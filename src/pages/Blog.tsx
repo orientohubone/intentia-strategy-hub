@@ -1,9 +1,11 @@
-import { Footer } from "@/components/Footer";
-import { LandingNav } from "@/components/LandingNav";
-import { BackToTop } from "@/components/BackToTop";
+import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Calendar, Clock, User } from "lucide-react";
+import { ScoreRing } from "@/components/ScoreRing";
+import { Footer } from "@/components/Footer";
+import { BackToTop } from "@/components/BackToTop";
+import { BackToHomeButton } from "@/components/BackToHomeButton";
 import { useNavigate } from "react-router-dom";
+import { ArrowRight, Calendar, Clock, User } from "lucide-react";
 
 const blogPosts = [
   {
@@ -76,7 +78,9 @@ export default function Blog() {
 
   return (
     <div className="min-h-screen bg-background">
-      <LandingNav />
+      {/* Header */}
+      <Header />
+      {/* Hero Section */}
 
       {/* Hero Section */}
       <section className="pt-32 pb-16">
@@ -224,9 +228,13 @@ export default function Blog() {
         </div>
       </section>
 
+      {/* Footer */}
       <Footer />
       
+      {/* Back to Top Button */}
       <BackToTop />
+      {/* Back to Home Button */}
+      <BackToHomeButton />
     </div>
   );
 }

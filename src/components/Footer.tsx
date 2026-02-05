@@ -122,13 +122,13 @@ export function Footer() {
           <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
             <div className="text-sm text-muted-foreground">© 2024 Intentia Strategy Hub. Todos os direitos reservados.</div>
             <div className="flex flex-wrap justify-center sm:justify-end gap-x-6 gap-y-2 text-sm">
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+              <a href="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors">
                 Política de Privacidade
               </a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+              <a href="/terms-of-service" className="text-muted-foreground hover:text-primary transition-colors">
                 Termos de Serviço
               </a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+              <a href="/cookie-policy" className="text-muted-foreground hover:text-primary transition-colors">
                 Política de Cookies
               </a>
             </div>

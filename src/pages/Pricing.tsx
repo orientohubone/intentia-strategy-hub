@@ -1,8 +1,11 @@
+import { Header } from "@/components/Header";
+import { Button } from "@/components/ui/button";
+import { ScoreRing } from "@/components/ScoreRing";
 import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
-import { Button } from "@/components/ui/button";
-import { CheckCircle2, ArrowRight } from "lucide-react";
+import { BackToHomeButton } from "@/components/BackToHomeButton";
 import { useNavigate } from "react-router-dom";
+import { ArrowRight, MapPin, Clock, DollarSign, Users, Zap, Target, CheckCircle2 } from "lucide-react";
 
 const plans = [
   {
@@ -20,7 +23,7 @@ const plans = [
       "Alertas em tempo real",
       "API access"
     ],
-    cta: "Começar Grátis",
+    cta: "Falar com Consultor",
     popular: false
   },
   {
@@ -67,7 +70,8 @@ export default function Pricing() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      <Header />
+      {/* Hero Section */}
       <section className="pt-32 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6">
@@ -190,8 +194,13 @@ export default function Pricing() {
           </Button>
         </div>
       </section>
+      {/* Footer */}
       <Footer />
+      
+      {/* Back to Top Button */}
       <BackToTop />
+      {/* Back to Home Button */}
+      <BackToHomeButton />
     </div>
   );
 }

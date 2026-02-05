@@ -1,9 +1,11 @@
-import { Footer } from "@/components/Footer";
-import { LandingNav } from "@/components/LandingNav";
-import { BackToTop } from "@/components/BackToTop";
+import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, MapPin, Clock, DollarSign, Users, Zap, Target } from "lucide-react";
+import { ScoreRing } from "@/components/ScoreRing";
+import { Footer } from "@/components/Footer";
+import { BackToTop } from "@/components/BackToTop";
+import { BackToHomeButton } from "@/components/BackToHomeButton";
 import { useNavigate } from "react-router-dom";
+import { ArrowRight, MapPin, Clock, DollarSign, Users, Zap, Target } from "lucide-react";
 
 const openPositions = [
   {
@@ -100,7 +102,8 @@ export default function Careers() {
 
   return (
     <div className="min-h-screen bg-background">
-      <LandingNav />
+      {/* Header */}
+      <Header />
 
       {/* Hero Section */}
       <section className="pt-32 pb-16">
@@ -294,9 +297,13 @@ export default function Careers() {
         </div>
       </section>
 
+      {/* Footer */}
       <Footer />
       
+      {/* Back to Top Button */}
       <BackToTop />
+      {/* Back to Home Button */}
+      <BackToHomeButton />
     </div>
   );
 }

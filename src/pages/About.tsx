@@ -1,9 +1,11 @@
-import { Footer } from "@/components/Footer";
-import { LandingNav } from "@/components/LandingNav";
-import { BackToTop } from "@/components/BackToTop";
+import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, Target, Award, TrendingUp } from "lucide-react";
+import { ScoreRing } from "@/components/ScoreRing";
+import { Footer } from "@/components/Footer";
+import { BackToTop } from "@/components/BackToTop";
+import { BackToHomeButton } from "@/components/BackToHomeButton";
 import { useNavigate } from "react-router-dom";
+import { ArrowRight, Users, Target, Award, TrendingUp } from "lucide-react";
 
 const teamMembers = [
   {
@@ -44,8 +46,7 @@ export default function About() {
 
   return (
     <div className="min-h-screen bg-background">
-      <LandingNav />
-
+      <Header />
       {/* Hero Section */}
       <section className="pt-32 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -200,9 +201,13 @@ export default function About() {
         </div>
       </section>
 
+      {/* Footer */}
       <Footer />
       
+      {/* Back to Top Button */}
       <BackToTop />
+      {/* Back to Home Button */}
+      <BackToHomeButton />
     </div>
   );
 }

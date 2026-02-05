@@ -1,8 +1,9 @@
-import { LandingNav } from "@/components/LandingNav";
+import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { ScoreRing } from "@/components/ScoreRing";
 import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
+import { BackToHomeButton } from "@/components/BackToHomeButton";
 import { useNavigate } from "react-router-dom";
 import { 
   Target, 
@@ -58,7 +59,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background">
-      <LandingNav />
+      <Header />
 
       {/* Hero Section */}
       <section className="pt-24 pb-16 gradient-hero">
@@ -334,6 +335,8 @@ export default function Landing() {
       
       {/* Back to Top Button */}
       <BackToTop />
+      {/* Back to Home Button */}
+      <BackToHomeButton />
     </div>
   );
 }

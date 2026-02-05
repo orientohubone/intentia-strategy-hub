@@ -1,14 +1,17 @@
-import { Footer } from "@/components/Footer";
-import { LandingNav } from "@/components/LandingNav";
-import { BackToTop } from "@/components/BackToTop";
+import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
+import { ScoreRing } from "@/components/ScoreRing";
+import { Footer } from "@/components/Footer";
+import { BackToTop } from "@/components/BackToTop";
+import { BackToHomeButton } from "@/components/BackToHomeButton";
+import { useNavigate } from "react-router-dom";
+import { ArrowRight, MapPin, Clock, Send, MessageSquare, Mail, Phone } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, Phone, MapPin, Clock, Send, MessageSquare } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 
 const contactInfo = [
   {
@@ -96,7 +99,8 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-background">
-      <LandingNav />
+      {/* Header */}
+      <Header />
 
       {/* Hero Section */}
       <section className="pt-32 pb-16">
@@ -268,9 +272,13 @@ export default function Contact() {
         </div>
       </section>
 
+      {/* Footer */}
       <Footer />
       
+      {/* Back to Top Button */}
       <BackToTop />
+      {/* Back to Home Button */}
+      <BackToHomeButton />
     </div>
   );
 }
