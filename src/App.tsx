@@ -15,6 +15,12 @@ import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CookiePolicy from "./pages/CookiePolicy";
+import Projects from "./pages/Projects";
+import Insights from "./pages/Insights";
+import Audiences from "./pages/Audiences";
+import Benchmark from "./pages/Benchmark";
+import Settings from "./pages/Settings";
+import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
@@ -43,6 +49,54 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/projects" 
+            element={
+              <ProtectedRoute>
+                <Projects />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/insights" 
+            element={
+              <ProtectedRoute>
+                <Insights />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/audiences" 
+            element={
+              <ProtectedRoute>
+                <Audiences />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/benchmark" 
+            element={
+              <ProtectedRoute>
+                <Benchmark />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/settings" 
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/help" 
+            element={
+              <ProtectedRoute>
+                <Help />
               </ProtectedRoute>
             } 
           />

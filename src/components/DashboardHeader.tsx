@@ -2,8 +2,20 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Bell, Search, Plus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 export function DashboardHeader() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const fullName = (user?.user_metadata?.full_name as string | undefined) || user?.email || "Usuário";
+  const initials = fullName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "U";
+
   return (
     <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between">
       <div className="flex items-center gap-4 flex-1">
@@ -17,7 +29,7 @@ export function DashboardHeader() {
       </div>
 
       <div className="flex items-center gap-4">
-        <Button variant="hero" size="sm" className="gap-2">
+        <Button variant="hero" size="sm" className="gap-2" onClick={() => navigate("/projects")}> 
           <Plus className="h-4 w-4" />
           Novo Projeto
         </Button>
@@ -33,11 +45,11 @@ export function DashboardHeader() {
           <Avatar className="h-9 w-9">
             <AvatarImage src="" />
             <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
-              JD
+              {initials}
             </AvatarFallback>
           </Avatar>
           <div className="hidden md:block">
-            <p className="text-sm font-medium text-foreground">João Diniz</p>
+            <p className="text-sm font-medium text-foreground">{fullName}</p>
             <p className="text-xs text-muted-foreground">Admin</p>
           </div>
         </div>

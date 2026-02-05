@@ -11,7 +11,7 @@ export interface Project {
   score: number;
   status: 'pending' | 'analyzing' | 'completed';
   last_update: string;
-  channel_scores: {
+  channel_scores?: {
     google: number;
     meta: number;
     linkedin: number;
@@ -54,7 +54,7 @@ export function useTenantData() {
       setLoading(true);
 
       // Fetch tenant settings
-      const { data: settings, error: settingsError } = await supabase
+      const { data: settings, error: settingsError } = await (supabase as any)
         .from('tenant_settings')
         .select('*')
         .eq('user_id', user.id)
@@ -72,7 +72,7 @@ export function useTenantData() {
       }
 
       // Fetch user's projects (tenant isolation)
-      const { data: userProjects, error: projectsError } = await supabase
+      const { data: userProjects, error: projectsError } = await (supabase as any)
         .from('projects')
         .select('*')
         .eq('user_id', user.id)
@@ -95,7 +95,7 @@ export function useTenantData() {
     const { data: userData } = await supabase.auth.getUser();
     
     if (userData?.user?.user_metadata) {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('tenant_settings')
         .insert({
           user_id: user.id,
@@ -121,7 +121,7 @@ export function useTenantData() {
       throw new Error('Monthly analysis limit reached');
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('projects')
       .insert({
         ...projectData,
@@ -134,13 +134,13 @@ export function useTenantData() {
 
     // Update analyses count
     if (tenantSettings) {
-      await supabase
-        .from('tenant_settings')
-        .update({
-          analyses_used: tenantSettings.analyses_used + 1,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', user.id);
+      await (supabase as any)
+      .from('tenant_settings')
+      .update({
+        analyses_used: tenantSettings.analyses_used + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', user.id);
     }
 
     setProjects(prev => [data, ...prev]);
@@ -150,7 +150,7 @@ export function useTenantData() {
   const updateProject = async (id: string, updates: Partial<Project>) => {
     if (!user) throw new Error('User not authenticated');
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('projects')
       .update(updates)
       .eq('id', id)
@@ -171,7 +171,7 @@ export function useTenantData() {
   const deleteProject = async (id: string) => {
     if (!user) throw new Error('User not authenticated');
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('projects')
       .delete()
       .eq('id', id)
