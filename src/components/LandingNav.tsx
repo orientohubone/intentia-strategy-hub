@@ -1,10 +1,12 @@
 import { Button } from "./ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 export function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
 
   const navLinks = [
     { label: "Funcionalidades", href: "#features" },
@@ -39,8 +41,8 @@ export function LandingNav() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost">Entrar</Button>
-            <Button variant="hero">Começar Grátis</Button>
+            <Button variant="ghost" onClick={() => navigate('/auth')}>Entrar</Button>
+            <Button variant="hero" onClick={() => navigate('/auth')}>Começar Grátis</Button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -71,8 +73,8 @@ export function LandingNav() {
             </a>
           ))}
           <div className="flex flex-col gap-2 pt-2 border-t border-border">
-            <Button variant="ghost" className="w-full justify-center">Entrar</Button>
-            <Button variant="hero" className="w-full">Começar Grátis</Button>
+            <Button variant="ghost" className="w-full justify-center" onClick={() => navigate('/auth')}>Entrar</Button>
+            <Button variant="hero" className="w-full" onClick={() => navigate('/auth')}>Começar Grátis</Button>
           </div>
         </div>
       </div>

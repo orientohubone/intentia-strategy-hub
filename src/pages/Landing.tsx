@@ -1,6 +1,9 @@
 import { LandingNav } from "@/components/LandingNav";
 import { Button } from "@/components/ui/button";
 import { ScoreRing } from "@/components/ScoreRing";
+import { Footer } from "@/components/Footer";
+import { BackToTop } from "@/components/BackToTop";
+import { useNavigate } from "react-router-dom";
 import { 
   Target, 
   BarChart3, 
@@ -51,6 +54,8 @@ const benefits = [
 ];
 
 export default function Landing() {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background">
       <LandingNav />
@@ -67,7 +72,7 @@ export default function Landing() {
             </div>
             
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 animate-slide-up">
-              Descubra <span className="text-gradient">onde investir</span> em mídia paga antes de gastar
+              Descubra <span className="text-gradient bg-gradient-to-r from-primary to-orange-600 bg-clip-text text-transparent">onde investir</span> em mídia paga antes de gastar
             </h1>
             
             <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: "0.1s" }}>
@@ -76,12 +81,12 @@ export default function Landing() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: "0.2s" }}>
-              <Button variant="hero" size="xl">
+              <Button variant="hero" size="xl" onClick={() => navigate('/auth')}>
                 Começar Análise Grátis
                 <ArrowRight className="h-5 w-5" />
               </Button>
-              <Button variant="hero-outline" size="xl">
-                Ver Demonstração
+              <Button variant="hero-outline" size="xl" onClick={() => navigate('/pricing')}>
+                Ver Preços
               </Button>
             </div>
           </div>
@@ -223,6 +228,86 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Pricing Preview Section */}
+      <section id="pricing" className="py-20 bg-muted/30">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+              Planos para todos os estágios
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Comece grátis e evolua conforme sua necessidade de análise estratégica
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* Starter */}
+            <div className="bg-card rounded-xl border border-border p-6 text-center">
+              <h3 className="text-xl font-bold text-foreground mb-2">Starter</h3>
+              <div className="text-3xl font-bold text-foreground mb-4">Grátis</div>
+              <p className="text-sm text-muted-foreground mb-4">Perfeito para testar sua estratégia</p>
+              <ul className="space-y-3 text-sm text-muted-foreground mb-6">
+                <li>✓ 1 análise de URL por mês</li>
+                <li>✓ Score básico por canal</li>
+                <li>✓ Relatório simples</li>
+                <li>✓ Suporte por email</li>
+              </ul>
+              <Button variant="outline" className="w-full" onClick={() => navigate('/auth')}>
+                Começar Grátis
+              </Button>
+            </div>
+
+            {/* Professional */}
+            <div className="bg-primary text-primary-foreground rounded-xl border-2 border-primary p-6 text-center relative scale-105">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <span className="bg-background text-foreground px-3 py-1 rounded-full text-xs font-medium">
+                  Mais Popular
+                </span>
+              </div>
+              <h3 className="text-xl font-bold mb-2">Professional</h3>
+              <div className="text-3xl font-bold mb-4">R$97<span className="text-lg font-normal">/mês</span></div>
+              <p className="text-sm mb-4 opacity-90">Para empresas que levam marketing a sério</p>
+              <ul className="space-y-3 text-sm mb-6">
+                <li>✓ Análises ilimitadas de URLs</li>
+                <li>✓ Score avançado por canal</li>
+                <li>✓ Benchmark competitivo</li>
+                <li>✓ Alertas estratégicos em tempo real</li>
+                <li>✓ Relatórios detalhados</li>
+              </ul>
+              <Button variant="secondary" className="w-full" onClick={() => navigate('/pricing')}>
+                Ver Detalhes
+              </Button>
+            </div>
+
+            {/* Enterprise */}
+            <div className="bg-card rounded-xl border border-border p-6 text-center">
+              <h3 className="text-xl font-bold text-foreground mb-2">Enterprise</h3>
+              <div className="text-3xl font-bold text-foreground mb-4">Personalizado</div>
+              <p className="text-sm text-muted-foreground mb-4">Solução sob medida para grandes empresas</p>
+              <ul className="space-y-3 text-sm text-muted-foreground mb-6">
+                <li>✓ Tudo do Professional</li>
+                <li>✓ API access completo</li>
+                <li>✓ White label</li>
+                <li>✓ SLA dedicado</li>
+              </ul>
+              <Button variant="outline" className="w-full" onClick={() => navigate('/pricing')}>
+                Falar com Vendas
+              </Button>
+            </div>
+          </div>
+
+          <div className="text-center mt-8">
+            <p className="text-sm text-muted-foreground mb-4">
+              Todos os planos incluem suporte por email
+            </p>
+            <Button variant="ghost" onClick={() => navigate('/pricing')}>
+              Ver todos os recursos e detalhes
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -233,38 +318,22 @@ export default function Landing() {
             Comece sua análise estratégica gratuita e descubra os melhores canais para seu negócio B2B.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button variant="hero" size="xl">
+            <Button variant="hero" size="xl" onClick={() => navigate('/auth')}>
               Começar Análise Grátis
               <ArrowRight className="h-5 w-5" />
             </Button>
-            <Button variant="outline" size="xl">
-              Falar com Especialista
+            <Button variant="outline" size="xl" onClick={() => navigate('/pricing')}>
+              Ver Preços
             </Button>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-secondary/50 border-t border-border py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">I</span>
-              </div>
-              <span className="font-bold text-foreground">Intentia</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              © 2024 Intentia. Todos os direitos reservados.
-            </p>
-            <div className="flex items-center gap-6">
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground">Termos</a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground">Privacidade</a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground">Contato</a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
+      
+      {/* Back to Top Button */}
+      <BackToTop />
     </div>
   );
 }
