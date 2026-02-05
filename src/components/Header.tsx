@@ -43,9 +43,18 @@ function Logo() {
   );
 }
 
-function DropdownMenu({ category }: { category: typeof menuCategories[0] }) {
-  const [isOpen, setIsOpen] = useState(false);
+function DropdownMenu({ 
+  category, 
+  activeDropdown, 
+  setActiveDropdown 
+}: { 
+  category: typeof menuCategories[0]; 
+  activeDropdown: string | null; 
+  setActiveDropdown: (value: string | null) => void; 
+}) {
   const navigate = useNavigate();
+  const isOpen = activeDropdown === category.name;
+  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   const handleClick = (href: string) => {
     // Se for link interno com #, faz scroll suave
@@ -72,14 +81,38 @@ function DropdownMenu({ category }: { category: typeof menuCategories[0] }) {
       navigate(href);
       window.scrollTo(0, 0);
     }
-    setIsOpen(false);
+    setActiveDropdown(null);
+  };
+
+  const toggleDropdown = () => {
+    setActiveDropdown(isOpen ? null : category.name);
+  };
+
+  const handleMouseEnter = () => {
+    // Cancela qualquer timeout pendente
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      setTimeoutId(null);
+    }
+    setActiveDropdown(category.name);
+  };
+
+  const handleMouseLeave = () => {
+    // Adiciona um pequeno delay antes de fechar
+    const id = setTimeout(() => {
+      setActiveDropdown(null);
+    }, 150);
+    setTimeoutId(id);
   };
 
   return (
-    <div className="relative">
+    <div 
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        onMouseEnter={() => setIsOpen(true)}
+        onClick={toggleDropdown}
         className="text-muted-foreground hover:text-accent-foreground flex items-center gap-1 py-2 text-sm font-medium transition-colors"
       >
         {category.name}
@@ -87,11 +120,7 @@ function DropdownMenu({ category }: { category: typeof menuCategories[0] }) {
       </button>
       
       {isOpen && (
-        <div 
-          className="absolute top-full left-0 mt-1 w-48 bg-background border border-border rounded-lg shadow-lg py-2 z-50"
-          onMouseEnter={() => setIsOpen(true)}
-          onMouseLeave={() => setIsOpen(false)}
-        >
+        <div className="absolute top-full left-0 mt-1 w-48 bg-background border border-border rounded-lg shadow-lg py-2 z-50">
           {category.items.map((item, index) => (
             <button
               key={index}
@@ -110,6 +139,7 @@ function DropdownMenu({ category }: { category: typeof menuCategories[0] }) {
 export function Header() {
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -150,7 +180,11 @@ export function Header() {
               <ul className="flex gap-6 text-sm">
                 {menuCategories.map((category, index) => (
                   <li key={index}>
-                    <DropdownMenu category={category} />
+                    <DropdownMenu 
+                      category={category} 
+                      activeDropdown={activeDropdown}
+                      setActiveDropdown={setActiveDropdown}
+                    />
                   </li>
                 ))}
               </ul>
