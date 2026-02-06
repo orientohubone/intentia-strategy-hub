@@ -13,6 +13,7 @@ import type { UrlAnalysis } from "@/lib/urlAnalyzer";
 import { runAiAnalysis, getUserActiveKeys } from "@/lib/aiAnalyzer";
 import type { AiAnalysisResult, UserApiKey } from "@/lib/aiAnalyzer";
 import { exportAsJson, exportAsMarkdown, exportAsHtml, exportAsPdf } from "@/lib/exportAnalysis";
+import { fetchProjectReport, generateConsolidatedReport } from "@/lib/reportGenerator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -27,6 +28,19 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   FileSearch,
   Sparkles,
   CheckCircle2,
@@ -39,6 +53,11 @@ import {
   FileText,
   Settings,
   Download,
+  RefreshCw,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  FolderOpen,
 } from "lucide-react";
 
 type Insight = {
@@ -598,35 +617,83 @@ export default function Projects() {
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                       <div>
                         <h2 className="text-lg font-semibold text-foreground">{project.name}</h2>
-                        <p className="text-sm text-muted-foreground">{project.niche} • {project.url}</p>
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <span>{project.niche} •</span>
+                          <span className="truncate max-w-[200px]">{project.url}</span>
+                          <TooltipProvider delayDuration={300}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  className="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-muted transition-colors disabled:opacity-50"
+                                  onClick={() => handleReanalyze(project.id)}
+                                  disabled={analyzing}
+                                >
+                                  <RefreshCw className={`h-3 w-3 ${analyzing ? "animate-spin" : ""}`} />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">
+                                <p>Reanalisar URL</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        <Button size="sm" variant="outline" onClick={() => startEdit(project.id)}>Editar</Button>
-                        <Button size="sm" variant="outline" onClick={() => handleReanalyze(project.id)} disabled={analyzing}>
-                          {analyzing ? "Analisando..." : "Reanalisar URL"}
-                        </Button>
+                      <div className="flex items-center gap-2">
                         <Button size="sm" variant="outline" onClick={() => setActiveProjectId(isActive ? null : project.id)}>
+                          <FolderOpen className="h-3.5 w-3.5 mr-1.5" />
                           {isActive ? "Fechar" : "Gerenciar"}
                         </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="destructive">Excluir</Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja excluir o projeto "{project.name}"? Esta ação não pode ser desfeita.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteProject(project.id)}>
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="icon" variant="ghost" className="h-8 w-8">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => startEdit(project.id)}>
+                              <Pencil className="h-3.5 w-3.5 mr-2" />
+                              Editar
+                            </DropdownMenuItem>
+                            {project.status === "completed" && (
+                              <DropdownMenuItem onClick={async () => {
+                                if (!user) return;
+                                toast.info("Gerando relatório...");
+                                try {
+                                  const report = await fetchProjectReport(project.id, user.id);
+                                  generateConsolidatedReport(report);
+                                } catch (e: any) {
+                                  toast.error("Erro ao gerar relatório: " + e.message);
+                                }
+                              }}>
+                                <FileText className="h-3.5 w-3.5 mr-2" />
+                                Relatório PDF
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
+                                  <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                  Excluir
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja excluir o projeto "{project.name}"? Esta ação não pode ser desfeita.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteProject(project.id)}>
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
 

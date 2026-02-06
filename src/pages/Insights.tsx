@@ -25,7 +25,11 @@ import {
   Minimize2,
   Calendar,
   Zap,
+  FileText,
+  FileSpreadsheet,
 } from "lucide-react";
+import { exportInsightsPdf } from "@/lib/reportGenerator";
+import { exportInsightsCsv } from "@/lib/exportCsv";
 
 type Insight = {
   id: string;
@@ -164,9 +168,36 @@ export default function Insights() {
         <main className="flex-1 overflow-auto p-6">
           <div className="max-w-6xl mx-auto space-y-6">
             {/* Header */}
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Insights Estratégicos</h1>
-              <p className="text-muted-foreground text-sm">Insights gerados automaticamente a partir da análise dos seus projetos.</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Insights Estratégicos</h1>
+                <p className="text-muted-foreground text-sm">Insights gerados automaticamente a partir da análise dos seus projetos.</p>
+              </div>
+              {filteredInsights.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                    onClick={() => exportInsightsPdf({
+                      insights: filteredInsights.map(i => ({ type: i.type, title: i.title, description: i.description, action: i.action || undefined, project_name: i.project_name, created_at: i.created_at })),
+                      counts: { warnings: stats.warnings, opportunities: stats.opportunities, improvements: stats.improvements },
+                    })}
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    PDF
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                    onClick={() => exportInsightsCsv(filteredInsights.map(i => ({ type: i.type, title: i.title, description: i.description, action: i.action || undefined, project_name: i.project_name, created_at: i.created_at })))}
+                  >
+                    <FileSpreadsheet className="h-3.5 w-3.5" />
+                    CSV
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Stats */}

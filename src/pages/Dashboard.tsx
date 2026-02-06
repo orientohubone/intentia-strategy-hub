@@ -6,7 +6,10 @@ import { ChannelCard } from "@/components/ChannelCard";
 import { InsightCard } from "@/components/InsightCard";
 import { StatsCard } from "@/components/StatsCard";
 import { ScoreRing } from "@/components/ScoreRing";
-import { FolderOpen, Target, BarChart3, Zap } from "lucide-react";
+import { FolderOpen, Target, BarChart3, Zap, FileText, FileSpreadsheet } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { exportDashboardPdf } from "@/lib/reportGenerator";
+import { exportProjectsCsv } from "@/lib/exportCsv";
 import { useTenantData } from "@/hooks/useTenantData";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -292,9 +295,49 @@ export default function Dashboard() {
               <div className="lg:col-span-2 space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-foreground">Projetos Recentes</h2>
-                  <a href="/projects" className="text-sm text-primary hover:underline">
-                    Ver todos
-                  </a>
+                  <div className="flex items-center gap-2">
+                    {projects.length > 0 && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="gap-1 h-7 text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => {
+                            const companyName = (user?.user_metadata?.company_name as string) || "Empresa";
+                            exportDashboardPdf({
+                              userName: fullName,
+                              companyName,
+                              projects: projects.map(p => ({ name: p.name, score: p.score, status: statusMap[p.status], niche: p.niche, url: p.url })),
+                              totalProjects: projects.length,
+                              completedProjects: projects.filter(p => p.status === "completed").length,
+                              averageScore,
+                              channelScores: [],
+                              recentInsights: insights.map(i => ({ type: i.type, title: i.title, description: i.description })),
+                              audiencesCount,
+                              benchmarksCount,
+                            });
+                          }}
+                        >
+                          <FileText className="h-3 w-3" />
+                          PDF
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="gap-1 h-7 text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => {
+                            exportProjectsCsv(projects.map(p => ({ name: p.name, score: p.score, status: statusMap[p.status], niche: p.niche, url: p.url, created_at: p.created_at, updated_at: p.updated_at })));
+                          }}
+                        >
+                          <FileSpreadsheet className="h-3 w-3" />
+                          CSV
+                        </Button>
+                      </>
+                    )}
+                    <a href="/projects" className="text-sm text-primary hover:underline">
+                      Ver todos
+                    </a>
+                  </div>
                 </div>
                 <div className="space-y-4">
                   {loading && (

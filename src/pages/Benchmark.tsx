@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Filter, TrendingUp, Target, BarChart3, Users } from "lucide-react";
+import { Search, Filter, TrendingUp, Target, BarChart3, Users, FileText, FileSpreadsheet } from "lucide-react";
+import { exportBenchmarksPdf } from "@/lib/reportGenerator";
+import { exportBenchmarksCsv } from "@/lib/exportCsv";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -302,11 +304,64 @@ export default function Benchmark() {
         <main className="flex-1 overflow-auto p-6">
           <div className="max-w-6xl mx-auto space-y-6">
             {/* Header */}
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Benchmark Competitivo</h1>
-              <p className="text-muted-foreground text-sm mt-1">
-                Análise comparativa com concorrentes — gerada automaticamente a partir das URLs cadastradas nos projetos.
-              </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Benchmark Competitivo</h1>
+                <p className="text-muted-foreground text-sm mt-1">
+                  Análise comparativa com concorrentes — gerada automaticamente a partir das URLs cadastradas nos projetos.
+                </p>
+              </div>
+              {benchmarks.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                    onClick={() => {
+                      const avgScore = benchmarks.reduce((s, b) => s + b.overall_score, 0) / benchmarks.length;
+                      exportBenchmarksPdf({
+                        benchmarks: benchmarks.map(b => ({
+                          competitor_name: b.competitor_name,
+                          competitor_url: b.competitor_url,
+                          competitor_niche: b.competitor_niche,
+                          overall_score: b.overall_score,
+                          score_gap: b.score_gap,
+                          strengths: [],
+                          weaknesses: [],
+                          project_name: b.project_name,
+                        })),
+                        totalBenchmarks: benchmarks.length,
+                        averageScore: avgScore,
+                      });
+                    }}
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    PDF
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                    onClick={() => {
+                      exportBenchmarksCsv(benchmarks.map(b => ({
+                        competitor_name: b.competitor_name,
+                        competitor_url: b.competitor_url,
+                        competitor_niche: b.competitor_niche,
+                        overall_score: b.overall_score,
+                        score_gap: b.score_gap,
+                        value_proposition_score: b.value_proposition_score,
+                        offer_clarity_score: b.offer_clarity_score,
+                        user_journey_score: b.user_journey_score,
+                        project_name: b.project_name,
+                        created_at: b.created_at,
+                      })));
+                    }}
+                  >
+                    <FileSpreadsheet className="h-3.5 w-3.5" />
+                    CSV
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Stats Cards */}

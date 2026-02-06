@@ -8,9 +8,9 @@
 **UI Framework:** shadcn/ui + Tailwind CSS  
 **Backend:** Supabase (PostgreSQL + Auth + Edge Functions)  
 **Propósito:** Plataforma de análise estratégica para marketing B2B  
-**Versão:** 1.6.0
+**Versão:** 1.9.0
 
-## Status Atual: ✅ v1.6.0 (Análise Heurística + Integrações de IA)
+## Status Atual: ✅ v1.9.0 (Etapa Estratégica Completa)
 
 ### Funcionalidades Implementadas
 
@@ -30,14 +30,20 @@
 - **Nome do usuário** do Supabase user_metadata
 - **Welcome Section** com card gradient-primary + ScoreRing
 
-#### 3. CRUD Completo de Projetos ✅
+#### 3. CRUD Completo de Projetos + Análise por IA ✅
 - **Criar/Editar/Excluir** projetos
 - **Validações** de formulário (nome, nicho, URL)
 - **URLs de concorrentes** (competitor_urls array)
 - **Análise heurística de URL** automática (Edge Function fetch HTML → scores + insights)
+- **Análise por IA sob demanda** — seletor de modelo acoplado ao botão
+- **Modelos suportados:** Gemini (2.0 Flash, 3 Flash, 3 Pro) e Claude (Sonnet 4, 3.7, Haiku 3.5, 3, Opus 3)
+- **Animação lab-bubble** durante processamento da IA
+- **Resultados IA:** resumo executivo, prontidão para investimento (score 0-100), SWOT, recomendações por canal, recomendações estratégicas, posição competitiva
+- **Exportação de análise IA:** JSON, Markdown, HTML, PDF
 - **Channel scores** por projeto (Google, Meta, LinkedIn, TikTok)
 - **Confirmação** ao excluir (AlertDialog)
 - **Toast feedback** para todas as operações
+- **Notificação** após conclusão da análise IA (com guard anti-duplicação)
 
 #### 4. Insights Estratégicos ✅
 - **Agrupados por projeto** em cards visuais com ícones por tipo
@@ -56,11 +62,14 @@
 - **Busca** por nome/descrição
 - **Formulário** com validações
 
-#### 6. Benchmark Competitivo ✅
+#### 6. Benchmark Competitivo + Enriquecimento por IA ✅
 - **Geração automática** a partir de competitor_urls do projeto
 - **Análise SWOT** (Strengths, Weaknesses, Opportunities, Threats)
 - **Scores detalhados** (proposta, clareza, jornada, geral) e gap analysis
-- **BenchmarkDetailDialog** com toggle fullscreen
+- **Enriquecimento por IA** — seletor de modelo + botão com animação lab-bubble
+- **Resultados IA do benchmark:** resumo executivo, nível de ameaça (0-100), vantagens/desvantagens competitivas, gaps estratégicos, posicionamento de mercado, oportunidades de diferenciação, avaliação de ameaças, plano de ação
+- **Exportação benchmark IA:** JSON, Markdown, HTML, PDF
+- **BenchmarkDetailDialog** com toggle fullscreen + seção IA integrada
 - **Cards visuais** com tags coloridas e indicadores
 - **Limpeza automática** de benchmarks antigos na reanálise
 - **Filtros** por projeto e busca avançada
@@ -99,7 +108,47 @@
 - **Insights gerados:** warnings, opportunities, improvements
 - **Benchmarks automáticos:** SWOT + gap analysis para concorrentes
 
-#### 11. Páginas Institucionais ✅
+#### 11. Análise por IA (Projetos) ✅
+- **aiAnalyzer.ts** — motor de análise IA com `runAiAnalysis()`
+- **Chamada direta** para Gemini API e via Edge Function proxy (`ai-analyze`) para Claude
+- **Seletor de modelo** acoplado ao botão de análise (formato `provider::model`)
+- **Botão compacto** (size="icon") com ícone Sparkles e animação lab-bubble
+- **Resultados salvos** em `projects.ai_analysis` (jsonb) e `projects.ai_completed_at`
+- **Guard anti-duplicação** de notificações via `useRef`
+
+#### 12. Enriquecimento de Benchmark por IA ✅
+- **runBenchmarkAiAnalysis()** em aiAnalyzer.ts com prompt específico para análise competitiva
+- **BenchmarkAiResult** — tipo com: executiveSummary, competitiveAdvantages/Disadvantages, strategicGaps, marketPositioning, differentiationOpportunities, threatAssessment, actionPlan, overallVerdict
+- **UI integrada** no BenchmarkDetailDialog com seletor de modelo + botão + animação
+- **Resultados salvos** em `benchmarks.ai_analysis` (jsonb)
+
+#### 13. Exportação de Análises ✅
+- **exportAnalysis.ts** — funções de exportação para projetos e benchmarks
+- **Formatos:** JSON, Markdown, HTML (estilizado), PDF (via print window)
+- **Projetos:** `exportAsJson`, `exportAsMarkdown`, `exportAsHtml`, `exportAsPdf`
+- **Benchmarks:** `exportBenchmarkAsJson`, `exportBenchmarkAsMarkdown`, `exportBenchmarkAsHtml`, `exportBenchmarkAsPdf`
+
+#### 14. Relatórios PDF Gerais ✅
+- **reportGenerator.ts** — gerador de relatórios consolidados e por seção
+- **Relatório consolidado do projeto** (heurística + IA + benchmarks + insights + channels) via `fetchProjectReport` + `generateConsolidatedReport`
+- **Botão "Relatório PDF"** em cada projeto completo (Projects.tsx)
+- **Exportar PDF por seção:** Dashboard (`exportDashboardPdf`), Insights (`exportInsightsPdf`), Benchmarks (`exportBenchmarksPdf`)
+
+#### 15. Exportação CSV ✅
+- **exportCsv.ts** — funções de exportação CSV com BOM UTF-8 e separador `;`
+- **Projetos:** `exportProjectsCsv` (Dashboard)
+- **Insights:** `exportInsightsCsv` (Insights)
+- **Benchmarks:** `exportBenchmarksCsv` (Benchmark)
+- **Públicos-alvo:** `exportAudiencesCsv` (Audiences)
+- **Channel Scores:** `exportChannelScoresCsv`
+
+#### 16. Testes Automatizados ✅
+- **Vitest + jsdom** configurado com setup.ts
+- **6 testes exportCsv** — BOM, headers, escaping, labels, arrays, channel names
+- **5 testes exportAnalysis** — JSON, Markdown, heuristic-only, benchmark JSON/MD
+- **12 testes passando** (100%)
+
+#### 17. Páginas Institucionais ✅
 - **Preços** com planos Starter/Professional/Enterprise
 - **Sobre, Cases, Blog, Carreiras, Contato**
 - **Políticas:** Privacidade, Termos, Cookies
@@ -124,7 +173,7 @@
 - Row Level Security (RLS) por user_id em todas as tabelas
 - Triggers para updated_at automático
 - Views para dashboard queries
-- Edge Functions (analyze-url)
+- Edge Functions (analyze-url, ai-analyze)
 - Storage bucket (avatars)
 
 **Desenvolvimento:**
@@ -170,16 +219,23 @@ intentia-strategy-hub/
 │   │   └── useNotifications.ts # Notificações
 │   ├── lib/               # Utilitários
 │   │   ├── utils.ts
-│   │   └── urlAnalyzer.ts # Análise heurística + salvar resultados
-│   ├── test/              # Testes
+│   │   ├── urlAnalyzer.ts # Análise heurística + salvar resultados
+│   │   ├── aiAnalyzer.ts  # Análise por IA (projetos + benchmarks)
+│   │   ├── exportAnalysis.ts # Exportação JSON/MD/HTML/PDF
+│   │   ├── reportGenerator.ts # Relatórios PDF consolidados e por seção
+│   │   └── exportCsv.ts   # Exportação CSV (projetos, insights, benchmarks, audiences)
+│   ├── test/              # Testes (12 testes: exportCsv + exportAnalysis)
 │   ├── App.tsx            # App principal com rotas
 │   └── main.tsx           # Entry point
 ├── supabase/              # Config Supabase
 │   ├── schema.sql         # Schema completo (todas as tabelas)
 │   ├── audiences_schema.sql
 │   ├── add_project_to_audiences.sql
+│   ├── benchmark_ai_analysis.sql  # Migration: ai_analysis em benchmarks
 │   └── functions/
-│       └── analyze-url/   # Edge Function de análise heurística
+│       ├── analyze-url/   # Edge Function de análise heurística
+│       │   └── index.ts
+│       └── ai-analyze/    # Edge Function proxy para Claude API
 │           └── index.ts
 ├── documentacao/          # Documentação do projeto
 │   ├── AGENTS.md          # Este arquivo
@@ -198,7 +254,7 @@ intentia-strategy-hub/
 - `project_channel_scores` — Scores por canal (google/meta/linkedin/tiktok)
 - `insights` — Insights estratégicos (warning/opportunity/improvement)
 - `audiences` — Públicos-alvo com keywords e vinculação a projetos
-- `benchmarks` — Análises competitivas com SWOT e scores
+- `benchmarks` — Análises competitivas com SWOT, scores e ai_analysis (jsonb)
 - `notifications` — Sistema de notificações
 - `user_api_keys` — API keys de IA por usuário (google_gemini/anthropic_claude)
 
@@ -297,9 +353,12 @@ intentia-strategy-hub/
 4. **Criação de Projeto:** Nome, nicho, URL + URLs de concorrentes
 5. **Análise Heurística:** Automática ao analisar URL (fetch HTML → scores + insights)
 6. **Configurar API Keys:** Settings → Integrações de IA (Gemini/Claude)
-7. **Análise por IA:** Sob demanda após heurística (planejado)
-8. **Benchmark:** Comparação com concorrentes via análise SWOT
-9. **Insights:** Visualização agrupada por projeto com dialog + fullscreen
+7. **Análise por IA:** Sob demanda — selecionar modelo → clicar ✨ → resultados detalhados
+8. **Exportar Análise:** JSON, MD, HTML ou PDF
+9. **Benchmark:** Comparação com concorrentes via análise SWOT
+10. **Enriquecer Benchmark com IA:** Selecionar modelo → análise competitiva aprofundada
+11. **Exportar Benchmark IA:** JSON, MD, HTML ou PDF
+12. **Insights:** Visualização agrupada por projeto com dialog + fullscreen
 
 ### Fluxo de Análise (Arquitetura)
 
@@ -310,8 +369,16 @@ intentia-strategy-hub/
 2. Notificação (após heurística)
    Análise concluída → notifica usuário → libera análise por IA
 
-3. Análise por IA (sob demanda, planejado)
-   Dados heurísticos + HTML → API key do usuário → Gemini/Claude → insights aprofundados
+3. Análise por IA de Projeto (sob demanda) ✅
+   Seletor modelo → runAiAnalysis() → Gemini (direto) ou Claude (Edge Function proxy)
+   → parse JSON → salva em projects.ai_analysis → notificação
+
+4. Enriquecimento de Benchmark por IA (sob demanda) ✅
+   Seletor modelo → runBenchmarkAiAnalysis() → prompt competitivo
+   → parse JSON → salva em benchmarks.ai_analysis → notificação
+
+5. Exportação ✅
+   Resultados IA → exportAnalysis.ts → JSON / Markdown / HTML / PDF
 ```
 
 ### Integrações de IA
@@ -354,6 +421,14 @@ npm run test:watch   # Testes em modo watch
 - [x] Autenticação completa (login/signup redesenhado)
 - [x] Dashboard com dados reais e Welcome Section
 - [x] CRUD projetos com análise heurística de URL
+- [x] Análise por IA sob demanda com seletor de modelo (Gemini + Claude)
+- [x] Resultados IA de projetos (resumo, prontidão, SWOT, canais, recomendações)
+- [x] Enriquecimento de benchmark por IA (análise competitiva aprofundada)
+- [x] Exportação de análises IA: JSON, Markdown, HTML, PDF
+- [x] Exportação de benchmark IA: JSON, Markdown, HTML, PDF
+- [x] Relatórios PDF consolidados por projeto e por seção
+- [x] Exportação CSV de projetos, insights, benchmarks, audiences e channels
+- [x] 12 testes automatizados passando (exportCsv + exportAnalysis)
 - [x] Insights agrupados por projeto com dialog + fullscreen
 - [x] Público-alvo (CRUD + vinculação)
 - [x] Benchmark competitivo com SWOT, dialog fullscreen e tags coloridas
@@ -367,17 +442,14 @@ npm run test:watch   # Testes em modo watch
 - [x] Navegação SPA completa
 - [x] UI consistente e acessível (design system)
 - [x] Schema SQL completo + RLS + user_api_keys
-- [x] Edge Function analyze-url
-
-### � Em Progresso
-- [ ] Guardar análise heurística no gerenciar do projeto + notificação
-- [ ] Análise por IA sob demanda usando API key do usuário
+- [x] Edge Functions: analyze-url, ai-analyze
+- [x] Animação lab-bubble para feedback visual durante IA
+- [x] Guard anti-duplicação de notificações (useRef)
 
 ### 📋 Próximos Passos
-- [ ] Geração de relatórios PDF
-- [ ] Exportação de dados CSV/Excel
-- [ ] Testes automatizados
 - [ ] Integração com APIs de marketing
+- [ ] Multi-tenancy avançado
+- [ ] Advanced analytics e dashboards customizáveis
 
 ## Considerações Técnicas
 
@@ -397,18 +469,24 @@ O projeto está configurado para deploy via:
 
 ## Resumo
 
-O **Intentia Strategy Hub** está na **versão 1.6.0** com funcionalidades avançadas implementadas:
+O **Intentia Strategy Hub** está na **versão 1.9.0** — etapa estratégica completa:
 
 1. **Autenticação** redesenhada com split layout e design system
 2. **Dashboard** com dados reais, Welcome Section e ScoreRing
 3. **Análise heurística de URLs** automática via Edge Function
-4. **Insights agrupados por projeto** com cards visuais, dialog e fullscreen
-5. **Benchmark competitivo** com SWOT, gap analysis e dialog fullscreen
-6. **Integrações de IA** — API keys por usuário (Gemini + Claude) com validação
-7. **CRUD completo** para projetos, públicos-alvo e benchmarks
-8. **Dark mode** isolado (sistema vs site público)
-9. **Notificações** real-time com cores adaptáveis
-10. **Schema SQL** completo com RLS + user_api_keys
-11. **Design system** consistente com variáveis CSS
+4. **Análise por IA de projetos** sob demanda com seletor de modelo (Gemini/Claude)
+5. **Enriquecimento de benchmark por IA** com análise competitiva aprofundada
+6. **Exportação completa** de análises IA em JSON, Markdown, HTML e PDF
+7. **Relatórios PDF consolidados** por projeto e por seção (Dashboard, Insights, Benchmarks)
+8. **Exportação CSV** de projetos, insights, benchmarks, audiences e channels
+9. **12 testes automatizados** passando (exportCsv + exportAnalysis)
+10. **Insights agrupados por projeto** com cards visuais, dialog e fullscreen
+11. **Benchmark competitivo** com SWOT, gap analysis, dialog fullscreen e IA
+12. **Integrações de IA** — API keys por usuário (Gemini + Claude) com validação
+13. **CRUD completo** para projetos, públicos-alvo e benchmarks
+14. **Dark mode** isolado (sistema vs site público)
+15. **Notificações** real-time com cores adaptáveis
+16. **Schema SQL** completo com RLS + user_api_keys
+17. **Design system** consistente com variáveis CSS + animações lab-bubble
 
-Próximos passos: análise por IA sob demanda, relatórios PDF e exportação de dados.
+Próximos passos: integração com APIs de marketing, multi-tenancy avançado e dashboards customizáveis.

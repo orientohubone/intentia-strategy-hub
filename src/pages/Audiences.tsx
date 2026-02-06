@@ -9,7 +9,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTenantData } from "@/hooks/useTenantData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Users, Target, TrendingUp, Globe } from "lucide-react";
+import { Users, Target, TrendingUp, Globe, FileSpreadsheet } from "lucide-react";
+import { exportAudiencesCsv } from "@/lib/exportCsv";
 
 type Audience = {
   id: string;
@@ -174,10 +175,18 @@ export default function Audiences() {
                 <h1 className="text-2xl font-bold text-foreground">Públicos-Alvo</h1>
                 <p className="text-muted-foreground">Gerencie seus públicos-alvo estratégicos.</p>
               </div>
-              <Button onClick={() => setShowCreateForm(true)}>
-                <Users className="h-4 w-4 mr-2" />
-                Novo Público
-              </Button>
+              <div className="flex items-center gap-2">
+                {audiences.length > 0 && (
+                  <Button size="sm" variant="outline" className="gap-1" onClick={() => exportAudiencesCsv(audiences.map(a => ({ name: a.name, description: a.description, industry: a.industry, company_size: a.company_size, location: a.location, keywords: a.keywords, project_name: a.project_name, created_at: a.created_at })))}>
+                    <FileSpreadsheet className="h-3.5 w-3.5" />
+                    CSV
+                  </Button>
+                )}
+                <Button onClick={() => setShowCreateForm(true)}>
+                  <Users className="h-4 w-4 mr-2" />
+                  Novo Público
+                </Button>
+              </div>
             </div>
 
             <Input
