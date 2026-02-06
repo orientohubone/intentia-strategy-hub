@@ -23,7 +23,7 @@ const plans = [
       "Alertas em tempo real",
       "API access"
     ],
-    cta: "Falar com Consultor",
+    cta: "Começar Grátis",
     popular: false
   },
   {

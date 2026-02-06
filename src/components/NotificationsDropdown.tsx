@@ -46,13 +46,13 @@ export function NotificationsDropdown() {
   const getNotificationColor = (type: string) => {
     switch (type) {
       case "success":
-        return "border-green-200 bg-green-50";
+        return "border-green-500/20 bg-green-500/10";
       case "warning":
-        return "border-yellow-200 bg-yellow-50";
+        return "border-yellow-500/20 bg-yellow-500/10";
       case "error":
-        return "border-red-200 bg-red-50";
+        return "border-red-500/20 bg-red-500/10";
       default:
-        return "border-blue-200 bg-blue-50";
+        return "border-blue-500/20 bg-blue-500/10";
     }
   };
 
@@ -138,7 +138,7 @@ export function NotificationsDropdown() {
                           
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
-                              <h4 className="text-sm font-medium truncate">
+                              <h4 className="text-sm font-medium text-foreground truncate">
                                 {notification.title}
                               </h4>
                               {!notification.read && (

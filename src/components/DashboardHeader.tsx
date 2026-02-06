@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationsDropdown } from "./NotificationsDropdown";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function DashboardHeader() {
   const navigate = useNavigate();
@@ -37,6 +38,7 @@ export function DashboardHeader() {
         </Button>
         
         <NotificationsDropdown />
+        <ThemeToggle />
 
         <div className="flex items-center gap-3 pl-4 border-l border-border">
           <Avatar className="h-9 w-9">

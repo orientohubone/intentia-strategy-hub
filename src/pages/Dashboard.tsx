@@ -226,14 +226,21 @@ export default function Dashboard() {
         <main className="flex-1 overflow-auto p-6">
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Welcome Section */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">
-                  Olá, {fullName} 👋
-                </h1>
-                <p className="text-muted-foreground">
-                  Confira a visão estratégica dos seus projetos de mídia.
-                </p>
+            <div className="flex items-center justify-between gap-6">
+              <div className="flex-1 relative overflow-hidden rounded-2xl gradient-primary p-8 shadow-lg">
+                <div className="absolute inset-0">
+                  <div className="absolute -top-10 -left-10 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
+                  <div className="absolute -bottom-10 -right-10 w-56 h-56 bg-black/10 rounded-full blur-2xl"></div>
+                  <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-white/5 rounded-full blur-3xl"></div>
+                </div>
+                <div className="relative z-10">
+                  <h1 className="text-2xl font-bold text-primary-foreground">
+                    Olá, {fullName}
+                  </h1>
+                  <p className="text-primary-foreground/80 mt-1">
+                    Confira a visão estratégica dos seus projetos de mídia.
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-4 p-4 card-elevated">
                 <ScoreRing score={averageScore} size="md" label="Score Médio" />

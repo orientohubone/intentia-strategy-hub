@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Pricing from "./pages/Pricing";
@@ -23,27 +24,29 @@ import Settings from "./pages/Settings";
 import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ForceLightMode } from "@/components/ForceLightMode";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/cases" element={<Cases />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/careers" element={<Careers />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms-of-service" element={<TermsOfService />} />
-          <Route path="/cookie-policy" element={<CookiePolicy />} />
+          <Route path="/" element={<ForceLightMode><Index /></ForceLightMode>} />
+          <Route path="/pricing" element={<ForceLightMode><Pricing /></ForceLightMode>} />
+          <Route path="/auth" element={<ForceLightMode><Auth /></ForceLightMode>} />
+          <Route path="/about" element={<ForceLightMode><About /></ForceLightMode>} />
+          <Route path="/cases" element={<ForceLightMode><Cases /></ForceLightMode>} />
+          <Route path="/blog" element={<ForceLightMode><Blog /></ForceLightMode>} />
+          <Route path="/careers" element={<ForceLightMode><Careers /></ForceLightMode>} />
+          <Route path="/contact" element={<ForceLightMode><Contact /></ForceLightMode>} />
+          <Route path="/privacy-policy" element={<ForceLightMode><PrivacyPolicy /></ForceLightMode>} />
+          <Route path="/terms-of-service" element={<ForceLightMode><TermsOfService /></ForceLightMode>} />
+          <Route path="/cookie-policy" element={<ForceLightMode><CookiePolicy /></ForceLightMode>} />
           <Route 
             path="/dashboard" 
             element={
@@ -105,7 +108,8 @@ const App = () => (
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
-  </QueryClientProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;
