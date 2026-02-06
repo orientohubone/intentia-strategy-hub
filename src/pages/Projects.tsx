@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { analyzeUrl, saveAnalysisResults, analyzeCompetitors, cleanBenchmarks } from "@/lib/urlAnalyzer";
 import type { UrlAnalysis } from "@/lib/urlAnalyzer";
 import { runAiAnalysis, getUserActiveKeys } from "@/lib/aiAnalyzer";
+import { AI_MODEL_LABELS, getModelsForProvider } from "@/lib/aiModels";
 import type { AiAnalysisResult, UserApiKey } from "@/lib/aiAnalyzer";
 import { exportAsJson, exportAsMarkdown, exportAsHtml, exportAsPdf } from "@/lib/exportAnalysis";
 import { fetchProjectReport, generateConsolidatedReport } from "@/lib/reportGenerator";
@@ -120,17 +121,6 @@ export default function Projects() {
     action: "",
   });
 
-  const AI_MODEL_LABELS: Record<string, string> = {
-    "gemini-2.0-flash": "Gemini 2.0 Flash",
-    "gemini-3-flash-preview": "Gemini 3 Flash",
-    "gemini-3-pro-preview": "Gemini 3 Pro",
-    "claude-sonnet-4-20250514": "Claude Sonnet 4",
-    "claude-3-7-sonnet-20250219": "Claude 3.7 Sonnet",
-    "claude-3-5-haiku-20241022": "Claude 3.5 Haiku",
-    "claude-3-haiku-20240307": "Claude 3 Haiku",
-    "claude-3-opus-20240229": "Claude 3 Opus",
-  };
-
   // Check if user has AI API keys configured and load available models
   useEffect(() => {
     const checkAiKeys = async () => {
@@ -140,16 +130,22 @@ export default function Projects() {
 
       const models: { provider: string; model: string; label: string }[] = [];
       for (const key of keys) {
-        const providerLabel = key.provider === "google_gemini" ? "Gemini" : "Claude";
-        models.push({
-          provider: key.provider,
-          model: key.preferred_model,
-          label: AI_MODEL_LABELS[key.preferred_model] || `${providerLabel} (${key.preferred_model})`,
-        });
+        const allProviderModels = getModelsForProvider(key.provider);
+        for (const m of allProviderModels) {
+          models.push({
+            provider: key.provider,
+            model: m.value,
+            label: m.label,
+          });
+        }
       }
       setAvailableAiModels(models);
       if (models.length > 0 && !selectedAiModel) {
-        setSelectedAiModel(`${models[0].provider}::${models[0].model}`);
+        // Default to the user's preferred model if available
+        const preferred = keys[0];
+        const preferredKey = `${preferred.provider}::${preferred.preferred_model}`;
+        const hasPreferred = models.some(m => `${m.provider}::${m.model}` === preferredKey);
+        setSelectedAiModel(hasPreferred ? preferredKey : `${models[0].provider}::${models[0].model}`);
       }
     };
     checkAiKeys();

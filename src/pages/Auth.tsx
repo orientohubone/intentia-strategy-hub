@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, EyeOff, ArrowLeft, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, ArrowRight } from "lucide-react";
+import { BackToHomeButton } from "@/components/BackToHomeButton";
 import { toast } from "sonner";
 
 export default function Auth() {
@@ -77,17 +78,7 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex">
       {/* Back to Home */}
-      <div className="fixed top-6 left-6 z-10">
-        <Button
-          onClick={() => navigate("/")}
-          variant="ghost"
-          size="icon"
-          className="bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white text-gray-600 transition-all duration-300 rounded-full shadow-sm"
-          aria-label="Voltar para página inicial"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-      </div>
+      <BackToHomeButton />
 
       {/* Left: Form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-16 lg:px-20 py-12 bg-white">
@@ -114,6 +105,7 @@ export default function Auth() {
                     id="fullName"
                     name="fullName"
                     type="text"
+                    autoComplete="name"
                     placeholder="João Silva"
                     value={formData.fullName}
                     onChange={handleInputChange}
@@ -128,6 +120,7 @@ export default function Auth() {
                     id="companyName"
                     name="companyName"
                     type="text"
+                    autoComplete="organization"
                     placeholder="Sua Empresa Ltda"
                     value={formData.companyName}
                     onChange={handleInputChange}
@@ -143,6 +136,7 @@ export default function Auth() {
                 id="email"
                 name="email"
                 type="email"
+                autoComplete="email"
                 placeholder="seu@email.com"
                 value={formData.email}
                 onChange={handleInputChange}
@@ -158,6 +152,7 @@ export default function Auth() {
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
+                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={handleInputChange}

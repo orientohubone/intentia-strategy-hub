@@ -5,174 +5,331 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { 
   Search, 
-  Book, 
-  Video, 
   MessageCircle, 
   Mail, 
-  ExternalLink,
+  Phone,
   ChevronRight,
+  ChevronDown,
   HelpCircle,
   FileText,
   Users,
   Zap,
   Shield,
   Settings,
-  TrendingUp
+  TrendingUp,
+  Target,
+  Sparkles,
+  BarChart3,
+  Lightbulb,
+  Download,
+  Moon,
+  Bell,
+  Key,
+  Globe,
 } from "lucide-react";
 
 export default function Help() {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
   const helpCategories = [
     {
       id: "getting-started",
       title: "Primeiros Passos",
-      description: "Aprenda a usar o Intentia Strategy Hub",
+      description: "Como começar a usar a plataforma Intentia",
       icon: <Zap className="h-5 w-5" />,
       color: "text-blue-600",
       articles: [
         {
-          title: "Como criar seu primeiro projeto",
-          content: "Comece analisando sua estratégia de marketing digital em poucos passos.",
+          title: "Criando sua conta",
+          content: "Acesse a página de Sign Up, preencha nome completo, email e senha. Após o cadastro, você será redirecionado ao Dashboard principal.",
           difficulty: "Iniciante",
-          readTime: "3 min"
         },
         {
-          title: "Entendendo os scores de canal",
-          content: "Saiba como interpretamos a adequação de cada canal de mídia para seu negócio.",
+          title: "Criando seu primeiro projeto",
+          content: "Vá em Projetos → Novo Projeto. Insira o nome do projeto, nicho de mercado (ex: SaaS, Consultoria, Tecnologia), a URL principal do seu negócio e, opcionalmente, URLs de concorrentes para benchmark automático.",
           difficulty: "Iniciante",
-          readTime: "5 min"
+        },
+        {
+          title: "Entendendo o Dashboard",
+          content: "O Dashboard exibe seus projetos recentes, métricas gerais (total de projetos, insights, benchmarks, públicos), insights recentes e scores por canal. Tudo com dados reais da sua conta.",
+          difficulty: "Iniciante",
         },
         {
           title: "Configurando seu perfil",
-          content: "Personalize sua experiência e configure suas preferências.",
+          content: "Em Configurações, atualize seu nome, email, empresa, cargo e foto de perfil. Você também pode alternar entre tema claro e escuro pelo ícone no header.",
           difficulty: "Iniciante",
-          readTime: "2 min"
-        }
+        },
       ]
     },
     {
-      id: "features",
-      title: "Funcionalidades",
-      description: "Explore todas as ferramentas disponíveis",
-      icon: <Settings className="h-5 w-5" />,
-      color: "text-green-600",
+      id: "url-analysis",
+      title: "Diagnóstico de URL",
+      description: "Análise heurística automática da sua URL",
+      icon: <Target className="h-5 w-5" />,
+      color: "text-orange-600",
       articles: [
         {
-          title: "Análise de Projetos",
-          content: "Como criar e gerenciar seus projetos de análise estratégica.",
-          difficulty: "Intermediário",
-          readTime: "7 min"
-        },
-        {
-          title: "Benchmark Competitivo",
-          content: "Compare-se com concorrentes e identifique oportunidades.",
-          difficulty: "Intermediário",
-          readTime: "10 min"
-        },
-        {
-          title: "Gestão de Insights",
-          content: "Organize e aja sobre seus insights estratégicos.",
-          difficulty: "Intermediário",
-          readTime: "5 min"
-        },
-        {
-          title: "Públicos-Alvo",
-          content: "Defina e gerencie seus diferentes públicos-alvo.",
+          title: "Como funciona a análise heurística",
+          content: "Ao analisar uma URL, o sistema faz fetch do HTML da página e avalia automaticamente 6 dimensões: Proposta de Valor, Clareza da Oferta, Jornada do Usuário, SEO, Conversão e Qualidade de Conteúdo. Cada dimensão recebe um score de 0 a 100.",
           difficulty: "Iniciante",
-          readTime: "4 min"
-        }
+        },
+        {
+          title: "Interpretando os 6 scores",
+          content: "Proposta de Valor: avalia se o benefício principal está claro. Clareza: verifica se a oferta é compreensível. Jornada: analisa CTAs e fluxo de navegação. SEO: verifica meta tags, headings e estrutura. Conversão: avalia formulários e elementos de conversão. Conteúdo: analisa qualidade e quantidade de texto.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Score Estratégico geral",
+          content: "O Score Estratégico é a média ponderada dos 6 scores individuais. Ele indica a prontidão geral da sua URL para receber tráfego pago. Scores acima de 70 indicam boa prontidão; abaixo de 50 sugerem ajustes antes de investir em mídia.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Insights automáticos gerados",
+          content: "Após a análise heurística, o sistema gera automaticamente insights categorizados como: Alertas (riscos e problemas), Oportunidades (potenciais de melhoria) e Melhorias (ações sugeridas). Cada insight inclui título, descrição e ação recomendada.",
+          difficulty: "Iniciante",
+        },
       ]
     },
     {
-      id: "strategy",
-      title: "Estratégia",
-      description: "Melhores práticas de marketing digital",
-      icon: <TrendingUp className="h-5 w-5" />,
+      id: "ai-analysis",
+      title: "Análise por Inteligência Artificial",
+      description: "Enriqueça seus diagnósticos com Gemini ou Claude",
+      icon: <Sparkles className="h-5 w-5" />,
       color: "text-purple-600",
       articles: [
         {
-          title: "Como definir sua proposta de valor",
-          content: "Fundamentos para uma comunicação eficaz com seu público.",
-          difficulty: "Avançado",
-          readTime: "12 min"
-        },
-        {
-          title: "Mapeando a jornada do cliente",
-          content: "Entenda os pontos de contato e otimize a experiência.",
-          difficulty: "Avançado",
-          readTime: "15 min"
-        },
-        {
-          title: "Escolhendo os canais certos",
-          content: "Critérios para selecionar as melhores plataformas de mídia.",
+          title: "Configurando suas API keys",
+          content: "Vá em Configurações → Integrações de IA. Insira sua API key do Google Gemini e/ou Anthropic Claude. O sistema valida a chave em tempo real contra a API oficial. Selecione seu modelo preferido para cada provider.",
           difficulty: "Intermediário",
-          readTime: "8 min"
-        }
+        },
+        {
+          title: "Modelos disponíveis",
+          content: "Google Gemini: Gemini 2.0 Flash, Gemini 3 Flash Preview, Gemini 3 Pro Preview. Anthropic Claude: Claude Sonnet 4, Claude Sonnet 3.7, Claude Haiku 3.5, Claude Haiku 3, Claude Opus 3. Escolha o modelo no seletor ao lado do botão de análise IA.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Executando análise por IA em projetos",
+          content: "Na página de Projetos, após a análise heurística, clique no botão com ícone de IA (✨). Selecione o modelo desejado no dropdown. A análise retorna: resumo executivo, score de prontidão para investimento, análise SWOT, recomendações por canal e posição competitiva.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Resultados da análise IA",
+          content: "Os resultados incluem: Resumo Executivo (visão geral do negócio), Score de Prontidão (0-100 com justificativa), SWOT (forças, fraquezas, oportunidades, ameaças), Recomendações por Canal (Google, Meta, LinkedIn, TikTok) e Posição Competitiva. Tudo salvo automaticamente no projeto.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Custos da análise por IA",
+          content: "A Intentia não cobra pela funcionalidade de IA. Você usa sua própria API key e paga diretamente ao Google ou Anthropic pelo consumo. Cada análise consome poucos tokens, resultando em custo mínimo (centavos por análise).",
+          difficulty: "Iniciante",
+        },
       ]
     },
     {
-      id: "technical",
-      title: "Suporte Técnico",
-      description: "Resolução de problemas e dúvidas técnicas",
-      icon: <Shield className="h-5 w-5" />,
-      color: "text-red-600",
+      id: "benchmark",
+      title: "Benchmark Competitivo",
+      description: "Compare seu posicionamento com concorrentes",
+      icon: <BarChart3 className="h-5 w-5" />,
+      color: "text-green-600",
       articles: [
         {
-          title: "Problemas de login?",
-          content: "Soluções para os problemas mais comuns de autenticação.",
+          title: "Criando um benchmark",
+          content: "Vá em Benchmark → Novo Benchmark. Selecione o projeto, insira a URL do concorrente, nome e tags. O sistema gera automaticamente uma análise SWOT com scores comparativos.",
           difficulty: "Iniciante",
-          readTime: "3 min"
         },
         {
-          title: "Como exportar seus dados",
-          content: "Faça backup das suas análises e insights.",
-          difficulty: "Iniciante",
-          readTime: "4 min"
+          title: "Análise SWOT automática",
+          content: "Cada benchmark inclui: Forças (vantagens do concorrente), Fraquezas (pontos fracos), Oportunidades (gaps que você pode explorar) e Ameaças (riscos competitivos). Scores individuais para cada dimensão.",
+          difficulty: "Intermediário",
         },
         {
-          title: "Integrações com outras ferramentas",
-          content: "Conecte o Intentia com seu ecossistema de marketing.",
+          title: "Gap Analysis",
+          content: "O gap analysis identifica as diferenças entre seu posicionamento e o do concorrente em cada dimensão avaliada, destacando onde você está à frente e onde precisa melhorar.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Enriquecimento de benchmark por IA",
+          content: "Clique no botão de IA em qualquer benchmark para obter análise aprofundada: vantagens e desvantagens competitivas detalhadas, gaps estratégicos, oportunidades de diferenciação e um plano de ação prático.",
           difficulty: "Avançado",
-          readTime: "10 min"
-        }
+        },
+        {
+          title: "Dialog de detalhes e fullscreen",
+          content: "Clique em qualquer card de benchmark para abrir o dialog de detalhes com todas as informações. Use o botão de fullscreen para expandir e visualizar melhor os dados.",
+          difficulty: "Iniciante",
+        },
       ]
-    }
+    },
+    {
+      id: "channels",
+      title: "Score por Canal de Mídia",
+      description: "Avaliação de adequação para Google, Meta, LinkedIn e TikTok",
+      icon: <Globe className="h-5 w-5" />,
+      color: "text-sky-600",
+      articles: [
+        {
+          title: "Os 4 canais avaliados",
+          content: "A plataforma avalia a adequação do seu negócio para: Google Ads (busca e display), Meta Ads (Facebook e Instagram), LinkedIn Ads (B2B profissional) e TikTok Ads (conteúdo e awareness). Cada canal recebe um score de 0 a 100.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Objetivos recomendados por canal",
+          content: "Para cada canal, o sistema sugere os melhores objetivos de campanha: geração de leads, awareness, tráfego, conversão, etc. Baseado no perfil do seu negócio e na análise da URL.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Riscos identificados",
+          content: "Cada canal também lista riscos potenciais: custo por lead alto, audiência inadequada, concorrência elevada, etc. Use essas informações para decidir onde investir primeiro.",
+          difficulty: "Intermediário",
+        },
+      ]
+    },
+    {
+      id: "insights",
+      title: "Insights Estratégicos",
+      description: "Alertas, oportunidades e melhorias agrupados por projeto",
+      icon: <Lightbulb className="h-5 w-5" />,
+      color: "text-yellow-600",
+      articles: [
+        {
+          title: "Tipos de insights",
+          content: "Existem 3 tipos: Alertas (⚠️ riscos e problemas que precisam de atenção imediata), Oportunidades (💡 potenciais de crescimento e diferenciação) e Melhorias (🔧 ações práticas para otimizar resultados).",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Agrupamento por projeto",
+          content: "Na página de Insights, todos os insights são agrupados por projeto para facilitar a visualização. Cada grupo mostra o nome do projeto, quantidade de insights e cards individuais.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Dialog de detalhes",
+          content: "Clique em qualquer insight para abrir o dialog de detalhes com informações completas, incluindo descrição expandida e ação recomendada. Use o botão fullscreen para melhor visualização.",
+          difficulty: "Iniciante",
+        },
+      ]
+    },
+    {
+      id: "audiences",
+      title: "Públicos-Alvo",
+      description: "Defina e gerencie suas audiências B2B",
+      icon: <Users className="h-5 w-5" />,
+      color: "text-indigo-600",
+      articles: [
+        {
+          title: "Criando um público-alvo",
+          content: "Vá em Públicos-Alvo → Novo Público. Defina nome, descrição, indústria, porte da empresa, localização e keywords relevantes. Vincule o público a um ou mais projetos.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Vinculação com projetos",
+          content: "Cada público-alvo pode ser vinculado a projetos específicos. Isso permite refinar a estratégia de cada projeto com base nas características da audiência definida.",
+          difficulty: "Intermediário",
+        },
+      ]
+    },
+    {
+      id: "exports",
+      title: "Exportação e Relatórios",
+      description: "PDF, CSV, JSON, Markdown e HTML",
+      icon: <Download className="h-5 w-5" />,
+      color: "text-emerald-600",
+      articles: [
+        {
+          title: "Relatório PDF consolidado",
+          content: "Na página de Projetos, clique no botão de PDF para gerar um relatório completo do projeto incluindo: dados gerais, scores heurísticos, análise IA (se disponível), insights e scores por canal. Formatado profissionalmente para apresentação.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Exportação por seção em PDF",
+          content: "Além do relatório consolidado, você pode exportar seções individuais em PDF: apenas a análise heurística, apenas os resultados de IA, apenas os benchmarks, etc.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Exportação CSV",
+          content: "Exporte dados tabulares em CSV para análise externa: projetos, insights, benchmarks, públicos-alvo e scores por canal. Ideal para importar em planilhas ou ferramentas de BI.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Exportação de análise IA",
+          content: "Os resultados da análise por IA podem ser exportados em 4 formatos: JSON (dados estruturados), Markdown (texto formatado), HTML estilizado (para compartilhar) e PDF (para apresentação). Disponível tanto para projetos quanto para benchmarks.",
+          difficulty: "Intermediário",
+        },
+      ]
+    },
+    {
+      id: "settings",
+      title: "Configurações e Personalização",
+      description: "Perfil, tema, API keys e preferências",
+      icon: <Settings className="h-5 w-5" />,
+      color: "text-gray-600",
+      articles: [
+        {
+          title: "Integrações de IA",
+          content: "Em Configurações → Integrações de IA, configure suas API keys do Google Gemini e Anthropic Claude. Cada provider mostra: status (Ativa/Não configurada), modelo preferido, última validação e opções de editar/excluir.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Tema claro e escuro",
+          content: "Alterne entre tema claro e escuro pelo ícone de sol/lua no header do dashboard. O tema é salvo automaticamente. Páginas públicas (landing, pricing, etc.) sempre usam tema claro.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Foto de perfil",
+          content: "Em Configurações, clique na foto de perfil para fazer upload de uma nova imagem. A foto é armazenada no Supabase Storage e exibida no header e sidebar.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Notificações",
+          content: "O sino no header mostra notificações em tempo real: análises concluídas, novos insights gerados, etc. Clique para ver o dropdown com todas as notificações. Notificações não lidas aparecem com indicador.",
+          difficulty: "Iniciante",
+        },
+      ]
+    },
   ];
 
-  const quickActions = [
+  const faqItems = [
     {
-      title: "Video Tutoriais",
-      description: "Aprenda de forma visual com nossos vídeos",
-      icon: <Video className="h-8 w-8" />,
-      color: "bg-blue-100 text-blue-600",
-      action: "Assistir"
+      question: "Como funciona a análise heurística de URL?",
+      answer: "Ao inserir uma URL, o sistema faz fetch do HTML da página e analisa automaticamente 6 dimensões: Proposta de Valor, Clareza, Jornada do Usuário, SEO, Conversão e Conteúdo. Cada dimensão recebe um score de 0 a 100, e o Score Estratégico geral é a média ponderada. Insights são gerados automaticamente com alertas, oportunidades e melhorias."
     },
     {
-      title: "Webinars Ao Vivo",
-      description: "Participe de sessões ao vivo com especialistas",
-      icon: <Users className="h-8 w-8" />,
-      color: "bg-green-100 text-green-600",
-      action: "Participar"
+      question: "Preciso pagar para usar a análise por IA?",
+      answer: "A funcionalidade de IA é gratuita na plataforma. Você configura sua própria API key do Google Gemini ou Anthropic Claude em Configurações → Integrações de IA, e paga diretamente ao provider pelo consumo de tokens. Cada análise custa centavos."
     },
     {
-      title: "Chat de Suporte",
-      description: "Fale com nossa equipe em tempo real",
-      icon: <MessageCircle className="h-8 w-8" />,
-      color: "bg-purple-100 text-purple-600",
-      action: "Conversar"
+      question: "Quais modelos de IA são suportados?",
+      answer: "Google Gemini: Gemini 2.0 Flash, Gemini 3 Flash Preview e Gemini 3 Pro Preview. Anthropic Claude: Claude Sonnet 4, Claude Sonnet 3.7, Claude Haiku 3.5, Claude Haiku 3 e Claude Opus 3. Você escolhe o modelo no seletor antes de cada análise."
     },
     {
-      title: "Documentação API",
-      description: "Para desenvolvedores que querem integrar",
-      icon: <FileText className="h-8 w-8" />,
-      color: "bg-orange-100 text-orange-600",
-      action: "Explorar"
-    }
+      question: "Como funciona o benchmark competitivo?",
+      answer: "Você adiciona URLs de concorrentes e o sistema gera uma análise SWOT automática com scores comparativos, gap analysis e tags. Opcionalmente, enriqueça com IA para obter vantagens/desvantagens detalhadas, gaps estratégicos e plano de ação."
+    },
+    {
+      question: "Quais formatos de exportação estão disponíveis?",
+      answer: "Relatórios PDF consolidados por projeto, exportação por seção em PDF, dados tabulares em CSV (projetos, insights, benchmarks, audiences, channels), e resultados de IA em JSON, Markdown, HTML estilizado ou PDF."
+    },
+    {
+      question: "Quais planos estão disponíveis?",
+      answer: "Starter (gratuito): 5 análises de URL por mês, score básico por canal. Professional (R$ 97/mês): análises ilimitadas, IA, benchmark com IA, relatórios PDF/CSV, insights e alertas. Enterprise (personalizado): tudo do Professional + API access, SLA dedicado, consultoria estratégica e treinamento."
+    },
+    {
+      question: "Posso usar a plataforma no modo escuro?",
+      answer: "Sim! Alterne entre tema claro e escuro pelo ícone de sol/lua no header do dashboard. O tema é salvo automaticamente. As páginas públicas (landing, preços, etc.) sempre usam tema claro para consistência da marca."
+    },
+    {
+      question: "Meus dados estão seguros?",
+      answer: "Sim. Utilizamos Supabase com PostgreSQL e Row Level Security (RLS) — cada usuário só acessa seus próprios dados. API keys são armazenadas de forma segura por usuário. A autenticação é gerenciada pelo Supabase Auth."
+    },
+    {
+      question: "Como recebo notificações?",
+      answer: "Notificações são enviadas em tempo real via Supabase Subscriptions. Você recebe alertas quando análises são concluídas, novos insights são gerados ou quando há atualizações importantes. Acesse pelo ícone de sino no header."
+    },
+    {
+      question: "Posso cancelar meu plano a qualquer momento?",
+      answer: "Sim! Todos os planos são flexíveis, sem compromisso de longo prazo. Você pode fazer upgrade, downgrade ou cancelar quando quiser. As alterações são refletidas na próxima cobrança."
+    },
   ];
 
   const filteredCategories = helpCategories.map(category => ({
@@ -186,11 +343,16 @@ export default function Help() {
     category.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const filteredFaq = faqItems.filter(item =>
+    item.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.answer.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case "Iniciante": return "bg-green-100 text-green-800";
-      case "Intermediário": return "bg-yellow-100 text-yellow-800";
-      case "Avançado": return "bg-red-100 text-red-800";
+      case "Iniciante": return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+      case "Intermediário": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
+      case "Avançado": return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
       default: return "bg-gray-100 text-gray-800";
     }
   };
@@ -206,7 +368,7 @@ export default function Help() {
             <div>
               <h1 className="text-2xl font-bold text-foreground">Centro de Ajuda</h1>
               <p className="text-muted-foreground">
-                Encontre respostas, tutoriais e suporte para usar ao máximo o Intentia Strategy Hub
+                Guia completo da plataforma Intentia — funcionalidades, fluxos e dúvidas frequentes
               </p>
             </div>
 
@@ -214,162 +376,157 @@ export default function Help() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar artigos, tutoriais ou tópicos..."
+                placeholder="Buscar por funcionalidade, dúvida ou tópico..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {quickActions.map((action, index) => (
-                <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="p-4 text-center">
-                    <div className={`w-16 h-16 rounded-full ${action.color} flex items-center justify-center mx-auto mb-3`}>
-                      {action.icon}
-                    </div>
-                    <h3 className="font-semibold mb-1">{action.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-3">{action.description}</p>
-                    <Button variant="outline" size="sm" className="w-full">
-                      {action.action}
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-card border rounded-lg p-4 text-center">
+                <Target className="h-6 w-6 text-orange-500 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-foreground">6</p>
+                <p className="text-xs text-muted-foreground">Scores por URL</p>
+              </div>
+              <div className="bg-card border rounded-lg p-4 text-center">
+                <Sparkles className="h-6 w-6 text-purple-500 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-foreground">8+</p>
+                <p className="text-xs text-muted-foreground">Modelos de IA</p>
+              </div>
+              <div className="bg-card border rounded-lg p-4 text-center">
+                <Globe className="h-6 w-6 text-sky-500 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-foreground">4</p>
+                <p className="text-xs text-muted-foreground">Canais de Mídia</p>
+              </div>
+              <div className="bg-card border rounded-lg p-4 text-center">
+                <Download className="h-6 w-6 text-emerald-500 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-foreground">5</p>
+                <p className="text-xs text-muted-foreground">Formatos de Export</p>
+              </div>
             </div>
 
             {/* Help Categories */}
-            <div className="space-y-4">
-              {filteredCategories.map((category) => (
-                <Card key={category.id}>
-                  <CardHeader 
-                    className="cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => setExpandedCategory(expandedCategory === category.id ? null : category.id)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={category.color}>
-                          {category.icon}
+            <div>
+              <h2 className="text-lg font-semibold text-foreground mb-4">Guia por Funcionalidade</h2>
+              <div className="space-y-3">
+                {filteredCategories.map((category) => (
+                  <Card key={category.id}>
+                    <CardHeader 
+                      className="cursor-pointer hover:bg-muted/50 transition-colors py-4"
+                      onClick={() => setExpandedCategory(expandedCategory === category.id ? null : category.id)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={category.color}>
+                            {category.icon}
+                          </div>
+                          <div>
+                            <CardTitle className="text-base">{category.title}</CardTitle>
+                            <CardDescription className="text-xs">{category.description}</CardDescription>
+                          </div>
                         </div>
-                        <div>
-                          <CardTitle className="text-lg">{category.title}</CardTitle>
-                          <CardDescription>{category.description}</CardDescription>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="text-xs">
+                            {category.articles.length} artigos
+                          </Badge>
+                          <ChevronRight 
+                            className={`h-4 w-4 text-muted-foreground transition-transform ${
+                              expandedCategory === category.id ? "rotate-90" : ""
+                            }`} 
+                          />
                         </div>
                       </div>
-                      <ChevronRight 
-                        className={`h-5 w-5 transition-transform ${
-                          expandedCategory === category.id ? "rotate-90" : ""
-                        }`} 
-                      />
-                    </div>
-                  </CardHeader>
-                  
-                  {expandedCategory === category.id && (
-                    <CardContent className="space-y-3">
-                      {category.articles.map((article, index) => (
-                        <div key={index} className="flex items-start justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h4 className="font-medium">{article.title}</h4>
-                              <Badge variant="secondary" className={getDifficultyColor(article.difficulty)}>
+                    </CardHeader>
+                    
+                    {expandedCategory === category.id && (
+                      <CardContent className="space-y-3 pt-0">
+                        {category.articles.map((article, index) => (
+                          <div key={index} className="p-3 rounded-lg border bg-muted/20">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className="font-medium text-sm text-foreground">{article.title}</h4>
+                              <Badge variant="secondary" className={`text-xs ${getDifficultyColor(article.difficulty)}`}>
                                 {article.difficulty}
                               </Badge>
                             </div>
-                            <p className="text-sm text-muted-foreground">{article.content}</p>
+                            <p className="text-sm text-muted-foreground leading-relaxed">{article.content}</p>
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground ml-4">
-                            <span>{article.readTime}</span>
-                            <ExternalLink className="h-3 w-3" />
-                          </div>
+                        ))}
+                      </CardContent>
+                    )}
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* FAQ */}
+            <div>
+              <h2 className="text-lg font-semibold text-foreground mb-4">Perguntas Frequentes</h2>
+              <Card>
+                <CardContent className="p-0">
+                  {filteredFaq.map((item, index) => (
+                    <div key={index} className={index < filteredFaq.length - 1 ? "border-b" : ""}>
+                      <button
+                        className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/50 transition-colors"
+                        onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
+                      >
+                        <span className="font-medium text-sm text-foreground pr-4">{item.question}</span>
+                        <ChevronDown 
+                          className={`h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform ${
+                            expandedFaq === index ? "rotate-180" : ""
+                          }`} 
+                        />
+                      </button>
+                      {expandedFaq === index && (
+                        <div className="px-4 pb-4">
+                          <p className="text-sm text-muted-foreground leading-relaxed">{item.answer}</p>
                         </div>
-                      ))}
-                    </CardContent>
-                  )}
-                </Card>
-              ))}
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
             </div>
 
             {/* Contact Support */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-base">
                   <MessageCircle className="h-5 w-5" />
-                  Ainda precisa de ajuda?
+                  Precisa de mais ajuda?
                 </CardTitle>
                 <CardDescription>
-                  Nossa equipe de suporte está pronta para ajudar
+                  Entre em contato com nossa equipe
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4 border rounded-lg">
-                    <Mail className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                    <h3 className="font-semibold mb-1">Email</h3>
-                    <p className="text-sm text-muted-foreground mb-2">suporte@intentia.com</p>
-                    <Button variant="outline" size="sm">Enviar Email</Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-4 p-4 border rounded-lg">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                      <Mail className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-sm">Email</h3>
+                      <p className="text-sm text-muted-foreground">intentia@orientohub.com.br</p>
+                      <p className="text-xs text-muted-foreground">Respondemos em até 24h úteis</p>
+                    </div>
                   </div>
                   
-                  <div className="text-center p-4 border rounded-lg">
-                    <MessageCircle className="h-8 w-8 mx-auto mb-2 text-green-600" />
-                    <h3 className="font-semibold mb-1">Chat ao Vivo</h3>
-                    <p className="text-sm text-muted-foreground mb-2">Seg-Sex, 9h-18h</p>
-                    <Button variant="outline" size="sm">Iniciar Chat</Button>
-                  </div>
-                  
-                  <div className="text-center p-4 border rounded-lg">
-                    <HelpCircle className="h-8 w-8 mx-auto mb-2 text-purple-600" />
-                    <h3 className="font-semibold mb-1">Base de Conhecimento</h3>
-                    <p className="text-sm text-muted-foreground mb-2">Artigos detalhados</p>
-                    <Button variant="outline" size="sm">Explorar</Button>
+                  <div className="flex items-center gap-4 p-4 border rounded-lg">
+                    <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                      <Phone className="h-6 w-6 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-sm">Telefone</h3>
+                      <p className="text-sm text-muted-foreground">+55 (14) 99861-8547</p>
+                      <p className="text-xs text-muted-foreground">Seg a Sex, 9h às 18h</p>
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* FAQ */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <HelpCircle className="h-5 w-5" />
-                  Perguntas Frequentes
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="border-b pb-3">
-                    <h4 className="font-medium mb-1">Como funciona a análise de projetos?</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Nossa IA analisa sua URL, proposta de valor e jornada do usuário para gerar insights estratégicos 
-                      e scores de adequação para diferentes canais de marketing.
-                    </p>
-                  </div>
-                  
-                  <div className="border-b pb-3">
-                    <h4 className="font-medium mb-1">Quais planos estão disponíveis?</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Oferecemos planos Starter (1 análise/mês), Professional (10 análises/mês) e 
-                      Enterprise (análises ilimitadas). Todos incluem acesso total às funcionalidades.
-                    </p>
-                  </div>
-                  
-                  <div className="border-b pb-3">
-                    <h4 className="font-medium mb-1">Posso exportar meus dados?</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Sim! Você pode exportar todos os seus projetos, insights e benchmarks a qualquer momento 
-                      através das configurações da conta.
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-medium mb-1">Como o benchmark competitivo funciona?</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Você adiciona concorrentes e nossa plataforma analisa seus pontos fortes e fracos, 
-                      permitindo identificar gaps e oportunidades no mercado.
-                    </p>
-                  </div>
-                </div>
+                <p className="text-xs text-muted-foreground mt-4 text-center">
+                  Uma solução do ecossistema <a href="https://orientohub.com.br" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">orientohub.com.br</a>
+                </p>
               </CardContent>
             </Card>
           </div>

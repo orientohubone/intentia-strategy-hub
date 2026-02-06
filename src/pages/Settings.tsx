@@ -49,19 +49,7 @@ interface ApiKeyEntry {
   last_validated_at: string | null;
 }
 
-const GEMINI_MODELS = [
-  { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash" },
-  { value: "gemini-3-flash-preview", label: "Gemini 3 Flash Preview" },
-  { value: "gemini-3-pro-preview", label: "Gemini 3 Pro Preview" },
-];
-
-const CLAUDE_MODELS = [
-  { value: "claude-sonnet-4-20250514", label: "Claude Sonnet 4" },
-  { value: "claude-3-7-sonnet-20250219", label: "Claude Sonnet 3.7" },
-  { value: "claude-3-5-haiku-20241022", label: "Claude Haiku 3.5" },
-  { value: "claude-3-haiku-20240307", label: "Claude Haiku 3" },
-  { value: "claude-3-opus-20240229", label: "Claude Opus 3" },
-];
+import { GEMINI_MODELS, CLAUDE_MODELS } from "@/lib/aiModels";
 
 function maskApiKey(key: string): string {
   if (!key || key.length < 8) return "••••••••";

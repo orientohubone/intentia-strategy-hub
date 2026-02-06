@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { AI_MODEL_LABELS } from "@/lib/aiModels";
 import { ScoreRing } from "./ScoreRing";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -143,17 +144,6 @@ function SwotSection({
     </div>
   );
 }
-
-const AI_MODEL_LABELS: Record<string, string> = {
-  "gemini-2.0-flash": "Gemini 2.0 Flash",
-  "gemini-3-flash-preview": "Gemini 3 Flash",
-  "gemini-3-pro-preview": "Gemini 3 Pro",
-  "claude-sonnet-4-20250514": "Claude Sonnet 4",
-  "claude-3-7-sonnet-20250219": "Claude 3.7 Sonnet",
-  "claude-3-5-haiku-20241022": "Claude 3.5 Haiku",
-  "claude-3-haiku-20240307": "Claude 3 Haiku",
-  "claude-3-opus-20240229": "Claude 3 Opus",
-};
 
 export function BenchmarkDetailDialog({
   benchmark,

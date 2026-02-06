@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserActiveKeys, runBenchmarkAiAnalysis } from "@/lib/aiAnalyzer";
 import type { BenchmarkAiResult } from "@/lib/aiAnalyzer";
+import { AI_MODEL_LABELS, getModelsForProvider } from "@/lib/aiModels";
 
 interface BenchmarkSummary {
   id: string;
@@ -42,16 +43,6 @@ interface Project {
   score: number;
 }
 
-const AI_MODEL_LABELS: Record<string, string> = {
-  "gemini-2.0-flash": "Gemini 2.0 Flash",
-  "gemini-3-flash-preview": "Gemini 3 Flash",
-  "gemini-3-pro-preview": "Gemini 3 Pro",
-  "claude-sonnet-4-20250514": "Claude Sonnet 4",
-  "claude-3-7-sonnet-20250219": "Claude 3.7 Sonnet",
-  "claude-3-5-haiku-20241022": "Claude 3.5 Haiku",
-  "claude-3-haiku-20240307": "Claude 3 Haiku",
-  "claude-3-opus-20240229": "Claude 3 Opus",
-};
 
 export default function Benchmark() {
   const { user } = useAuth();
@@ -85,16 +76,21 @@ export default function Benchmark() {
       setHasAiKeys(keys.length > 0);
       const models: { provider: string; model: string; label: string }[] = [];
       for (const key of keys) {
-        const providerLabel = key.provider === "google_gemini" ? "Gemini" : "Claude";
-        models.push({
-          provider: key.provider,
-          model: key.preferred_model,
-          label: AI_MODEL_LABELS[key.preferred_model] || `${providerLabel} (${key.preferred_model})`,
-        });
+        const allProviderModels = getModelsForProvider(key.provider);
+        for (const m of allProviderModels) {
+          models.push({
+            provider: key.provider,
+            model: m.value,
+            label: m.label,
+          });
+        }
       }
       setAvailableAiModels(models);
       if (models.length > 0 && !selectedAiModel) {
-        setSelectedAiModel(`${models[0].provider}::${models[0].model}`);
+        const preferred = keys[0];
+        const preferredKey = `${preferred.provider}::${preferred.preferred_model}`;
+        const hasPreferred = models.some(m => `${m.provider}::${m.model}` === preferredKey);
+        setSelectedAiModel(hasPreferred ? preferredKey : `${models[0].provider}::${models[0].model}`);
       }
     };
     loadAiKeys();
