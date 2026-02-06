@@ -339,7 +339,7 @@ export default function Dashboard() {
               <h2 className="text-lg font-semibold text-foreground">
                 Visão por Canal {latestProject ? `- ${latestProject.name}` : ""}
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {latestChannelScores.length === 0 && (
                   <p className="text-sm text-muted-foreground">Nenhuma análise de canal disponível.</p>
                 )}

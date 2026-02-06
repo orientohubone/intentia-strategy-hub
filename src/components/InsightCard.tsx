@@ -16,18 +16,21 @@ const typeConfig = {
     bgColor: "bg-warning/10",
     iconColor: "text-warning",
     borderColor: "border-l-warning",
+    label: "Alerta",
   },
   opportunity: {
     icon: TrendingUp,
     bgColor: "bg-success/10",
     iconColor: "text-success",
     borderColor: "border-l-success",
+    label: "Oportunidade",
   },
   improvement: {
     icon: Lightbulb,
     bgColor: "bg-info/10",
     iconColor: "text-info",
     borderColor: "border-l-info",
+    label: "Melhoria",
   },
 };
 
@@ -43,23 +46,24 @@ export function InsightCard({
 
   return (
     <div className={cn(
-      "p-4 rounded-lg border-l-4",
+      "p-3 sm:p-4 rounded-lg border-l-4",
       config.bgColor,
       config.borderColor,
       className
     )}>
-      <div className="flex items-start gap-3">
-        <div className={cn("mt-0.5", config.iconColor)}>
-          <Icon className="h-5 w-5" />
+      <div className="flex items-start gap-2.5">
+        <div className={cn("mt-0.5 flex-shrink-0", config.iconColor)}>
+          <Icon className="h-4 w-4" />
         </div>
-        <div className="flex-1">
-          <h4 className="font-medium text-foreground mb-1">{title}</h4>
-          <p className="text-sm text-muted-foreground">{description}</p>
+        <div className="flex-1 min-w-0">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{config.label}</span>
+          <h4 className="font-medium text-foreground text-sm leading-snug mt-0.5">{title}</h4>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-3">{description}</p>
           {action && (
-            <Button variant="link" className="px-0 h-auto mt-2 text-sm">
+            <p className="text-xs text-primary font-medium mt-1.5 leading-snug">
+              <ArrowRight className="h-3 w-3 inline mr-1" />
               {action}
-              <ArrowRight className="h-3 w-3 ml-1" />
-            </Button>
+            </p>
           )}
         </div>
       </div>

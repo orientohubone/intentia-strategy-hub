@@ -26,10 +26,47 @@ import {
   Trash2,
   LogOut,
   Save,
-  RefreshCw
+  RefreshCw,
+  Key,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  XCircle,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+type ApiKeyProvider = "google_gemini" | "anthropic_claude";
+
+interface ApiKeyEntry {
+  id?: string;
+  provider: ApiKeyProvider;
+  api_key_encrypted: string;
+  preferred_model: string;
+  is_active: boolean;
+  last_validated_at: string | null;
+}
+
+const GEMINI_MODELS = [
+  { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash" },
+  { value: "gemini-3-flash-preview", label: "Gemini 3 Flash Preview" },
+  { value: "gemini-3-pro-preview", label: "Gemini 3 Pro Preview" },
+];
+
+const CLAUDE_MODELS = [
+  { value: "claude-sonnet-4-20250514", label: "Claude Sonnet 4" },
+  { value: "claude-3-7-sonnet-20250219", label: "Claude Sonnet 3.7" },
+  { value: "claude-3-5-haiku-20241022", label: "Claude Haiku 3.5" },
+  { value: "claude-3-haiku-20240307", label: "Claude Haiku 3" },
+  { value: "claude-3-opus-20240229", label: "Claude Opus 3" },
+];
+
+function maskApiKey(key: string): string {
+  if (!key || key.length < 8) return "••••••••";
+  return key.substring(0, 4) + "••••••••" + key.substring(key.length - 4);
+}
 
 export default function Settings() {
   const [loading, setLoading] = useState(false);
@@ -51,8 +88,37 @@ export default function Settings() {
     autoSave: true,
   });
 
+  // API Keys state
+  const [apiKeys, setApiKeys] = useState<Record<ApiKeyProvider, ApiKeyEntry>>({
+    google_gemini: {
+      provider: "google_gemini",
+      api_key_encrypted: "",
+      preferred_model: "gemini-2.0-flash",
+      is_active: false,
+      last_validated_at: null,
+    },
+    anthropic_claude: {
+      provider: "anthropic_claude",
+      api_key_encrypted: "",
+      preferred_model: "claude-sonnet-4-20250514",
+      is_active: false,
+      last_validated_at: null,
+    },
+  });
+  const [apiKeyInputs, setApiKeyInputs] = useState<Record<ApiKeyProvider, string>>({
+    google_gemini: "",
+    anthropic_claude: "",
+  });
+  const [showApiKey, setShowApiKey] = useState<Record<ApiKeyProvider, boolean>>({
+    google_gemini: false,
+    anthropic_claude: false,
+  });
+  const [validatingKey, setValidatingKey] = useState<ApiKeyProvider | null>(null);
+  const [savingKey, setSavingKey] = useState<ApiKeyProvider | null>(null);
+
   useEffect(() => {
     loadUserData();
+    loadApiKeys();
   }, []);
 
   const loadUserData = async () => {
@@ -117,6 +183,199 @@ export default function Settings() {
       toast.error("Erro ao atualizar perfil: " + error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadApiKeys = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await (supabase as any)
+        .from("user_api_keys")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error loading API keys:", error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const updated = { ...apiKeys };
+        data.forEach((row: any) => {
+          const provider = row.provider as ApiKeyProvider;
+          updated[provider] = {
+            id: row.id,
+            provider,
+            api_key_encrypted: row.api_key_encrypted,
+            preferred_model: row.preferred_model || (provider === "google_gemini" ? "gemini-2.0-flash" : "claude-sonnet-4-20250514"),
+            is_active: row.is_active,
+            last_validated_at: row.last_validated_at,
+          };
+        });
+        setApiKeys(updated);
+      }
+    } catch (error) {
+      console.error("Error loading API keys:", error);
+    }
+  };
+
+  const handleSaveApiKey = async (provider: ApiKeyProvider) => {
+    const keyInput = apiKeyInputs[provider];
+    if (!keyInput.trim()) {
+      toast.error("Insira uma API key válida");
+      return;
+    }
+
+    setSavingKey(provider);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      const entry = apiKeys[provider];
+      const payload = {
+        user_id: user.id,
+        provider,
+        api_key_encrypted: keyInput.trim(),
+        preferred_model: entry.preferred_model,
+        is_active: true,
+        last_validated_at: null,
+      };
+
+      let error;
+      if (entry.id) {
+        ({ error } = await (supabase as any)
+          .from("user_api_keys")
+          .update({
+            api_key_encrypted: payload.api_key_encrypted,
+            preferred_model: payload.preferred_model,
+            is_active: true,
+            last_validated_at: null,
+          })
+          .eq("id", entry.id));
+      } else {
+        ({ error } = await (supabase as any)
+          .from("user_api_keys")
+          .insert(payload));
+      }
+
+      if (error) throw error;
+
+      toast.success(`API key ${provider === "google_gemini" ? "Google Gemini" : "Anthropic Claude"} salva com sucesso!`);
+      setApiKeyInputs((prev) => ({ ...prev, [provider]: "" }));
+      setShowApiKey((prev) => ({ ...prev, [provider]: false }));
+      await loadApiKeys();
+    } catch (error: any) {
+      toast.error("Erro ao salvar API key: " + error.message);
+    } finally {
+      setSavingKey(null);
+    }
+  };
+
+  const handleDeleteApiKey = async (provider: ApiKeyProvider) => {
+    const entry = apiKeys[provider];
+    if (!entry.id) return;
+
+    if (!confirm(`Tem certeza que deseja remover a API key de ${provider === "google_gemini" ? "Google Gemini" : "Anthropic Claude"}?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await (supabase as any)
+        .from("user_api_keys")
+        .delete()
+        .eq("id", entry.id);
+
+      if (error) throw error;
+
+      toast.success("API key removida com sucesso!");
+      setApiKeys((prev) => ({
+        ...prev,
+        [provider]: {
+          provider,
+          api_key_encrypted: "",
+          preferred_model: provider === "google_gemini" ? "gemini-2.0-flash" : "claude-sonnet-4-20250514",
+          is_active: false,
+          last_validated_at: null,
+        },
+      }));
+    } catch (error: any) {
+      toast.error("Erro ao remover API key: " + error.message);
+    }
+  };
+
+  const handleValidateApiKey = async (provider: ApiKeyProvider) => {
+    const entry = apiKeys[provider];
+    const keyToValidate = apiKeyInputs[provider].trim() || entry.api_key_encrypted;
+    if (!keyToValidate) {
+      toast.error("Nenhuma API key para validar");
+      return;
+    }
+
+    setValidatingKey(provider);
+    try {
+      let isValid = false;
+
+      if (provider === "google_gemini") {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models?key=${keyToValidate}`
+        );
+        isValid = res.ok;
+      } else {
+        const res = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "x-api-key": keyToValidate,
+            "anthropic-version": "2023-06-01",
+            "Content-Type": "application/json",
+            "anthropic-dangerous-direct-browser-access": "true",
+          },
+          body: JSON.stringify({
+            model: "claude-3-haiku-20240307",
+            max_tokens: 1,
+            messages: [{ role: "user", content: "ping" }],
+          }),
+        });
+        isValid = res.ok || res.status === 400;
+      }
+
+      if (isValid) {
+        toast.success("API key válida!");
+        if (entry.id) {
+          await (supabase as any)
+            .from("user_api_keys")
+            .update({ last_validated_at: new Date().toISOString() })
+            .eq("id", entry.id);
+          await loadApiKeys();
+        }
+      } else {
+        toast.error("API key inválida. Verifique e tente novamente.");
+      }
+    } catch (error: any) {
+      toast.error("Erro ao validar: " + error.message);
+    } finally {
+      setValidatingKey(null);
+    }
+  };
+
+  const handleModelChange = async (provider: ApiKeyProvider, model: string) => {
+    setApiKeys((prev) => ({
+      ...prev,
+      [provider]: { ...prev[provider], preferred_model: model },
+    }));
+
+    const entry = apiKeys[provider];
+    if (entry.id) {
+      try {
+        await (supabase as any)
+          .from("user_api_keys")
+          .update({ preferred_model: model })
+          .eq("id", entry.id);
+        toast.success("Modelo preferido atualizado!");
+      } catch (error: any) {
+        toast.error("Erro ao atualizar modelo: " + error.message);
+      }
     }
   };
 
@@ -370,6 +629,248 @@ export default function Settings() {
                     checked={formData.autoSave}
                     onCheckedChange={(checked) => setFormData(prev => ({ ...prev, autoSave: checked }))}
                   />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* AI API Keys Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5" />
+                  Integrações de IA
+                </CardTitle>
+                <CardDescription>
+                  Configure suas API keys para análise avançada com inteligência artificial. Cada usuário utiliza suas próprias chaves.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Google Gemini */}
+                {(() => {
+                  const provider: ApiKeyProvider = "google_gemini";
+                  const entry = apiKeys[provider];
+                  const hasKey = !!entry.api_key_encrypted && !!entry.id;
+                  const models = GEMINI_MODELS;
+                  return (
+                    <div className="rounded-lg border border-border p-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                            <Sparkles className="h-5 w-5 text-blue-500" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-foreground">Google Gemini</h3>
+                            <p className="text-xs text-muted-foreground">Gemini Flash, Pro e Preview</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {hasKey ? (
+                            <Badge className="bg-success/10 text-success border-success/30">
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              Ativa
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-muted-foreground">
+                              <XCircle className="h-3 w-3 mr-1" />
+                              Não configurada
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div>
+                          <Label htmlFor="gemini-key" className="text-xs">API Key</Label>
+                          <div className="flex gap-2 mt-1">
+                            <div className="relative flex-1">
+                              <Input
+                                id="gemini-key"
+                                type={showApiKey[provider] ? "text" : "password"}
+                                placeholder={hasKey ? maskApiKey(entry.api_key_encrypted) : "Cole sua API key do Google AI Studio"}
+                                value={apiKeyInputs[provider]}
+                                onChange={(e) => setApiKeyInputs((prev) => ({ ...prev, [provider]: e.target.value }))}
+                                className="pr-10 font-mono text-xs"
+                              />
+                              <button
+                                type="button"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                onClick={() => setShowApiKey((prev) => ({ ...prev, [provider]: !prev[provider] }))}
+                              >
+                                {showApiKey[provider] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </button>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleValidateApiKey(provider)}
+                              disabled={validatingKey === provider}
+                              title="Validar key"
+                            >
+                              {validatingKey === provider ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Modelo Preferido</Label>
+                          <Select
+                            value={entry.preferred_model}
+                            onValueChange={(v) => handleModelChange(provider, v)}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {models.map((m) => (
+                                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {entry.last_validated_at && (
+                          <p className="text-[11px] text-muted-foreground">
+                            Última validação: {new Date(entry.last_validated_at).toLocaleString("pt-BR")}
+                          </p>
+                        )}
+
+                        <div className="flex gap-2 justify-end">
+                          {hasKey && (
+                            <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleDeleteApiKey(provider)}>
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Remover
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            onClick={() => handleSaveApiKey(provider)}
+                            disabled={savingKey === provider || !apiKeyInputs[provider].trim()}
+                          >
+                            {savingKey === provider ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+                            {hasKey ? "Atualizar" : "Salvar"}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Anthropic Claude */}
+                {(() => {
+                  const provider: ApiKeyProvider = "anthropic_claude";
+                  const entry = apiKeys[provider];
+                  const hasKey = !!entry.api_key_encrypted && !!entry.id;
+                  const models = CLAUDE_MODELS;
+                  return (
+                    <div className="rounded-lg border border-border p-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                            <Key className="h-5 w-5 text-amber-500" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-foreground">Anthropic Claude</h3>
+                            <p className="text-xs text-muted-foreground">Opus, Sonnet e Haiku</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {hasKey ? (
+                            <Badge className="bg-success/10 text-success border-success/30">
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              Ativa
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-muted-foreground">
+                              <XCircle className="h-3 w-3 mr-1" />
+                              Não configurada
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div>
+                          <Label htmlFor="claude-key" className="text-xs">API Key</Label>
+                          <div className="flex gap-2 mt-1">
+                            <div className="relative flex-1">
+                              <Input
+                                id="claude-key"
+                                type={showApiKey[provider] ? "text" : "password"}
+                                placeholder={hasKey ? maskApiKey(entry.api_key_encrypted) : "Cole sua API key da Anthropic"}
+                                value={apiKeyInputs[provider]}
+                                onChange={(e) => setApiKeyInputs((prev) => ({ ...prev, [provider]: e.target.value }))}
+                                className="pr-10 font-mono text-xs"
+                              />
+                              <button
+                                type="button"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                onClick={() => setShowApiKey((prev) => ({ ...prev, [provider]: !prev[provider] }))}
+                              >
+                                {showApiKey[provider] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </button>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleValidateApiKey(provider)}
+                              disabled={validatingKey === provider}
+                              title="Validar key"
+                            >
+                              {validatingKey === provider ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Modelo Preferido</Label>
+                          <Select
+                            value={entry.preferred_model}
+                            onValueChange={(v) => handleModelChange(provider, v)}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {models.map((m) => (
+                                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {entry.last_validated_at && (
+                          <p className="text-[11px] text-muted-foreground">
+                            Última validação: {new Date(entry.last_validated_at).toLocaleString("pt-BR")}
+                          </p>
+                        )}
+
+                        <div className="flex gap-2 justify-end">
+                          {hasKey && (
+                            <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleDeleteApiKey(provider)}>
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Remover
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            onClick={() => handleSaveApiKey(provider)}
+                            disabled={savingKey === provider || !apiKeyInputs[provider].trim()}
+                          >
+                            {savingKey === provider ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+                            {hasKey ? "Atualizar" : "Salvar"}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                <div className="rounded-lg bg-muted/50 p-3">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    <strong>Como funciona:</strong> A análise heurística (fetch do HTML) é executada automaticamente ao analisar uma URL. 
+                    Após essa primeira análise, você pode executar uma análise aprofundada por IA que utiliza sua API key para gerar insights 
+                    mais contextualizados e factuais. Suas chaves são armazenadas de forma segura e nunca compartilhadas.
+                  </p>
                 </div>
               </CardContent>
             </Card>

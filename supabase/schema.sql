@@ -51,6 +51,7 @@ create table if not exists public.projects (
   name text not null,
   niche text not null,
   url text not null,
+  competitor_urls text[] default '{}',
   score integer not null default 0,
   status text not null check (status in ('pending', 'analyzing', 'completed')),
   last_update timestamptz,
@@ -255,3 +256,45 @@ create trigger audiences_updated_at
   before update on public.audiences
   for each row
   execute function update_updated_at_column();
+
+-- =====================================================
+-- TABLE: user_api_keys
+-- Stores user-provided API keys for AI providers
+-- Keys are stored encrypted (app-level encryption before insert)
+-- =====================================================
+create table if not exists public.user_api_keys (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  provider text not null check (provider in ('google_gemini', 'anthropic_claude')),
+  api_key_encrypted text not null,
+  preferred_model text,
+  is_active boolean not null default true,
+  last_validated_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, provider)
+);
+
+create index if not exists user_api_keys_user_id_idx on public.user_api_keys (user_id);
+
+-- RLS for user_api_keys
+alter table public.user_api_keys enable row level security;
+
+create policy "user_api_keys_select_own" on public.user_api_keys
+  for select using (auth.uid() = user_id);
+
+create policy "user_api_keys_insert_own" on public.user_api_keys
+  for insert with check (auth.uid() = user_id);
+
+create policy "user_api_keys_update_own" on public.user_api_keys
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create policy "user_api_keys_delete_own" on public.user_api_keys
+  for delete using (auth.uid() = user_id);
+
+-- trigger for updated_at on user_api_keys
+drop trigger if exists set_user_api_keys_updated_at on public.user_api_keys;
+create trigger set_user_api_keys_updated_at
+  before update on public.user_api_keys
+  for each row
+  execute function public.set_updated_at();

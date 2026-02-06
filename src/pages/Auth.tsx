@@ -2,17 +2,16 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Auth() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -76,113 +75,48 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center p-4">
-      {/* Back to Home Button */}
-      <div className="fixed top-8 left-8 z-10">
+    <div className="min-h-screen flex">
+      {/* Back to Home */}
+      <div className="fixed top-6 left-6 z-10">
         <Button
           onClick={() => navigate("/")}
           variant="ghost"
           size="icon"
-          className="bg-background/80 backdrop-blur-sm border border-border/50 hover:bg-accent transition-all duration-300"
+          className="bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white text-gray-600 transition-all duration-300 rounded-full shadow-sm"
           aria-label="Voltar para página inicial"
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
       </div>
 
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Intentia</CardTitle>
-          <CardDescription>
-            Plataforma de estratégia de mídia para B2B
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Entrar</TabsTrigger>
-              <TabsTrigger value="signup">Cadastrar</TabsTrigger>
-            </TabsList>
+      {/* Left: Form */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-16 lg:px-20 py-12 bg-white">
+        <div className="w-full max-w-md mx-auto">
+          {/* Title */}
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-10 text-center">
+            {mode === "signin" ? "Sign In" : "Sign Up"}
+          </h1>
 
-            {/* Sign In */}
-            <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="space-y-4">
+          {/* Form */}
+          <form onSubmit={mode === "signin" ? handleSignIn : handleSignUp} className="space-y-6">
+            {mode === "signup" && (
+              <>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
+                  <Label htmlFor="fullName" className="text-gray-800 text-sm font-medium">Nome Completo</Label>
+                  <Input
+                    id="fullName"
+                    name="fullName"
+                    type="text"
+                    placeholder="João Silva"
+                    value={formData.fullName}
+                    onChange={handleInputChange}
+                    className="h-12 border-0 bg-gray-100 rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary"
+                    required
+                  />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Senha</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="•••••••••"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      className="pl-10 pr-10"
-                      required
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full px-3"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Entrando..." : "Entrar"}
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </form>
-            </TabsContent>
-
-            {/* Sign Up */}
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Nome Completo</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="fullName"
-                      name="fullName"
-                      type="text"
-                      placeholder="João Silva"
-                      value={formData.fullName}
-                      onChange={handleInputChange}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="companyName">Empresa</Label>
+                  <Label htmlFor="companyName" className="text-gray-800 text-sm font-medium">Empresa</Label>
                   <Input
                     id="companyName"
                     name="companyName"
@@ -190,78 +124,105 @@ export default function Auth() {
                     placeholder="Sua Empresa Ltda"
                     value={formData.companyName}
                     onChange={handleInputChange}
+                    className="h-12 border-0 bg-gray-100 rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary"
                   />
                 </div>
+              </>
+            )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signup-email"
-                      name="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-gray-800 text-sm font-medium">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="seu@email.com"
+                value={formData.email}
+                onChange={handleInputChange}
+                className="h-12 border-0 bg-gray-100 rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary"
+                required
+              />
+            </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Senha</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signup-password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="•••••••••"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      className="pl-10 pr-10"
-                      required
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full px-3"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-gray-800 text-sm font-medium">Senha</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="h-12 border-0 bg-gray-100 rounded-lg pr-10 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary"
+                  required
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
 
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Cadastrando..." : "Criar Conta"}
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+            {mode === "signin" && (
+              <div className="text-sm">
+                <span className="text-gray-500">Esqueceu sua </span>
+                <button type="button" className="text-primary font-medium hover:text-primary/80 hover:underline transition-colors">
+                  senha
+                </button>
+                <span className="text-gray-500">?</span>
+              </div>
+            )}
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              Ao continuar, você aceita nossos{" "}
-              <a href="#" className="text-primary hover:underline">
-                Termos de Serviço
-              </a>{" "}
-              e {" "}
-              <a href="#" className="text-primary hover:underline">
-                Política de Privacidade
-              </a>
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full h-12 rounded-full gradient-primary text-white font-bold text-base shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:opacity-90 transition-all duration-300"
+            >
+              {loading
+                ? (mode === "signin" ? "Entrando..." : "Cadastrando...")
+                : (mode === "signin" ? "Login" : "Criar Conta")}
+            </Button>
+          </form>
+
+          {/* Toggle mode */}
+          <p className="text-center text-sm text-gray-500 mt-8">
+            {mode === "signin" ? "Não tem uma conta?" : "Já tem uma conta?"}{" "}
+            <button
+              type="button"
+              onClick={() => {
+                setMode(mode === "signin" ? "signup" : "signin");
+                setFormData({ email: "", password: "", fullName: "", companyName: "" });
+              }}
+              className="text-primary font-semibold hover:text-primary/80 hover:underline transition-colors"
+            >
+              {mode === "signin" ? "Sign up" : "Sign in"}
+            </button>
+          </p>
+        </div>
+      </div>
+
+      {/* Right: Gradient panel */}
+      <div className="hidden lg:flex lg:w-1/2 gradient-primary flex-col justify-center items-center px-12 xl:px-20 relative overflow-hidden">
+        {/* Decorative circles */}
+        <div className="absolute top-[-80px] right-[-80px] w-64 h-64 bg-white/10 rounded-full" />
+        <div className="absolute bottom-[-60px] left-[-60px] w-48 h-48 bg-white/5 rounded-full" />
+        <div className="absolute top-1/3 right-1/4 w-32 h-32 bg-primary/20 rounded-full blur-2xl" />
+
+        <div className="relative z-10 max-w-md">
+          <h2 className="text-4xl xl:text-5xl font-bold text-white mb-6 leading-tight">
+            {mode === "signin" ? "Bem-vindo de volta!" : "Junte-se a nós!"}
+          </h2>
+          <p className="text-white/85 text-base xl:text-lg leading-relaxed">
+            {mode === "signin"
+              ? "Acesse sua plataforma de estratégia de mídia B2B. Analise concorrentes, descubra oportunidades e tome decisões baseadas em dados reais."
+              : "Comece a transformar sua estratégia de marketing B2B com análises inteligentes, benchmarks competitivos e insights acionáveis."}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

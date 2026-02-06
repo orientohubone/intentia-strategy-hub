@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { ScoreRing } from "./ScoreRing";
 import { Badge } from "./ui/badge";
-import { ExternalLink, TrendingUp, TrendingDown, Target, Calendar, Globe } from "lucide-react";
+import { TrendingUp, TrendingDown, Target, Calendar, Globe, Eye, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
 
 interface BenchmarkCardProps {
@@ -19,7 +19,7 @@ interface BenchmarkCardProps {
   analysisDate: string;
   channelPresence?: Record<string, any>;
   className?: string;
-  onEdit?: () => void;
+  onView?: () => void;
   onDelete?: () => void;
 }
 
@@ -38,111 +38,97 @@ export function BenchmarkCard({
   analysisDate,
   channelPresence,
   className,
-  onEdit,
+  onView,
   onDelete,
 }: BenchmarkCardProps) {
   const isPositiveGap = scoreGap > 0;
-  const gapColor = isPositiveGap ? "text-success" : "text-danger";
-  const gapIcon = isPositiveGap ? TrendingUp : TrendingDown;
-  const gapLabel = isPositiveGap ? "Acima" : "Abaixo";
+  const gapColor = isPositiveGap ? "text-green-600" : "text-red-500";
+  const GapIcon = isPositiveGap ? TrendingUp : TrendingDown;
 
   return (
-    <div className={cn("card-elevated p-6", className)}>
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-foreground">{competitorName}</h3>
-            <Badge variant="outline" className="bg-muted/50">
-              {competitorNiche}
-            </Badge>
+    <div
+      className={cn(
+        "card-elevated p-4 sm:p-5 cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all",
+        className
+      )}
+      onClick={onView}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+            <h3 className="font-semibold text-foreground text-sm sm:text-base">{competitorName}</h3>
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0">{competitorNiche}</Badge>
           </div>
-          <p className="text-sm text-muted-foreground">Concorrente analisado</p>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className={cn("flex items-center gap-1 text-sm font-medium", gapColor)}>
-            {gapIcon && <gapIcon className="h-4 w-4" />}
-            <span>{gapLabel}</span>
-            <span className="font-bold">{Math.abs(scoreGap)}</span>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+            <Globe className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate">{competitorUrl.replace(/^https?:\/\//, "")}</span>
           </div>
         </div>
+        <ScoreRing score={overallScore} size="sm" label="Score" />
       </div>
 
-      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-        <Globe className="h-4 w-4" />
-        <a 
-          href={competitorUrl} 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="hover:text-primary truncate"
-        >
-          {competitorUrl.replace(/^https?:\/\//, '')}
-        </a>
+      {/* Score bars mini */}
+      <div className="grid grid-cols-3 gap-2 mb-3">
+        {[
+          { label: "Proposta", score: valuePropositionScore, bar: "bg-blue-500", text: "text-blue-600 dark:text-blue-400" },
+          { label: "Clareza", score: offerClarityScore, bar: "bg-violet-500", text: "text-violet-600 dark:text-violet-400" },
+          { label: "Jornada", score: userJourneyScore, bar: "bg-amber-500", text: "text-amber-600 dark:text-amber-400" },
+        ].map(({ label, score, bar, text }) => (
+          <div key={label} className="space-y-0.5">
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="text-muted-foreground">{label}</span>
+              <span className={cn("font-bold", text)}>{score}</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+              <div className={cn("h-full rounded-full", bar)} style={{ width: `${score}%` }} />
+            </div>
+          </div>
+        ))}
       </div>
 
-      <div className="grid grid-cols-4 gap-4 mb-4">
-        <div className="text-center">
-          <ScoreRing score={overallScore} size="sm" label="Geral" />
-        </div>
-        <div className="text-center">
-          <ScoreRing score={valuePropositionScore} size="sm" label="Proposta" />
-        </div>
-        <div className="text-center">
-          <ScoreRing score={offerClarityScore} size="sm" label="Clareza" />
-        </div>
-        <div className="text-center">
-          <ScoreRing score={userJourneyScore} size="sm" label="Jornada" />
-        </div>
-      </div>
-
+      {/* SWOT preview */}
       {(strengths.length > 0 || weaknesses.length > 0) && (
-        <div className="space-y-2 mb-4">
-          {strengths.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {strengths.slice(0, 2).map((strength, index) => (
-                <Badge key={index} variant="secondary" className="text-xs bg-success/10 text-success border-success/30">
-                  <Target className="h-3 w-3 mr-1" />
-                  {strength}
-                </Badge>
-              ))}
-              {strengths.length > 2 && (
-                <Badge variant="secondary" className="text-xs">
-                  +{strengths.length - 2}
-                </Badge>
-              )}
-            </div>
-          )}
-          {weaknesses.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {weaknesses.slice(0, 2).map((weakness, index) => (
-                <Badge key={index} variant="secondary" className="text-xs bg-danger/10 text-danger border-danger/30">
-                  {weakness}
-                </Badge>
-              ))}
-              {weaknesses.length > 2 && (
-                <Badge variant="secondary" className="text-xs">
-                  +{weaknesses.length - 2}
-                </Badge>
-              )}
-            </div>
+        <div className="flex flex-wrap gap-1 mb-3">
+          {strengths.slice(0, 2).map((s, i) => (
+            <Badge key={`s-${i}`} variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 px-1.5 py-0">
+              <Target className="h-2.5 w-2.5 mr-0.5" />
+              <span className="truncate max-w-[120px]">{s}</span>
+            </Badge>
+          ))}
+          {weaknesses.slice(0, 2).map((w, i) => (
+            <Badge key={`w-${i}`} variant="secondary" className="text-[10px] bg-rose-500/10 text-rose-500 dark:text-rose-400 border-rose-500/20 px-1.5 py-0">
+              <span className="truncate max-w-[120px]">{w}</span>
+            </Badge>
+          ))}
+          {(strengths.length + weaknesses.length > 4) && (
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+              +{strengths.length + weaknesses.length - 4}
+            </Badge>
           )}
         </div>
       )}
 
-      <div className="flex items-center justify-between pt-4 border-t border-border">
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Calendar className="h-3 w-3" />
-          {new Date(analysisDate).toLocaleDateString('pt-BR')}
-        </div>
-        
+      {/* Footer */}
+      <div className="flex items-center justify-between pt-3 border-t border-border">
         <div className="flex items-center gap-2">
-          {onEdit && (
-            <Button variant="ghost" size="sm" onClick={onEdit}>
-              Editar
-            </Button>
-          )}
+          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            {new Date(analysisDate).toLocaleDateString("pt-BR")}
+          </span>
+          <div className={cn("flex items-center gap-0.5 text-[11px] font-medium", gapColor)}>
+            <GapIcon className="h-3 w-3" />
+            <span>{isPositiveGap ? "+" : ""}{scoreGap} gap</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={onView}>
+            <Eye className="h-3.5 w-3.5" />
+            Ver
+          </Button>
           {onDelete && (
-            <Button variant="ghost" size="sm" className="text-danger hover:text-danger hover:bg-danger/10" onClick={onDelete}>
-              Excluir
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-400 hover:text-red-500 hover:bg-red-500/10" onClick={onDelete}>
+              <Trash2 className="h-3.5 w-3.5" />
             </Button>
           )}
         </div>

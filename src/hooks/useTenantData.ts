@@ -8,6 +8,7 @@ export interface Project {
   name: string;
   niche: string;
   url: string;
+  competitor_urls: string[];
   score: number;
   status: 'pending' | 'analyzing' | 'completed';
   last_update: string;

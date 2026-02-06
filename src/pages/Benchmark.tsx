@@ -2,18 +2,17 @@ import { useEffect, useState } from "react";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { BenchmarkCard } from "@/components/BenchmarkCard";
-import { BenchmarkForm } from "@/components/BenchmarkForm";
+import { BenchmarkDetailDialog, BenchmarkDetail } from "@/components/BenchmarkDetailDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, Filter, TrendingUp, Target, BarChart3, Users } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Search, Filter, TrendingUp, Target, BarChart3, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface Benchmark {
+interface BenchmarkSummary {
   id: string;
   project_id: string;
   project_name: string;
@@ -39,15 +38,15 @@ interface Project {
 }
 
 export default function Benchmark() {
-  const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
+  const [benchmarks, setBenchmarks] = useState<BenchmarkSummary[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterProject, setFilterProject] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("created_at");
-  const [showForm, setShowForm] = useState(false);
-  const [editingBenchmark, setEditingBenchmark] = useState<string | null>(null);
   const [stats, setStats] = useState<any>(null);
+  const [selectedBenchmark, setSelectedBenchmark] = useState<BenchmarkDetail | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -108,14 +107,28 @@ export default function Benchmark() {
       }
     });
 
-  const handleCreateBenchmark = () => {
-    setEditingBenchmark(null);
-    setShowForm(true);
-  };
+  const handleViewBenchmark = async (id: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("benchmarks")
+        .select("*")
+        .eq("id", id)
+        .single();
 
-  const handleEditBenchmark = (id: string) => {
-    setEditingBenchmark(id);
-    setShowForm(true);
+      if (error) throw error;
+
+      // Get project name
+      const summary = benchmarks.find((b) => b.id === id);
+
+      setSelectedBenchmark({
+        ...data,
+        project_name: summary?.project_name || "Projeto",
+        score_gap: summary?.score_gap || 0,
+      } as BenchmarkDetail);
+      setDetailOpen(true);
+    } catch (error: any) {
+      toast.error("Erro ao carregar detalhes: " + error.message);
+    }
   };
 
   const handleDeleteBenchmark = async (id: string) => {
@@ -136,16 +149,6 @@ export default function Benchmark() {
     }
   };
 
-  const handleFormSuccess = () => {
-    setShowForm(false);
-    setEditingBenchmark(null);
-    loadData();
-  };
-
-  const getStatsForProject = (projectId: string) => {
-    return stats?.find((s: any) => s.project_id === projectId);
-  };
-
   if (loading) {
     return (
       <div className="flex h-screen bg-background">
@@ -153,13 +156,18 @@ export default function Benchmark() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <DashboardHeader />
           <main className="flex-1 overflow-auto p-6">
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-6xl mx-auto">
               <div className="animate-pulse space-y-4">
                 <div className="h-8 bg-muted rounded w-1/3"></div>
                 <div className="h-4 bg-muted rounded w-2/3"></div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="h-32 bg-muted rounded"></div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="h-24 bg-muted rounded-lg"></div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {[1, 2].map(i => (
+                    <div key={i} className="h-48 bg-muted rounded-lg"></div>
                   ))}
                 </div>
               </div>
@@ -176,152 +184,128 @@ export default function Benchmark() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader />
         <main className="flex-1 overflow-auto p-6">
-          <div className="max-w-5xl mx-auto space-y-6">
+          <div className="max-w-6xl mx-auto space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">Benchmark Competitivo</h1>
-                <p className="text-muted-foreground">
-                  Análise comparativa com concorrentes e insights estratégicos
-                </p>
-              </div>
-              <Button onClick={handleCreateBenchmark} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Novo Benchmark
-              </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Benchmark Competitivo</h1>
+              <p className="text-muted-foreground text-sm mt-1">
+                Análise comparativa com concorrentes — gerada automaticamente a partir das URLs cadastradas nos projetos.
+              </p>
             </div>
 
             {/* Stats Cards */}
-            {stats && stats.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2">
-                      <BarChart3 className="h-5 w-5 text-primary" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Total de Análises</p>
-                        <p className="text-2xl font-bold">{benchmarks.length}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2">
-                      <Target className="h-5 w-5 text-success" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Score Médio</p>
-                        <p className="text-2xl font-bold">
-                          {benchmarks.length > 0 
-                            ? Math.round(benchmarks.reduce((acc, b) => acc + b.overall_score, 0) / benchmarks.length)
-                            : 0}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-info" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Melhor Score</p>
-                        <p className="text-2xl font-bold">
-                          {benchmarks.length > 0 
-                            ? Math.max(...benchmarks.map(b => b.overall_score))
-                            : 0}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-5 w-5 text-warning" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Projetos Ativos</p>
-                        <p className="text-2xl font-bold">{projects.length}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* Filters */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Buscar por nome, URL ou nicho..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <BarChart3 className="h-4 w-4 text-primary" />
                   </div>
-                  <div className="flex gap-2">
-                    <Select value={filterProject} onValueChange={setFilterProject}>
-                      <SelectTrigger className="w-48">
-                        <Filter className="h-4 w-4 mr-2" />
-                        <SelectValue placeholder="Filtrar por projeto" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos os projetos</SelectItem>
-                        {projects.map((project) => (
-                          <SelectItem key={project.id} value={project.id}>
-                            {project.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Ordenar por" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="created_at">Mais recentes</SelectItem>
-                        <SelectItem value="overall_score">Maior score</SelectItem>
-                        <SelectItem value="score_gap">Maior gap</SelectItem>
-                        <SelectItem value="competitor_name">Nome (A-Z)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Análises</p>
+                    <p className="text-xl font-bold text-foreground">{benchmarks.length}</p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-green-500/10 rounded-lg">
+                    <Target className="h-4 w-4 text-green-500" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Score Médio</p>
+                    <p className="text-xl font-bold text-foreground">
+                      {benchmarks.length > 0 
+                        ? Math.round(benchmarks.reduce((acc, b) => acc + b.overall_score, 0) / benchmarks.length)
+                        : 0}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-blue-500/10 rounded-lg">
+                    <TrendingUp className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Melhor Score</p>
+                    <p className="text-xl font-bold text-foreground">
+                      {benchmarks.length > 0 
+                        ? Math.max(...benchmarks.map(b => b.overall_score))
+                        : 0}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-yellow-500/10 rounded-lg">
+                    <Users className="h-4 w-4 text-yellow-500" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Concorrentes</p>
+                    <p className="text-xl font-bold text-foreground">
+                      {new Set(benchmarks.map(b => b.competitor_url)).size}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome, URL ou nicho..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={filterProject} onValueChange={setFilterProject}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filtrar por projeto" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os projetos</SelectItem>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder="Ordenar por" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="created_at">Mais recentes</SelectItem>
+                  <SelectItem value="overall_score">Maior score</SelectItem>
+                  <SelectItem value="score_gap">Maior gap</SelectItem>
+                  <SelectItem value="competitor_name">Nome (A-Z)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Benchmarks List */}
             {filteredAndSortedBenchmarks.length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <div className="space-y-4">
-                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
-                      <Target className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold">Nenhum benchmark encontrado</h3>
-                      <p className="text-muted-foreground">
-                        {searchTerm || filterProject !== "all" 
-                          ? "Tente ajustar os filtros ou busca"
-                          : "Crie seu primeiro benchmark para começar a análise competitiva"}
-                      </p>
-                    </div>
-                    {!searchTerm && filterProject === "all" && (
-                      <Button onClick={handleCreateBenchmark} className="gap-2">
-                        <Plus className="h-4 w-4" />
-                        Criar Primeiro Benchmark
-                      </Button>
-                    )}
+              <div className="rounded-xl border border-border bg-card p-8 sm:p-12 text-center">
+                <div className="space-y-3">
+                  <div className="w-14 h-14 bg-muted rounded-full flex items-center justify-center mx-auto">
+                    <Target className="h-7 w-7 text-muted-foreground" />
                   </div>
-                </CardContent>
-              </Card>
+                  <h3 className="text-lg font-semibold">Nenhum benchmark encontrado</h3>
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                    {searchTerm || filterProject !== "all" 
+                      ? "Tente ajustar os filtros ou busca."
+                      : "Adicione URLs de concorrentes nos seus projetos e execute uma análise para gerar benchmarks automaticamente."}
+                  </p>
+                </div>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {filteredAndSortedBenchmarks.map((benchmark) => (
                   <BenchmarkCard
                     key={benchmark.id}
@@ -337,7 +321,7 @@ export default function Benchmark() {
                     strengths={benchmark.strengths}
                     weaknesses={benchmark.weaknesses}
                     analysisDate={benchmark.analysis_date}
-                    onEdit={() => handleEditBenchmark(benchmark.id)}
+                    onView={() => handleViewBenchmark(benchmark.id)}
                     onDelete={() => handleDeleteBenchmark(benchmark.id)}
                   />
                 ))}
@@ -347,22 +331,12 @@ export default function Benchmark() {
         </main>
       </div>
 
-      {/* Form Dialog */}
-      <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingBenchmark ? "Editar Benchmark" : "Novo Benchmark"}
-            </DialogTitle>
-          </DialogHeader>
-          <BenchmarkForm
-            projectId={filterProject !== "all" ? filterProject : undefined}
-            benchmarkId={editingBenchmark || undefined}
-            onSuccess={handleFormSuccess}
-            onCancel={() => setShowForm(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Detail Dialog */}
+      <BenchmarkDetailDialog
+        benchmark={selectedBenchmark}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+      />
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useTenantData } from "@/hooks/useTenantData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { analyzeUrl, saveAnalysisResults } from "@/lib/urlAnalyzer";
+import { analyzeUrl, saveAnalysisResults, analyzeCompetitors, cleanBenchmarks } from "@/lib/urlAnalyzer";
 import { useAuth } from "@/hooks/useAuth";
 import {
   AlertDialog,
@@ -60,6 +60,7 @@ export default function Projects() {
     name: "",
     niche: "",
     url: "",
+    competitorUrls: "" as string,
     status: "pending" as "pending" | "analyzing" | "completed",
   });
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -120,6 +121,12 @@ export default function Projects() {
       return;
     }
     
+    // Parse competitor URLs
+    const competitorUrls = formState.competitorUrls
+      .split("\n")
+      .map((u) => u.trim())
+      .filter((u) => u.length > 0 && u.startsWith("http"));
+
     try {
       let projectId: string;
       const urlToAnalyze = formState.url.trim();
@@ -129,25 +136,27 @@ export default function Projects() {
           name: formState.name.trim(),
           niche: formState.niche.trim(),
           url: urlToAnalyze,
+          competitor_urls: competitorUrls,
           status: "analyzing",
           last_update: new Date().toISOString(),
         });
         projectId = editingId;
-        toast.success("Projeto atualizado! Iniciando análise da URL...");
+        toast.success("Projeto atualizado! Iniciando análise...");
       } else {
         const result = await createProject({
           name: formState.name.trim(),
           niche: formState.niche.trim(),
           url: urlToAnalyze,
+          competitor_urls: competitorUrls,
           score: 0,
           status: "analyzing",
           last_update: new Date().toISOString(),
         });
         projectId = result.id;
-        toast.success("Projeto criado! Iniciando análise da URL...");
+        toast.success("Projeto criado! Iniciando análise...");
       }
 
-      setFormState({ name: "", niche: "", url: "", status: "pending" });
+      setFormState({ name: "", niche: "", url: "", competitorUrls: "", status: "pending" });
       setEditingId(null);
 
       // Run URL analysis in background
@@ -156,6 +165,13 @@ export default function Projects() {
         try {
           const analysis = await analyzeUrl(urlToAnalyze);
           await saveAnalysisResults(projectId, user.id, analysis);
+          // Clean old benchmarks for this project before generating new ones
+          await cleanBenchmarks(projectId, user.id);
+          // Analyze competitors and generate benchmarks
+          if (competitorUrls.length > 0) {
+            toast.info(`Analisando ${competitorUrls.length} concorrente(s)...`);
+            await analyzeCompetitors(projectId, user.id, competitorUrls, formState.niche.trim());
+          }
           toast.success(`Análise concluída! Score: ${analysis.overallScore}/100`);
           await refetch();
         } catch (analysisError: any) {
@@ -180,6 +196,7 @@ export default function Projects() {
       name: project.name,
       niche: project.niche,
       url: project.url,
+      competitorUrls: (project.competitor_urls || []).join("\n"),
       status: project.status,
     });
   };
@@ -211,6 +228,14 @@ export default function Projects() {
       toast.info("Reanalisando URL...");
       const analysis = await analyzeUrl(project.url);
       await saveAnalysisResults(projectId, user.id, analysis);
+      // Clean old benchmarks for this project
+      await cleanBenchmarks(projectId, user.id);
+      // Analyze competitors if any
+      const competitors = project.competitor_urls || [];
+      if (competitors.length > 0) {
+        toast.info(`Analisando ${competitors.length} concorrente(s)...`);
+        await analyzeCompetitors(projectId, user.id, competitors, project.niche);
+      }
       toast.success(`Reanálise concluída! Score: ${analysis.overallScore}/100`);
       await refetch();
       // Refresh details if this project is active
@@ -343,9 +368,10 @@ export default function Projects() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="url">URL</Label>
+                  <Label htmlFor="url">URL do Projeto</Label>
                   <Input
                     id="url"
+                    placeholder="https://meusite.com.br"
                     value={formState.url}
                     onChange={(e) => setFormState((prev) => ({ ...prev, url: e.target.value }))}
                     required
@@ -365,6 +391,19 @@ export default function Projects() {
                   </select>
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="competitors">URLs dos Concorrentes (uma por linha)</Label>
+                <textarea
+                  id="competitors"
+                  className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  placeholder={"https://concorrente1.com.br\nhttps://concorrente2.com.br\nhttps://concorrente3.com.br"}
+                  value={formState.competitorUrls}
+                  onChange={(e) => setFormState((prev) => ({ ...prev, competitorUrls: e.target.value }))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Adicione as URLs dos seus principais concorrentes para gerar um benchmark comparativo automático.
+                </p>
+              </div>
               <div className="flex items-center gap-3">
                 <Button type="submit" disabled={analyzing}>
                   {analyzing ? (
@@ -377,7 +416,7 @@ export default function Projects() {
                 {editingId && (
                   <Button type="button" variant="outline" disabled={analyzing} onClick={() => {
                     setEditingId(null);
-                    setFormState({ name: "", niche: "", url: "", status: "pending" });
+                    setFormState({ name: "", niche: "", url: "", competitorUrls: "", status: "pending" });
                   }}>
                     Cancelar
                   </Button>
@@ -439,123 +478,119 @@ export default function Projects() {
                     </div>
 
                     {isActive && (
-                      <div className="grid gap-6">
-                        <div className="border border-border rounded-lg p-4 space-y-4">
-                          <h3 className="text-base font-semibold text-foreground">Scores por Canal</h3>
-                          <div className="grid gap-4">
+                      <div className="space-y-6">
+                        {/* Project Score Overview */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          <div className="bg-muted/50 rounded-xl p-4 text-center">
+                            <p className="text-sm text-muted-foreground mb-1">Score Geral</p>
+                            <p className={`text-3xl font-bold ${
+                              project.score >= 70 ? "text-green-600" : project.score >= 50 ? "text-yellow-600" : "text-red-500"
+                            }`}>{project.score}</p>
+                            <p className="text-xs text-muted-foreground mt-1">de 100</p>
+                          </div>
+                          <div className="bg-muted/50 rounded-xl p-4 text-center">
+                            <p className="text-sm text-muted-foreground mb-1">Status</p>
+                            <p className="text-lg font-semibold text-foreground capitalize">{project.status === "completed" ? "Concluído" : project.status === "analyzing" ? "Analisando..." : "Pendente"}</p>
+                          </div>
+                          <div className="bg-muted/50 rounded-xl p-4 text-center sm:col-span-2 lg:col-span-1">
+                            <p className="text-sm text-muted-foreground mb-1">Última Análise</p>
+                            <p className="text-lg font-semibold text-foreground">
+                              {project.last_update ? new Date(project.last_update).toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Channel Scores Cards */}
+                        <div className="border border-border rounded-xl p-4 sm:p-6 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-base font-semibold text-foreground">Scores por Canal</h3>
+                            <Button size="sm" variant="outline" onClick={() => handleChannelSave(project.id)}>Salvar alterações</Button>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {channelList.map((channel) => {
-                              const existing = scores.find((item) => item.channel === channel) || { channel, score: 0 };
+                              const existing = scores.find((item) => item.channel === channel) || { channel, score: 0 } as ChannelScore;
+                              const channelNames: Record<string, string> = { google: "Google Ads", meta: "Meta Ads", linkedin: "LinkedIn Ads", tiktok: "TikTok Ads" };
+                              const channelColors: Record<string, string> = { google: "border-blue-500/30 bg-blue-500/5", meta: "border-indigo-500/30 bg-indigo-500/5", linkedin: "border-cyan-500/30 bg-cyan-500/5", tiktok: "border-zinc-500/30 bg-zinc-500/5" };
+                              const scoreColor = existing.score >= 70 ? "text-green-600" : existing.score >= 50 ? "text-yellow-600" : "text-red-500";
+
                               return (
-                                <div key={channel} className="grid grid-cols-1 md:grid-cols-5 gap-3 items-center">
-                                  <div className="text-sm font-medium capitalize">{channel}</div>
-                                  <Input
-                                    type="number"
-                                    min={0}
-                                    max={100}
-                                    value={existing.score}
-                                    onChange={(e) => {
-                                      const value = Number(e.target.value);
-                                      setChannelScores((prev) => {
-                                        const current = prev[project.id] || [];
-                                        const updated = current.filter((item) => item.channel !== channel);
-                                        updated.push({ ...existing, channel, score: value });
-                                        return { ...prev, [project.id]: updated };
-                                      });
-                                    }}
-                                  />
-                                  <Input
-                                    placeholder="Objetivo"
-                                    value={existing.objective ?? ""}
-                                    onChange={(e) => {
-                                      const value = e.target.value;
-                                      setChannelScores((prev) => {
-                                        const current = prev[project.id] || [];
-                                        const updated = current.filter((item) => item.channel !== channel);
-                                        updated.push({ ...existing, channel, objective: value });
-                                        return { ...prev, [project.id]: updated };
-                                      });
-                                    }}
-                                  />
-                                  <Input
-                                    placeholder="Papel no funil"
-                                    value={existing.funnel_role ?? ""}
-                                    onChange={(e) => {
-                                      const value = e.target.value;
-                                      setChannelScores((prev) => {
-                                        const current = prev[project.id] || [];
-                                        const updated = current.filter((item) => item.channel !== channel);
-                                        updated.push({ ...existing, channel, funnel_role: value });
-                                        return { ...prev, [project.id]: updated };
-                                      });
-                                    }}
-                                  />
-                                  <Input
-                                    placeholder="Riscos (separados por vírgula)"
-                                    value={(existing.risks || []).join(", ")}
-                                    onChange={(e) => {
-                                      const value = e.target.value;
-                                      setChannelScores((prev) => {
-                                        const current = prev[project.id] || [];
-                                        const updated = current.filter((item) => item.channel !== channel);
-                                        updated.push({
-                                          ...existing,
-                                          channel,
-                                          risks: value.split(",").map((item) => item.trim()).filter(Boolean),
+                                <div key={channel} className={`rounded-xl border p-4 space-y-3 ${channelColors[channel]}`}>
+                                  <div className="flex items-center justify-between">
+                                    <h4 className="font-semibold text-foreground">{channelNames[channel]}</h4>
+                                    <span className={`text-2xl font-bold ${scoreColor}`}>{existing.score}</span>
+                                  </div>
+                                  {existing.is_recommended !== undefined && (
+                                    <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${
+                                      existing.is_recommended ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-500"
+                                    }`}>
+                                      {existing.is_recommended ? "✓ Recomendado" : "✗ Não recomendado"}
+                                    </span>
+                                  )}
+                                  {existing.objective && (
+                                    <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Objetivo:</span> {existing.objective}</p>
+                                  )}
+                                  {existing.funnel_role && (
+                                    <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Funil:</span> {existing.funnel_role}</p>
+                                  )}
+                                  {existing.risks && existing.risks.length > 0 && (
+                                    <div>
+                                      <p className="text-xs font-medium text-foreground mb-1">Riscos:</p>
+                                      <ul className="space-y-1">
+                                        {existing.risks.map((risk, i) => (
+                                          <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                                            <span className="text-red-400 mt-0.5 flex-shrink-0">•</span>
+                                            <span>{risk}</span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                  {/* Editable score */}
+                                  <div className="pt-2 border-t border-border/50">
+                                    <label className="text-xs text-muted-foreground">Ajustar score:</label>
+                                    <Input
+                                      type="number"
+                                      min={0}
+                                      max={100}
+                                      value={existing.score}
+                                      className="h-8 mt-1"
+                                      onChange={(e) => {
+                                        const value = Number(e.target.value);
+                                        setChannelScores((prev) => {
+                                          const current = prev[project.id] || [];
+                                          const updated = current.filter((item) => item.channel !== channel);
+                                          updated.push({ ...existing, channel, score: value });
+                                          return { ...prev, [project.id]: updated };
                                         });
-                                        return { ...prev, [project.id]: updated };
-                                      });
-                                    }}
-                                  />
+                                      }}
+                                    />
+                                  </div>
                                 </div>
                               );
                             })}
                           </div>
-                          <div className="flex justify-end">
-                            <Button size="sm" onClick={() => handleChannelSave(project.id)}>Salvar canais</Button>
-                          </div>
                         </div>
 
-                        <div className="border border-border rounded-lg p-4 space-y-4">
-                          <h3 className="text-base font-semibold text-foreground">Insights</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                            <select
-                              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                              value={insightDraft.type}
-                              onChange={(e) => setInsightDraft((prev) => ({ ...prev, type: e.target.value as Insight["type"] }))}
-                            >
-                              <option value="warning">Alerta</option>
-                              <option value="opportunity">Oportunidade</option>
-                              <option value="improvement">Melhoria</option>
-                            </select>
-                            <Input
-                              placeholder="Título"
-                              value={insightDraft.title}
-                              onChange={(e) => setInsightDraft((prev) => ({ ...prev, title: e.target.value }))}
-                            />
-                            <Input
-                              placeholder="Descrição"
-                              value={insightDraft.description}
-                              onChange={(e) => setInsightDraft((prev) => ({ ...prev, description: e.target.value }))}
-                            />
-                            <Input
-                              placeholder="Ação (opcional)"
-                              value={insightDraft.action}
-                              onChange={(e) => setInsightDraft((prev) => ({ ...prev, action: e.target.value }))}
-                            />
-                          </div>
-                          <div className="flex justify-end">
-                            <Button size="sm" onClick={() => handleInsightCreate(project.id)}>Adicionar insight</Button>
-                          </div>
-                          <div className="space-y-2">
-                            {projectInsights.length === 0 && (
-                              <p className="text-sm text-muted-foreground">Nenhum insight cadastrado.</p>
-                            )}
-                            {projectInsights.map((insight) => (
-                              <div key={insight.id} className="flex items-start justify-between border border-border rounded-md p-3">
-                                {editingInsightId === insight.id ? (
-                                  <div className="flex-1 space-y-2">
+                        {/* Insights Section */}
+                        <div className="border border-border rounded-xl p-4 sm:p-6 space-y-4">
+                          <h3 className="text-base font-semibold text-foreground">Insights ({projectInsights.length})</h3>
+                          
+                          {projectInsights.length === 0 ? (
+                            <p className="text-sm text-muted-foreground py-4 text-center">Nenhum insight gerado. Clique em "Reanalisar URL" para gerar insights automáticos.</p>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {projectInsights.map((insight) => {
+                                const typeConfig: Record<string, { label: string; color: string; icon: string }> = {
+                                  warning: { label: "Alerta", color: "border-yellow-500/30 bg-yellow-500/5", icon: "⚠️" },
+                                  opportunity: { label: "Oportunidade", color: "border-green-500/30 bg-green-500/5", icon: "💡" },
+                                  improvement: { label: "Melhoria", color: "border-blue-500/30 bg-blue-500/5", icon: "🔧" },
+                                };
+                                const config = typeConfig[insight.type] || typeConfig.improvement;
+
+                                return editingInsightId === insight.id ? (
+                                  <div key={insight.id} className="border border-border rounded-lg p-3 space-y-2">
                                     <select
-                                      className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+                                      className="h-8 w-full rounded-md border border-input bg-background px-2 text-sm"
                                       value={editingInsight.type || insight.type}
                                       onChange={(e) => setEditingInsight((prev) => ({ ...prev, type: e.target.value as Insight["type"] }))}
                                     >
@@ -563,55 +598,66 @@ export default function Projects() {
                                       <option value="opportunity">Oportunidade</option>
                                       <option value="improvement">Melhoria</option>
                                     </select>
-                                    <Input
-                                      placeholder="Título"
-                                      value={editingInsight.title || ""}
-                                      onChange={(e) => setEditingInsight((prev) => ({ ...prev, title: e.target.value }))}
-                                      className="h-8"
-                                    />
-                                    <Input
-                                      placeholder="Descrição"
-                                      value={editingInsight.description || ""}
-                                      onChange={(e) => setEditingInsight((prev) => ({ ...prev, description: e.target.value }))}
-                                      className="h-8"
-                                    />
-                                    <Input
-                                      placeholder="Ação (opcional)"
-                                      value={editingInsight.action || ""}
-                                      onChange={(e) => setEditingInsight((prev) => ({ ...prev, action: e.target.value }))}
-                                      className="h-8"
-                                    />
+                                    <Input placeholder="Título" value={editingInsight.title || ""} onChange={(e) => setEditingInsight((prev) => ({ ...prev, title: e.target.value }))} className="h-8" />
+                                    <Input placeholder="Descrição" value={editingInsight.description || ""} onChange={(e) => setEditingInsight((prev) => ({ ...prev, description: e.target.value }))} className="h-8" />
+                                    <Input placeholder="Ação (opcional)" value={editingInsight.action || ""} onChange={(e) => setEditingInsight((prev) => ({ ...prev, action: e.target.value }))} className="h-8" />
                                     <div className="flex gap-2">
-                                      <Button size="sm" onClick={() => handleInsightUpdate(project.id, insight.id)}>
-                                        Salvar
-                                      </Button>
-                                      <Button size="sm" variant="outline" onClick={cancelEditInsight}>
-                                        Cancelar
-                                      </Button>
+                                      <Button size="sm" onClick={() => handleInsightUpdate(project.id, insight.id)}>Salvar</Button>
+                                      <Button size="sm" variant="outline" onClick={cancelEditInsight}>Cancelar</Button>
                                     </div>
                                   </div>
                                 ) : (
-                                  <>
-                                    <div className="flex-1">
-                                      <p className="text-sm font-medium text-foreground">{insight.title}</p>
-                                      <p className="text-xs text-muted-foreground">{insight.description}</p>
-                                      {insight.action && (
-                                        <p className="text-xs text-primary mt-1">{insight.action}</p>
-                                      )}
+                                  <div key={insight.id} className={`rounded-lg border p-3 space-y-2 ${config.color}`}>
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="flex items-start gap-2 min-w-0">
+                                        <span className="text-base flex-shrink-0">{config.icon}</span>
+                                        <div className="min-w-0">
+                                          <span className="inline-block text-[10px] uppercase font-semibold tracking-wider text-muted-foreground mb-0.5">{config.label}</span>
+                                          <p className="text-sm font-medium text-foreground leading-tight">{insight.title}</p>
+                                        </div>
+                                      </div>
+                                      <div className="flex gap-0.5 flex-shrink-0">
+                                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => startEditInsight(insight)}>
+                                          <span className="text-xs">✏️</span>
+                                        </Button>
+                                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleInsightDelete(project.id, insight.id)}>
+                                          <span className="text-xs">🗑️</span>
+                                        </Button>
+                                      </div>
                                     </div>
-                                    <div className="flex gap-1">
-                                      <Button size="sm" variant="ghost" onClick={() => startEditInsight(insight)}>
-                                        Editar
-                                      </Button>
-                                      <Button size="sm" variant="ghost" onClick={() => handleInsightDelete(project.id, insight.id)}>
-                                        Remover
-                                      </Button>
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            ))}
-                          </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">{insight.description}</p>
+                                    {insight.action && (
+                                      <p className="text-xs text-primary font-medium">→ {insight.action}</p>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {/* Add insight form */}
+                          <details className="group">
+                            <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+                              + Adicionar insight manualmente
+                            </summary>
+                            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                              <select
+                                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                                value={insightDraft.type}
+                                onChange={(e) => setInsightDraft((prev) => ({ ...prev, type: e.target.value as Insight["type"] }))}
+                              >
+                                <option value="warning">Alerta</option>
+                                <option value="opportunity">Oportunidade</option>
+                                <option value="improvement">Melhoria</option>
+                              </select>
+                              <Input placeholder="Título" value={insightDraft.title} onChange={(e) => setInsightDraft((prev) => ({ ...prev, title: e.target.value }))} />
+                              <Input placeholder="Descrição" value={insightDraft.description} onChange={(e) => setInsightDraft((prev) => ({ ...prev, description: e.target.value }))} />
+                              <Input placeholder="Ação (opcional)" value={insightDraft.action} onChange={(e) => setInsightDraft((prev) => ({ ...prev, action: e.target.value }))} />
+                            </div>
+                            <div className="flex justify-end mt-3">
+                              <Button size="sm" onClick={() => handleInsightCreate(project.id)}>Adicionar insight</Button>
+                            </div>
+                          </details>
                         </div>
                       </div>
                     )}
