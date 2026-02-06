@@ -25,8 +25,26 @@ export type Database = {
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database["public"]["Tables"]["tenant_settings"]["Row"], "id" | "created_at" | "updated_at">
-        Update: Partial<Database["public"]["Tables"]["tenant_settings"]["Insert"]>
+        Insert: {
+          id?: string
+          user_id: string
+          company_name: string
+          plan?: "starter" | "professional" | "enterprise"
+          monthly_analyses_limit?: number
+          analyses_used?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          company_name?: string
+          plan?: "starter" | "professional" | "enterprise"
+          monthly_analyses_limit?: number
+          analyses_used?: number
+          created_at?: string
+          updated_at?: string
+        }
       }
       projects: {
         Row: {
@@ -123,6 +141,41 @@ export type Database = {
         }
         Insert: Omit<Database["public"]["Tables"]["benchmarks"]["Row"], "id" | "created_at" | "updated_at" | "analysis_date">
         Update: Partial<Database["public"]["Tables"]["benchmarks"]["Insert"]>
+      }
+      user_api_keys: {
+        Row: {
+          id: string
+          user_id: string
+          provider: "google_gemini" | "anthropic_claude"
+          api_key_encrypted: string
+          preferred_model: string
+          is_active: boolean
+          last_validated_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          provider: "google_gemini" | "anthropic_claude"
+          api_key_encrypted: string
+          preferred_model: string
+          is_active?: boolean
+          last_validated_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          provider?: "google_gemini" | "anthropic_claude"
+          api_key_encrypted?: string
+          preferred_model?: string
+          is_active?: boolean
+          last_validated_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
       }
     }
     Views: {

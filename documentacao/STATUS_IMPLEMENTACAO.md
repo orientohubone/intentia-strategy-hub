@@ -2,9 +2,9 @@
 
 ## 📊 Visão Geral
 
-**Status do Projeto:** v1.9.0 — Relatórios PDF + CSV + Testes Automatizados  
+**Status do Projeto:** v2.0.0 — Consistência IA + Auth Aprimorado + Email Templates  
 **Data de Atualização:** 06/02/2026  
-**Versão:** 1.9.0
+**Versão:** 2.0.0
 
 ---
 
@@ -18,6 +18,10 @@
 - **[COMPLETO]** Session management com localStorage
 - **[COMPLETO]** ProtectedRoute wrapper para rotas autenticadas
 - **[COMPLETO]** Design system aplicado na tela de auth (cores primary, gradient-primary)
+- **[COMPLETO]** Botão "Voltar" padronizado (BackToHomeButton) na tela de auth
+- **[COMPLETO]** Fluxo "Esqueceu sua senha" com resetPasswordForEmail (email nativo Supabase)
+- **[COMPLETO]** Autocomplete attributes em todos os inputs (email, password, name, organization)
+- **[COMPLETO]** Painel direito contextual (textos mudam por modo: signin/signup/forgot)
 
 ### 🧭 Navegação e UI
 - **[COMPLETO]** Header dropdown com hover sensitivo
@@ -97,12 +101,14 @@
 ### ⚙️ Configurações
 - **[COMPLETO]** Perfil do usuário com avatar upload, nome, empresa, bio
 - **[COMPLETO]** Integrações de IA — API keys por usuário:
-  - Google Gemini (2.0 Flash, 3 Flash Preview, 3 Pro Preview)
+  - Google Gemini (2.0 Flash, 2.5 Flash Preview, 2.5 Pro Preview)
   - Anthropic Claude (Sonnet 4, Sonnet 3.7, Haiku 3.5, Haiku 3, Opus 3)
   - Validação de key contra API real
   - Seleção de modelo preferido
   - Badge de status (Ativa/Não configurada)
   - Máscara de key com toggle de visibilidade
+  - Indicador visual "Key salva" com key mascarada ao retornar à tela
+  - Placeholder contextual ("Nova key" quando já existe / instrução quando não existe)
   - Última validação registrada
 - **[COMPLETO]** Configurações de notificações (email, relatórios semanais)
 - **[COMPLETO]** Preferências de idioma e fuso horário
@@ -110,12 +116,21 @@
 - **[COMPLETO]** Informações do plano e upgrade
 
 ### 📚 Centro de Ajuda
-- **[COMPLETO]** Base de conhecimento categorizada
+- **[COMPLETO]** Base de conhecimento categorizada (todas as funcionalidades documentadas)
 - **[COMPLETO]** Busca inteligente de artigos e tutoriais
-- **[COMPLETO]** FAQ com perguntas frequentes
+- **[COMPLETO]** FAQ com perguntas frequentes atualizadas
 - **[COMPLETO]** Canais de suporte (email, chat, base)
+- **[COMPLETO]** Conteúdo atualizado para refletir todas as features implementadas
 
-### 🖼️ Upload de Foto de Perfil
+### � Email Templates (Supabase Auth)
+- **[COMPLETO]** Template de confirmação de cadastro (email-confirmacao-cadastro.html)
+- **[COMPLETO]** Template de redefinição de senha (email-resetar-senha.html)
+- **[COMPLETO]** Template de reautenticação com código (email-reautenticacao.html)
+- **[COMPLETO]** Design consistente: header escuro com logo, botão laranja gradiente, footer com contato
+- **[COMPLETO]** Inline styles para compatibilidade com clientes de email
+- **[COMPLETO]** Variáveis Supabase: {{ .ConfirmationURL }} e {{ .Token }}
+
+### �🖼️ Upload de Foto de Perfil
 - **[COMPLETO]** Componente AvatarUpload com preview em tempo real
 - **[COMPLETO]** Validação de arquivo (tipo, tamanho máximo 5MB)
 - **[COMPLETO]** Storage no Supabase com bucket 'avatars'
@@ -145,6 +160,10 @@
 - **[COMPLETO]** Análise IA de benchmarks: resumo, ameaça, gaps, posicionamento, plano de ação
 - **[COMPLETO]** Resultados salvos em projects.ai_analysis e benchmarks.ai_analysis (jsonb)
 - **[COMPLETO]** Guard anti-duplicação de notificações (useRef)
+- **[COMPLETO]** Constantes centralizadas de modelos (src/lib/aiModels.ts)
+- **[COMPLETO]** Seletores de IA em Projetos e Benchmark mostram TODOS os modelos do provider
+- **[COMPLETO]** Model IDs reais das APIs (gemini-2.5-flash-preview-05-20, claude-sonnet-4-20250514, etc.)
+- **[COMPLETO]** AI_MODEL_LABELS centralizado (usado em BenchmarkDetailDialog, Projects, Benchmark)
 
 ### 📦 Exportação de Análises
 - **[COMPLETO]** exportAnalysis.ts — funções de exportação para projetos e benchmarks
@@ -202,6 +221,11 @@
 - **[COMPLETO]** `benchmarks` — Análises competitivas com SWOT e scores
 - **[COMPLETO]** `notifications` — Sistema de notificações
 - **[COMPLETO]** `user_api_keys` — API keys de IA por usuário (google_gemini/anthropic_claude)
+
+### Supabase Types (Frontend)
+- **[COMPLETO]** `user_api_keys` adicionado aos types (src/integrations/supabase/types.ts)
+- **[COMPLETO]** `tenant_settings` Insert/Update types corrigidos (evita resolução para `never`)
+- **[COMPLETO]** Remoção de casts `(supabase as any)` no Settings.tsx
 
 ### Storage Buckets
 - **[COMPLETO]** `avatars` — Fotos de perfil dos usuários
@@ -294,10 +318,10 @@
 
 ## 🎯 Conclusão
 
-O **Intentia Strategy Hub** está na **versão 1.9.0** com funcionalidades avançadas:
+O **Intentia Strategy Hub** está na **versão 2.0.0** com funcionalidades avançadas:
 
 ### ✅ Entregáveis Concluídos
-1. **Autenticação redesenhada** com split layout e design system
+1. **Autenticação redesenhada** com split layout, design system e fluxo "Esqueceu sua senha"
 2. **Dashboard completo** com dados reais, Welcome Section e ScoreRing
 3. **Análise heurística de URLs** automática via Edge Function
 4. **Análise por IA de projetos** sob demanda com seletor de modelo (Gemini/Claude)
@@ -308,18 +332,23 @@ O **Intentia Strategy Hub** está na **versão 1.9.0** com funcionalidades avan�
 9. **Testes automatizados** — 12 testes passando (exportCsv + exportAnalysis)
 10. **Insights agrupados por projeto** com cards visuais, dialog e fullscreen
 11. **Benchmark competitivo** com SWOT, gap analysis, dialog fullscreen e IA
-12. **Integrações de IA** — API keys por usuário (Gemini + Claude) com validação
+12. **Integrações de IA** — API keys por usuário (Gemini + Claude) com validação e persistência
 13. **CRUD completo** para projetos, públicos-alvo e benchmarks
 14. **Dark mode** isolado (sistema vs site público)
 15. **Notificações** real-time com cores adaptáveis
 16. **Schema SQL completo** com RLS + user_api_keys
 17. **Design system** consistente com variáveis CSS + animações lab-bubble
+18. **Modelos de IA centralizados** (aiModels.ts) com IDs reais das APIs
+19. **Email templates** para confirmação, reset de senha e reautenticação
+20. **Supabase types atualizados** com user_api_keys e tenant_settings corrigidos
+21. **Centro de Ajuda** atualizado com documentação completa de todas as features
 
 ### 📋 Próximos Passos
-1. Integração com APIs de marketing
-2. Multi-tenancy avançado
-3. Advanced analytics e dashboards customizáveis
+1. Configurar SMTP custom (Resend) para emails transacionais em produção
+2. Integração com APIs de marketing
+3. Multi-tenancy avançado
+4. Advanced analytics e dashboards customizáveis
 
 ---
 
-**Status:** 🟢 **v1.9.0 — ETAPA ESTRATÉGICA COMPLETA**
+**Status:** 🟢 **v2.0.0 — PLATAFORMA COMPLETA**

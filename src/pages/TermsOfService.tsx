@@ -22,7 +22,7 @@ export default function TermsOfService() {
             Termos de <span className="text-gradient bg-gradient-to-r from-primary to-orange-600 bg-clip-text text-transparent">Serviço</span>
           </h1>
           <p className="text-lg text-muted-foreground mb-8">
-            Última atualização: 5 de Janeiro de 2024
+            Última atualização: 6 de Fevereiro de 2026
           </p>
           <p className="text-muted-foreground">
             Estes Termos de Serviço regem o uso da plataforma Intentia Strategy Hub e estabelecem os direitos e responsabilidades entre você e a Intentia.

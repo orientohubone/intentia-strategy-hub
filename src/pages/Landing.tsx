@@ -1,6 +1,6 @@
+import { useState, useRef, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { ScoreRing } from "@/components/ScoreRing";
 import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
 import { BackToHomeButton } from "@/components/BackToHomeButton";
@@ -13,17 +13,89 @@ import {
   ArrowRight,
   CheckCircle2,
   Zap,
-  Users,
-  TrendingUp,
   Sparkles,
   FileText,
-  FileSpreadsheet,
-  Globe,
-  Eye,
-  MousePointerClick,
   Brain,
-  RefreshCw,
+  GripVertical,
 } from "lucide-react";
+
+function ShowcaseSlider() {
+  const [sliderPos, setSliderPos] = useState(50);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+
+  const updatePosition = useCallback((clientX: number) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const pct = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    setSliderPos(pct);
+  }, []);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    isDragging.current = true;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    updatePosition(e.clientX);
+  }, [updatePosition]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isDragging.current) return;
+    updatePosition(e.clientX);
+  }, [updatePosition]);
+
+  const handlePointerUp = useCallback(() => {
+    isDragging.current = false;
+  }, []);
+
+  return (
+    <div className="mt-16 relative animate-scale-in" style={{ animationDelay: "0.3s" }}>
+      <div
+        ref={containerRef}
+        className="relative rounded-2xl max-w-5xl mx-auto select-none cursor-col-resize"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+      >
+        <div className="border-beam rounded-2xl" />
+        <div className="relative rounded-2xl border border-border shadow-xl overflow-hidden">
+        {/* Light mode — full width base */}
+        <img
+          src="/intentia-light.png"
+          alt="Intentia Dashboard - Light Mode"
+          className="w-full h-auto block pointer-events-none"
+          draggable={false}
+        />
+        {/* Dark mode — clipped from left */}
+        <div
+          className="absolute inset-0"
+          style={{ clipPath: `inset(0 ${100 - sliderPos}% 0 0)` }}
+        >
+          <img
+            src="/intentia-dark.png"
+            alt="Intentia Dashboard - Dark Mode"
+            className="w-full h-auto block pointer-events-none"
+            draggable={false}
+          />
+        </div>
+        {/* Orange divider line with grip */}
+        <div
+          className="absolute top-0 bottom-0 z-20 flex items-center justify-center"
+          style={{ left: `${sliderPos}%`, transform: "translateX(-50%)" }}
+        >
+          <div className="w-1 h-full bg-primary" />
+          <div className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-primary shadow-lg flex items-center justify-center">
+            <GripVertical className="h-5 w-5 text-white" />
+          </div>
+        </div>
+        </div>
+      </div>
+      <p className="text-center text-xs text-muted-foreground mt-4 opacity-60">
+        Arraste para comparar Light e Dark mode
+      </p>
+    </div>
+  );
+}
 
 const features = [
   {
@@ -114,63 +186,8 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Dashboard Preview */}
-          <div className="mt-16 relative animate-scale-in" style={{ animationDelay: "0.3s" }}>
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-10 pointer-events-none" />
-            <div className="bg-card rounded-2xl border border-border shadow-xl overflow-hidden max-w-5xl mx-auto">
-              <div className="p-4 sm:p-6 border-b border-border flex items-center gap-4">
-                <div className="flex gap-2">
-                  <div className="w-3 h-3 rounded-full bg-destructive/50" />
-                  <div className="w-3 h-3 rounded-full bg-warning/50" />
-                  <div className="w-3 h-3 rounded-full bg-success/50" />
-                </div>
-                <div className="flex-1 h-8 bg-muted rounded-lg" />
-              </div>
-              <div className="p-4 sm:p-8 space-y-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-6 bg-muted/50 rounded-xl">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-foreground text-lg">SaaS CRM Pro</h3>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                        <Sparkles className="h-3 w-3" /> IA Analisado
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">Diagnóstico heurístico + análise por IA completa</p>
-                  </div>
-                  <ScoreRing score={72} size="lg" label="Score Estratégico" />
-                </div>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                  {[
-                    { label: "Proposta de Valor", score: 78, icon: TrendingUp },
-                    { label: "Clareza", score: 65, icon: Eye },
-                    { label: "Jornada", score: 70, icon: MousePointerClick },
-                    { label: "SEO", score: 82, icon: Globe },
-                    { label: "Conversão", score: 58, icon: CheckCircle2 },
-                    { label: "Conteúdo", score: 74, icon: FileText },
-                  ].map((item) => (
-                    <div key={item.label} className="p-3 bg-muted/30 rounded-lg text-center">
-                      <item.icon className="h-4 w-4 text-primary mx-auto mb-1.5" />
-                      <p className="text-xs font-medium text-muted-foreground mb-1">{item.label}</p>
-                      <p className="text-xl font-bold text-foreground">{item.score}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { channel: "Google Ads", score: 78, color: "text-blue-500" },
-                    { channel: "Meta Ads", score: 65, color: "text-blue-600" },
-                    { channel: "LinkedIn Ads", score: 82, color: "text-sky-600" },
-                    { channel: "TikTok Ads", score: 45, color: "text-gray-800" },
-                  ].map((item) => (
-                    <div key={item.channel} className="p-3 bg-muted/30 rounded-lg text-center">
-                      <p className="text-xs font-medium text-muted-foreground mb-1">{item.channel}</p>
-                      <p className={`text-2xl font-bold ${item.color}`}>{item.score}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Dashboard Showcase — Comparison Slider */}
+          <ShowcaseSlider />
         </div>
       </section>
 

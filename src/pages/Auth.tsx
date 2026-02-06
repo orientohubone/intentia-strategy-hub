@@ -12,7 +12,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -75,6 +75,30 @@ export default function Auth() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.email.trim()) {
+      toast.error("Informe seu email para redefinir a senha.");
+      return;
+    }
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+
+      if (error) throw error;
+
+      toast.success("Email de redefinição enviado! Verifique sua caixa de entrada.");
+      setMode("signin");
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao enviar email de redefinição");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex">
       {/* Back to Home */}
@@ -92,11 +116,17 @@ export default function Auth() {
 
           {/* Title */}
           <h1 className="text-2xl font-bold text-gray-900 mb-8 text-center">
-            {mode === "signin" ? "Sign In" : "Sign Up"}
+            {mode === "signin" ? "Sign In" : mode === "signup" ? "Sign Up" : "Redefinir Senha"}
           </h1>
 
           {/* Form */}
-          <form onSubmit={mode === "signin" ? handleSignIn : handleSignUp} className="space-y-6">
+          <form onSubmit={mode === "signin" ? handleSignIn : mode === "signup" ? handleSignUp : handleForgotPassword} className="space-y-6">
+            {mode === "forgot" && (
+              <p className="text-sm text-gray-500 -mt-2 mb-2">
+                Informe seu email e enviaremos um link para redefinir sua senha.
+              </p>
+            )}
+
             {mode === "signup" && (
               <>
                 <div className="space-y-2">
@@ -145,34 +175,43 @@ export default function Auth() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-800 text-sm font-medium">Senha</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className="h-12 border-0 bg-gray-100 rounded-lg pr-10 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary"
-                  required
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+            {mode !== "forgot" && (
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-gray-800 text-sm font-medium">Senha</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                    placeholder="••••••••"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className="h-12 border-0 bg-gray-100 rounded-lg pr-10 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {mode === "signin" && (
               <div className="text-sm">
                 <span className="text-gray-500">Esqueceu sua </span>
-                <button type="button" className="text-primary font-medium hover:text-primary/80 hover:underline transition-colors">
+                <button
+                  type="button"
+                  className="text-primary font-medium hover:text-primary/80 hover:underline transition-colors"
+                  onClick={() => {
+                    setMode("forgot");
+                    setFormData(prev => ({ ...prev, password: "" }));
+                  }}
+                >
                   senha
                 </button>
                 <span className="text-gray-500">?</span>
@@ -185,24 +224,42 @@ export default function Auth() {
               className="w-full h-12 rounded-full gradient-primary text-white font-bold text-base shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:opacity-90 transition-all duration-300"
             >
               {loading
-                ? (mode === "signin" ? "Entrando..." : "Cadastrando...")
-                : (mode === "signin" ? "Login" : "Criar Conta")}
+                ? (mode === "forgot" ? "Enviando..." : mode === "signin" ? "Entrando..." : "Cadastrando...")
+                : (mode === "forgot" ? "Enviar link de redefinição" : mode === "signin" ? "Login" : "Criar Conta")}
             </Button>
           </form>
 
           {/* Toggle mode */}
           <p className="text-center text-sm text-gray-500 mt-8">
-            {mode === "signin" ? "Não tem uma conta?" : "Já tem uma conta?"}{" "}
-            <button
-              type="button"
-              onClick={() => {
-                setMode(mode === "signin" ? "signup" : "signin");
-                setFormData({ email: "", password: "", fullName: "", companyName: "" });
-              }}
-              className="text-primary font-semibold hover:text-primary/80 hover:underline transition-colors"
-            >
-              {mode === "signin" ? "Sign up" : "Sign in"}
-            </button>
+            {mode === "forgot" ? (
+              <>
+                Lembrou a senha?{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("signin");
+                    setFormData({ email: "", password: "", fullName: "", companyName: "" });
+                  }}
+                  className="text-primary font-semibold hover:text-primary/80 hover:underline transition-colors"
+                >
+                  Voltar ao login
+                </button>
+              </>
+            ) : (
+              <>
+                {mode === "signin" ? "Não tem uma conta?" : "Já tem uma conta?"}{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode(mode === "signin" ? "signup" : "signin");
+                    setFormData({ email: "", password: "", fullName: "", companyName: "" });
+                  }}
+                  className="text-primary font-semibold hover:text-primary/80 hover:underline transition-colors"
+                >
+                  {mode === "signin" ? "Sign up" : "Sign in"}
+                </button>
+              </>
+            )}
           </p>
         </div>
       </div>
@@ -216,10 +273,12 @@ export default function Auth() {
 
         <div className="relative z-10 max-w-md">
           <h2 className="text-4xl xl:text-5xl font-bold text-white mb-6 leading-tight">
-            {mode === "signin" ? "Bem-vindo de volta!" : "Junte-se a nós!"}
+            {mode === "forgot" ? "Recupere seu acesso" : mode === "signin" ? "Bem-vindo de volta!" : "Junte-se a nós!"}
           </h2>
           <p className="text-white/85 text-base xl:text-lg leading-relaxed">
-            {mode === "signin"
+            {mode === "forgot"
+              ? "Enviaremos um link seguro para o seu email. Use-o para criar uma nova senha e voltar a acessar sua plataforma."
+              : mode === "signin"
               ? "Acesse sua plataforma de estratégia de mídia B2B. Analise concorrentes, descubra oportunidades e tome decisões baseadas em dados reais."
               : "Comece a transformar sua estratégia de marketing B2B com análises inteligentes, benchmarks competitivos e insights acionáveis."}
           </p>

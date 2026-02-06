@@ -179,7 +179,7 @@ export default function Settings() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("user_api_keys")
         .select("*")
         .eq("user_id", user.id);
@@ -233,7 +233,7 @@ export default function Settings() {
 
       let error;
       if (entry.id) {
-        ({ error } = await (supabase as any)
+        ({ error } = await supabase
           .from("user_api_keys")
           .update({
             api_key_encrypted: payload.api_key_encrypted,
@@ -243,7 +243,7 @@ export default function Settings() {
           })
           .eq("id", entry.id));
       } else {
-        ({ error } = await (supabase as any)
+        ({ error } = await supabase
           .from("user_api_keys")
           .insert(payload));
       }
@@ -270,7 +270,7 @@ export default function Settings() {
     }
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("user_api_keys")
         .delete()
         .eq("id", entry.id);
@@ -331,7 +331,7 @@ export default function Settings() {
       if (isValid) {
         toast.success("API key válida!");
         if (entry.id) {
-          await (supabase as any)
+          await supabase
             .from("user_api_keys")
             .update({ last_validated_at: new Date().toISOString() })
             .eq("id", entry.id);
@@ -356,7 +356,7 @@ export default function Settings() {
     const entry = apiKeys[provider];
     if (entry.id) {
       try {
-        await (supabase as any)
+        await supabase
           .from("user_api_keys")
           .update({ preferred_model: model })
           .eq("id", entry.id);
@@ -674,7 +674,7 @@ export default function Settings() {
                               <Input
                                 id="gemini-key"
                                 type={showApiKey[provider] ? "text" : "password"}
-                                placeholder={hasKey ? maskApiKey(entry.api_key_encrypted) : "Cole sua API key do Google AI Studio"}
+                                placeholder={hasKey ? "Nova key (deixe vazio para manter a atual)" : "Cole sua API key do Google AI Studio"}
                                 value={apiKeyInputs[provider]}
                                 onChange={(e) => setApiKeyInputs((prev) => ({ ...prev, [provider]: e.target.value }))}
                                 className="pr-10 font-mono text-xs"
@@ -697,6 +697,12 @@ export default function Settings() {
                               {validatingKey === provider ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                             </Button>
                           </div>
+                          {hasKey && (
+                            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                              <CheckCircle2 className="h-3 w-3 text-green-500" />
+                              Key salva: <span className="font-mono">{maskApiKey(entry.api_key_encrypted)}</span>
+                            </p>
+                          )}
                         </div>
 
                         <div>
@@ -784,7 +790,7 @@ export default function Settings() {
                               <Input
                                 id="claude-key"
                                 type={showApiKey[provider] ? "text" : "password"}
-                                placeholder={hasKey ? maskApiKey(entry.api_key_encrypted) : "Cole sua API key da Anthropic"}
+                                placeholder={hasKey ? "Nova key (deixe vazio para manter a atual)" : "Cole sua API key da Anthropic"}
                                 value={apiKeyInputs[provider]}
                                 onChange={(e) => setApiKeyInputs((prev) => ({ ...prev, [provider]: e.target.value }))}
                                 className="pr-10 font-mono text-xs"
@@ -807,6 +813,12 @@ export default function Settings() {
                               {validatingKey === provider ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                             </Button>
                           </div>
+                          {hasKey && (
+                            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                              <CheckCircle2 className="h-3 w-3 text-green-500" />
+                              Key salva: <span className="font-mono">{maskApiKey(entry.api_key_encrypted)}</span>
+                            </p>
+                          )}
                         </div>
 
                         <div>

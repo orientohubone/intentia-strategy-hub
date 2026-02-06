@@ -22,7 +22,7 @@ export default function CookiePolicy() {
             Política de <span className="text-gradient bg-gradient-to-r from-primary to-orange-600 bg-clip-text text-transparent">Cookies</span>
           </h1>
           <p className="text-lg text-muted-foreground mb-8">
-            Última atualização: 5 de Janeiro de 2024
+            Última atualização: 6 de Fevereiro de 2026
           </p>
           <p className="text-muted-foreground">
             Esta política explica como a Intentia usa cookies e tecnologias similares para melhorar sua experiência em nosso site e proteger sua privacidade.

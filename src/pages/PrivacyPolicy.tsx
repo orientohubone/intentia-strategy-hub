@@ -22,7 +22,7 @@ export default function PrivacyPolicy() {
             Política de <span className="text-gradient bg-gradient-to-r from-primary to-orange-600 bg-clip-text text-transparent">Privacidade</span>
           </h1>
           <p className="text-lg text-muted-foreground mb-8">
-            Última atualização: 5 de Janeiro de 2024
+            Última atualização: 6 de Fevereiro de 2026
           </p>
           <p className="text-muted-foreground">
             Na Intentia, levamos a privacidade dos seus dados muito a sério. Esta política descreve como coletamos, usamos e protegemos suas informações pessoais.
