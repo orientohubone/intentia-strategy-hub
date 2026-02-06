@@ -720,6 +720,293 @@ export default function BrandGuide() {
           </div>
         </section>
 
+        {/* ─── 12. BRANDBOOK — PERFIS DIGITAIS ─── */}
+        <section className="space-y-10">
+          <div className="space-y-3">
+            <h2 className="text-2xl font-bold text-foreground tracking-tight">12. Brandbook — Perfis Digitais</h2>
+            <div className="w-12 h-0.5 bg-primary rounded-full" />
+          </div>
+
+          <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
+            Diretrizes para criação e manutenção dos perfis da Intentia em redes sociais e plataformas digitais.
+            Todos os perfis devem seguir o mesmo padrão de identidade visual, tom de voz e posicionamento estratégico.
+          </p>
+
+          {/* Proposta de Valor */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-foreground">Proposta de Valor</h3>
+            <div className="p-6 rounded-xl border-2 border-primary/20 bg-primary/5 space-y-4">
+              <p className="text-base font-semibold text-foreground leading-relaxed">
+                "Ajudamos empresas B2B a investir em mídia digital com inteligência — combinando diagnóstico heurístico,
+                inteligência artificial e benchmark competitivo para decisões estratégicas fundamentadas."
+              </p>
+              <div className="grid sm:grid-cols-3 gap-4 pt-2">
+                {[
+                  { pillar: "Diagnóstico antes do investimento", desc: "Análise completa da prontidão digital antes de gastar em mídia paga." },
+                  { pillar: "IA como aliada estratégica", desc: "Gemini e Claude para insights aprofundados, não como substituto do estrategista." },
+                  { pillar: "Dados, não intuição", desc: "Scores objetivos por canal, benchmark com concorrentes e alertas de risco." },
+                ].map((item) => (
+                  <div key={item.pillar} className="space-y-1">
+                    <p className="text-sm font-semibold text-primary">{item.pillar}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Configuração de Perfis */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-foreground">Configuração dos Perfis</h3>
+            <div className="grid sm:grid-cols-2 gap-6">
+              {[
+                {
+                  platform: "LinkedIn",
+                  color: "#0A66C2",
+                  avatar: "Símbolo 'i.' em fundo escuro (#151A23)",
+                  banner: "Gradiente primary com tagline + URL do site",
+                  username: "@intentia ou /company/intentia",
+                  type: "Company Page",
+                },
+                {
+                  platform: "Instagram",
+                  color: "#E4405F",
+                  avatar: "Símbolo 'i.' em fundo escuro (#151A23)",
+                  banner: "Destaques com ícones na cor primary",
+                  username: "@intentia.hub",
+                  type: "Perfil Profissional",
+                },
+                {
+                  platform: "X (Twitter)",
+                  color: "#1A1A1A",
+                  avatar: "Símbolo 'i.' em fundo escuro (#151A23)",
+                  banner: "Gradiente primary com proposta de valor curta",
+                  username: "@intentia_hub",
+                  type: "Perfil Corporativo",
+                },
+                {
+                  platform: "YouTube",
+                  color: "#FF0000",
+                  avatar: "Símbolo 'i.' em fundo escuro (#151A23)",
+                  banner: "Logo + tagline + visual do dashboard",
+                  username: "@intentia",
+                  type: "Canal da Marca",
+                },
+              ].map((item) => (
+                <div key={item.platform} className="p-5 rounded-xl border border-border bg-card space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: item.color }}>
+                      <span className="text-xs font-extrabold text-white">i<span style={{ color: "#FF6B2B" }}>.</span></span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{item.platform}</p>
+                      <p className="text-xs text-muted-foreground">{item.type}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5 text-xs text-muted-foreground">
+                    <p><strong className="text-foreground">Avatar:</strong> {item.avatar}</p>
+                    <p><strong className="text-foreground">Banner:</strong> {item.banner}</p>
+                    <p><strong className="text-foreground">Handle:</strong> <span className="font-mono">{item.username}</span></p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Bio */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-foreground">Bio / Descrição</h3>
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              A bio deve ser adaptada ao limite de caracteres de cada plataforma, mas sempre manter os elementos essenciais:
+              o que fazemos, para quem e o diferencial.
+            </p>
+            <div className="space-y-4">
+              {[
+                {
+                  label: "Bio Completa (LinkedIn / YouTube)",
+                  chars: "~300 caracteres",
+                  text: "Plataforma de estratégia de mídia para B2B. Diagnóstico heurístico + IA (Gemini & Claude) + benchmark competitivo. Descubra onde investir em mídia paga antes de gastar. Fundada por @Fernando Ramalho | Ecossistema Orientohub.",
+                },
+                {
+                  label: "Bio Média (Instagram)",
+                  chars: "~150 caracteres",
+                  text: "Estratégia de mídia B2B com IA 🎯\nDiagnóstico + Benchmark + Scores por canal\nSaiba onde investir antes de gastar\n🔗 intentia.com.br",
+                },
+                {
+                  label: "Bio Curta (X / Twitter)",
+                  chars: "~80 caracteres",
+                  text: "Estratégia de mídia B2B com IA. Diagnóstico antes do investimento. 🎯",
+                },
+              ].map((item) => (
+                <div key={item.label} className="p-4 rounded-xl border border-border bg-card space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-foreground">{item.label}</p>
+                    <span className="text-xs text-muted-foreground font-mono">{item.chars}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line bg-muted/50 p-3 rounded-lg font-mono text-xs">
+                    {item.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* CTAs */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-foreground">CTAs (Chamadas para Ação)</h3>
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              CTAs padronizados para manter consistência em todos os pontos de contato. Sempre orientados à ação e ao benefício.
+            </p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                { context: "CTA Principal", cta: "Começar Análise Grátis", usage: "Landing page, posts de conversão, bio links" },
+                { context: "CTA Secundário", cta: "Descubra onde investir", usage: "Posts educativos, stories, carrosséis" },
+                { context: "CTA de Autoridade", cta: "Veja o diagnóstico completo", usage: "Cases, demonstrações, webinars" },
+                { context: "CTA de Urgência", cta: "Pare de desperdiçar budget", usage: "Ads, remarketing, email marketing" },
+                { context: "CTA de Prova Social", cta: "+50 marcas já analisaram", usage: "Posts de prova social, landing page" },
+                { context: "CTA de Conteúdo", cta: "Leia o guia completo", usage: "Blog posts, newsletters, threads" },
+              ].map((item) => (
+                <div key={item.context} className="p-4 rounded-xl border border-border bg-card space-y-2">
+                  <p className="text-xs text-primary font-semibold uppercase tracking-wider">{item.context}</p>
+                  <p className="text-sm font-bold text-foreground">"{item.cta}"</p>
+                  <p className="text-xs text-muted-foreground">{item.usage}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Linha Editorial */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-foreground">Linha Editorial — Tópicos Centrais</h3>
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              Todo conteúdo publicado deve orbitar estes pilares temáticos. Cada pilar tem subtópicos que podem ser explorados
+              em diferentes formatos (posts, carrosséis, vídeos, artigos).
+            </p>
+            <div className="space-y-4">
+              {[
+                {
+                  pillar: "Estratégia antes da Mídia",
+                  emoji: "🎯",
+                  color: "border-primary/30 bg-primary/5",
+                  topics: [
+                    "Por que análise estratégica vem antes do investimento em ads",
+                    "Erros comuns de empresas B2B ao investir em mídia paga",
+                    "Como avaliar se sua empresa está pronta para Google/Meta/LinkedIn Ads",
+                    "O custo real de investir sem estratégia",
+                    "Cases de diagnóstico: antes vs. depois",
+                  ],
+                },
+                {
+                  pillar: "Inteligência Artificial Aplicada",
+                  emoji: "🤖",
+                  color: "border-blue-200 bg-blue-50",
+                  topics: [
+                    "Como IA pode potencializar análises de marketing B2B",
+                    "Gemini vs Claude: quando usar cada modelo",
+                    "IA como copiloto estratégico, não substituto",
+                    "Análise semântica de concorrentes com IA",
+                    "O futuro da estratégia de mídia com IA generativa",
+                  ],
+                },
+                {
+                  pillar: "Benchmark e Competitividade",
+                  emoji: "📊",
+                  color: "border-green-200 bg-green-50",
+                  topics: [
+                    "Como fazer benchmark competitivo no B2B",
+                    "Análise SWOT automatizada: o que muda na prática",
+                    "Gap analysis: identificando oportunidades que seus concorrentes ignoram",
+                    "Posicionamento digital: como se diferenciar no seu nicho",
+                    "Métricas que importam vs. métricas de vaidade",
+                  ],
+                },
+                {
+                  pillar: "Canais de Mídia B2B",
+                  emoji: "📢",
+                  color: "border-orange-200 bg-orange-50",
+                  topics: [
+                    "Google Ads para B2B: quando faz sentido investir",
+                    "LinkedIn Ads: o canal mais caro vale a pena?",
+                    "Meta Ads no B2B: mitos e realidades",
+                    "TikTok Ads B2B: tendência ou modismo?",
+                    "Score por canal: como saber onde investir primeiro",
+                  ],
+                },
+                {
+                  pillar: "Produto e Plataforma",
+                  emoji: "🚀",
+                  color: "border-purple-200 bg-purple-50",
+                  topics: [
+                    "Novidades e atualizações da plataforma Intentia",
+                    "Tutoriais e walkthroughs de funcionalidades",
+                    "Bastidores do desenvolvimento (building in public)",
+                    "Roadmap e próximos passos",
+                    "Depoimentos e resultados de clientes",
+                  ],
+                },
+              ].map((item) => (
+                <div key={item.pillar} className={`p-5 rounded-xl border ${item.color} space-y-3`}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{item.emoji}</span>
+                    <p className="text-sm font-bold text-foreground">{item.pillar}</p>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5">
+                    {item.topics.map((topic) => (
+                      <div key={topic} className="flex gap-2">
+                        <div className="w-1 h-1 rounded-full bg-primary mt-2 shrink-0" />
+                        <p className="text-xs text-muted-foreground leading-relaxed">{topic}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Formatos de Conteúdo */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-foreground">Formatos Recomendados</h3>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { format: "Carrossel", platform: "LinkedIn / Instagram", frequency: "2-3x por semana", desc: "Conteúdo educativo com dados e insights visuais." },
+                { format: "Post Texto", platform: "LinkedIn / X", frequency: "Diário", desc: "Reflexões, dicas rápidas, provocações estratégicas." },
+                { format: "Vídeo Curto", platform: "Instagram / TikTok / YouTube Shorts", frequency: "1-2x por semana", desc: "Dicas de 30-60s, demos do produto, bastidores." },
+                { format: "Artigo / Blog", platform: "LinkedIn / Blog", frequency: "Semanal", desc: "Conteúdo aprofundado, guias, análises de mercado." },
+              ].map((item) => (
+                <div key={item.format} className="p-4 rounded-xl border border-border bg-card space-y-2">
+                  <p className="text-sm font-bold text-foreground">{item.format}</p>
+                  <p className="text-xs text-primary font-medium">{item.platform}</p>
+                  <p className="text-xs text-muted-foreground">{item.desc}</p>
+                  <p className="text-xs text-muted-foreground font-mono">Frequência: {item.frequency}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Hashtags */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-foreground">Hashtags Padrão</h3>
+            <div className="p-5 rounded-xl border border-border bg-card space-y-3">
+              <div className="space-y-2">
+                <p className="text-xs text-primary font-semibold uppercase tracking-wider">Marca</p>
+                <div className="flex flex-wrap gap-2">
+                  {["#Intentia", "#IntentiaHub", "#EstratégiaComIA", "#MídiaB2B"].map((tag) => (
+                    <span key={tag} className="inline-flex items-center rounded-full bg-primary/10 text-primary text-xs font-medium px-3 py-1">{tag}</span>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Temáticas</p>
+                <div className="flex flex-wrap gap-2">
+                  {["#MarketingB2B", "#MídiaPaga", "#GoogleAds", "#LinkedInAds", "#MetaAds", "#IAMarketing", "#BenchmarkCompetitivo", "#EstratégiaDigital", "#SaaS", "#GrowthB2B"].map((tag) => (
+                    <span key={tag} className="inline-flex items-center rounded-full bg-muted text-muted-foreground text-xs font-medium px-3 py-1">{tag}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ─── FOOTER ─── */}
         <section className="pt-8 border-t border-border">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
