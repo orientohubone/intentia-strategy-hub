@@ -116,13 +116,17 @@ export async function saveAnalysisResults(
   userId: string,
   analysis: UrlAnalysis
 ): Promise<void> {
-  // 1. Update project score and status
+  const now = new Date().toISOString();
+
+  // 1. Update project score, status and store full heuristic analysis
   const { error: projectError } = await (supabase as any)
     .from("projects")
     .update({
       score: analysis.overallScore,
       status: "completed",
-      last_update: new Date().toISOString(),
+      heuristic_analysis: analysis,
+      heuristic_completed_at: now,
+      last_update: now,
     })
     .eq("id", projectId)
     .eq("user_id", userId);
@@ -181,7 +185,62 @@ export async function saveAnalysisResults(
     }
   }
 
-  // 4. Benchmark is now generated separately via analyzeCompetitors
+}
+
+// =====================================================
+// CREATE NOTIFICATION after heuristic analysis
+// =====================================================
+
+export async function createAnalysisNotification(
+  projectId: string,
+  userId: string,
+  score: number
+): Promise<void> {
+  try {
+    // Get project name
+    const { data: project } = await (supabase as any)
+      .from("projects")
+      .select("name")
+      .eq("id", projectId)
+      .single();
+
+    const projectName = project?.name || "Projeto";
+
+    // Check if user has AI API keys configured
+    const { data: apiKeys } = await (supabase as any)
+      .from("user_api_keys")
+      .select("provider")
+      .eq("user_id", userId)
+      .eq("is_active", true);
+
+    const hasAiKeys = apiKeys && apiKeys.length > 0;
+
+    const message = hasAiKeys
+      ? `Análise heurística de "${projectName}" concluída com score ${score}/100. Você pode agora executar uma análise aprofundada por IA para insights mais detalhados.`
+      : `Análise heurística de "${projectName}" concluída com score ${score}/100. Configure suas API keys em Configurações para habilitar análise por IA.`;
+
+    // Remove previous heuristic notifications for this project to avoid duplicates
+    await (supabase as any)
+      .from("notifications")
+      .delete()
+      .eq("user_id", userId)
+      .eq("title", "Análise Heurística Concluída")
+      .ilike("message", `%"${projectName}"%`);
+
+    await (supabase as any)
+      .from("notifications")
+      .insert({
+        user_id: userId,
+        title: "Análise Heurística Concluída",
+        message,
+        type: "success",
+        read: false,
+        action_url: "/projects",
+        action_text: hasAiKeys ? "Analisar com IA" : "Ver Projeto",
+      });
+  } catch (error) {
+    console.error("Error creating analysis notification:", error);
+  }
 }
 
 // =====================================================

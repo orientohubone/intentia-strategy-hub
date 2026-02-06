@@ -11,6 +11,10 @@ export interface Project {
   competitor_urls: string[];
   score: number;
   status: 'pending' | 'analyzing' | 'completed';
+  heuristic_analysis?: any;
+  heuristic_completed_at?: string;
+  ai_analysis?: any;
+  ai_completed_at?: string;
   last_update: string;
   channel_scores?: {
     google: number;

@@ -1,13 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { useTenantData } from "@/hooks/useTenantData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { analyzeUrl, saveAnalysisResults, analyzeCompetitors, cleanBenchmarks } from "@/lib/urlAnalyzer";
+import type { UrlAnalysis } from "@/lib/urlAnalyzer";
+import { runAiAnalysis, getUserActiveKeys } from "@/lib/aiAnalyzer";
+import type { AiAnalysisResult, UserApiKey } from "@/lib/aiAnalyzer";
+import { exportAsJson, exportAsMarkdown, exportAsHtml, exportAsPdf } from "@/lib/exportAnalysis";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import {
   AlertDialog,
@@ -20,6 +26,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  FileSearch,
+  Sparkles,
+  CheckCircle2,
+  AlertTriangle,
+  TrendingUp,
+  Globe,
+  Shield,
+  Eye,
+  MousePointerClick,
+  FileText,
+  Settings,
+  Download,
+} from "lucide-react";
 
 type Insight = {
   id: string;
@@ -64,6 +84,14 @@ export default function Projects() {
     status: "pending" as "pending" | "analyzing" | "completed",
   });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [hasAiKeys, setHasAiKeys] = useState(false);
+  const [heuristicResults, setHeuristicResults] = useState<Record<string, UrlAnalysis>>({});
+  const [aiResults, setAiResults] = useState<Record<string, AiAnalysisResult>>({});
+  const [aiAnalyzing, setAiAnalyzing] = useState<string | null>(null);
+  const [availableAiModels, setAvailableAiModels] = useState<{ provider: string; model: string; label: string }[]>([]);
+  const [selectedAiModel, setSelectedAiModel] = useState<string>("");
+  const notificationSentRef = useRef<string | null>(null);
+  const aiNotificationSentRef = useRef<string | null>(null);
   const [editingInsightId, setEditingInsightId] = useState<string | null>(null);
   const [editingInsight, setEditingInsight] = useState<Partial<Insight>>({});
   const [insightDraft, setInsightDraft] = useState({
@@ -72,6 +100,41 @@ export default function Projects() {
     description: "",
     action: "",
   });
+
+  const AI_MODEL_LABELS: Record<string, string> = {
+    "gemini-2.0-flash": "Gemini 2.0 Flash",
+    "gemini-3-flash-preview": "Gemini 3 Flash",
+    "gemini-3-pro-preview": "Gemini 3 Pro",
+    "claude-sonnet-4-20250514": "Claude Sonnet 4",
+    "claude-3-7-sonnet-20250219": "Claude 3.7 Sonnet",
+    "claude-3-5-haiku-20241022": "Claude 3.5 Haiku",
+    "claude-3-haiku-20240307": "Claude 3 Haiku",
+    "claude-3-opus-20240229": "Claude 3 Opus",
+  };
+
+  // Check if user has AI API keys configured and load available models
+  useEffect(() => {
+    const checkAiKeys = async () => {
+      if (!user) return;
+      const keys = await getUserActiveKeys(user.id);
+      setHasAiKeys(keys.length > 0);
+
+      const models: { provider: string; model: string; label: string }[] = [];
+      for (const key of keys) {
+        const providerLabel = key.provider === "google_gemini" ? "Gemini" : "Claude";
+        models.push({
+          provider: key.provider,
+          model: key.preferred_model,
+          label: AI_MODEL_LABELS[key.preferred_model] || `${providerLabel} (${key.preferred_model})`,
+        });
+      }
+      setAvailableAiModels(models);
+      if (models.length > 0 && !selectedAiModel) {
+        setSelectedAiModel(`${models[0].provider}::${models[0].model}`);
+      }
+    };
+    checkAiKeys();
+  }, [user]);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -165,6 +228,8 @@ export default function Projects() {
         try {
           const analysis = await analyzeUrl(urlToAnalyze);
           await saveAnalysisResults(projectId, user.id, analysis);
+          // Store heuristic results in local state
+          setHeuristicResults(prev => ({ ...prev, [projectId]: analysis }));
           // Clean old benchmarks for this project before generating new ones
           await cleanBenchmarks(projectId, user.id);
           // Analyze competitors and generate benchmarks
@@ -173,13 +238,29 @@ export default function Projects() {
             await analyzeCompetitors(projectId, user.id, competitorUrls, formState.niche.trim());
           }
           toast.success(`Análise concluída! Score: ${analysis.overallScore}/100`);
+          // Single notification — guarded by ref to prevent duplicates
+          if (notificationSentRef.current !== projectId) {
+            notificationSentRef.current = projectId;
+            await (supabase as any).from("notifications").insert({
+              user_id: user.id,
+              title: "Análise Heurística Concluída",
+              message: `Análise de "${formState.name.trim() || 'Projeto'}" concluída com score ${analysis.overallScore}/100.`,
+              type: "success",
+              read: false,
+              action_url: "/projects",
+              action_text: "Ver Projeto",
+            });
+          }
           await refetch();
+          // Auto-open project management to show heuristic results
+          setTimeout(() => setActiveProjectId(projectId), 300);
         } catch (analysisError: any) {
           console.error("Erro na análise:", analysisError);
           toast.error(`Análise falhou: ${analysisError.message}. Você pode reanalisar depois.`);
           await updateProject(projectId, { status: "pending" });
         } finally {
           setAnalyzing(false);
+          notificationSentRef.current = null;
         }
       }
     } catch (error: any) {
@@ -228,6 +309,8 @@ export default function Projects() {
       toast.info("Reanalisando URL...");
       const analysis = await analyzeUrl(project.url);
       await saveAnalysisResults(projectId, user.id, analysis);
+      // Store heuristic results in local state
+      setHeuristicResults(prev => ({ ...prev, [projectId]: analysis }));
       // Clean old benchmarks for this project
       await cleanBenchmarks(projectId, user.id);
       // Analyze competitors if any
@@ -237,18 +320,88 @@ export default function Projects() {
         await analyzeCompetitors(projectId, user.id, competitors, project.niche);
       }
       toast.success(`Reanálise concluída! Score: ${analysis.overallScore}/100`);
-      await refetch();
-      // Refresh details if this project is active
-      if (activeProjectId === projectId) {
-        setActiveProjectId(null);
-        setTimeout(() => setActiveProjectId(projectId), 100);
+      // Single notification — guarded by ref to prevent duplicates
+      if (notificationSentRef.current !== projectId) {
+        notificationSentRef.current = projectId;
+        await (supabase as any).from("notifications").insert({
+          user_id: user.id,
+          title: "Análise Heurística Concluída",
+          message: `Reanálise de "${project.name}" concluída com score ${analysis.overallScore}/100.`,
+          type: "success",
+          read: false,
+          action_url: "/projects",
+          action_text: "Ver Projeto",
+        });
       }
+      await refetch();
+      // Force re-render of active project details
+      setActiveProjectId(null);
+      setTimeout(() => setActiveProjectId(projectId), 300);
     } catch (error: any) {
       console.error("Erro na reanálise:", error);
       toast.error(`Reanálise falhou: ${error.message}`);
       await updateProject(projectId, { status: "pending" });
     } finally {
       setAnalyzing(false);
+      notificationSentRef.current = null;
+    }
+  };
+
+  const handleAiAnalysis = async (projectId: string) => {
+    const project = projects.find((p) => p.id === projectId);
+    if (!project || !user) return;
+
+    const heuristic = heuristicResults[projectId] || project.heuristic_analysis;
+    if (!heuristic) {
+      toast.error("Dados heurísticos não disponíveis. Reanalize a URL primeiro.");
+      return;
+    }
+
+    // Parse selected model
+    const [provider, model] = selectedAiModel.split("::");
+    if (!provider || !model) {
+      toast.error("Selecione um modelo de IA antes de analisar.");
+      return;
+    }
+
+    setAiAnalyzing(projectId);
+
+    try {
+      const result = await runAiAnalysis(
+        projectId,
+        user.id,
+        project.name,
+        project.niche,
+        project.url,
+        heuristic as UrlAnalysis,
+        provider as "google_gemini" | "anthropic_claude",
+        model
+      );
+
+      setAiResults((prev) => ({ ...prev, [projectId]: result }));
+      toast.success("Análise por IA concluída!");
+
+      // Single notification — guarded by ref to prevent duplicates
+      if (aiNotificationSentRef.current !== projectId) {
+        aiNotificationSentRef.current = projectId;
+        await (supabase as any).from("notifications").insert({
+          user_id: user.id,
+          title: "Análise por IA Concluída",
+          message: `Análise por IA de "${project.name}" concluída. Prontidão para investimento: ${result.investmentReadiness.score}/100.`,
+          type: "success",
+          read: false,
+          action_url: "/projects",
+          action_text: "Ver Resultados",
+        });
+      }
+
+      await refetch();
+    } catch (error: any) {
+      console.error("Erro na análise por IA:", error);
+      toast.error(`Análise por IA falhou: ${error.message}`);
+    } finally {
+      setAiAnalyzing(null);
+      aiNotificationSentRef.current = null;
     }
   };
 
@@ -479,6 +632,358 @@ export default function Projects() {
 
                     {isActive && (
                       <div className="space-y-6">
+                        {/* Heuristic Analysis Results */}
+                        {(heuristicResults[project.id] || project.heuristic_analysis) && (() => {
+                          const ha = (heuristicResults[project.id] || project.heuristic_analysis) as UrlAnalysis;
+                          const scoreItems = [
+                            { label: "Proposta de Valor", value: ha.scores.valueProposition, icon: TrendingUp, color: "text-primary" },
+                            { label: "Clareza da Oferta", value: ha.scores.offerClarity, icon: Eye, color: "text-blue-500" },
+                            { label: "Jornada do Usuário", value: ha.scores.userJourney, icon: MousePointerClick, color: "text-purple-500" },
+                            { label: "SEO", value: ha.scores.seoReadiness, icon: Globe, color: "text-green-500" },
+                            { label: "Conversão", value: ha.scores.conversionOptimization, icon: CheckCircle2, color: "text-amber-500" },
+                            { label: "Conteúdo", value: ha.scores.contentQuality, icon: FileText, color: "text-cyan-500" },
+                          ];
+                          const getScoreColor = (v: number) => v >= 70 ? "text-green-600" : v >= 50 ? "text-yellow-600" : "text-red-500";
+                          const getScoreBg = (v: number) => v >= 70 ? "bg-green-500" : v >= 50 ? "bg-yellow-500" : "bg-red-500";
+
+                          return (
+                            <div className="border border-border rounded-xl p-4 sm:p-6 space-y-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <FileSearch className="h-5 w-5 text-primary" />
+                                  <h3 className="text-base font-semibold text-foreground">Análise Heurística</h3>
+                                  <Badge variant="outline" className="text-xs">
+                                    {project.heuristic_completed_at
+                                      ? new Date(project.heuristic_completed_at).toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+                                      : "Concluída"}
+                                  </Badge>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  {hasAiKeys ? (
+                                    <>
+                                      <Select
+                                        value={selectedAiModel}
+                                        onValueChange={setSelectedAiModel}
+                                        disabled={aiAnalyzing === project.id}
+                                      >
+                                        <SelectTrigger className="h-8 w-[160px] text-xs border-primary/30 bg-primary/5">
+                                          <SelectValue placeholder="Modelo IA" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {availableAiModels.map((m) => (
+                                            <SelectItem key={`${m.provider}::${m.model}`} value={`${m.provider}::${m.model}`} className="text-xs">
+                                              {m.label}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <Button
+                                        size="icon"
+                                        className="h-8 w-8 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 flex-shrink-0"
+                                        disabled={project.status !== "completed" || analyzing || aiAnalyzing === project.id}
+                                        title={project.status !== "completed" ? "Aguardando conclusão da análise heurística" : "Executar análise por IA"}
+                                        onClick={() => handleAiAnalysis(project.id)}
+                                      >
+                                        {aiAnalyzing === project.id ? (
+                                          <div className="relative flex items-center justify-center h-4 w-4">
+                                            <span className="absolute h-1.5 w-1.5 rounded-full bg-primary-foreground animate-lab-bubble"></span>
+                                            <span className="absolute h-1 w-1 rounded-full bg-primary-foreground/80 animate-lab-bubble-delay -translate-x-1"></span>
+                                            <span className="absolute h-1 w-1 rounded-full bg-primary-foreground/60 animate-lab-bubble-delay-2 translate-x-1"></span>
+                                          </div>
+                                        ) : (
+                                          <Sparkles className="h-4 w-4" />
+                                        )}
+                                      </Button>
+                                    </>
+                                  ) : (
+                                    <Button size="sm" variant="ghost" className="gap-1.5 text-muted-foreground" onClick={() => window.location.href = "/settings"}>
+                                      <Settings className="h-4 w-4" />
+                                      Configurar IA
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Score Grid */}
+                              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                                {scoreItems.map((item) => {
+                                  const Icon = item.icon;
+                                  return (
+                                    <div key={item.label} className="bg-muted/50 rounded-lg p-3 text-center space-y-1">
+                                      <Icon className={`h-4 w-4 mx-auto ${item.color}`} />
+                                      <p className={`text-xl font-bold ${getScoreColor(item.value)}`}>{item.value}</p>
+                                      <p className="text-[10px] text-muted-foreground leading-tight">{item.label}</p>
+                                      <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                                        <div className={`h-full rounded-full ${getScoreBg(item.value)}`} style={{ width: `${item.value}%` }} />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Technical & Content Summary */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+                                  <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                                    <Shield className="h-3.5 w-3.5" /> Técnico
+                                  </p>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    <Badge variant={ha.technical.hasHttps ? "default" : "destructive"} className="text-[10px]">
+                                      {ha.technical.hasHttps ? "✓ HTTPS" : "✗ Sem HTTPS"}
+                                    </Badge>
+                                    <Badge variant={ha.technical.hasViewport ? "default" : "destructive"} className="text-[10px]">
+                                      {ha.technical.hasViewport ? "✓ Mobile" : "✗ Sem viewport"}
+                                    </Badge>
+                                    <Badge variant={ha.technical.hasAnalytics ? "default" : "secondary"} className="text-[10px]">
+                                      {ha.technical.hasAnalytics ? "✓ Analytics" : "✗ Sem analytics"}
+                                    </Badge>
+                                    <Badge variant={ha.technical.hasStructuredData ? "default" : "secondary"} className="text-[10px]">
+                                      {ha.technical.hasStructuredData ? "✓ Schema" : "✗ Sem schema"}
+                                    </Badge>
+                                    <Badge variant="outline" className="text-[10px]">
+                                      ⏱ {ha.technical.loadTimeEstimate}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+                                  <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                                    <FileText className="h-3.5 w-3.5" /> Conteúdo
+                                  </p>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    <Badge variant="outline" className="text-[10px]">
+                                      {ha.content.wordCount} palavras
+                                    </Badge>
+                                    <Badge variant="outline" className="text-[10px]">
+                                      {ha.content.ctaCount} CTAs
+                                    </Badge>
+                                    <Badge variant="outline" className="text-[10px]">
+                                      {ha.content.formCount} formulários
+                                    </Badge>
+                                    <Badge variant="outline" className="text-[10px]">
+                                      {ha.content.imageCount} imagens
+                                    </Badge>
+                                    {ha.content.hasVideo && <Badge className="text-[10px]">✓ Vídeo</Badge>}
+                                    {ha.content.hasSocialProof && <Badge className="text-[10px]">✓ Prova social</Badge>}
+                                    {ha.content.hasPricing && <Badge className="text-[10px]">✓ Preços</Badge>}
+                                    {ha.content.hasFAQ && <Badge className="text-[10px]">✓ FAQ</Badge>}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Meta Info */}
+                              {(ha.meta.title || ha.meta.description) && (
+                                <div className="bg-muted/30 rounded-lg p-3 space-y-1">
+                                  {ha.meta.title && (
+                                    <p className="text-xs"><span className="font-medium text-foreground">Título:</span> <span className="text-muted-foreground">{ha.meta.title}</span></p>
+                                  )}
+                                  {ha.meta.description && (
+                                    <p className="text-xs"><span className="font-medium text-foreground">Descrição:</span> <span className="text-muted-foreground">{ha.meta.description.substring(0, 160)}</span></p>
+                                  )}
+                                  {ha.content.h1.length > 0 && (
+                                    <p className="text-xs"><span className="font-medium text-foreground">H1:</span> <span className="text-muted-foreground">{ha.content.h1[0]}</span></p>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* AI Analysis Status / Results */}
+                              {project.status === "completed" && !aiResults[project.id] && !project.ai_analysis && aiAnalyzing !== project.id && (
+                                <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 flex items-center gap-3">
+                                  <Sparkles className="h-5 w-5 text-primary flex-shrink-0" />
+                                  <div className="flex-1">
+                                    <p className="text-xs font-medium text-foreground">Análise por IA disponível</p>
+                                    <p className="text-[11px] text-muted-foreground">
+                                      {hasAiKeys
+                                        ? "Clique em \"Analisar com IA\" para obter insights semânticos aprofundados."
+                                        : "Configure suas API keys em Configurações → Integrações de IA para habilitar."}
+                                    </p>
+                                  </div>
+                                  {!hasAiKeys && (
+                                    <Button size="sm" variant="outline" className="text-xs flex-shrink-0" onClick={() => window.location.href = "/settings"}>
+                                      Configurar
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* AI Analyzing Loading — Lab animation */}
+                              {aiAnalyzing === project.id && (
+                                <div className="rounded-lg border border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 p-4 flex items-center gap-4">
+                                  <div className="relative h-10 w-10 flex items-center justify-center flex-shrink-0">
+                                    <div className="absolute inset-0 rounded-full border-2 border-primary/20"></div>
+                                    <span className="absolute h-2 w-2 rounded-full bg-primary animate-lab-bubble"></span>
+                                    <span className="absolute h-1.5 w-1.5 rounded-full bg-primary/70 animate-lab-bubble-delay -translate-x-1.5"></span>
+                                    <span className="absolute h-1.5 w-1.5 rounded-full bg-primary/50 animate-lab-bubble-delay-2 translate-x-1.5"></span>
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="text-sm font-medium text-foreground">Preparando análise semântica...</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      Processando com {selectedAiModel.split("::")[1] ? (AI_MODEL_LABELS[selectedAiModel.split("::")[1]] || selectedAiModel.split("::")[1]) : "IA"}. Isso pode levar até 30 segundos.
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+
+                        {/* AI Analysis Results Section */}
+                        {(() => {
+                          const ai = aiResults[project.id] || project.ai_analysis as AiAnalysisResult | undefined;
+                          if (!ai) return null;
+
+                          const verdictConfig: Record<string, { label: string; color: string }> = {
+                            recommended: { label: "Recomendado", color: "text-green-600 bg-green-500/10" },
+                            caution: { label: "Cautela", color: "text-yellow-600 bg-yellow-500/10" },
+                            not_recommended: { label: "Não recomendado", color: "text-red-500 bg-red-500/10" },
+                          };
+                          const priorityConfig: Record<string, { label: string; color: string }> = {
+                            high: { label: "Alta", color: "bg-red-500" },
+                            medium: { label: "Média", color: "bg-yellow-500" },
+                            low: { label: "Baixa", color: "bg-blue-500" },
+                          };
+                          const readinessColor = ai.investmentReadiness.score >= 70 ? "text-green-600" : ai.investmentReadiness.score >= 50 ? "text-yellow-600" : "text-red-500";
+
+                          return (
+                            <div className="border border-primary/20 rounded-xl p-4 sm:p-6 space-y-5 bg-primary/[0.02]">
+                              <div className="flex items-center justify-between flex-wrap gap-2">
+                                <div className="flex items-center gap-2">
+                                  <Sparkles className="h-5 w-5 text-primary" />
+                                  <h3 className="text-base font-semibold text-foreground">Análise por IA</h3>
+                                  <Badge variant="outline" className="text-xs">
+                                    {ai.provider === "google_gemini" ? "Gemini" : "Claude"} • {ai.model.split("-").slice(0, 3).join("-")}
+                                  </Badge>
+                                  {ai.analyzedAt && (
+                                    <span className="text-[10px] text-muted-foreground hidden sm:inline">
+                                      {new Date(ai.analyzedAt).toLocaleDateString("pt-BR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  {(() => {
+                                    const ha = heuristicResults[project.id] || project.heuristic_analysis as UrlAnalysis | undefined;
+                                    const exportData = { projectName: project.name, projectUrl: project.url, projectNiche: project.niche, heuristic: ha as UrlAnalysis | undefined, ai };
+                                    return (
+                                      <>
+                                        <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => exportAsJson(exportData)} title="Exportar JSON">
+                                          <Download className="h-3 w-3 mr-1" />JSON
+                                        </Button>
+                                        <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => exportAsMarkdown(exportData)} title="Exportar Markdown">
+                                          MD
+                                        </Button>
+                                        <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => exportAsHtml(exportData)} title="Exportar HTML">
+                                          HTML
+                                        </Button>
+                                        <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => exportAsPdf(exportData)} title="Exportar PDF">
+                                          PDF
+                                        </Button>
+                                      </>
+                                    );
+                                  })()}
+                                </div>
+                              </div>
+
+                              {/* Summary */}
+                              <div className="bg-muted/40 rounded-lg p-3">
+                                <p className="text-sm text-foreground leading-relaxed">{ai.summary}</p>
+                              </div>
+
+                              {/* Investment Readiness */}
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="bg-muted/30 rounded-lg p-3 text-center">
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Prontidão p/ Investimento</p>
+                                  <p className={`text-2xl font-bold ${readinessColor}`}>{ai.investmentReadiness.score}</p>
+                                  <Badge className={`mt-1 text-[10px] ${ai.investmentReadiness.level === "high" ? "bg-green-500" : ai.investmentReadiness.level === "medium" ? "bg-yellow-500" : "bg-red-500"}`}>
+                                    {ai.investmentReadiness.level === "high" ? "Alto" : ai.investmentReadiness.level === "medium" ? "Médio" : "Baixo"}
+                                  </Badge>
+                                </div>
+                                <div className="bg-muted/30 rounded-lg p-3 sm:col-span-2">
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Justificativa</p>
+                                  <p className="text-xs text-foreground leading-relaxed">{ai.investmentReadiness.justification}</p>
+                                </div>
+                              </div>
+
+                              {/* SWOT-like: Strengths, Weaknesses, Opportunities */}
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="bg-green-500/5 border border-green-500/20 rounded-lg p-3 space-y-1.5">
+                                  <p className="text-xs font-semibold text-green-700 dark:text-green-400">Pontos Fortes</p>
+                                  {ai.strengths.map((s, i) => (
+                                    <p key={i} className="text-[11px] text-foreground flex items-start gap-1.5">
+                                      <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span> {s}
+                                    </p>
+                                  ))}
+                                </div>
+                                <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3 space-y-1.5">
+                                  <p className="text-xs font-semibold text-red-700 dark:text-red-400">Fraquezas</p>
+                                  {ai.weaknesses.map((w, i) => (
+                                    <p key={i} className="text-[11px] text-foreground flex items-start gap-1.5">
+                                      <span className="text-red-500 mt-0.5 flex-shrink-0">✗</span> {w}
+                                    </p>
+                                  ))}
+                                </div>
+                                <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-3 space-y-1.5">
+                                  <p className="text-xs font-semibold text-blue-700 dark:text-blue-400">Oportunidades</p>
+                                  {ai.opportunities.map((o, i) => (
+                                    <p key={i} className="text-[11px] text-foreground flex items-start gap-1.5">
+                                      <span className="text-blue-500 mt-0.5 flex-shrink-0">→</span> {o}
+                                    </p>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Channel Recommendations */}
+                              <div className="space-y-2">
+                                <p className="text-xs font-semibold text-foreground">Recomendações por Canal</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  {ai.channelRecommendations.map((ch, i) => {
+                                    const vc = verdictConfig[ch.verdict] || verdictConfig.caution;
+                                    return (
+                                      <div key={i} className="bg-muted/30 rounded-lg p-3 space-y-1.5">
+                                        <div className="flex items-center justify-between">
+                                          <p className="text-xs font-semibold text-foreground">{ch.channel}</p>
+                                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${vc.color}`}>{vc.label}</span>
+                                        </div>
+                                        <p className="text-[11px] text-muted-foreground">{ch.reasoning}</p>
+                                        {ch.suggestedBudgetAllocation && (
+                                          <p className="text-[10px] text-primary font-medium">Budget: {ch.suggestedBudgetAllocation}</p>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              {/* Recommendations */}
+                              <div className="space-y-2">
+                                <p className="text-xs font-semibold text-foreground">Recomendações Estratégicas</p>
+                                <div className="space-y-2">
+                                  {ai.recommendations.map((rec, i) => {
+                                    const pc = priorityConfig[rec.priority] || priorityConfig.medium;
+                                    return (
+                                      <div key={i} className="bg-muted/30 rounded-lg p-3 space-y-1">
+                                        <div className="flex items-center gap-2">
+                                          <span className={`h-2 w-2 rounded-full ${pc.color} flex-shrink-0`}></span>
+                                          <p className="text-xs font-semibold text-foreground">{rec.title}</p>
+                                          <Badge variant="outline" className="text-[9px] ml-auto">{rec.category}</Badge>
+                                        </div>
+                                        <p className="text-[11px] text-muted-foreground pl-4">{rec.description}</p>
+                                        <p className="text-[10px] text-primary font-medium pl-4">Impacto: {rec.expectedImpact}</p>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              {/* Competitive Position */}
+                              {ai.competitivePosition && (
+                                <div className="bg-muted/30 rounded-lg p-3">
+                                  <p className="text-xs font-semibold text-foreground mb-1">Posição Competitiva</p>
+                                  <p className="text-[11px] text-muted-foreground leading-relaxed">{ai.competitivePosition}</p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+
                         {/* Project Score Overview */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                           <div className="bg-muted/50 rounded-xl p-4 text-center">

@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { ScoreRing } from "./ScoreRing";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +24,16 @@ import {
   ExternalLink,
   Maximize2,
   Minimize2,
+  Sparkles,
+  Settings,
+  Download,
+  Shield,
+  Crosshair,
+  Zap,
+  Clock,
 } from "lucide-react";
+import type { BenchmarkAiResult } from "@/lib/aiAnalyzer";
+import { exportBenchmarkAsJson, exportBenchmarkAsMarkdown, exportBenchmarkAsHtml, exportBenchmarkAsPdf } from "@/lib/exportAnalysis";
 
 export interface BenchmarkDetail {
   id: string;
@@ -51,10 +61,23 @@ export interface BenchmarkDetail {
   analysis_date: string;
 }
 
+interface AiModel {
+  provider: string;
+  model: string;
+  label: string;
+}
+
 interface BenchmarkDetailDialogProps {
   benchmark: BenchmarkDetail | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  hasAiKeys?: boolean;
+  availableAiModels?: AiModel[];
+  selectedAiModel?: string;
+  onAiModelChange?: (value: string) => void;
+  onAiAnalysis?: (benchmarkId: string) => void;
+  aiAnalyzing?: string | null;
+  aiResult?: BenchmarkAiResult | null;
 }
 
 const channelNames: Record<string, string> = {
@@ -121,7 +144,29 @@ function SwotSection({
   );
 }
 
-export function BenchmarkDetailDialog({ benchmark, open, onOpenChange }: BenchmarkDetailDialogProps) {
+const AI_MODEL_LABELS: Record<string, string> = {
+  "gemini-2.0-flash": "Gemini 2.0 Flash",
+  "gemini-3-flash-preview": "Gemini 3 Flash",
+  "gemini-3-pro-preview": "Gemini 3 Pro",
+  "claude-sonnet-4-20250514": "Claude Sonnet 4",
+  "claude-3-7-sonnet-20250219": "Claude 3.7 Sonnet",
+  "claude-3-5-haiku-20241022": "Claude 3.5 Haiku",
+  "claude-3-haiku-20240307": "Claude 3 Haiku",
+  "claude-3-opus-20240229": "Claude 3 Opus",
+};
+
+export function BenchmarkDetailDialog({
+  benchmark,
+  open,
+  onOpenChange,
+  hasAiKeys,
+  availableAiModels,
+  selectedAiModel,
+  onAiModelChange,
+  onAiAnalysis,
+  aiAnalyzing,
+  aiResult,
+}: BenchmarkDetailDialogProps) {
   const [fullscreen, setFullscreen] = useState(false);
 
   if (!benchmark) return null;
@@ -310,8 +355,296 @@ export function BenchmarkDetailDialog({ benchmark, open, onOpenChange }: Benchma
               </div>
             </section>
           )}
+
+          {/* AI Enrichment Section */}
+          <section className="border-t border-border pt-5">
+            <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                <h3 className="text-sm font-semibold text-foreground">Enriquecimento por IA</h3>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {hasAiKeys ? (
+                  <>
+                    <Select
+                      value={selectedAiModel || ""}
+                      onValueChange={(v) => onAiModelChange?.(v)}
+                      disabled={aiAnalyzing === b.id}
+                    >
+                      <SelectTrigger className="h-8 w-[160px] text-xs border-primary/30 bg-primary/5">
+                        <SelectValue placeholder="Modelo IA" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(availableAiModels || []).map((m) => (
+                          <SelectItem key={`${m.provider}::${m.model}`} value={`${m.provider}::${m.model}`} className="text-xs">
+                            {m.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      size="icon"
+                      className="h-8 w-8 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 flex-shrink-0"
+                      disabled={aiAnalyzing === b.id}
+                      title="Enriquecer benchmark com IA"
+                      onClick={() => onAiAnalysis?.(b.id)}
+                    >
+                      {aiAnalyzing === b.id ? (
+                        <div className="relative flex items-center justify-center h-4 w-4">
+                          <span className="absolute h-1.5 w-1.5 rounded-full bg-primary-foreground animate-lab-bubble"></span>
+                          <span className="absolute h-1 w-1 rounded-full bg-primary-foreground/80 animate-lab-bubble-delay -translate-x-1"></span>
+                          <span className="absolute h-1 w-1 rounded-full bg-primary-foreground/60 animate-lab-bubble-delay-2 translate-x-1"></span>
+                        </div>
+                      ) : (
+                        <Sparkles className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </>
+                ) : (
+                  <Button size="sm" variant="ghost" className="gap-1.5 text-muted-foreground" onClick={() => window.location.href = "/settings"}>
+                    <Settings className="h-4 w-4" />
+                    Configurar IA
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Lab animation during analysis */}
+            {aiAnalyzing === b.id && (
+              <div className="rounded-lg border border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 p-4 flex items-center gap-4 mb-4">
+                <div className="relative h-10 w-10 flex items-center justify-center flex-shrink-0">
+                  <div className="absolute inset-0 rounded-full border-2 border-primary/20"></div>
+                  <span className="absolute h-2 w-2 rounded-full bg-primary animate-lab-bubble"></span>
+                  <span className="absolute h-1.5 w-1.5 rounded-full bg-primary/70 animate-lab-bubble-delay -translate-x-1.5"></span>
+                  <span className="absolute h-1.5 w-1.5 rounded-full bg-primary/50 animate-lab-bubble-delay-2 translate-x-1.5"></span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">Enriquecendo benchmark com IA...</p>
+                  <p className="text-xs text-muted-foreground">
+                    Processando com {selectedAiModel?.split("::")[1] ? (AI_MODEL_LABELS[selectedAiModel.split("::")[1]] || selectedAiModel.split("::")[1]) : "IA"}. Isso pode levar até 30 segundos.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* AI Results */}
+            {(() => {
+              const ai = aiResult || (b as any).ai_analysis as BenchmarkAiResult | undefined;
+              if (!ai) {
+                if (aiAnalyzing !== b.id) {
+                  return (
+                    <div className="rounded-lg border border-dashed border-muted-foreground/30 bg-muted/20 p-6 text-center">
+                      <Sparkles className="h-6 w-6 text-muted-foreground/50 mx-auto mb-2" />
+                      <p className="text-xs text-muted-foreground">Clique no botão acima para enriquecer este benchmark com análise por IA.</p>
+                    </div>
+                  );
+                }
+                return null;
+              }
+
+              const threatColor = ai.overallVerdict.competitorThreatLevel >= 70 ? "text-red-500" : ai.overallVerdict.competitorThreatLevel >= 40 ? "text-yellow-600" : "text-green-600";
+              const severityConfig: Record<string, { label: string; color: string }> = {
+                high: { label: "Alta", color: "bg-red-500" },
+                medium: { label: "Média", color: "bg-yellow-500" },
+                low: { label: "Baixa", color: "bg-blue-500" },
+              };
+              const priorityConfig: Record<string, { label: string; color: string }> = {
+                high: { label: "Alta", color: "bg-red-500" },
+                medium: { label: "Média", color: "bg-yellow-500" },
+                low: { label: "Baixa", color: "bg-blue-500" },
+              };
+
+              return (
+                <div className="space-y-4">
+                  {/* AI Header */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        {ai.provider === "google_gemini" ? "Gemini" : "Claude"} • {ai.model.split("-").slice(0, 3).join("-")}
+                      </Badge>
+                      {ai.analyzedAt && (
+                        <span className="text-[10px] text-muted-foreground">
+                          {new Date(ai.analyzedAt).toLocaleDateString("pt-BR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {(() => {
+                        const exportData = {
+                          competitorName: b.competitor_name,
+                          competitorUrl: b.competitor_url,
+                          competitorNiche: b.competitor_niche,
+                          projectName: b.project_name,
+                          overallScore: b.overall_score,
+                          scoreGap: b.score_gap,
+                          ai,
+                        };
+                        return (
+                          <>
+                            <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => exportBenchmarkAsJson(exportData)} title="Exportar JSON">
+                              <Download className="h-3 w-3 mr-1" />JSON
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => exportBenchmarkAsMarkdown(exportData)} title="Exportar Markdown">
+                              MD
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => exportBenchmarkAsHtml(exportData)} title="Exportar HTML">
+                              HTML
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => exportBenchmarkAsPdf(exportData)} title="Exportar PDF">
+                              PDF
+                            </Button>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Executive Summary */}
+                  <div className="bg-muted/40 rounded-lg p-3">
+                    <p className="text-sm text-foreground leading-relaxed">{ai.executiveSummary}</p>
+                  </div>
+
+                  {/* Threat Level */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="bg-muted/30 rounded-lg p-3 text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Nível de Ameaça</p>
+                      <p className={cn("text-2xl font-bold", threatColor)}>{ai.overallVerdict.competitorThreatLevel}</p>
+                      <p className="text-[10px] text-muted-foreground">/100</p>
+                    </div>
+                    <div className="bg-muted/30 rounded-lg p-3 sm:col-span-2 flex items-center">
+                      <p className="text-xs text-foreground leading-relaxed">{ai.overallVerdict.summary}</p>
+                    </div>
+                  </div>
+
+                  {/* Competitive Advantages vs Disadvantages */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="rounded-lg border border-green-500/20 bg-green-500/5 p-3 space-y-2">
+                      <div className="flex items-center gap-1.5">
+                        <TrendingUp className="h-4 w-4 text-green-600" />
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-green-700 dark:text-green-400">Vantagens do Concorrente</h4>
+                      </div>
+                      <ul className="space-y-1">
+                        {ai.competitiveAdvantages.map((item, i) => (
+                          <li key={i} className="text-xs text-foreground leading-snug flex items-start gap-1.5">
+                            <span className="mt-0.5 flex-shrink-0 text-green-500">•</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 space-y-2">
+                      <div className="flex items-center gap-1.5">
+                        <TrendingDown className="h-4 w-4 text-red-500" />
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-red-700 dark:text-red-400">Desvantagens do Concorrente</h4>
+                      </div>
+                      <ul className="space-y-1">
+                        {ai.competitiveDisadvantages.map((item, i) => (
+                          <li key={i} className="text-xs text-foreground leading-snug flex items-start gap-1.5">
+                            <span className="mt-0.5 flex-shrink-0 text-red-400">•</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Strategic Gaps */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Crosshair className="h-4 w-4 text-primary" />
+                      <h4 className="text-xs font-semibold uppercase tracking-wider">Gaps Estratégicos</h4>
+                    </div>
+                    <div className="space-y-2">
+                      {ai.strategicGaps.map((gap, i) => (
+                        <div key={i} className="rounded-lg border border-border bg-muted/20 p-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge variant="outline" className="text-[10px]">{gap.area}</Badge>
+                          </div>
+                          <p className="text-xs text-foreground mb-1">{gap.gap}</p>
+                          <p className="text-[11px] text-primary font-medium">→ {gap.recommendation}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Market Positioning */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Target className="h-4 w-4 text-primary" />
+                      <h4 className="text-xs font-semibold uppercase tracking-wider">Posicionamento de Mercado</h4>
+                    </div>
+                    <div className="rounded-lg border border-border bg-muted/30 p-3">
+                      <p className="text-xs text-foreground leading-relaxed">{ai.marketPositioning}</p>
+                    </div>
+                  </div>
+
+                  {/* Differentiation Opportunities */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Lightbulb className="h-4 w-4 text-yellow-500" />
+                      <h4 className="text-xs font-semibold uppercase tracking-wider">Oportunidades de Diferenciação</h4>
+                    </div>
+                    <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-3">
+                      <ul className="space-y-1">
+                        {ai.differentiationOpportunities.map((item, i) => (
+                          <li key={i} className="text-xs text-foreground leading-snug flex items-start gap-1.5">
+                            <span className="mt-0.5 flex-shrink-0 text-yellow-500">💡</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Threat Assessment */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Shield className="h-4 w-4 text-red-500" />
+                      <h4 className="text-xs font-semibold uppercase tracking-wider">Avaliação de Ameaças</h4>
+                    </div>
+                    <div className="space-y-2">
+                      {ai.threatAssessment.map((t, i) => (
+                        <div key={i} className="rounded-lg border border-border bg-muted/20 p-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={cn("h-2 w-2 rounded-full", severityConfig[t.severity]?.color || "bg-gray-400")}></span>
+                            <span className="text-xs font-medium text-foreground">{t.threat}</span>
+                            <Badge variant="secondary" className="text-[10px] ml-auto">{severityConfig[t.severity]?.label || t.severity}</Badge>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">Mitigação: {t.mitigation}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Action Plan */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Zap className="h-4 w-4 text-primary" />
+                      <h4 className="text-xs font-semibold uppercase tracking-wider">Plano de Ação</h4>
+                    </div>
+                    <div className="space-y-2">
+                      {ai.actionPlan.map((a, i) => (
+                        <div key={i} className="rounded-lg border border-primary/10 bg-primary/[0.02] p-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={cn("h-2 w-2 rounded-full", priorityConfig[a.priority]?.color || "bg-gray-400")}></span>
+                            <span className="text-xs font-medium text-foreground flex-1">{a.action}</span>
+                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              {a.timeframe}
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">{a.expectedOutcome}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </section>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+

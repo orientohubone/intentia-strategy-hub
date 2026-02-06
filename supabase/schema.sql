@@ -54,6 +54,10 @@ create table if not exists public.projects (
   competitor_urls text[] default '{}',
   score integer not null default 0,
   status text not null check (status in ('pending', 'analyzing', 'completed')),
+  heuristic_analysis jsonb,
+  heuristic_completed_at timestamptz,
+  ai_analysis jsonb,
+  ai_completed_at timestamptz,
   last_update timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

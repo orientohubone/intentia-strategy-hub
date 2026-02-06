@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { BenchmarkCard } from "@/components/BenchmarkCard";
@@ -11,6 +11,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Search, Filter, TrendingUp, Target, BarChart3, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { getUserActiveKeys, runBenchmarkAiAnalysis } from "@/lib/aiAnalyzer";
+import type { BenchmarkAiResult } from "@/lib/aiAnalyzer";
 
 interface BenchmarkSummary {
   id: string;
@@ -37,7 +40,19 @@ interface Project {
   score: number;
 }
 
+const AI_MODEL_LABELS: Record<string, string> = {
+  "gemini-2.0-flash": "Gemini 2.0 Flash",
+  "gemini-3-flash-preview": "Gemini 3 Flash",
+  "gemini-3-pro-preview": "Gemini 3 Pro",
+  "claude-sonnet-4-20250514": "Claude Sonnet 4",
+  "claude-3-7-sonnet-20250219": "Claude 3.7 Sonnet",
+  "claude-3-5-haiku-20241022": "Claude 3.5 Haiku",
+  "claude-3-haiku-20240307": "Claude 3 Haiku",
+  "claude-3-opus-20240229": "Claude 3 Opus",
+};
+
 export default function Benchmark() {
+  const { user } = useAuth();
   const [benchmarks, setBenchmarks] = useState<BenchmarkSummary[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,9 +63,40 @@ export default function Benchmark() {
   const [selectedBenchmark, setSelectedBenchmark] = useState<BenchmarkDetail | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
+  // AI enrichment state
+  const [hasAiKeys, setHasAiKeys] = useState(false);
+  const [availableAiModels, setAvailableAiModels] = useState<{ provider: string; model: string; label: string }[]>([]);
+  const [selectedAiModel, setSelectedAiModel] = useState<string>("");
+  const [aiAnalyzing, setAiAnalyzing] = useState<string | null>(null);
+  const [aiResults, setAiResults] = useState<Record<string, BenchmarkAiResult>>({});
+  const aiNotificationSentRef = useRef<string | null>(null);
+
   useEffect(() => {
     loadData();
   }, []);
+
+  // Load AI keys
+  useEffect(() => {
+    const loadAiKeys = async () => {
+      if (!user) return;
+      const keys = await getUserActiveKeys(user.id);
+      setHasAiKeys(keys.length > 0);
+      const models: { provider: string; model: string; label: string }[] = [];
+      for (const key of keys) {
+        const providerLabel = key.provider === "google_gemini" ? "Gemini" : "Claude";
+        models.push({
+          provider: key.provider,
+          model: key.preferred_model,
+          label: AI_MODEL_LABELS[key.preferred_model] || `${providerLabel} (${key.preferred_model})`,
+        });
+      }
+      setAvailableAiModels(models);
+      if (models.length > 0 && !selectedAiModel) {
+        setSelectedAiModel(`${models[0].provider}::${models[0].model}`);
+      }
+    };
+    loadAiKeys();
+  }, [user]);
 
   const loadData = async () => {
     try {
@@ -128,6 +174,76 @@ export default function Benchmark() {
       setDetailOpen(true);
     } catch (error: any) {
       toast.error("Erro ao carregar detalhes: " + error.message);
+    }
+  };
+
+  const handleBenchmarkAiAnalysis = async (benchmarkId: string) => {
+    if (!user || !selectedBenchmark) return;
+
+    const [provider, model] = selectedAiModel.split("::");
+    if (!provider || !model) {
+      toast.error("Selecione um modelo de IA antes de analisar.");
+      return;
+    }
+
+    const b = selectedBenchmark;
+    const project = projects.find((p) => p.id === b.project_id);
+
+    setAiAnalyzing(benchmarkId);
+
+    try {
+      const result = await runBenchmarkAiAnalysis(
+        benchmarkId,
+        user.id,
+        {
+          competitorName: b.competitor_name,
+          competitorUrl: b.competitor_url,
+          competitorNiche: b.competitor_niche,
+          overallScore: b.overall_score,
+          valuePropositionScore: b.value_proposition_score,
+          valuePropositionAnalysis: b.value_proposition_analysis,
+          offerClarityScore: b.offer_clarity_score,
+          offerClarityAnalysis: b.offer_clarity_analysis,
+          userJourneyScore: b.user_journey_score,
+          userJourneyAnalysis: b.user_journey_analysis,
+          strengths: b.strengths || [],
+          weaknesses: b.weaknesses || [],
+          opportunities: b.opportunities || [],
+          threats: b.threats || [],
+          channelPresence: b.channel_presence || {},
+          channelEffectiveness: b.channel_effectiveness || {},
+          strategicInsights: b.strategic_insights || "",
+          recommendations: b.recommendations || "",
+          scoreGap: b.score_gap,
+          projectName: b.project_name || project?.name || "Projeto",
+          projectScore: project?.score || 0,
+        },
+        provider as "google_gemini" | "anthropic_claude",
+        model
+      );
+
+      setAiResults((prev) => ({ ...prev, [benchmarkId]: result }));
+      toast.success("Benchmark enriquecido com IA!");
+
+      // Single notification — guarded by ref
+      if (aiNotificationSentRef.current !== benchmarkId) {
+        aiNotificationSentRef.current = benchmarkId;
+        await (supabase as any).from("notifications").insert({
+          user_id: user.id,
+          title: "Benchmark Enriquecido com IA",
+          message: `Análise IA do benchmark "${b.competitor_name}" concluída. Nível de ameaça: ${result.overallVerdict.competitorThreatLevel}/100.`,
+          type: "success",
+          read: false,
+          action_url: "/benchmark",
+          action_text: "Ver Resultados",
+        });
+      }
+    } catch (error: any) {
+      console.error("Erro na análise IA do benchmark:", error);
+      toast.error(`Análise IA falhou: ${error.message}`);
+    } finally {
+      setAiAnalyzing(null);
+      aiNotificationSentRef.current = null;
     }
   };
 
@@ -336,6 +452,13 @@ export default function Benchmark() {
         benchmark={selectedBenchmark}
         open={detailOpen}
         onOpenChange={setDetailOpen}
+        hasAiKeys={hasAiKeys}
+        availableAiModels={availableAiModels}
+        selectedAiModel={selectedAiModel}
+        onAiModelChange={setSelectedAiModel}
+        onAiAnalysis={handleBenchmarkAiAnalysis}
+        aiAnalyzing={aiAnalyzing}
+        aiResult={selectedBenchmark ? aiResults[selectedBenchmark.id] || null : null}
       />
     </div>
   );
