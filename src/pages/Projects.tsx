@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { useTenantData } from "@/hooks/useTenantData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { analyzeUrl, saveAnalysisResults } from "@/lib/urlAnalyzer";
+import { useAuth } from "@/hooks/useAuth";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,17 +42,20 @@ type ChannelScore = {
 const channelList: ChannelScore["channel"][] = ["google", "meta", "linkedin", "tiktok"];
 
 export default function Projects() {
+  const { user } = useAuth();
   const {
     projects,
     loading,
     createProject,
     updateProject,
     deleteProject,
+    refetch,
   } = useTenantData();
 
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [channelScores, setChannelScores] = useState<Record<string, ChannelScore[]>>({});
   const [insights, setInsights] = useState<Record<string, Insight[]>>({});
+  const [analyzing, setAnalyzing] = useState(false);
   const [formState, setFormState] = useState({
     name: "",
     niche: "",
@@ -116,29 +121,51 @@ export default function Projects() {
     }
     
     try {
+      let projectId: string;
+      const urlToAnalyze = formState.url.trim();
+
       if (editingId) {
-        await updateProject(editingId, {
+        const result = await updateProject(editingId, {
           name: formState.name.trim(),
           niche: formState.niche.trim(),
-          url: formState.url.trim(),
-          status: formState.status,
+          url: urlToAnalyze,
+          status: "analyzing",
           last_update: new Date().toISOString(),
         });
-        toast.success("Projeto atualizado com sucesso!");
+        projectId = editingId;
+        toast.success("Projeto atualizado! Iniciando análise da URL...");
       } else {
-        await createProject({
+        const result = await createProject({
           name: formState.name.trim(),
           niche: formState.niche.trim(),
-          url: formState.url.trim(),
+          url: urlToAnalyze,
           score: 0,
-          status: formState.status,
+          status: "analyzing",
           last_update: new Date().toISOString(),
         });
-        toast.success("Projeto criado com sucesso!");
+        projectId = result.id;
+        toast.success("Projeto criado! Iniciando análise da URL...");
       }
 
       setFormState({ name: "", niche: "", url: "", status: "pending" });
       setEditingId(null);
+
+      // Run URL analysis in background
+      if (user) {
+        setAnalyzing(true);
+        try {
+          const analysis = await analyzeUrl(urlToAnalyze);
+          await saveAnalysisResults(projectId, user.id, analysis);
+          toast.success(`Análise concluída! Score: ${analysis.overallScore}/100`);
+          await refetch();
+        } catch (analysisError: any) {
+          console.error("Erro na análise:", analysisError);
+          toast.error(`Análise falhou: ${analysisError.message}. Você pode reanalisar depois.`);
+          await updateProject(projectId, { status: "pending" });
+        } finally {
+          setAnalyzing(false);
+        }
+      }
     } catch (error: any) {
       console.error("Erro ao salvar projeto:", error);
       toast.error(error?.message || "Erro ao salvar projeto. Tente novamente.");
@@ -172,6 +199,32 @@ export default function Projects() {
     await (supabase as any)
       .from("project_channel_scores")
       .upsert(payload, { onConflict: "project_id,channel" });
+  };
+
+  const handleReanalyze = async (projectId: string) => {
+    const project = projects.find((p) => p.id === projectId);
+    if (!project || !user) return;
+
+    setAnalyzing(true);
+    try {
+      await updateProject(projectId, { status: "analyzing" });
+      toast.info("Reanalisando URL...");
+      const analysis = await analyzeUrl(project.url);
+      await saveAnalysisResults(projectId, user.id, analysis);
+      toast.success(`Reanálise concluída! Score: ${analysis.overallScore}/100`);
+      await refetch();
+      // Refresh details if this project is active
+      if (activeProjectId === projectId) {
+        setActiveProjectId(null);
+        setTimeout(() => setActiveProjectId(projectId), 100);
+      }
+    } catch (error: any) {
+      console.error("Erro na reanálise:", error);
+      toast.error(`Reanálise falhou: ${error.message}`);
+      await updateProject(projectId, { status: "pending" });
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   const handleInsightCreate = async (projectId: string) => {
@@ -313,14 +366,26 @@ export default function Projects() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Button type="submit">{editingId ? "Salvar alterações" : "Criar projeto"}</Button>
+                <Button type="submit" disabled={analyzing}>
+                  {analyzing ? (
+                    <>
+                      <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2"></span>
+                      Analisando URL...
+                    </>
+                  ) : editingId ? "Salvar alterações" : "Criar projeto e analisar URL"}
+                </Button>
                 {editingId && (
-                  <Button type="button" variant="outline" onClick={() => {
+                  <Button type="button" variant="outline" disabled={analyzing} onClick={() => {
                     setEditingId(null);
                     setFormState({ name: "", niche: "", url: "", status: "pending" });
                   }}>
                     Cancelar
                   </Button>
+                )}
+                {analyzing && (
+                  <span className="text-sm text-muted-foreground">
+                    Analisando proposta de valor, clareza, jornada e canais...
+                  </span>
                 )}
               </div>
             </form>
@@ -345,6 +410,9 @@ export default function Projects() {
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <Button size="sm" variant="outline" onClick={() => startEdit(project.id)}>Editar</Button>
+                        <Button size="sm" variant="outline" onClick={() => handleReanalyze(project.id)} disabled={analyzing}>
+                          {analyzing ? "Analisando..." : "Reanalisar URL"}
+                        </Button>
                         <Button size="sm" variant="outline" onClick={() => setActiveProjectId(isActive ? null : project.id)}>
                           {isActive ? "Fechar" : "Gerenciar"}
                         </Button>

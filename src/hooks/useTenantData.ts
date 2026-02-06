@@ -101,7 +101,7 @@ export function useTenantData() {
           user_id: user.id,
           company_name: userData.user.user_metadata.company_name || 'Default Company',
           plan: 'starter',
-          monthly_analyses_limit: 1,
+          monthly_analyses_limit: 5,
           analyses_used: 0,
         })
         .select()
