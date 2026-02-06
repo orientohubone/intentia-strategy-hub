@@ -14,10 +14,186 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      tenant_settings: {
+        Row: {
+          id: string
+          user_id: string
+          company_name: string
+          plan: "starter" | "professional" | "enterprise"
+          monthly_analyses_limit: number
+          analyses_used: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database["public"]["Tables"]["tenant_settings"]["Row"], "id" | "created_at" | "updated_at">
+        Update: Partial<Database["public"]["Tables"]["tenant_settings"]["Insert"]>
+      }
+      projects: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          niche: string
+          url: string
+          score: number
+          status: "pending" | "analyzing" | "completed"
+          last_update: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database["public"]["Tables"]["projects"]["Row"], "id" | "created_at" | "updated_at">
+        Update: Partial<Database["public"]["Tables"]["projects"]["Insert"]>
+      }
+      project_channel_scores: {
+        Row: {
+          id: string
+          project_id: string
+          user_id: string
+          channel: "google" | "meta" | "linkedin" | "tiktok"
+          score: number
+          objective: string | null
+          funnel_role: string | null
+          is_recommended: boolean
+          risks: string[] | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database["public"]["Tables"]["project_channel_scores"]["Row"], "id" | "created_at" | "updated_at">
+        Update: Partial<Database["public"]["Tables"]["project_channel_scores"]["Insert"]>
+      }
+      insights: {
+        Row: {
+          id: string
+          project_id: string
+          user_id: string
+          type: "warning" | "opportunity" | "improvement"
+          title: string
+          description: string
+          action: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database["public"]["Tables"]["insights"]["Row"], "id" | "created_at" | "updated_at">
+        Update: Partial<Database["public"]["Tables"]["insights"]["Insert"]>
+      }
+      audiences: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          description: string
+          industry: string | null
+          company_size: "startup" | "small" | "medium" | "large" | "enterprise" | null
+          location: string | null
+          keywords: string[]
+          project_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database["public"]["Tables"]["audiences"]["Row"], "id" | "created_at" | "updated_at">
+        Update: Partial<Database["public"]["Tables"]["audiences"]["Insert"]>
+      }
+      benchmarks: {
+        Row: {
+          id: string
+          user_id: string
+          project_id: string
+          competitor_name: string
+          competitor_url: string
+          competitor_niche: string
+          overall_score: number
+          value_proposition_score: number
+          offer_clarity_score: number
+          user_journey_score: number
+          value_proposition_analysis: string | null
+          offer_clarity_analysis: string | null
+          user_journey_analysis: string | null
+          channel_presence: Json
+          channel_effectiveness: Json
+          strengths: string[]
+          weaknesses: string[]
+          opportunities: string[]
+          threats: string[]
+          strategic_insights: string | null
+          recommendations: string | null
+          analysis_date: string
+          last_update: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database["public"]["Tables"]["benchmarks"]["Row"], "id" | "created_at" | "updated_at" | "analysis_date">
+        Update: Partial<Database["public"]["Tables"]["benchmarks"]["Insert"]>
+      }
     }
     Views: {
-      [_ in never]: never
+      v_project_summary: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          niche: string
+          url: string
+          score: number
+          status: "pending" | "analyzing" | "completed"
+          last_update: string | null
+          created_at: string
+          updated_at: string
+          channel_scores: Json
+        }
+        Insert: never
+        Update: never
+      }
+      v_dashboard_stats: {
+        Row: {
+          user_id: string
+          total_projects: number
+          completed_projects: number
+          analyzing_projects: number
+          pending_projects: number
+          average_score: number
+          last_project_update: string | null
+        }
+        Insert: never
+        Update: never
+      }
+      v_benchmark_summary: {
+        Row: {
+          id: string
+          user_id: string
+          project_id: string
+          project_name: string
+          competitor_name: string
+          competitor_url: string
+          competitor_niche: string
+          overall_score: number
+          value_proposition_score: number
+          offer_clarity_score: number
+          user_journey_score: number
+          channel_presence: Json
+          strengths: string[]
+          weaknesses: string[]
+          analysis_date: string
+          created_at: string
+          updated_at: string
+          score_gap: number
+        }
+        Insert: never
+        Update: never
+      }
+      v_benchmark_stats: {
+        Row: {
+          user_id: string
+          project_id: string
+          total_competitors: number
+          avg_competitor_score: number
+          max_competitor_score: number
+          min_competitor_score: number
+          score_range: number
+          top_competitors: string[]
+        }
+        Insert: never
+        Update: never
+      }
     }
     Functions: {
       [_ in never]: never

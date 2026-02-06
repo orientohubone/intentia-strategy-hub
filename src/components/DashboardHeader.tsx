@@ -15,6 +15,7 @@ export function DashboardHeader() {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join("") || "U";
+  const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
 
   return (
     <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between">
@@ -43,7 +44,7 @@ export function DashboardHeader() {
 
         <div className="flex items-center gap-3 pl-4 border-l border-border">
           <Avatar className="h-9 w-9">
-            <AvatarImage src="" />
+            <AvatarImage src={avatarUrl} />
             <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
               {initials}
             </AvatarFallback>
