@@ -100,18 +100,17 @@ export function DashboardSidebar() {
       {/* Logo */}
       <div className="p-4 flex items-center justify-between border-b border-sidebar-border relative">
         {!collapsed && (
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">I</span>
-            </div>
-            <span className="font-semibold text-sidebar-foreground">Intentia</span>
-          </div>
+          <span className="text-lg font-extrabold tracking-tight text-sidebar-foreground">
+            intentia<span className="text-primary">.</span>
+          </span>
         )}
         {collapsed && (
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center mx-auto cursor-pointer hover:bg-primary/80 transition-colors" 
+          <div className="mx-auto cursor-pointer" 
                onClick={() => setCollapsed(false)}
                title="Abrir Menu - Intentia Strategy Hub">
-            <span className="text-primary-foreground font-bold text-sm">I</span>
+            <span className="text-lg font-extrabold tracking-tight text-sidebar-foreground">
+              i<span className="text-primary">.</span>
+            </span>
           </div>
         )}
         {!collapsed && (

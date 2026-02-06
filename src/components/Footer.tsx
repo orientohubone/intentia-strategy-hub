@@ -7,12 +7,9 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           {/* Company Info */}
           <div className="space-y-4 sm:col-span-2 lg:col-span-1">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">I</span>
-              </div>
-              <span className="font-bold text-xl text-foreground">Intentia</span>
-            </div>
+            <span className="text-2xl font-extrabold tracking-tight text-foreground">
+              intentia<span className="text-primary">.</span>
+            </span>
             <p className="text-sm text-muted-foreground max-w-xs">
               Plataforma de estratégia de mídia para B2B. Ajudamos empresas a tomar decisões inteligentes sobre investimentos em marketing digital.
             </p>
@@ -99,18 +96,18 @@ export function Footer() {
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li className="flex items-center space-x-2">
                 <Mail className="h-4 w-4 flex-shrink-0" />
-                <span className="break-all">contato@intentia.com.br</span>
+                <span className="break-all">intentia@orientohub.com.br</span>
               </li>
               <li className="flex items-center space-x-2">
                 <Phone className="h-4 w-4 flex-shrink-0" />
-                <span>+55 (11) 9999-8888</span>
+                <span>+55 (14) 99861-8547</span>
               </li>
               <li className="flex items-start space-x-2">
                 <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
                 <span>
-                  Av. Paulista, 1000
+                  Rua Eduardo Paulo de Souza, 296
                   <br />
-                  São Paulo, SP 01310-100
+                  Pompeia, SP 17584-284
                 </span>
               </li>
             </ul>
@@ -120,7 +117,10 @@ export function Footer() {
         {/* Bottom section */}
         <div className="mt-12 pt-8 border-t border-orange-200">
           <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-            <div className="text-sm text-muted-foreground">© 2024 Intentia Strategy Hub. Todos os direitos reservados.</div>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <div>© 2026 Intentia. Estratégia antes da mídia.</div>
+              <div>Uma solução do ecossistema <a href="https://orientohub.com.br" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">orientohub.com.br</a></div>
+            </div>
             <div className="flex flex-wrap justify-center sm:justify-end gap-x-6 gap-y-2 text-sm">
               <a href="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors">
                 Política de Privacidade

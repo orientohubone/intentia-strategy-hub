@@ -23,6 +23,7 @@ import Benchmark from "./pages/Benchmark";
 import Settings from "./pages/Settings";
 import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
+import BrandGuide from "./pages/BrandGuide";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ForceLightMode } from "@/components/ForceLightMode";
 
@@ -47,6 +48,7 @@ const App = () => (
           <Route path="/privacy-policy" element={<ForceLightMode><PrivacyPolicy /></ForceLightMode>} />
           <Route path="/terms-of-service" element={<ForceLightMode><TermsOfService /></ForceLightMode>} />
           <Route path="/cookie-policy" element={<ForceLightMode><CookiePolicy /></ForceLightMode>} />
+          <Route path="/brand" element={<ForceLightMode><BrandGuide /></ForceLightMode>} />
           <Route 
             path="/dashboard" 
             element={

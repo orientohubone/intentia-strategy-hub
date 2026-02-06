@@ -17,20 +17,20 @@ const contactInfo = [
   {
     icon: Mail,
     title: "Email",
-    content: "contato@intentia.com.br",
+    content: "intentia@orientohub.com.br",
     description: "Respondemos em até 24h úteis"
   },
   {
     icon: Phone,
     title: "Telefone",
-    content: "+55 (11) 9999-8888",
+    content: "+55 (14) 99861-8547",
     description: "Seg a Sex, 9h às 18h"
   },
   {
     icon: MapPin,
     title: "Endereço",
-    content: "Av. Paulista, 1000 - 14º andar",
-    description: "São Paulo, SP 01310-100"
+    content: "Rua Eduardo Paulo de Souza, 296",
+    description: "Pompeia, SP 17584-284"
   },
   {
     icon: Clock,

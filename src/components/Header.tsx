@@ -34,12 +34,9 @@ const menuCategories = [
 
 function Logo() {
   return (
-    <div className="flex items-center gap-2">
-      <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-        <span className="text-primary-foreground font-bold text-lg">I</span>
-      </div>
-      <span className="font-bold text-xl text-foreground">Intentia</span>
-    </div>
+    <span className="text-2xl font-extrabold tracking-tight text-foreground">
+      intentia<span className="text-primary">.</span>
+    </span>
   );
 }
 

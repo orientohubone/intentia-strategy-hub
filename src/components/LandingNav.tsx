@@ -19,12 +19,9 @@ export function LandingNav() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold">I</span>
-            </div>
-            <span className="font-bold text-xl text-foreground">Intentia</span>
-          </div>
+          <span className="text-xl font-extrabold tracking-tight text-foreground">
+            intentia<span className="text-primary">.</span>
+          </span>
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8">

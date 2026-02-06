@@ -14,44 +14,66 @@ import {
   CheckCircle2,
   Zap,
   Users,
-  TrendingUp
+  TrendingUp,
+  Sparkles,
+  FileText,
+  FileSpreadsheet,
+  Globe,
+  Eye,
+  MousePointerClick,
+  Brain,
+  RefreshCw,
 } from "lucide-react";
 
 const features = [
   {
     icon: Target,
-    title: "Diagnóstico de URL",
-    description: "Analise automaticamente proposta de valor, clareza da oferta e jornada do usuário.",
+    title: "Diagnóstico Heurístico de URL",
+    description: "Análise automática de proposta de valor, clareza da oferta, jornada do usuário, SEO, conversão e qualidade de conteúdo — tudo em segundos.",
+  },
+  {
+    icon: Sparkles,
+    title: "Análise por IA (Gemini & Claude)",
+    description: "Enriqueça seus diagnósticos com inteligência artificial. Use sua própria API key do Google Gemini ou Anthropic Claude para insights aprofundados.",
   },
   {
     icon: BarChart3,
-    title: "Benchmark Estratégico",
-    description: "Compare seu posicionamento com concorrentes e identifique gaps de mercado.",
+    title: "Benchmark Competitivo com IA",
+    description: "Compare seu posicionamento com concorrentes via análise SWOT, gap analysis e enriquecimento por IA com vantagens, ameaças e plano de ação.",
   },
   {
     icon: Lightbulb,
-    title: "Score por Canal",
-    description: "Saiba se Google, Meta, LinkedIn ou TikTok são adequados para seu negócio.",
+    title: "Score por Canal de Mídia",
+    description: "Scores individuais para Google, Meta, LinkedIn e TikTok Ads com objetivos recomendados, riscos identificados e nível de recomendação.",
   },
   {
     icon: Shield,
-    title: "Alertas Estratégicos",
-    description: "Receba avisos quando o investimento em mídia for prematuro ou arriscado.",
+    title: "Alertas e Insights Estratégicos",
+    description: "Insights automáticos agrupados por projeto: alertas de risco, oportunidades de mercado e melhorias sugeridas com ações práticas.",
+  },
+  {
+    icon: FileText,
+    title: "Relatórios PDF e Exportação CSV",
+    description: "Relatórios consolidados por projeto em PDF, exportação por seção e dados em CSV para análise externa. Tudo pronto para apresentar ao cliente.",
   },
 ];
 
 const steps = [
-  { number: "01", title: "Crie seu projeto", description: "Insira a URL e defina o nicho do seu negócio B2B." },
-  { number: "02", title: "Defina públicos", description: "Mapeie dores, nível de consciência e decisores." },
-  { number: "03", title: "Analise concorrentes", description: "Compare posicionamento e identifique oportunidades." },
-  { number: "04", title: "Receba o Score", description: "Veja a prontidão estratégica de cada canal de mídia." },
+  { number: "01", title: "Crie seu projeto", description: "Insira a URL do seu negócio B2B, defina o nicho e adicione URLs de concorrentes." },
+  { number: "02", title: "Análise heurística automática", description: "Em segundos, receba scores de proposta de valor, clareza, jornada, SEO, conversão e conteúdo." },
+  { number: "03", title: "Enriqueça com IA", description: "Ative a análise por Gemini ou Claude para obter resumo executivo, SWOT, prontidão e recomendações por canal." },
+  { number: "04", title: "Compare com concorrentes", description: "Benchmarks automáticos com SWOT, gap analysis e enriquecimento por IA para cada concorrente." },
+  { number: "05", title: "Mapeie públicos-alvo", description: "Defina audiências com indústria, porte, localização e keywords para refinar sua estratégia." },
+  { number: "06", title: "Exporte e apresente", description: "Gere relatórios PDF consolidados, exporte dados em CSV e compartilhe insights com seu time." },
 ];
 
 const benefits = [
   "Evite desperdício de budget em canais inadequados",
-  "Tome decisões baseadas em dados, não intuição",
-  "Identifique o momento certo de investir",
+  "Tome decisões baseadas em dados e IA, não intuição",
+  "Identifique o momento certo de investir em cada canal",
   "Alinhe estratégia antes de criar campanhas",
+  "Compare seu posicionamento com concorrentes em tempo real",
+  "Gere relatórios profissionais para apresentar ao cliente",
 ];
 
 export default function Landing() {
@@ -77,8 +99,8 @@ export default function Landing() {
             </h1>
             
             <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: "0.1s" }}>
-              Avalie a prontidão estratégica do seu negócio para Google, Meta, LinkedIn e TikTok Ads. 
-              Decisão inteligente antes da execução.
+              Diagnóstico heurístico + inteligência artificial + benchmark competitivo. 
+              Avalie a prontidão do seu negócio B2B para Google, Meta, LinkedIn e TikTok Ads antes de investir.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: "0.2s" }}>
@@ -96,7 +118,7 @@ export default function Landing() {
           <div className="mt-16 relative animate-scale-in" style={{ animationDelay: "0.3s" }}>
             <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-10 pointer-events-none" />
             <div className="bg-card rounded-2xl border border-border shadow-xl overflow-hidden max-w-5xl mx-auto">
-              <div className="p-6 border-b border-border flex items-center gap-4">
+              <div className="p-4 sm:p-6 border-b border-border flex items-center gap-4">
                 <div className="flex gap-2">
                   <div className="w-3 h-3 rounded-full bg-destructive/50" />
                   <div className="w-3 h-3 rounded-full bg-warning/50" />
@@ -104,23 +126,48 @@ export default function Landing() {
                 </div>
                 <div className="flex-1 h-8 bg-muted rounded-lg" />
               </div>
-              <div className="p-8 grid grid-cols-4 gap-6">
-                <div className="col-span-4 flex items-center justify-between p-6 bg-muted/50 rounded-xl">
+              <div className="p-4 sm:p-8 space-y-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-6 bg-muted/50 rounded-xl">
                   <div>
-                    <h3 className="font-semibold text-foreground text-lg">SaaS CRM Pro</h3>
-                    <p className="text-sm text-muted-foreground">Análise estratégica completa</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-foreground text-lg">SaaS CRM Pro</h3>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                        <Sparkles className="h-3 w-3" /> IA Analisado
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Diagnóstico heurístico + análise por IA completa</p>
                   </div>
                   <ScoreRing score={72} size="lg" label="Score Estratégico" />
                 </div>
-                {["Google Ads", "Meta Ads", "LinkedIn Ads", "TikTok Ads"].map((channel, i) => (
-                  <div key={channel} className="p-4 bg-muted/30 rounded-lg text-center">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-2">
-                      <BarChart3 className="h-5 w-5 text-primary" />
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                  {[
+                    { label: "Proposta de Valor", score: 78, icon: TrendingUp },
+                    { label: "Clareza", score: 65, icon: Eye },
+                    { label: "Jornada", score: 70, icon: MousePointerClick },
+                    { label: "SEO", score: 82, icon: Globe },
+                    { label: "Conversão", score: 58, icon: CheckCircle2 },
+                    { label: "Conteúdo", score: 74, icon: FileText },
+                  ].map((item) => (
+                    <div key={item.label} className="p-3 bg-muted/30 rounded-lg text-center">
+                      <item.icon className="h-4 w-4 text-primary mx-auto mb-1.5" />
+                      <p className="text-xs font-medium text-muted-foreground mb-1">{item.label}</p>
+                      <p className="text-xl font-bold text-foreground">{item.score}</p>
                     </div>
-                    <p className="text-sm font-medium text-foreground">{channel}</p>
-                    <p className="text-2xl font-bold text-foreground mt-1">{[78, 65, 82, 45][i]}</p>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { channel: "Google Ads", score: 78, color: "text-blue-500" },
+                    { channel: "Meta Ads", score: 65, color: "text-blue-600" },
+                    { channel: "LinkedIn Ads", score: 82, color: "text-sky-600" },
+                    { channel: "TikTok Ads", score: 45, color: "text-gray-800" },
+                  ].map((item) => (
+                    <div key={item.channel} className="p-3 bg-muted/30 rounded-lg text-center">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">{item.channel}</p>
+                      <p className={`text-2xl font-bold ${item.color}`}>{item.score}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -131,22 +178,25 @@ export default function Landing() {
       <section id="features" className="py-20 bg-secondary/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
+            <span className="inline-block px-4 py-1 rounded-full bg-accent text-accent-foreground text-sm font-medium mb-4">
+              Funcionalidades
+            </span>
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-              Decisão estratégica, não operacional
+              Tudo que você precisa para decidir com inteligência
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Intentia é a camada de inteligência que vem antes de qualquer campanha de mídia paga.
+              Da análise heurística à inteligência artificial, do benchmark competitivo ao relatório final — uma plataforma completa para estratégia de mídia B2B.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, i) => (
-              <div key={i} className="card-elevated p-6 text-center group">
-                <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center mx-auto mb-4 group-hover:bg-primary transition-colors">
+              <div key={i} className="card-elevated p-6 group">
+                <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center mb-4 group-hover:bg-primary transition-colors">
                   <feature.icon className="h-6 w-6 text-primary group-hover:text-primary-foreground transition-colors" />
                 </div>
                 <h3 className="font-semibold text-foreground mb-2">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground">{feature.description}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -161,23 +211,93 @@ export default function Landing() {
               Como Funciona
             </span>
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-              Da URL à decisão estratégica em <span className="text-primary">4 passos</span>
+              Da URL ao relatório estratégico em <span className="text-primary">6 passos</span>
             </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Um fluxo completo que combina análise automática, inteligência artificial e benchmark competitivo.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {steps.map((step, i) => (
               <div key={i} className="relative">
-                {i < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-8 left-full w-full h-0.5 bg-border -translate-x-1/2 z-0" />
-                )}
                 <div className="relative z-10">
                   <span className="text-5xl font-bold text-primary/20">{step.number}</span>
                   <h3 className="font-semibold text-foreground mt-2 mb-2">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground">{step.description}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* AI Section */}
+      <section className="py-20 bg-secondary/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <span className="inline-block px-4 py-1 rounded-full bg-accent text-accent-foreground text-sm font-medium mb-4">
+                Inteligência Artificial
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
+                Sua própria IA, seus próprios insights
+              </h2>
+              <p className="text-lg text-muted-foreground mb-6">
+                Conecte sua API key do Google Gemini ou Anthropic Claude e desbloqueie análises semânticas profundas — 
+                sem custo adicional da plataforma. Você paga apenas o que consumir direto na API.
+              </p>
+              <div className="space-y-4">
+                {[
+                  { title: "Análise de Projetos", desc: "Resumo executivo, prontidão para investimento, SWOT, recomendações por canal e posição competitiva." },
+                  { title: "Enriquecimento de Benchmark", desc: "Vantagens e desvantagens competitivas, gaps estratégicos, oportunidades de diferenciação e plano de ação." },
+                  { title: "Exportação completa", desc: "Exporte resultados da IA em JSON, Markdown, HTML estilizado ou PDF — para projetos e benchmarks." },
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                      <p className="text-sm text-muted-foreground">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="card-elevated p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <Sparkles className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Google Gemini</p>
+                    <p className="text-xs text-muted-foreground">Gemini 2.0 Flash · 3 Flash Preview · 3 Pro Preview</p>
+                  </div>
+                </div>
+              </div>
+              <div className="card-elevated p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                    <Brain className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Anthropic Claude</p>
+                    <p className="text-xs text-muted-foreground">Claude Sonnet 4 · Sonnet 3.7 · Haiku 3.5 · Opus 3</p>
+                  </div>
+                </div>
+              </div>
+              <div className="card-elevated p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                    <Shield className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Suas chaves, seu controle</p>
+                    <p className="text-xs text-muted-foreground">API keys armazenadas com segurança por usuário</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -188,13 +308,14 @@ export default function Landing() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-                Pare de desperdiçar budget em canais errados
+                Estratégia antes da mídia
               </h2>
               <p className="text-lg opacity-90 mb-8">
                 A maioria das empresas B2B investe em mídia paga sem validar se estão prontas estrategicamente. 
-                Com Intentia, você toma decisões inteligentes.
+                Com Intentia, você combina análise heurística, inteligência artificial e benchmark competitivo 
+                para tomar decisões fundamentadas.
               </p>
-              <ul className="space-y-4">
+              <ul className="space-y-3">
                 {benefits.map((benefit, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
@@ -205,24 +326,24 @@ export default function Landing() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-primary-foreground/10 rounded-xl p-6 text-center">
-                <TrendingUp className="h-8 w-8 mx-auto mb-3" />
-                <p className="text-3xl font-bold">40%</p>
-                <p className="text-sm opacity-80">Redução de desperdício</p>
-              </div>
-              <div className="bg-primary-foreground/10 rounded-xl p-6 text-center">
                 <Target className="h-8 w-8 mx-auto mb-3" />
-                <p className="text-3xl font-bold">3x</p>
-                <p className="text-sm opacity-80">Melhor alocação</p>
+                <p className="text-3xl font-bold">6</p>
+                <p className="text-sm opacity-80">Scores por URL</p>
               </div>
               <div className="bg-primary-foreground/10 rounded-xl p-6 text-center">
-                <Users className="h-8 w-8 mx-auto mb-3" />
-                <p className="text-3xl font-bold">500+</p>
-                <p className="text-sm opacity-80">Empresas B2B</p>
+                <BarChart3 className="h-8 w-8 mx-auto mb-3" />
+                <p className="text-3xl font-bold">4</p>
+                <p className="text-sm opacity-80">Canais de mídia</p>
               </div>
               <div className="bg-primary-foreground/10 rounded-xl p-6 text-center">
-                <Lightbulb className="h-8 w-8 mx-auto mb-3" />
-                <p className="text-3xl font-bold">24h</p>
-                <p className="text-sm opacity-80">Análise completa</p>
+                <Sparkles className="h-8 w-8 mx-auto mb-3" />
+                <p className="text-3xl font-bold">8+</p>
+                <p className="text-sm opacity-80">Modelos de IA</p>
+              </div>
+              <div className="bg-primary-foreground/10 rounded-xl p-6 text-center">
+                <FileText className="h-8 w-8 mx-auto mb-3" />
+                <p className="text-3xl font-bold">5</p>
+                <p className="text-sm opacity-80">Formatos de export</p>
               </div>
             </div>
           </div>
@@ -270,10 +391,10 @@ export default function Landing() {
               <p className="text-sm mb-4 opacity-90">Para empresas que levam marketing a sério</p>
               <ul className="space-y-3 text-sm mb-6">
                 <li>✓ Análises ilimitadas de URLs</li>
-                <li>✓ Score avançado por canal</li>
-                <li>✓ Benchmark competitivo</li>
-                <li>✓ Alertas estratégicos em tempo real</li>
-                <li>✓ Relatórios detalhados</li>
+                <li>✓ Análise por IA (Gemini & Claude)</li>
+                <li>✓ Benchmark competitivo com IA</li>
+                <li>✓ Relatórios PDF e exportação CSV</li>
+                <li>✓ Insights e alertas estratégicos</li>
               </ul>
               <Button variant="secondary" className="w-full" onClick={() => navigate('/pricing')}>
                 Ver Detalhes
@@ -288,8 +409,8 @@ export default function Landing() {
               <ul className="space-y-3 text-sm text-muted-foreground mb-6">
                 <li>✓ Tudo do Professional</li>
                 <li>✓ API access completo</li>
-                <li>✓ White label</li>
                 <li>✓ SLA dedicado</li>
+                <li>✓ Consultoria estratégica</li>
               </ul>
               <Button variant="outline" className="w-full" onClick={() => navigate('/pricing')}>
                 Falar com Vendas
@@ -313,10 +434,10 @@ export default function Landing() {
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            Pronto para decidir com inteligência?
+            Pronto para investir com inteligência?
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Comece sua análise estratégica gratuita e descubra os melhores canais para seu negócio B2B.
+            Crie seu primeiro projeto, analise sua URL e descubra em segundos quais canais de mídia são ideais para seu negócio B2B.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button variant="hero" size="xl" onClick={() => navigate('/auth')}>

@@ -92,8 +92,15 @@ export default function Auth() {
       {/* Left: Form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-16 lg:px-20 py-12 bg-white">
         <div className="w-full max-w-md mx-auto">
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <span className="text-4xl font-extrabold tracking-tight text-gray-900">
+              intentia<span className="text-primary">.</span>
+            </span>
+          </div>
+
           {/* Title */}
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-10 text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-8 text-center">
             {mode === "signin" ? "Sign In" : "Sign Up"}
           </h1>
 

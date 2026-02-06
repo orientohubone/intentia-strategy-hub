@@ -28,7 +28,7 @@ const plans = [
   },
   {
     name: "Professional",
-    price: "R$ 97/mês",
+    price: "R$ 97",
     description: "Para empresas que levam marketing a sério",
     features: [
       "Análises ilimitadas de URLs",
@@ -40,8 +40,7 @@ const plans = [
       "Exportação de dados"
     ],
     notIncluded: [
-      "API access",
-      "White label"
+      "API access"
     ],
     cta: "Assinar Agora",
     popular: true
@@ -53,7 +52,6 @@ const plans = [
     features: [
       "Tudo do Professional",
       "API access completo",
-      "White label",
       "SLA dedicado",
       "Consultoria estratégica",
       "Integrações customizadas",
