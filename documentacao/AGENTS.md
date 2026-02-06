@@ -9,7 +9,7 @@
 **Backend:** Supabase  
 **Propósito:** Plataforma de análise estratégica para marketing B2B
 
-## Status Atual: ✅ MVP COMPLETO
+## Status Atual: ✅ MVP COMPLETO (v1.4.0)
 
 ### Funcionalidades Implementadas
 
@@ -50,9 +50,33 @@
 - **Busca** por nome/descrição
 - **Formulário** com validações
 
-#### 6. Placeholder Pages ✅
-- **Benchmark** (próximo a implementar)
-- **Settings** e **Help** (placeholders funcionais)
+#### 6. Benchmark Competitivo ✅
+- **CRUD completo** de benchmarks
+- **Análise SWOT** (Strengths, Weaknesses, Opportunities, Threats)
+- **Scores detalhados** e gap analysis
+- **Filtros** por projeto e busca avançada
+
+#### 7. Configurações e Ajuda ✅
+- **Perfil do usuário** com avatar e upload de foto
+- **Configurações** de notificações e preferências
+- **Centro de ajuda** com base de conhecimento
+
+#### 8. Dark Mode ✅
+- **ThemeProvider** (next-themes) integrado no App.tsx
+- **ThemeToggle** com ícones Sun/Moon no DashboardHeader
+- **ForceLightMode** wrapper para páginas públicas
+- **Isolamento completo:** dark mode no sistema não afeta site público
+- **Notificações** com cores adaptáveis (opacity-based)
+
+#### 9. Página de Preços ✅
+- **Starter:** botão "Começar Grátis" → /auth
+- **Professional:** "Assinar Agora" → /auth
+- **Enterprise:** "Falar com Consultor" → /#contact
+
+#### 10. Animações e UX ✅
+- **Hero animations** sem flicker (opacity: 0 inicial no CSS)
+- **Dashboard Welcome** com card gradient-primary + ScoreRing
+- **Estatísticas dinâmicas** (audiences, benchmarks, insights semanais)
 
 ### Stack Tecnológico Completo
 
@@ -66,6 +90,7 @@
 - Tailwind CSS 3.4.17 (estilização)
 - Lucide React (ícones)
 - Sonner (toast notifications)
+- next-themes (dark mode)
 
 **Backend/Database:**
 - Supabase (PostgreSQL + Auth + Real-time)
@@ -127,19 +152,24 @@ intentia-strategy-hub/
 - `project_channel_scores` - Scores por canal
 - `insights` - Insights estratégicos
 - `audiences` - Públicos-alvo (com project_id)
+- `benchmarks` - Análises competitivas
+- `notifications` - Sistema de notificações
+
+**Storage Buckets:**
+- `avatars` - Fotos de perfil dos usuários
 
 **Features:**
 - Row Level Security por user_id
 - Triggers para updated_at
 - Índices para performance
-- Views para dashboard
+- Views para dashboard e benchmark
 - Relacionamentos com foreign keys
 
 ### Componentes Principais
 
 #### Dashboard Components
-- **DashboardHeader:** Header com navegação e perfil do usuário
-- **DashboardSidebar:** Sidebar com menu SPA e active state
+- **DashboardHeader:** Header com navegação, perfil, notificações e ThemeToggle
+- **DashboardSidebar:** Sidebar com menu SPA, active state e dados reais
 - **ProjectCard:** Card de projeto com score e status
 - **ChannelCard:** Card de scores por canal
 - **InsightCard:** Card de insights estratégicos
@@ -149,6 +179,14 @@ intentia-strategy-hub/
 #### Landing Components
 - **LandingNav:** Navegação da landing page
 - **BackToHomeButton:** Botão voltar consistente
+
+#### Theme Components
+- **ThemeToggle:** Botão Sun/Moon para alternar dark/light
+- **ForceLightMode:** Wrapper que força light mode em páginas públicas
+
+#### Notification Components
+- **NotificationsDropdown:** Dropdown com notificações real-time
+- **AvatarUpload:** Upload de foto de perfil com preview
 
 #### UI Components (shadcn/ui)
 - Sistema completo de componentes acessíveis
@@ -216,26 +254,28 @@ npm run test:watch   # Testes em modo watch
 
 ### ✅ Completo e Funcional
 - [x] Autenticação completa
-- [x] Dashboard com dados reais
+- [x] Dashboard com dados reais e Welcome Section
 - [x] CRUD projetos (validações + confirmação)
 - [x] Insights (lista + edição inline)
 - [x] Público-alvo (CRUD + vinculação)
+- [x] Benchmark competitivo completo
+- [x] Configurações e Centro de Ajuda
+- [x] Upload de foto de perfil
+- [x] Sistema de notificações real-time
+- [x] Dark mode (apenas sistema, isolado do site público)
+- [x] Página de preços com CTAs corretos
+- [x] Animações hero sem flicker
 - [x] Navegação SPA completa
 - [x] UI consistente e acessível
-- [x] Toast feedback em todas operações
-- [x] Schema SQL completo
-- [x] RLS policies por usuário
-
-### 🔄 Em Progresso
-- [ ] Benchmark (análise competitiva)
+- [x] Schema SQL completo + RLS
 
 ### 📋 Próximos Passos (Opcional)
 - [ ] Análise real de URLs
 - [ ] Integração com APIs de marketing
-- [ ] Geração de relatórios
-- [ ] Sistema de notificações avançado
+- [ ] Geração de relatórios PDF
 - [ ] Exportação de dados
 - [ ] Testes automatizados
+- [ ] Dark mode para site público (futuro)
 
 ## Considerações Técnicas
 
@@ -254,13 +294,17 @@ O projeto está configurado para deploy via:
 
 ## Resumo
 
-O **Intentia Strategy Hub** está **completo como MVP** com todas as funcionalidades principais implementadas e funcionando:
+O **Intentia Strategy Hub** está **completo como MVP v1.4** com todas as funcionalidades principais implementadas:
 
 1. **Autenticação** robusta com Supabase
-2. **Dashboard** com dados reais e visualizações
-3. **CRUD completo** para projetos, insights e públicos-alvo
-4. **UI/UX** consistente e acessível
-5. **Schema SQL** completo com RLS
-6. **Navegação SPA** funcional
+2. **Dashboard** com dados reais, Welcome Section e ScoreRing
+3. **CRUD completo** para projetos, insights, públicos-alvo e benchmarks
+4. **Dark mode** isolado (sistema vs site público)
+5. **Notificações** real-time com cores adaptáveis
+6. **Página de preços** com CTAs corretos por plano
+7. **Animações** refinadas sem flicker
+8. **UI/UX** consistente, acessível e responsiva
+9. **Schema SQL** completo com RLS
+10. **Navegação SPA** funcional
 
 O projeto está pronto para uso e demonstração, com arquitetura escalável para futuras implementações.

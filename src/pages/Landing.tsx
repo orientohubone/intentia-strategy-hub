@@ -248,7 +248,7 @@ export default function Landing() {
               <div className="text-3xl font-bold text-foreground mb-4">Grátis</div>
               <p className="text-sm text-muted-foreground mb-4">Perfeito para testar sua estratégia</p>
               <ul className="space-y-3 text-sm text-muted-foreground mb-6">
-                <li>✓ 1 análise de URL por mês</li>
+                <li>✓ 5 análises de URL por mês</li>
                 <li>✓ Score básico por canal</li>
                 <li>✓ Relatório simples</li>
                 <li>✓ Suporte por email</li>

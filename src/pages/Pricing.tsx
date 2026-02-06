@@ -13,7 +13,7 @@ const plans = [
     price: "Grátis",
     description: "Perfeito para testar sua estratégia",
     features: [
-      "1 análise de URL por mês",
+      "5 análises de URL por mês",
       "Score básico por canal",
       "Relatório simples",
       "Suporte por email"

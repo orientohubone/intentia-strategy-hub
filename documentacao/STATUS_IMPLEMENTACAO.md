@@ -4,7 +4,7 @@
 
 **Status do Projeto:** MVP COMPLETO E FUNCIONAL  
 **Data de Atualização:** 06/02/2026  
-**Versão:** 1.3.0 MVP (Completo com Features Avançadas)  
+**Versão:** 1.4.0 MVP (Dark Mode + UI Refinements)  
 
 ---
 
@@ -24,13 +24,24 @@
 - **[COMPLETO]** Toast notifications (Sonner)
 - **[COMPLETO]** AlertDialog para confirmações
 
+### 🌙 Dark Mode
+- **[COMPLETO]** ThemeProvider (next-themes) integrado no App.tsx
+- **[COMPLETO]** Componente ThemeToggle com ícones Sun/Moon
+- **[COMPLETO]** Toggle disponível apenas no sistema (DashboardHeader)
+- **[COMPLETO]** Páginas públicas forçam light mode (ForceLightMode wrapper)
+- **[COMPLETO]** Variáveis CSS dark já definidas no design system
+- **[COMPLETO]** Notificações com cores adaptáveis (opacity-based)
+- **[COMPLETO]** Isolamento: dark mode no sistema não afeta site público
+
 ### 📊 Dashboard Principal
 - **[COMPLETO]** Dados reais do Supabase (sem mocks)
 - **[COMPLETO]** Cards de projetos com scores e status
 - **[COMPLETO]** Insights estratégicos por projeto
 - **[COMPLETO]** Scores por canal (Google, Meta, LinkedIn, TikTok)
-- **[COMPLETO]** Estatísticas gerais com médias
+- **[COMPLETO]** Estatísticas dinâmicas (audiences, benchmarks, insights semanais, projetos mensais)
 - **[COMPLETO]** Nome do usuário do Supabase user_metadata
+- **[COMPLETO]** Welcome Section com card gradient-primary do design system
+- **[COMPLETO]** ScoreRing de prontidão geral no canto direito
 
 ### 🚀 CRUD de Projetos
 - **[COMPLETO]** Criar projetos com validações
@@ -98,6 +109,7 @@
 - **[COMPLETO]** Marcar como lida/remover individualmente
 - **[COMPLETO]** Geração automática baseada em atividade
 - **[COMPLETO]** Ações diretas para páginas relevantes
+- **[COMPLETO]** Cores adaptáveis para dark mode (opacity-based)
 
 ### 📊 Sidebar com Dados Reais
 - **[COMPLETO]** Nome da empresa vindo do tenant_settings
@@ -106,7 +118,18 @@
 - **[COMPLETO]** Remoção completa de dados mockados
 - **[COMPLETO]** Pluralização correta (1 projeto vs 2 projetos)
 
-### � Páginas e Rotas
+### 💰 Página de Preços
+- **[COMPLETO]** Plano Starter com botão "Começar Grátis" → /auth
+- **[COMPLETO]** Plano Professional com "Assinar Agora"
+- **[COMPLETO]** Plano Enterprise com "Falar com Consultor"
+- **[COMPLETO]** FAQ e CTA sections
+
+### 🎨 Animações e UX
+- **[COMPLETO]** Animações hero sem flicker (opacity: 0 inicial no CSS)
+- **[COMPLETO]** animate-fade-in, animate-slide-up, animate-scale-in refinados
+- **[COMPLETO]** Transições suaves entre temas
+
+### 🗺️ Páginas e Rotas
 - **[COMPLETO]** Landing page (/)
 - **[COMPLETO]** Dashboard principal (/dashboard)
 - **[COMPLETO]** CRUD Projetos (/dashboard/projects)
@@ -155,6 +178,7 @@
 - **[COMPLETO]** Tailwind CSS 3.4.17 (estilização)
 - **[COMPLETO]** Lucide React (ícones)
 - **[COMPLETO]** Sonner (toast notifications)
+- **[COMPLETO]** next-themes (dark mode)
 
 ### Backend
 - **[COMPLETO]** Supabase (PostgreSQL + Auth + Real-time)
@@ -173,6 +197,10 @@
 ## 🔄 Em Progresso
 
 *Nenhuma funcionalidade em progresso no momento*
+
+### Componentes Novos (v1.4)
+- `ThemeToggle.tsx` - Botão toggle dark/light mode
+- `ForceLightMode.tsx` - Wrapper que força light mode em páginas públicas
 
 ---
 

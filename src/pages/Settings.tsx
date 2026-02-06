@@ -435,7 +435,7 @@ export default function Settings() {
                     <div>
                       <h3 className="font-semibold capitalize">{tenantSettings.plan}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {tenantSettings.analyses_used} de {tenantSettings.monthly_analyses_limit} análises usadas este mês
+                        {tenantSettings.analyses_used || 0} de {tenantSettings.monthly_analyses_limit || 5} análises usadas este mês
                       </p>
                     </div>
                     <Button variant="outline">

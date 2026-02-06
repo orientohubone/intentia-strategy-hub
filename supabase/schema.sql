@@ -33,7 +33,7 @@ create table if not exists public.tenant_settings (
   user_id uuid not null references auth.users (id) on delete cascade,
   company_name text not null,
   plan text not null check (plan in ('starter', 'professional', 'enterprise')),
-  monthly_analyses_limit integer not null default 1,
+  monthly_analyses_limit integer not null default 5,
   analyses_used integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
