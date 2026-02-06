@@ -41,13 +41,23 @@ FOR DELETE USING (
 );
 
 -- =====================================================
+-- VERIFICATION QUERIES
+-- =====================================================
+
+-- Para verificar se o bucket foi criado, use:
+-- SELECT id, name, public FROM storage.buckets WHERE id = 'avatars';
+
+-- Para verificar as políticas, use:
+-- SELECT name, definition FROM pg_policies WHERE table_name = 'objects';
+
+-- =====================================================
 -- INSTRUCTIONS
 -- =====================================================
 
--- 1. Execute this SQL in the Supabase SQL Editor
--- 2. Go to Storage section in Supabase Dashboard
--- 3. Verify the 'avatars' bucket was created
--- 4. Test upload functionality
+-- 1. Execute este SQL no Supabase SQL Editor
+-- 2. Vá para Storage section no Supabase Dashboard
+-- 3. Verifique se o bucket 'avatars' foi criado
+-- 4. Teste a funcionalidade de upload
 
--- The bucket will be accessible at:
+-- O bucket será acessível em:
 -- https://[PROJECT_REF].supabase.co/storage/v1/object/public/avatars/[filename]

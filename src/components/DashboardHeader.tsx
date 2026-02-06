@@ -1,9 +1,10 @@
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Bell, Search, Plus } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { NotificationsDropdown } from "./NotificationsDropdown";
 
 export function DashboardHeader() {
   const navigate = useNavigate();
@@ -35,12 +36,7 @@ export function DashboardHeader() {
           Novo Projeto
         </Button>
         
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary rounded-full text-[10px] font-bold text-primary-foreground flex items-center justify-center">
-            3
-          </span>
-        </Button>
+        <NotificationsDropdown />
 
         <div className="flex items-center gap-3 pl-4 border-l border-border">
           <Avatar className="h-9 w-9">

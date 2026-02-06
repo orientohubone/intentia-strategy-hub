@@ -46,21 +46,123 @@ export default function Dashboard() {
   const { projects, loading } = useTenantData();
   const [insights, setInsights] = useState<Insight[]>([]);
   const [channelScores, setChannelScores] = useState<Record<string, ChannelScore[]>>({});
+  const [audiencesCount, setAudiencesCount] = useState(0);
+  const [benchmarksCount, setBenchmarksCount] = useState(0);
+  const [insightsThisWeek, setInsightsThisWeek] = useState(0);
+  const [projectsThisMonth, setProjectsThisMonth] = useState(0);
   const fullName = (user?.user_metadata?.full_name as string | undefined) || user?.email || "Usuário";
 
   useEffect(() => {
     const fetchInsights = async () => {
       if (!user) return;
-      const { data } = await (supabase as any)
-        .from("insights")
-        .select("id, type, title, description, action")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(6);
-      setInsights((data || []) as Insight[]);
+      try {
+        const { data, error } = await (supabase as any)
+          .from("insights")
+          .select("id, type, title, description, action, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(6);
+        
+        if (error) {
+          console.error("Error fetching insights:", error);
+          setInsights([]);
+        } else {
+          setInsights((data || []) as Insight[]);
+        }
+
+        // Calculate insights created this week
+        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const { count: weeklyCount, error: weeklyError } = await supabase
+          .from("insights")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .gte("created_at", oneWeekAgo);
+        
+        if (weeklyError) {
+          console.error("Error fetching weekly insights:", weeklyError);
+          setInsightsThisWeek(0);
+        } else {
+          setInsightsThisWeek(weeklyCount || 0);
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching insights:", err);
+        setInsights([]);
+        setInsightsThisWeek(0);
+      }
     };
 
-    fetchInsights();
+    const fetchAudiencesCount = async () => {
+      if (!user) return;
+      try {
+        const { count, error } = await supabase
+          .from("audiences")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id);
+        
+        if (error) {
+          console.error("Error fetching audiences count:", error);
+          setAudiencesCount(0);
+        } else {
+          setAudiencesCount(count || 0);
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching audiences:", err);
+        setAudiencesCount(0);
+      }
+    };
+
+    const fetchBenchmarksCount = async () => {
+      if (!user) return;
+      try {
+        const { count, error } = await supabase
+          .from("benchmarks")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id);
+        
+        if (error) {
+          console.error("Error fetching benchmarks count:", error);
+          setBenchmarksCount(0);
+        } else {
+          setBenchmarksCount(count || 0);
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching benchmarks:", err);
+        setBenchmarksCount(0);
+      }
+    };
+
+    const fetchProjectsThisMonth = async () => {
+      if (!user) return;
+      const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      try {
+        const { count, error } = await supabase
+          .from("projects")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .gte("created_at", oneMonthAgo);
+        
+        if (error) {
+          console.error("Error fetching projects this month:", error);
+          setProjectsThisMonth(0);
+        } else {
+          setProjectsThisMonth(count || 0);
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching projects:", err);
+        setProjectsThisMonth(0);
+      }
+    };
+
+    const fetchAllStats = async () => {
+      await Promise.all([
+        fetchInsights(),
+        fetchAudiencesCount(),
+        fetchBenchmarksCount(),
+        fetchProjectsThisMonth()
+      ]);
+    };
+
+    fetchAllStats();
   }, [user]);
 
   useEffect(() => {
@@ -150,29 +252,29 @@ export default function Dashboard() {
               <StatsCard
                 title="Projetos Ativos"
                 value={projects.length}
-                change={50}
-                changeLabel="vs. mês anterior"
+                change={projectsThisMonth}
+                changeLabel={projectsThisMonth > 0 ? "vs. mês anterior" : "sem novos projetos"}
                 icon={<FolderOpen className="h-5 w-5 text-primary" />}
               />
               <StatsCard
                 title="Públicos Mapeados"
-                value={8}
-                change={25}
-                changeLabel="novos este mês"
+                value={audiencesCount}
+                change={audiencesCount > 0 ? 25 : 0}
+                changeLabel={audiencesCount > 0 ? "novos este mês" : "nenhum cadastrado"}
                 icon={<Target className="h-5 w-5 text-primary" />}
               />
               <StatsCard
                 title="Benchmarks"
-                value={projects.length}
-                change={0}
-                changeLabel="sem alteração"
+                value={benchmarksCount}
+                change={benchmarksCount > 0 ? 10 : 0}
+                changeLabel={benchmarksCount > 0 ? "análises feitas" : "nenhuma análise"}
                 icon={<BarChart3 className="h-5 w-5 text-primary" />}
               />
               <StatsCard
                 title="Insights Gerados"
                 value={insights.length}
-                change={15}
-                changeLabel="esta semana"
+                change={insightsThisWeek}
+                changeLabel={insightsThisWeek > 0 ? "esta semana" : "nenhum novo"}
                 icon={<Zap className="h-5 w-5 text-primary" />}
               />
             </div>

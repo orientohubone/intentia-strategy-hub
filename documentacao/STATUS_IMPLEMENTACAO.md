@@ -3,8 +3,8 @@
 ## 📊 Visão Geral
 
 **Status do Projeto:** MVP COMPLETO E FUNCIONAL  
-**Data de Atualização:** 05/02/2026  
-**Versão:** 1.2.0 MVP (Completo)  
+**Data de Atualização:** 06/02/2026  
+**Versão:** 1.3.0 MVP (Completo com Features Avançadas)  
 
 ---
 
@@ -82,7 +82,31 @@
 - **[COMPLETO]** Canais de suporte (email, chat, base)
 - **[COMPLETO]** Classificação por dificuldade e tempo de leitura
 
-### 📄 Páginas e Rotas
+### �️ Upload de Foto de Perfil
+- **[COMPLETO]** Componente AvatarUpload com preview em tempo real
+- **[COMPLETO]** Validação de arquivo (tipo, tamanho máximo 5MB)
+- **[COMPLETO]** Storage no Supabase com bucket 'avatars'
+- **[COMPLETO]** Exibição automática no header e settings
+- **[COMPLETO]** Funcionalidade de remover foto
+- **[COMPLETO]** Políticas RLS para acesso seguro
+
+### 🔔 Sistema de Notificações
+- **[COMPLETO]** Hook useNotifications com gestão completa
+- **[COMPLETO]** Componente NotificationsDropdown no header
+- **[COMPLETO]** Real-time updates via Supabase subscriptions
+- **[COMPLETO]** Tipos: info, success, warning, error
+- **[COMPLETO]** Marcar como lida/remover individualmente
+- **[COMPLETO]** Geração automática baseada em atividade
+- **[COMPLETO]** Ações diretas para páginas relevantes
+
+### 📊 Sidebar com Dados Reais
+- **[COMPLETO]** Nome da empresa vindo do tenant_settings
+- **[COMPLETO]** Contagem real de projetos do usuário
+- **[COMPLETO]** Atualização automática quando dados mudam
+- **[COMPLETO]** Remoção completa de dados mockados
+- **[COMPLETO]** Pluralização correta (1 projeto vs 2 projetos)
+
+### � Páginas e Rotas
 - **[COMPLETO]** Landing page (/)
 - **[COMPLETO]** Dashboard principal (/dashboard)
 - **[COMPLETO]** CRUD Projetos (/dashboard/projects)
@@ -102,8 +126,12 @@
 - **[COMPLETO]** `projects` - Projetos de análise
 - **[COMPLETO]** `project_channel_scores` - Scores por canal
 - **[COMPLETO]** `insights` - Insights estratégicos
-- **[COMPLETO]** `audiences` - Públicos-alvo (com project_id)
-- **[COMPLETO]** `benchmarks` - Análise competitiva e benchmarking
+- **[COMPLETO]** `audiences` - Públicos-alvo
+- **[COMPLETO]** `benchmarks` - Análises competitivas
+- **[COMPLETO]** `notifications` - Sistema de notificações
+
+### Storage Buckets
+- **[COMPLETO]** `avatars` - Fotos de perfil dos usuários
 
 ### Features do Database
 - **[COMPLETO]** Row Level Security por user_id
@@ -219,15 +247,19 @@ O **Intentia Strategy Hub** está **completo como MVP** com todas as funcionalid
 4. **Benchmark competitivo** completo com análise SWOT
 5. **Configurações completas** de usuário e preferências
 6. **Centro de ajuda** com documentação e suporte
-7. **UI/UX consistente** e acessível
-8. **Schema SQL completo** com RLS
-9. **Navegação SPA** funcional
+7. **Upload de foto de perfil** com storage e validações
+8. **Sistema de notificações** real-time e contextual
+9. **Sidebar dinâmica** com dados reais do usuário
+10. **UI/UX consistente** e acessível
+11. **Schema SQL completo** com RLS
+12. **Navegação SPA** funcional
 
 ### 🔄 Próximos Passos Imediatos
-1. Executar schema SQL de benchmarks no Supabase
-2. Implementar análises reais de URLs
-3. Adicionar testes automatizados
-4. Otimizar performance
+1. Executar schema SQL de benchmarks e notificações no Supabase
+2. Executar setup de storage bucket para avatares
+3. Implementar análises reais de URLs
+4. Adicionar testes automatizados
+5. Otimizar performance
 
 O projeto está **pronto para uso e demonstração** com arquitetura escalável para futuras implementações.
 
