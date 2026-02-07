@@ -63,7 +63,7 @@ function ShowcaseSlider() {
         <div className="relative rounded-2xl border border-border shadow-xl overflow-hidden">
         {/* Light mode — full width base */}
         <img
-          src="/intentia-light.png"
+          src="/intentia-light1.png"
           alt="Intentia Dashboard - Light Mode"
           className="w-full h-auto block pointer-events-none"
           draggable={false}
@@ -74,7 +74,7 @@ function ShowcaseSlider() {
           style={{ clipPath: `inset(0 ${100 - sliderPos}% 0 0)` }}
         >
           <img
-            src="/intentia-dark.png"
+            src="/intentia-dark1.png"
             alt="Intentia Dashboard - Dark Mode"
             className="w-full h-auto block pointer-events-none"
             draggable={false}
