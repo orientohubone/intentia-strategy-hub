@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { DashboardSidebar } from "@/components/DashboardSidebar";
-import { DashboardHeader } from "@/components/DashboardHeader";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { ProjectCard } from "@/components/ProjectCard";
 import { ChannelCard } from "@/components/ChannelCard";
 import { StatsCard } from "@/components/StatsCard";
@@ -241,32 +240,26 @@ export default function Dashboard() {
   const visibleInsights = insightsExpanded ? insights : insights.slice(0, 3);
 
   return (
-    <div className="flex h-screen bg-background">
-      <DashboardSidebar />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader />
-        
-        <main className="flex-1 overflow-auto p-6">
-          <div className="max-w-7xl mx-auto space-y-6">
+    <DashboardLayout>
+          <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
             {/* Welcome Section */}
-            <div className="flex items-center justify-between gap-6">
-              <div className="flex-1 relative overflow-hidden rounded-2xl gradient-primary p-8 shadow-lg">
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 lg:gap-6">
+              <div className="flex-1 relative overflow-hidden rounded-2xl gradient-primary p-5 sm:p-8 shadow-lg">
                 <div className="absolute inset-0">
                   <div className="absolute -top-10 -left-10 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
                   <div className="absolute -bottom-10 -right-10 w-56 h-56 bg-black/10 rounded-full blur-2xl"></div>
                   <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-white/5 rounded-full blur-3xl"></div>
                 </div>
                 <div className="relative z-10">
-                  <h1 className="text-2xl font-bold text-primary-foreground">
+                  <h1 className="text-xl sm:text-2xl font-bold text-primary-foreground">
                     Olá, {fullName}
                   </h1>
-                  <p className="text-primary-foreground/80 mt-1">
+                  <p className="text-sm sm:text-base text-primary-foreground/80 mt-1">
                     Confira a visão estratégica dos seus projetos de mídia.
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 p-4 card-elevated">
+              <div className="flex items-center gap-4 p-4 card-elevated shrink-0">
                 <ScoreRing score={averageScore} size="md" label="Score Médio" />
                 <div className="pl-4 border-l border-border">
                   <p className="text-sm text-muted-foreground">Prontidão Geral</p>
@@ -279,7 +272,7 @@ export default function Dashboard() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <StatsCard
                 title="Projetos Ativos"
                 value={projects.length}
@@ -311,12 +304,12 @@ export default function Dashboard() {
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
               {/* Projects Section */}
               <div className="lg:col-span-2 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-foreground">Projetos Recentes</h2>
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-base sm:text-lg font-semibold text-foreground">Projetos Recentes</h2>
+                  <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                     {projects.length > 0 && (
                       <>
                         <Button
@@ -375,8 +368,8 @@ export default function Dashboard() {
 
               {/* Insights Section */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-foreground">Insights Estratégicos</h2>
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-base sm:text-lg font-semibold text-foreground">Insights Estratégicos</h2>
                   <a href="/insights" className="text-sm text-primary hover:underline">
                     Ver todos
                   </a>
@@ -446,8 +439,8 @@ export default function Dashboard() {
 
             {/* Channel Strategy Overview */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-foreground">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h2 className="text-base sm:text-lg font-semibold text-foreground truncate">
                   Visão por Canal {channelProject ? `- ${channelProject.name}` : ""}
                 </h2>
                 {projects.length > 1 && (
@@ -480,8 +473,6 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-        </main>
-      </div>
-    </div>
+    </DashboardLayout>
   );
 }

@@ -54,6 +54,7 @@ function ShowcaseSlider() {
       <div
         ref={containerRef}
         className="relative rounded-2xl max-w-5xl mx-auto select-none cursor-col-resize"
+        style={{ touchAction: "none" }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -303,7 +304,7 @@ export default function Landing() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">Google Gemini</p>
-                    <p className="text-xs text-muted-foreground">Gemini 2.0 Flash · 3 Flash Preview · 3 Pro Preview</p>
+                    <p className="text-xs text-muted-foreground">Gemini 3 Flash Preview · 2.5 Flash · 2.5 Pro Preview · 2.0 Flash</p>
                   </div>
                 </div>
               </div>

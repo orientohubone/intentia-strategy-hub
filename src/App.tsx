@@ -11,7 +11,6 @@ import Auth from "./pages/Auth";
 import About from "./pages/About";
 import Cases from "./pages/Cases";
 import Blog from "./pages/Blog";
-import Careers from "./pages/Careers";
 import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
@@ -44,7 +43,6 @@ const App = () => (
           <Route path="/about" element={<ForceLightMode><About /></ForceLightMode>} />
           <Route path="/cases" element={<ForceLightMode><Cases /></ForceLightMode>} />
           <Route path="/blog" element={<ForceLightMode><Blog /></ForceLightMode>} />
-          <Route path="/careers" element={<ForceLightMode><Careers /></ForceLightMode>} />
           <Route path="/contact" element={<ForceLightMode><Contact /></ForceLightMode>} />
           <Route path="/privacy-policy" element={<ForceLightMode><PrivacyPolicy /></ForceLightMode>} />
           <Route path="/terms-of-service" element={<ForceLightMode><TermsOfService /></ForceLightMode>} />

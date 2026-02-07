@@ -1,13 +1,17 @@
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Menu } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationsDropdown } from "./NotificationsDropdown";
 import { ThemeToggle } from "./ThemeToggle";
 
-export function DashboardHeader() {
+interface DashboardHeaderProps {
+  onMenuToggle?: () => void;
+}
+
+export function DashboardHeader({ onMenuToggle }: DashboardHeaderProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const fullName = (user?.user_metadata?.full_name as string | undefined) || user?.email || "Usuário";
@@ -20,9 +24,19 @@ export function DashboardHeader() {
   const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
 
   return (
-    <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between">
-      <div className="flex items-center gap-4 flex-1">
-        <div className="relative max-w-md flex-1">
+    <header className="h-14 lg:h-16 border-b border-border bg-card px-3 sm:px-4 lg:px-6 flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2 lg:gap-4 flex-1 min-w-0">
+        {/* Hamburger — mobile only */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 lg:hidden shrink-0"
+          onClick={onMenuToggle}
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+        {/* Search — hidden on mobile */}
+        <div className="relative max-w-md flex-1 hidden sm:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
             placeholder="Buscar projetos, públicos..." 
@@ -31,16 +45,16 @@ export function DashboardHeader() {
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         <Button variant="hero" size="sm" className="gap-2" onClick={() => navigate("/projects")}> 
           <Plus className="h-4 w-4" />
-          Novo Projeto
+          <span className="hidden sm:inline">Novo Projeto</span>
         </Button>
         
         <NotificationsDropdown />
         <ThemeToggle />
 
-        <div className="flex items-center gap-3 pl-4 border-l border-border">
+        <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-border">
           <Avatar className="h-9 w-9">
             <AvatarImage src={avatarUrl} />
             <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">

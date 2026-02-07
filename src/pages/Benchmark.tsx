@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { DashboardSidebar } from "@/components/DashboardSidebar";
-import { DashboardHeader } from "@/components/DashboardHeader";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { BenchmarkCard } from "@/components/BenchmarkCard";
 import { BenchmarkDetailDialog, BenchmarkDetail } from "@/components/BenchmarkDetailDialog";
 import { Button } from "@/components/ui/button";
@@ -265,11 +264,7 @@ export default function Benchmark() {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-background">
-        <DashboardSidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <DashboardHeader />
-          <main className="flex-1 overflow-auto p-6">
+      <DashboardLayout>
             <div className="max-w-6xl mx-auto">
               <div className="animate-pulse space-y-4">
                 <div className="h-8 bg-muted rounded w-1/3"></div>
@@ -286,29 +281,23 @@ export default function Benchmark() {
                 </div>
               </div>
             </div>
-          </main>
-        </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="flex h-screen bg-background">
-      <DashboardSidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader />
-        <main className="flex-1 overflow-auto p-6">
-          <div className="max-w-6xl mx-auto space-y-6">
+    <DashboardLayout>
+          <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Benchmark Competitivo</h1>
-                <p className="text-muted-foreground text-sm mt-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground">Benchmark Competitivo</h1>
+                <p className="text-muted-foreground text-xs sm:text-sm mt-1">
                   Análise comparativa com concorrentes — gerada automaticamente a partir das URLs cadastradas nos projetos.
                 </p>
               </div>
               {benchmarks.length > 0 && (
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <Button
                     size="sm"
                     variant="outline"
@@ -332,7 +321,7 @@ export default function Benchmark() {
                     }}
                   >
                     <FileText className="h-3.5 w-3.5" />
-                    PDF
+                    <span className="hidden sm:inline">PDF</span>
                   </Button>
                   <Button
                     size="sm"
@@ -354,33 +343,33 @@ export default function Benchmark() {
                     }}
                   >
                     <FileSpreadsheet className="h-3.5 w-3.5" />
-                    CSV
+                    <span className="hidden sm:inline">CSV</span>
                   </Button>
                 </div>
               )}
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="rounded-xl border border-border bg-card p-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+              <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <BarChart3 className="h-4 w-4 text-primary" />
+                  <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg shrink-0">
+                    <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                   </div>
-                  <div>
-                    <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Análises</p>
-                    <p className="text-xl font-bold text-foreground">{benchmarks.length}</p>
+                  <div className="min-w-0">
+                    <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Análises</p>
+                    <p className="text-lg sm:text-xl font-bold text-foreground">{benchmarks.length}</p>
                   </div>
                 </div>
               </div>
-              <div className="rounded-xl border border-border bg-card p-4">
+              <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 bg-green-500/10 rounded-lg">
-                    <Target className="h-4 w-4 text-green-500" />
+                  <div className="p-1.5 sm:p-2 bg-green-500/10 rounded-lg shrink-0">
+                    <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500" />
                   </div>
-                  <div>
-                    <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Score Médio</p>
-                    <p className="text-xl font-bold text-foreground">
+                  <div className="min-w-0">
+                    <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Score Médio</p>
+                    <p className="text-lg sm:text-xl font-bold text-foreground">
                       {benchmarks.length > 0 
                         ? Math.round(benchmarks.reduce((acc, b) => acc + b.overall_score, 0) / benchmarks.length)
                         : 0}
@@ -388,14 +377,14 @@ export default function Benchmark() {
                   </div>
                 </div>
               </div>
-              <div className="rounded-xl border border-border bg-card p-4">
+              <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 bg-blue-500/10 rounded-lg">
-                    <TrendingUp className="h-4 w-4 text-blue-500" />
+                  <div className="p-1.5 sm:p-2 bg-blue-500/10 rounded-lg shrink-0">
+                    <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500" />
                   </div>
-                  <div>
-                    <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Melhor Score</p>
-                    <p className="text-xl font-bold text-foreground">
+                  <div className="min-w-0">
+                    <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Melhor Score</p>
+                    <p className="text-lg sm:text-xl font-bold text-foreground">
                       {benchmarks.length > 0 
                         ? Math.max(...benchmarks.map(b => b.overall_score))
                         : 0}
@@ -403,14 +392,14 @@ export default function Benchmark() {
                   </div>
                 </div>
               </div>
-              <div className="rounded-xl border border-border bg-card p-4">
+              <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 bg-yellow-500/10 rounded-lg">
-                    <Users className="h-4 w-4 text-yellow-500" />
+                  <div className="p-1.5 sm:p-2 bg-yellow-500/10 rounded-lg shrink-0">
+                    <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-500" />
                   </div>
-                  <div>
-                    <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Concorrentes</p>
-                    <p className="text-xl font-bold text-foreground">
+                  <div className="min-w-0">
+                    <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Concorrentes</p>
+                    <p className="text-lg sm:text-xl font-bold text-foreground">
                       {new Set(benchmarks.map(b => b.competitor_url)).size}
                     </p>
                   </div>
@@ -495,8 +484,6 @@ export default function Benchmark() {
               </div>
             )}
           </div>
-        </main>
-      </div>
 
       {/* Detail Dialog */}
       <BenchmarkDetailDialog
@@ -511,6 +498,6 @@ export default function Benchmark() {
         aiAnalyzing={aiAnalyzing}
         aiResult={selectedBenchmark ? aiResults[selectedBenchmark.id] || null : null}
       />
-    </div>
+    </DashboardLayout>
   );
 }

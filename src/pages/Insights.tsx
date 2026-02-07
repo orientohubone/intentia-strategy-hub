@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { DashboardSidebar } from "@/components/DashboardSidebar";
-import { DashboardHeader } from "@/components/DashboardHeader";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -161,20 +160,16 @@ export default function Insights() {
   };
 
   return (
-    <div className="flex h-screen bg-background">
-      <DashboardSidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader />
-        <main className="flex-1 overflow-auto p-6">
-          <div className="max-w-6xl mx-auto space-y-6">
+    <DashboardLayout>
+          <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Insights Estratégicos</h1>
-                <p className="text-muted-foreground text-sm">Insights gerados automaticamente a partir da análise dos seus projetos.</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground">Insights Estratégicos</h1>
+                <p className="text-muted-foreground text-xs sm:text-sm">Insights gerados automaticamente a partir da análise dos seus projetos.</p>
               </div>
               {filteredInsights.length > 0 && (
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <Button
                     size="sm"
                     variant="outline"
@@ -185,7 +180,7 @@ export default function Insights() {
                     })}
                   >
                     <FileText className="h-3.5 w-3.5" />
-                    PDF
+                    <span className="hidden sm:inline">PDF</span>
                   </Button>
                   <Button
                     size="sm"
@@ -194,41 +189,41 @@ export default function Insights() {
                     onClick={() => exportInsightsCsv(filteredInsights.map(i => ({ type: i.type, title: i.title, description: i.description, action: i.action || undefined, project_name: i.project_name, created_at: i.created_at })))}
                   >
                     <FileSpreadsheet className="h-3.5 w-3.5" />
-                    CSV
+                    <span className="hidden sm:inline">CSV</span>
                   </Button>
                 </div>
               )}
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="rounded-lg border border-border bg-card p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <Zap className="h-4 w-4 text-primary" />
-                  <span className="text-xs text-muted-foreground font-medium">Total</span>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+              <div className="rounded-lg border border-border bg-card p-3 sm:p-4">
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+                  <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                  <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">Total</span>
                 </div>
-                <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.total}</p>
               </div>
-              <div className="rounded-lg border border-warning/20 bg-warning/5 p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <AlertTriangle className="h-4 w-4 text-warning" />
-                  <span className="text-xs text-muted-foreground font-medium">Alertas</span>
+              <div className="rounded-lg border border-warning/20 bg-warning/5 p-3 sm:p-4">
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+                  <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-warning" />
+                  <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">Alertas</span>
                 </div>
-                <p className="text-2xl font-bold text-warning">{stats.warnings}</p>
+                <p className="text-xl sm:text-2xl font-bold text-warning">{stats.warnings}</p>
               </div>
-              <div className="rounded-lg border border-success/20 bg-success/5 p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <TrendingUp className="h-4 w-4 text-success" />
-                  <span className="text-xs text-muted-foreground font-medium">Oportunidades</span>
+              <div className="rounded-lg border border-success/20 bg-success/5 p-3 sm:p-4">
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+                  <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-success" />
+                  <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">Oportunidades</span>
                 </div>
-                <p className="text-2xl font-bold text-success">{stats.opportunities}</p>
+                <p className="text-xl sm:text-2xl font-bold text-success">{stats.opportunities}</p>
               </div>
-              <div className="rounded-lg border border-info/20 bg-info/5 p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <Lightbulb className="h-4 w-4 text-info" />
-                  <span className="text-xs text-muted-foreground font-medium">Melhorias</span>
+              <div className="rounded-lg border border-info/20 bg-info/5 p-3 sm:p-4">
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+                  <Lightbulb className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-info" />
+                  <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">Melhorias</span>
                 </div>
-                <p className="text-2xl font-bold text-info">{stats.improvements}</p>
+                <p className="text-xl sm:text-2xl font-bold text-info">{stats.improvements}</p>
               </div>
             </div>
 
@@ -277,26 +272,26 @@ export default function Insights() {
             {!loading && groupedByProject.map((group) => (
               <div key={group.projectId} className="space-y-3">
                 {/* Project header */}
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <FolderOpen className="h-4 w-4 text-primary" />
+                <div className="flex items-center gap-2.5 sm:gap-3">
+                  <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <FolderOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-base font-semibold text-foreground">{group.projectName}</h2>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-muted-foreground">{group.insights.length} insights</span>
+                    <h2 className="text-sm sm:text-base font-semibold text-foreground truncate">{group.projectName}</h2>
+                    <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 flex-wrap">
+                      <span className="text-[10px] sm:text-xs text-muted-foreground">{group.insights.length} insights</span>
                       {group.warnings > 0 && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-warning/10 text-warning border-warning/30">
+                        <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 bg-warning/10 text-warning border-warning/30">
                           {group.warnings} alertas
                         </Badge>
                       )}
                       {group.opportunities > 0 && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-success/10 text-success border-success/30">
-                          {group.opportunities} oportunidades
+                        <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 bg-success/10 text-success border-success/30">
+                          {group.opportunities} oport.
                         </Badge>
                       )}
                       {group.improvements > 0 && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-info/10 text-info border-info/30">
+                        <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 bg-info/10 text-info border-info/30">
                           {group.improvements} melhorias
                         </Badge>
                       )}
@@ -305,7 +300,7 @@ export default function Insights() {
                 </div>
 
                 {/* Insight cards grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
                   {group.insights.map((insight) => {
                     const config = typeConfig[insight.type];
                     const Icon = config.icon;
@@ -314,29 +309,29 @@ export default function Insights() {
                         key={insight.id}
                         onClick={() => handleOpenInsight(insight)}
                         className={cn(
-                          "rounded-lg border-l-4 border border-border p-4 cursor-pointer transition-all hover:shadow-md hover:scale-[1.01]",
+                          "rounded-lg border-l-4 border border-border p-3 sm:p-4 cursor-pointer transition-all hover:shadow-md active:scale-[0.99] sm:hover:scale-[1.01]",
                           config.cardBg,
                           config.borderColor
                         )}
                       >
-                        <div className="flex items-start gap-2.5">
+                        <div className="flex items-start gap-2 sm:gap-2.5">
                           <div className={cn("mt-0.5 flex-shrink-0", config.iconColor)}>
-                            <Icon className="h-4 w-4" />
+                            <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 mb-1.5", config.badgeColor)}>
+                            <Badge variant="outline" className={cn("text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 mb-1 sm:mb-1.5", config.badgeColor)}>
                               {config.label}
                             </Badge>
-                            <h4 className="font-medium text-foreground text-sm leading-snug line-clamp-2">{insight.title}</h4>
-                            <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">{insight.description}</p>
+                            <h4 className="font-medium text-foreground text-xs sm:text-sm leading-snug line-clamp-2">{insight.title}</h4>
+                            <p className="text-[11px] sm:text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">{insight.description}</p>
                             {insight.action && (
-                              <p className="text-xs text-primary font-medium mt-1.5 leading-snug line-clamp-1">
-                                <ArrowRight className="h-3 w-3 inline mr-1" />
+                              <p className="text-[11px] sm:text-xs text-primary font-medium mt-1.5 leading-snug line-clamp-1">
+                                <ArrowRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 inline mr-0.5 sm:mr-1" />
                                 {insight.action}
                               </p>
                             )}
-                            <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
+                            <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-1.5 sm:mt-2 flex items-center gap-1">
+                              <Calendar className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                               {new Date(insight.created_at).toLocaleDateString("pt-BR")}
                             </p>
                           </div>
@@ -348,8 +343,6 @@ export default function Insights() {
               </div>
             ))}
           </div>
-        </main>
-      </div>
 
       {/* Insight Detail Dialog */}
       <Dialog open={dialogOpen} onOpenChange={(v) => { if (!v) setFullscreen(false); setDialogOpen(v); }}>
@@ -431,6 +424,6 @@ export default function Insights() {
           })()}
         </DialogContent>
       </Dialog>
-    </div>
+    </DashboardLayout>
   );
 }

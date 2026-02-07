@@ -10,7 +10,8 @@ import {
   Crosshair,
   LogOut, 
   Settings, 
-  HelpCircle
+  HelpCircle,
+  X,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -40,7 +41,12 @@ const bottomNavItems: NavItem[] = [
   { icon: LogOut, label: "Sair", href: "/logout" },
 ];
 
-export function DashboardSidebar() {
+interface DashboardSidebarProps {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+export function DashboardSidebar({ mobileOpen = false, onMobileClose }: DashboardSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [projectCount, setProjectCount] = useState(0);
   const [tenantName, setTenantName] = useState<string | null>(null);
@@ -95,8 +101,19 @@ export function DashboardSidebar() {
   };
 
   return (
+    <>
+    {/* Mobile backdrop */}
+    {mobileOpen && (
+      <div
+        className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+        onClick={onMobileClose}
+      />
+    )}
     <aside className={cn(
       "bg-sidebar border-r border-sidebar-border h-screen flex flex-col transition-all duration-300",
+      // Mobile: fixed overlay, hidden by default
+      "fixed inset-y-0 left-0 z-50 lg:static lg:z-auto",
+      mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
       collapsed ? "w-16" : "w-64"
     )}>
       {/* Logo */}
@@ -115,15 +132,26 @@ export function DashboardSidebar() {
             </span>
           </div>
         )}
+        {/* Close button on mobile, collapse on desktop */}
         {!collapsed && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8"
-            onClick={() => setCollapsed(true)}
-          >
-            <ChevronLeft className="h-4 w-4 transition-transform" />
-          </Button>
+          <>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 lg:hidden"
+              onClick={onMobileClose}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 hidden lg:flex"
+              onClick={() => setCollapsed(true)}
+            >
+              <ChevronLeft className="h-4 w-4 transition-transform" />
+            </Button>
+          </>
         )}
       </div>
 
@@ -168,6 +196,7 @@ export function DashboardSidebar() {
               <Link
                 key={item.href}
                 to={item.href}
+                onClick={onMobileClose}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative group",
                   isActive
@@ -218,6 +247,7 @@ export function DashboardSidebar() {
               ) : (
                 <Link
                   to={item.href}
+                  onClick={onMobileClose}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative group",
                     isActive
@@ -240,5 +270,6 @@ export function DashboardSidebar() {
         })}
       </div>
     </aside>
+    </>
   );
 }

@@ -8,18 +8,19 @@
 **UI Framework:** shadcn/ui + Tailwind CSS  
 **Backend:** Supabase (PostgreSQL + Auth + Edge Functions)  
 **Propósito:** Plataforma de análise estratégica para marketing B2B  
-**Versão:** 1.9.0
+**Versão:** 2.3.0
 
-## Status Atual: ✅ v1.9.0 (Etapa Estratégica Completa)
+## Status Atual: ✅ v2.3.0 (Mobile-First + Etapa Estratégica Completa)
 
 ### Funcionalidades Implementadas
 
 #### 1. Autenticação e Navegação ✅
 - **Login/Signup** redesenhado com split layout (form + gradient panel)
 - **Header dropdown** com navegação SPA e hover sensitivo
-- **Botão "Voltar"** consistente com backdrop blur
+- **Botão "Voltar"** consistente com backdrop blur, scroll-aware (esconde ao scrollar para baixo)
 - **Dashboard sidebar** com navegação interna, active state e dados reais do tenant
 - **ProtectedRoute** wrapper para rotas autenticadas
+- **DashboardLayout** wrapper compartilhado para todas as páginas protegidas
 
 #### 2. Dashboard Principal ✅
 - **Dados reais** do Supabase (sem mocks)
@@ -77,12 +78,13 @@
 #### 7. Configurações ✅
 - **Perfil do usuário** com avatar upload, nome, empresa, bio
 - **Integrações de IA** — API keys por usuário:
-  - Google Gemini (2.0 Flash, 3 Flash Preview, 3 Pro Preview)
+  - Google Gemini (3 Flash Preview, 2.5 Flash, 2.5 Pro Preview, 2.0 Flash)
   - Anthropic Claude (Sonnet 4, Sonnet 3.7, Haiku 3.5, Haiku 3, Opus 3)
   - Validação de key contra API real
   - Seleção de modelo preferido
   - Badge de status (Ativa/Não configurada)
   - Máscara de key com toggle de visibilidade
+  - Proteção contra autofill de senha (autoComplete="new-password", data-1p-ignore, data-lpignore)
 - **Notificações** (email, relatórios semanais)
 - **Preferências** (idioma, fuso horário, auto-save)
 - **Gerenciamento de conta** (senha, exportação, logout, exclusão)
@@ -150,9 +152,26 @@
 
 #### 17. Páginas Institucionais ✅
 - **Preços** com planos Starter/Professional/Enterprise
-- **Sobre, Cases, Blog, Carreiras, Contato**
+- **Sobre, Cases, Blog, Contato**
 - **Políticas:** Privacidade, Termos, Cookies
 - **Página 404** personalizada
+
+#### 18. Mobile-First Responsiveness ✅
+- **DashboardLayout** wrapper compartilhado (sidebar + header + main com padding responsivo)
+- **DashboardSidebar** responsiva: overlay mobile com backdrop, translate-x animation, auto-close ao navegar
+- **DashboardHeader** responsiva: hamburger mobile, search hidden, botões compactos
+- **Todas as 8 páginas protegidas** migradas para DashboardLayout
+- **Dashboard grids** mobile-first: stats 2col, headings responsive, channel stack
+- **Audiences** mobile-first: header empilha, cards padding/gap responsive, badges flex-wrap
+- **Benchmark** mobile-first: header empilha, stats cards responsive, export buttons icon-only
+- **Insights** mobile-first: badges responsive, cards sm:grid-cols-2, touch feedback
+- **Settings** mobile-first: AI provider cards responsive, plan card empilha
+- **Help** mobile-first: categories responsive, FAQ responsive, contact cards responsive
+- **Auth** padding mobile ajustado
+- **Landing** Header já responsiva, ShowcaseSlider com touch-action:none para drag mobile
+- **NotificationsDropdown** fixed full-width no mobile, absolute no desktop
+- **BackToHomeButton** scroll-aware: esconde ao scrollar para baixo, reaparece ao subir
+- **Breakpoints Tailwind:** base = mobile, sm:, md:, lg: para telas maiores
 
 ### Stack Tecnológico Completo
 
@@ -189,8 +208,9 @@ intentia-strategy-hub/
 ├── src/
 │   ├── components/         # Componentes React
 │   │   ├── ui/            # Componentes shadcn/ui
-│   │   ├── Dashboard*.tsx # Componentes do dashboard
-│   │   ├── Landing*.tsx   # Componentes da landing page
+│   │   ├── DashboardLayout.tsx  # Layout wrapper (sidebar + header + main)
+│   │   ├── DashboardSidebar.tsx # Sidebar responsiva (overlay mobile)
+│   │   ├── DashboardHeader.tsx  # Header responsiva (hamburger mobile)
 │   │   ├── BenchmarkCard.tsx
 │   │   ├── BenchmarkDetailDialog.tsx
 │   │   ├── InsightCard.tsx
@@ -198,7 +218,8 @@ intentia-strategy-hub/
 │   │   ├── ForceLightMode.tsx
 │   │   ├── ThemeToggle.tsx
 │   │   ├── AvatarUpload.tsx
-│   │   ├── NotificationsDropdown.tsx
+│   │   ├── BackToHomeButton.tsx # Botão voltar scroll-aware
+│   │   ├── NotificationsDropdown.tsx # Dropdown responsivo
 │   │   └── *.tsx          # Outros componentes
 │   ├── pages/             # Páginas principais
 │   │   ├── Index.tsx      # Home/Landing
@@ -210,6 +231,7 @@ intentia-strategy-hub/
 │   │   ├── Settings.tsx   # Configurações + API keys de IA
 │   │   ├── Auth.tsx       # Login/Signup (split layout)
 │   │   ├── Help.tsx       # Centro de ajuda
+│   │   ├── TacticalPlan.tsx # Plano tático por canal
 │   │   └── NotFound.tsx   # Página 404
 │   ├── integrations/      # Integrações externas
 │   │   └── supabase/      # Cliente Supabase
@@ -272,8 +294,9 @@ intentia-strategy-hub/
 ### Componentes Principais
 
 #### Dashboard Components
-- **DashboardHeader:** Header com navegação, perfil, notificações e ThemeToggle
-- **DashboardSidebar:** Sidebar com menu SPA, active state e dados reais do tenant
+- **DashboardLayout:** Wrapper compartilhado que gerencia sidebar mobile state
+- **DashboardHeader:** Header responsiva com hamburger mobile, perfil, notificações e ThemeToggle
+- **DashboardSidebar:** Sidebar responsiva (fixed overlay mobile, static desktop, auto-close ao navegar)
 - **ProjectCard:** Card de projeto com score e status
 - **ChannelCard:** Card de scores por canal (Google, Meta, LinkedIn, TikTok)
 - **InsightCard:** Card de insights com ícones por tipo (warning/opportunity/improvement)
@@ -286,7 +309,8 @@ intentia-strategy-hub/
 
 #### Landing Components
 - **LandingNav:** Navegação da landing page com dropdown hover
-- **BackToHomeButton:** Botão voltar consistente com backdrop blur
+- **ShowcaseSlider:** Comparador light/dark com touch-action:none para mobile
+- **BackToHomeButton:** Botão voltar scroll-aware (esconde ao scrollar, reaparece ao subir)
 
 #### Theme Components
 - **ThemeToggle:** Botão Sun/Moon para alternar dark/light
@@ -296,7 +320,7 @@ intentia-strategy-hub/
 - **Auth.tsx:** Tela de login/signup com split layout (form + gradient panel usando design system)
 
 #### Notification Components
-- **NotificationsDropdown:** Dropdown com notificações real-time
+- **NotificationsDropdown:** Dropdown responsivo (fixed full-width mobile, absolute desktop)
 - **AvatarUpload:** Upload de foto de perfil com preview
 
 #### UI Components (shadcn/ui)
@@ -330,7 +354,6 @@ intentia-strategy-hub/
 /about               # Sobre
 /cases               # Cases
 /blog                # Blog
-/careers             # Carreiras
 /contact             # Contato
 /privacy-policy      # Política de privacidade
 /terms-of-service    # Termos de serviço
@@ -342,6 +365,8 @@ intentia-strategy-hub/
 /benchmark           # Benchmark competitivo (protegido)
 /settings            # Configurações + API keys (protegido)
 /help                # Centro de ajuda (protegido)
+/tactical            # Plano tático por canal (protegido)
+/brand               # Guia de marca
 /*                   # Página 404
 ```
 
@@ -385,7 +410,7 @@ intentia-strategy-hub/
 
 **API Keys por Usuário** — Cada usuário configura suas próprias chaves em Settings → Integrações de IA.
 
-**Google Gemini:** Gemini 2.0 Flash, 3 Flash Preview, 3 Pro Preview  
+**Google Gemini:** Gemini 3 Flash Preview, 2.5 Flash, 2.5 Pro Preview, 2.0 Flash  
 **Anthropic Claude:** Claude Sonnet 4, Sonnet 3.7, Haiku 3.5, Haiku 3, Opus 3
 
 **Funcionalidades:**
@@ -469,7 +494,7 @@ O projeto está configurado para deploy via:
 
 ## Resumo
 
-O **Intentia Strategy Hub** está na **versão 1.9.0** — etapa estratégica completa:
+O **Intentia Strategy Hub** está na **versão 2.3.0** — mobile-first + etapa estratégica completa:
 
 1. **Autenticação** redesenhada com split layout e design system
 2. **Dashboard** com dados reais, Welcome Section e ScoreRing
@@ -488,5 +513,7 @@ O **Intentia Strategy Hub** está na **versão 1.9.0** — etapa estratégica co
 15. **Notificações** real-time com cores adaptáveis
 16. **Schema SQL** completo com RLS + user_api_keys
 17. **Design system** consistente com variáveis CSS + animações lab-bubble
+18. **Mobile-first** — todas as páginas e componentes responsivos com DashboardLayout
+19. **Plano Tático** por canal com templates validados por nicho B2B + playbook gamificado
 
-Próximos passos: integração com APIs de marketing, multi-tenancy avançado e dashboards customizáveis.
+Próximos passos: **Etapa Operacional** (execução de campanhas, integração com APIs de marketing, multi-tenancy avançado).

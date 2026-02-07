@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { DashboardHeader } from "@/components/DashboardHeader";
-import { DashboardSidebar } from "@/components/DashboardSidebar";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScoreRing } from "@/components/ScoreRing";
@@ -642,12 +641,8 @@ export default function TacticalPlan() {
   ];
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <DashboardSidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto space-y-6">
+    <DashboardLayout>
+          <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
 
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -1203,8 +1198,6 @@ export default function TacticalPlan() {
               </div>
             )}
           </div>
-        </main>
-      </div>
-    </div>
+    </DashboardLayout>
   );
 }

@@ -2,9 +2,9 @@
 
 ## 📊 Visão Geral
 
-**Status do Projeto:** v2.2.0 — UX Refinado + Playbook Gamificado + Gemini 3  
+**Status do Projeto:** v2.3.0 — Mobile-First + UX Refinado + Playbook Gamificado  
 **Data de Atualização:** 07/02/2026  
-**Versão:** 2.2.0
+**Versão:** 2.3.0
 
 ---
 
@@ -18,7 +18,7 @@
 - **[COMPLETO]** Session management com localStorage
 - **[COMPLETO]** ProtectedRoute wrapper para rotas autenticadas
 - **[COMPLETO]** Design system aplicado na tela de auth (cores primary, gradient-primary)
-- **[COMPLETO]** Botão "Voltar" padronizado (BackToHomeButton) na tela de auth
+- **[COMPLETO]** Botão "Voltar" padronizado (BackToHomeButton) scroll-aware na tela de auth
 - **[COMPLETO]** Fluxo "Esqueceu sua senha" com resetPasswordForEmail (email nativo Supabase)
 - **[COMPLETO]** Autocomplete attributes em todos os inputs (email, password, name, organization)
 - **[COMPLETO]** Painel direito contextual (textos mudam por modo: signin/signup/forgot)
@@ -27,7 +27,8 @@
 - **[COMPLETO]** Header dropdown com hover sensitivo
 - **[COMPLETO]** SPA navigation com React Router v6
 - **[COMPLETO]** Dashboard sidebar com active state e dados reais do tenant
-- **[COMPLETO]** Botão "Voltar" consistente com backdrop blur
+- **[COMPLETO]** DashboardLayout wrapper compartilhado para todas as páginas protegidas
+- **[COMPLETO]** Botão "Voltar" scroll-aware (esconde ao scrollar, reaparece ao subir)
 - **[COMPLETO]** Toast notifications (Sonner)
 - **[COMPLETO]** AlertDialog para confirmações
 - **[COMPLETO]** Design system com variáveis CSS (--primary, --gradient-primary)
@@ -111,6 +112,7 @@
   - Indicador visual "Key salva" com key mascarada ao retornar à tela
   - Placeholder contextual ("Nova key" quando já existe / instrução quando não existe)
   - Última validação registrada
+  - Proteção contra autofill de senha (autoComplete="new-password", data-1p-ignore, data-lpignore)
 - **[COMPLETO]** Configurações de notificações (email, relatórios semanais)
 - **[COMPLETO]** Preferências de idioma e fuso horário
 - **[COMPLETO]** Gerenciamento de conta (senha, exportação, logout, exclusão)
@@ -246,9 +248,26 @@
 - **[COMPLETO]** Settings (/settings) protegido
 - **[COMPLETO]** Help (/help) protegido
 - **[COMPLETO]** Plano Tático (/tactical) protegido
-- **[COMPLETO]** Preços, Sobre, Cases, Blog, Carreiras, Contato
+- **[COMPLETO]** Preços, Sobre, Cases, Blog, Contato
 - **[COMPLETO]** Políticas (Privacidade, Termos, Cookies)
 - **[COMPLETO]** Página 404
+
+### 📱 Mobile-First Responsiveness
+- **[COMPLETO]** DashboardLayout wrapper compartilhado (sidebar + header + main com padding responsivo)
+- **[COMPLETO]** DashboardSidebar responsiva: overlay mobile com backdrop, translate-x animation, auto-close ao navegar
+- **[COMPLETO]** DashboardHeader responsiva: hamburger mobile, search hidden, botões compactos
+- **[COMPLETO]** Todas as 8 páginas protegidas migradas para DashboardLayout
+- **[COMPLETO]** Dashboard grids mobile-first (stats 2col, headings responsive, channel stack)
+- **[COMPLETO]** Audiences mobile-first (header empilha, cards responsive, badges flex-wrap)
+- **[COMPLETO]** Benchmark mobile-first (header empilha, stats cards responsive, export icon-only)
+- **[COMPLETO]** Insights mobile-first (badges responsive, cards sm:grid-cols-2, touch feedback)
+- **[COMPLETO]** Settings mobile-first (AI provider cards responsive, plan card empilha)
+- **[COMPLETO]** Help mobile-first (categories responsive, FAQ responsive, contact cards responsive)
+- **[COMPLETO]** Auth padding mobile ajustado
+- **[COMPLETO]** Landing ShowcaseSlider com touch-action:none para drag mobile
+- **[COMPLETO]** NotificationsDropdown fixed full-width no mobile, absolute no desktop
+- **[COMPLETO]** BackToHomeButton scroll-aware (esconde ao scrollar, reaparece ao subir)
+- **[COMPLETO]** Breakpoints Tailwind: base = mobile, sm:, md:, lg: para telas maiores
 
 ---
 
@@ -319,10 +338,22 @@
 
 ## 📋 Roadmap Futuro
 
-### Versão 2.0 (Long-term)
-- [ ] Integração com APIs de marketing
-- [ ] Multi-tenancy avançado
+### Versão 3.0 — Etapa Operacional
+- [ ] Gestão de campanhas (criar/editar/monitorar campanhas reais)
+- [ ] Integração com APIs de marketing (Google Ads, Meta Ads, LinkedIn Ads)
+- [ ] Dashboard operacional com métricas de performance (CPC, CTR, ROAS, CPL)
+- [ ] Alertas automáticos de performance (anomalias, budget, pacing)
+- [ ] Calendário de campanhas e timeline visual
+- [ ] Gestão de budget por canal e projeto
+- [ ] Relatórios de performance automatizados (semanal/mensal)
+- [ ] A/B testing tracker (vincular testes táticos a resultados reais)
+
+### Versão 4.0 (Long-term)
+- [ ] Multi-tenancy avançado (equipes, permissões, workspaces)
 - [ ] Advanced analytics e dashboards customizáveis
+- [ ] Integração com CRMs (HubSpot, Salesforce)
+- [ ] Automação de workflows (triggers, ações programadas)
+- [ ] White-label para agências
 
 ---
 
@@ -344,7 +375,7 @@
 - **TypeScript Coverage:** 100%
 - **ESLint Rules:** 0 errors, 0 warnings
 - **Accessibility:** WCAG 2.1 AA compliant
-- **Responsive Design:** Mobile-first
+- **Responsive Design:** Mobile-first (todas as páginas e componentes)
 
 ---
 
@@ -365,7 +396,7 @@
 
 ## 🎯 Conclusão
 
-O **Intentia Strategy Hub** está na **versão 2.0.0** com funcionalidades avançadas:
+O **Intentia Strategy Hub** está na **versão 2.3.0** com funcionalidades avançadas:
 
 ### ✅ Entregáveis Concluídos
 1. **Autenticação redesenhada** com split layout, design system e fluxo "Esqueceu sua senha"
@@ -398,13 +429,22 @@ O **Intentia Strategy Hub** está na **versão 2.0.0** com funcionalidades avan�
 28. **Gemini 3 Flash Preview** — novo modelo adicionado como padrão, mensagens de erro melhoradas
 29. **Scores Táticos** — computados ao carregar (não só ao salvar), badges coloridos, overview com médias
 
-### 📋 Próximos Passos
-1. Camada Operacional (execução de campanhas a partir do plano tático)
-2. Configurar SMTP custom (Resend) para emails transacionais em produção
-3. Integração com APIs de marketing
-4. Multi-tenancy avançado
-5. Advanced analytics e dashboards customizáveis
+30. **Mobile-First** — todas as páginas e componentes responsivos com DashboardLayout
+31. **ShowcaseSlider** com touch-action:none para drag mobile
+32. **BackToHomeButton** scroll-aware
+33. **NotificationsDropdown** responsivo (fixed mobile, absolute desktop)
+34. **API Keys** protegidas contra autofill de senha
+
+### 📋 Próximos Passos — Etapa Operacional (v3.0)
+1. Gestão de campanhas (criar/editar/monitorar campanhas reais)
+2. Integração com APIs de marketing (Google Ads, Meta Ads, LinkedIn Ads)
+3. Dashboard operacional com métricas de performance (CPC, CTR, ROAS, CPL)
+4. Alertas automáticos de performance
+5. Calendário de campanhas e timeline visual
+6. Gestão de budget por canal e projeto
+7. Relatórios de performance automatizados
+8. Configurar SMTP custom (Resend) para emails transacionais
 
 ---
 
-**Status:** 🟢 **v2.2.0 — UX REFINADO + PLAYBOOK GAMIFICADO + GEMINI 3**
+**Status:** 🟢 **v2.3.0 — MOBILE-FIRST + UX REFINADO + PLAYBOOK GAMIFICADO**

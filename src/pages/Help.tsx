@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { DashboardSidebar } from "@/components/DashboardSidebar";
-import { DashboardHeader } from "@/components/DashboardHeader";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -431,16 +430,12 @@ export default function Help() {
   };
 
   return (
-    <div className="flex h-screen bg-background">
-      <DashboardSidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader />
-        <main className="flex-1 overflow-auto p-6">
-          <div className="max-w-5xl mx-auto space-y-6">
+    <DashboardLayout>
+          <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
             {/* Header */}
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Centro de Ajuda</h1>
-              <p className="text-muted-foreground">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Centro de Ajuda</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Guia completo da plataforma Intentia — funcionalidades, fluxos e dúvidas frequentes
               </p>
             </div>
@@ -449,63 +444,66 @@ export default function Help() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por funcionalidade, dúvida ou tópico..."
+                placeholder="Buscar funcionalidade ou dúvida..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 text-sm"
               />
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-card border rounded-lg p-4 text-center">
-                <Target className="h-6 w-6 text-orange-500 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-foreground">6</p>
-                <p className="text-xs text-muted-foreground">Scores por URL</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+              <div className="bg-card border rounded-lg p-3 sm:p-4 text-center">
+                <Target className="h-5 w-5 sm:h-6 sm:w-6 text-orange-500 mx-auto mb-1.5 sm:mb-2" />
+                <p className="text-xl sm:text-2xl font-bold text-foreground">6</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Scores por URL</p>
               </div>
-              <div className="bg-card border rounded-lg p-4 text-center">
-                <Sparkles className="h-6 w-6 text-purple-500 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-foreground">9</p>
-                <p className="text-xs text-muted-foreground">Modelos de IA</p>
+              <div className="bg-card border rounded-lg p-3 sm:p-4 text-center">
+                <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-purple-500 mx-auto mb-1.5 sm:mb-2" />
+                <p className="text-xl sm:text-2xl font-bold text-foreground">9</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Modelos de IA</p>
               </div>
-              <div className="bg-card border rounded-lg p-4 text-center">
-                <Globe className="h-6 w-6 text-sky-500 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-foreground">4</p>
-                <p className="text-xs text-muted-foreground">Canais de Mídia</p>
+              <div className="bg-card border rounded-lg p-3 sm:p-4 text-center">
+                <Globe className="h-5 w-5 sm:h-6 sm:w-6 text-sky-500 mx-auto mb-1.5 sm:mb-2" />
+                <p className="text-xl sm:text-2xl font-bold text-foreground">4</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Canais de Mídia</p>
               </div>
-              <div className="bg-card border rounded-lg p-4 text-center">
-                <Crosshair className="h-6 w-6 text-rose-500 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-foreground">6</p>
-                <p className="text-xs text-muted-foreground">Templates Táticos</p>
+              <div className="bg-card border rounded-lg p-3 sm:p-4 text-center">
+                <Crosshair className="h-5 w-5 sm:h-6 sm:w-6 text-rose-500 mx-auto mb-1.5 sm:mb-2" />
+                <p className="text-xl sm:text-2xl font-bold text-foreground">6</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Templates Táticos</p>
               </div>
             </div>
 
             {/* Help Categories */}
             <div>
-              <h2 className="text-lg font-semibold text-foreground mb-4">Guia por Funcionalidade</h2>
-              <div className="space-y-3">
+              <h2 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4">Guia por Funcionalidade</h2>
+              <div className="space-y-2 sm:space-y-3">
                 {filteredCategories.map((category) => (
                   <Card key={category.id}>
                     <CardHeader 
-                      className="cursor-pointer hover:bg-muted/50 transition-colors py-4"
+                      className="cursor-pointer hover:bg-muted/50 transition-colors py-3 sm:py-4 px-3 sm:px-6"
                       onClick={() => setExpandedCategory(expandedCategory === category.id ? null : category.id)}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={category.color}>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <div className={`shrink-0 ${category.color}`}>
                             {category.icon}
                           </div>
-                          <div>
-                            <CardTitle className="text-base">{category.title}</CardTitle>
-                            <CardDescription className="text-xs">{category.description}</CardDescription>
+                          <div className="min-w-0">
+                            <CardTitle className="text-sm sm:text-base truncate">{category.title}</CardTitle>
+                            <CardDescription className="text-[10px] sm:text-xs line-clamp-1">{category.description}</CardDescription>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className="text-xs">
+                        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                          <Badge variant="secondary" className="text-[10px] sm:text-xs hidden sm:inline-flex">
                             {category.articles.length} artigos
                           </Badge>
+                          <Badge variant="secondary" className="text-[10px] sm:hidden">
+                            {category.articles.length}
+                          </Badge>
                           <ChevronRight 
-                            className={`h-4 w-4 text-muted-foreground transition-transform ${
+                            className={`h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground transition-transform ${
                               expandedCategory === category.id ? "rotate-90" : ""
                             }`} 
                           />
@@ -514,16 +512,16 @@ export default function Help() {
                     </CardHeader>
                     
                     {expandedCategory === category.id && (
-                      <CardContent className="space-y-3 pt-0">
+                      <CardContent className="space-y-2 sm:space-y-3 pt-0 px-3 sm:px-6">
                         {category.articles.map((article, index) => (
-                          <div key={index} className="p-3 rounded-lg border bg-muted/20">
-                            <div className="flex items-center gap-2 mb-2">
-                              <h4 className="font-medium text-sm text-foreground">{article.title}</h4>
-                              <Badge variant="secondary" className={`text-xs ${getDifficultyColor(article.difficulty)}`}>
+                          <div key={index} className="p-2.5 sm:p-3 rounded-lg border bg-muted/20">
+                            <div className="flex items-start sm:items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 flex-wrap">
+                              <h4 className="font-medium text-xs sm:text-sm text-foreground">{article.title}</h4>
+                              <Badge variant="secondary" className={`text-[10px] sm:text-xs ${getDifficultyColor(article.difficulty)}`}>
                                 {article.difficulty}
                               </Badge>
                             </div>
-                            <p className="text-sm text-muted-foreground leading-relaxed">{article.content}</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{article.content}</p>
                           </div>
                         ))}
                       </CardContent>
@@ -535,25 +533,25 @@ export default function Help() {
 
             {/* FAQ */}
             <div>
-              <h2 className="text-lg font-semibold text-foreground mb-4">Perguntas Frequentes</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4">Perguntas Frequentes</h2>
               <Card>
                 <CardContent className="p-0">
                   {filteredFaq.map((item, index) => (
                     <div key={index} className={index < filteredFaq.length - 1 ? "border-b" : ""}>
                       <button
-                        className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/50 transition-colors"
+                        className="w-full flex items-center justify-between p-3 sm:p-4 text-left hover:bg-muted/50 transition-colors gap-3"
                         onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
                       >
-                        <span className="font-medium text-sm text-foreground pr-4">{item.question}</span>
+                        <span className="font-medium text-xs sm:text-sm text-foreground">{item.question}</span>
                         <ChevronDown 
-                          className={`h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform ${
+                          className={`h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0 transition-transform ${
                             expandedFaq === index ? "rotate-180" : ""
                           }`} 
                         />
                       </button>
                       {expandedFaq === index && (
-                        <div className="px-4 pb-4">
-                          <p className="text-sm text-muted-foreground leading-relaxed">{item.answer}</p>
+                        <div className="px-3 sm:px-4 pb-3 sm:pb-4">
+                          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{item.answer}</p>
                         </div>
                       )}
                     </div>
@@ -564,47 +562,45 @@ export default function Help() {
 
             {/* Contact Support */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <MessageCircle className="h-5 w-5" />
+              <CardHeader className="px-3 sm:px-6">
+                <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                  <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                   Precisa de mais ajuda?
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs sm:text-sm">
                   Entre em contato com nossa equipe
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-4 p-4 border rounded-lg">
-                    <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-                      <Mail className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <CardContent className="px-3 sm:px-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                      <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-sm">Email</h3>
-                      <p className="text-sm text-muted-foreground">intentia@orientohub.com.br</p>
-                      <p className="text-xs text-muted-foreground">Respondemos em até 24h úteis</p>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-xs sm:text-sm">Email</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">intentia@orientohub.com.br</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">Respondemos em até 24h úteis</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-4 p-4 border rounded-lg">
-                    <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
-                      <Phone className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                      <Phone className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 dark:text-green-400" />
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-sm">Telefone</h3>
-                      <p className="text-sm text-muted-foreground">+55 (14) 99861-8547</p>
-                      <p className="text-xs text-muted-foreground">Seg a Sex, 9h às 18h</p>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-xs sm:text-sm">Telefone</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground">+55 (14) 99861-8547</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">Seg a Sex, 9h às 18h</p>
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground mt-4 text-center">
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-3 sm:mt-4 text-center">
                   Uma solução do ecossistema <a href="https://orientohub.com.br" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">orientohub.com.br</a>
                 </p>
               </CardContent>
             </Card>
           </div>
-        </main>
-      </div>
-    </div>
+    </DashboardLayout>
   );
 }

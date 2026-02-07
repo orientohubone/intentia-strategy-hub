@@ -105,7 +105,7 @@ export default function Auth() {
       <BackToHomeButton />
 
       {/* Left: Form */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-16 lg:px-20 py-12 bg-white">
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-5 sm:px-16 lg:px-20 py-8 sm:py-12 bg-white">
         <div className="w-full max-w-md mx-auto">
           {/* Logo */}
           <div className="text-center mb-8">

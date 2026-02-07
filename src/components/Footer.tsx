@@ -78,11 +78,6 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="/careers" className="text-muted-foreground hover:text-primary transition-colors">
-                  Carreiras
-                </a>
-              </li>
-              <li>
                 <a href="/contact" className="text-muted-foreground hover:text-primary transition-colors">
                   Contato
                 </a>

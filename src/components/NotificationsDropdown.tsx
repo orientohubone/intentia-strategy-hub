@@ -88,20 +88,21 @@ export function NotificationsDropdown() {
           />
           
           {/* Dropdown */}
-          <Card className="absolute right-0 top-12 w-96 max-h-[500px] z-50 shadow-lg">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Notificações</CardTitle>
-                <div className="flex items-center gap-2">
+          <Card className="fixed sm:absolute inset-x-3 sm:inset-x-auto sm:right-0 top-16 sm:top-12 w-auto sm:w-96 max-h-[calc(100vh-5rem)] sm:max-h-[500px] z-50 shadow-lg">
+            <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6">
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-base sm:text-lg">Notificações</CardTitle>
+                <div className="flex items-center gap-2 shrink-0">
                   {unreadCount > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={markAllAsRead}
-                      className="text-xs"
+                      className="text-[10px] sm:text-xs h-7 px-2"
                     >
-                      <CheckCheck className="h-3 w-3 mr-1" />
-                      Marcar todas como lidas
+                      <CheckCheck className="h-3 w-3 mr-0.5 sm:mr-1" />
+                      <span className="hidden sm:inline">Marcar todas como lidas</span>
+                      <span className="sm:hidden">Ler todas</span>
                     </Button>
                   )}
                 </div>
@@ -119,26 +120,26 @@ export function NotificationsDropdown() {
                   <p className="text-sm">Nenhuma notificação</p>
                 </div>
               ) : (
-                <ScrollArea className="h-96">
-                  <div className="p-2">
+                <ScrollArea className="h-[calc(100vh-12rem)] sm:h-96">
+                  <div className="p-1.5 sm:p-2">
                     {notifications.map((notification) => (
                       <div
                         key={notification.id}
                         className={cn(
-                          "p-3 rounded-lg border mb-2 cursor-pointer transition-colors",
+                          "p-2.5 sm:p-3 rounded-lg border mb-1.5 sm:mb-2 cursor-pointer transition-colors",
                           getNotificationColor(notification.type),
                           !notification.read && "font-semibold"
                         )}
                         onClick={() => handleNotificationClick(notification)}
                       >
-                        <div className="flex items-start gap-3">
+                        <div className="flex items-start gap-2 sm:gap-3">
                           <div className="flex-shrink-0 mt-0.5">
                             {getNotificationIcon(notification.type)}
                           </div>
                           
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <h4 className="text-sm font-medium text-foreground truncate">
+                            <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                              <h4 className="text-xs sm:text-sm font-medium text-foreground truncate">
                                 {notification.title}
                               </h4>
                               {!notification.read && (
@@ -146,12 +147,12 @@ export function NotificationsDropdown() {
                               )}
                             </div>
                             
-                            <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                            <p className="text-[11px] sm:text-xs text-muted-foreground mb-1.5 sm:mb-2 line-clamp-2">
                               {notification.message}
                             </p>
                             
                             <div className="flex items-center justify-between">
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-[10px] sm:text-xs text-muted-foreground">
                                 {new Date(notification.created_at).toLocaleDateString('pt-BR', {
                                   day: 'numeric',
                                   month: 'short',
