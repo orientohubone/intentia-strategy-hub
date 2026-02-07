@@ -208,11 +208,13 @@ export default function Projects() {
     try {
       let projectId: string;
       const urlToAnalyze = formState.url.trim();
+      const projectName = formState.name.trim();
+      const projectNiche = formState.niche.trim();
 
       if (editingId) {
         const result = await updateProject(editingId, {
-          name: formState.name.trim(),
-          niche: formState.niche.trim(),
+          name: projectName,
+          niche: projectNiche,
           url: urlToAnalyze,
           competitor_urls: competitorUrls,
           status: "analyzing",
@@ -222,8 +224,8 @@ export default function Projects() {
         toast.success("Projeto atualizado! Iniciando análise...");
       } else {
         const result = await createProject({
-          name: formState.name.trim(),
-          niche: formState.niche.trim(),
+          name: projectName,
+          niche: projectNiche,
           url: urlToAnalyze,
           competitor_urls: competitorUrls,
           score: 0,
@@ -250,7 +252,7 @@ export default function Projects() {
           // Analyze competitors and generate benchmarks
           if (competitorUrls.length > 0) {
             toast.info(`Analisando ${competitorUrls.length} concorrente(s)...`);
-            await analyzeCompetitors(projectId, user.id, competitorUrls, formState.niche.trim());
+            await analyzeCompetitors(projectId, user.id, competitorUrls, projectNiche);
           }
           toast.success(`Análise concluída! Score: ${analysis.overallScore}/100`);
           // Single notification — guarded by ref to prevent duplicates
@@ -259,7 +261,7 @@ export default function Projects() {
             await (supabase as any).from("notifications").insert({
               user_id: user.id,
               title: "Análise Heurística Concluída",
-              message: `Análise de "${formState.name.trim() || 'Projeto'}" concluída com score ${analysis.overallScore}/100.`,
+              message: `Análise de "${projectName || 'Projeto'}" concluída com score ${analysis.overallScore}/100.`,
               type: "success",
               read: false,
               action_url: "/projects",

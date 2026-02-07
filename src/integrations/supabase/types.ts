@@ -142,6 +142,247 @@ export type Database = {
         Insert: Omit<Database["public"]["Tables"]["benchmarks"]["Row"], "id" | "created_at" | "updated_at" | "analysis_date">
         Update: Partial<Database["public"]["Tables"]["benchmarks"]["Insert"]>
       }
+      tactical_plans: {
+        Row: {
+          id: string
+          project_id: string
+          user_id: string
+          status: "draft" | "in_progress" | "completed"
+          overall_tactical_score: number
+          strategic_coherence_score: number
+          structure_clarity_score: number
+          segmentation_quality_score: number
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          user_id: string
+          status?: "draft" | "in_progress" | "completed"
+          overall_tactical_score?: number
+          strategic_coherence_score?: number
+          structure_clarity_score?: number
+          segmentation_quality_score?: number
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          user_id?: string
+          status?: "draft" | "in_progress" | "completed"
+          overall_tactical_score?: number
+          strategic_coherence_score?: number
+          structure_clarity_score?: number
+          segmentation_quality_score?: number
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      tactical_channel_plans: {
+        Row: {
+          id: string
+          tactical_plan_id: string
+          user_id: string
+          channel: "google" | "meta" | "linkedin" | "tiktok"
+          campaign_type: string | null
+          campaign_structure: Json
+          funnel_role: string | null
+          funnel_stage: "awareness" | "consideration" | "conversion" | "retention" | null
+          ad_group_structure: Json
+          bidding_strategy: string | null
+          extensions_plan: Json
+          quality_score_factors: Json
+          segmentation: Json
+          key_metrics: Json
+          testing_plan: Json
+          tactical_score: number
+          coherence_score: number
+          clarity_score: number
+          segmentation_score: number
+          alerts: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tactical_plan_id: string
+          user_id: string
+          channel: "google" | "meta" | "linkedin" | "tiktok"
+          campaign_type?: string | null
+          campaign_structure?: Json
+          funnel_role?: string | null
+          funnel_stage?: "awareness" | "consideration" | "conversion" | "retention" | null
+          ad_group_structure?: Json
+          bidding_strategy?: string | null
+          extensions_plan?: Json
+          quality_score_factors?: Json
+          segmentation?: Json
+          key_metrics?: Json
+          testing_plan?: Json
+          tactical_score?: number
+          coherence_score?: number
+          clarity_score?: number
+          segmentation_score?: number
+          alerts?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tactical_plan_id?: string
+          user_id?: string
+          channel?: "google" | "meta" | "linkedin" | "tiktok"
+          campaign_type?: string | null
+          campaign_structure?: Json
+          funnel_role?: string | null
+          funnel_stage?: "awareness" | "consideration" | "conversion" | "retention" | null
+          ad_group_structure?: Json
+          bidding_strategy?: string | null
+          extensions_plan?: Json
+          quality_score_factors?: Json
+          segmentation?: Json
+          key_metrics?: Json
+          testing_plan?: Json
+          tactical_score?: number
+          coherence_score?: number
+          clarity_score?: number
+          segmentation_score?: number
+          alerts?: Json
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      copy_frameworks: {
+        Row: {
+          id: string
+          tactical_plan_id: string
+          user_id: string
+          channel: "google" | "meta" | "linkedin" | "tiktok"
+          framework_type: "pain_solution_proof_cta" | "comparison" | "authority" | "custom"
+          framework_name: string
+          structure: Json
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tactical_plan_id: string
+          user_id: string
+          channel: "google" | "meta" | "linkedin" | "tiktok"
+          framework_type: "pain_solution_proof_cta" | "comparison" | "authority" | "custom"
+          framework_name: string
+          structure?: Json
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tactical_plan_id?: string
+          user_id?: string
+          channel?: "google" | "meta" | "linkedin" | "tiktok"
+          framework_type?: "pain_solution_proof_cta" | "comparison" | "authority" | "custom"
+          framework_name?: string
+          structure?: Json
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      segmentation_plans: {
+        Row: {
+          id: string
+          tactical_plan_id: string
+          user_id: string
+          audience_id: string | null
+          channel: "google" | "meta" | "linkedin" | "tiktok"
+          audience_name: string
+          targeting_criteria: Json
+          message_angle: string | null
+          priority: "high" | "medium" | "low" | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tactical_plan_id: string
+          user_id: string
+          audience_id?: string | null
+          channel: "google" | "meta" | "linkedin" | "tiktok"
+          audience_name: string
+          targeting_criteria?: Json
+          message_angle?: string | null
+          priority?: "high" | "medium" | "low" | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tactical_plan_id?: string
+          user_id?: string
+          audience_id?: string | null
+          channel?: "google" | "meta" | "linkedin" | "tiktok"
+          audience_name?: string
+          targeting_criteria?: Json
+          message_angle?: string | null
+          priority?: "high" | "medium" | "low" | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      testing_plans: {
+        Row: {
+          id: string
+          tactical_plan_id: string
+          user_id: string
+          channel: "google" | "meta" | "linkedin" | "tiktok"
+          test_name: string
+          hypothesis: string
+          what_to_test: string
+          success_criteria: string
+          priority: "high" | "medium" | "low" | null
+          status: "planned" | "running" | "completed"
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tactical_plan_id: string
+          user_id: string
+          channel: "google" | "meta" | "linkedin" | "tiktok"
+          test_name: string
+          hypothesis: string
+          what_to_test: string
+          success_criteria: string
+          priority?: "high" | "medium" | "low" | null
+          status?: "planned" | "running" | "completed"
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tactical_plan_id?: string
+          user_id?: string
+          channel?: "google" | "meta" | "linkedin" | "tiktok"
+          test_name?: string
+          hypothesis?: string
+          what_to_test?: string
+          success_criteria?: string
+          priority?: "high" | "medium" | "low" | null
+          status?: "planned" | "running" | "completed"
+          created_at?: string
+          updated_at?: string
+        }
+      }
       user_api_keys: {
         Row: {
           id: string

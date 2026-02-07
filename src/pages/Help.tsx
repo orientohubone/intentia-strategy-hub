@@ -28,6 +28,8 @@ import {
   Bell,
   Key,
   Globe,
+  Crosshair,
+  BookOpen,
 } from "lucide-react";
 
 export default function Help() {
@@ -55,7 +57,7 @@ export default function Help() {
         },
         {
           title: "Entendendo o Dashboard",
-          content: "O Dashboard exibe seus projetos recentes, métricas gerais (total de projetos, insights, benchmarks, públicos), insights recentes e scores por canal. Tudo com dados reais da sua conta.",
+          content: "O Dashboard exibe seus projetos recentes, métricas gerais (total de projetos, insights, benchmarks, públicos), insights estratégicos compactos (clique para expandir cada um) e scores por canal com seletor de projeto. Tudo com dados reais da sua conta.",
           difficulty: "Iniciante",
         },
         {
@@ -108,7 +110,12 @@ export default function Help() {
         },
         {
           title: "Modelos disponíveis",
-          content: "Google Gemini: Gemini 2.0 Flash, Gemini 3 Flash Preview, Gemini 3 Pro Preview. Anthropic Claude: Claude Sonnet 4, Claude Sonnet 3.7, Claude Haiku 3.5, Claude Haiku 3, Claude Opus 3. Escolha o modelo no seletor ao lado do botão de análise IA.",
+          content: "Google Gemini: Gemini 3 Flash Preview, Gemini 2.5 Flash, Gemini 2.5 Pro Preview, Gemini 2.0 Flash. Anthropic Claude: Claude Sonnet 4, Claude Sonnet 3.7, Claude Haiku 3.5, Claude Haiku 3, Claude Opus 3. Escolha o modelo no seletor ao lado do botão de análise IA.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Erros de modelo não suportado",
+          content: "Se sua API key não tem acesso a um modelo específico, o sistema exibe uma mensagem clara indicando qual modelo falhou e orienta você a trocar o modelo em Configurações → Integrações de IA. Nem todas as API keys têm acesso a todos os modelos — depende do seu plano no Google ou Anthropic.",
           difficulty: "Intermediário",
         },
         {
@@ -211,6 +218,60 @@ export default function Help() {
       ]
     },
     {
+      id: "tactical",
+      title: "Plano Tático por Canal",
+      description: "Estruture campanhas de mídia paga com templates validados por nicho",
+      icon: <Crosshair className="h-5 w-5" />,
+      color: "text-rose-600",
+      articles: [
+        {
+          title: "O que é o Plano Tático",
+          content: "O Plano Tático transforma decisões estratégicas em estruturas de campanha executáveis para cada canal de mídia (Google, Meta, LinkedIn, TikTok). Ele define tipo de campanha, papel no funil, estratégia de lances, estrutura de grupos e métricas-chave — sem criar anúncios finais.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Usando templates por nicho",
+          content: "Ao criar um plano tático, escolha entre 6 templates validados pelo mercado: SaaS B2B, Consultoria & Serviços, E-commerce & Indústria, Educação Corporativa, Fintech e Saúde Corporativa. Cada template preenche automaticamente os 4 canais com dados de campanha, copy frameworks, segmentação e testes.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Frameworks de Copy",
+          content: "Crie frameworks de argumentação por canal: Dor → Solução → Prova → CTA, Comparação, Autoridade ou Personalizado. Cada framework define a estrutura da mensagem sem gerar textos finais de anúncios — preparando a base para a execução.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Segmentação e Testes",
+          content: "Defina segmentação ideal por canal (público × mensagem × prioridade) e crie planos de teste com hipóteses, o que testar primeiro e critérios de sucesso. Tudo organizado por canal para facilitar a execução.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Score Tático e Alertas",
+          content: "Cada canal recebe um score tático que mede: coerência com a estratégia, clareza da estrutura e qualidade da segmentação. Alertas visuais aparecem quando o plano tático não respeita as recomendações da camada estratégica.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Aplicar template em plano existente",
+          content: "Na aba 'Templates' dentro do plano tático, você pode aplicar ou trocar o template a qualquer momento. Os dados existentes serão substituídos pelos dados do template selecionado. Ideal para testar diferentes abordagens por nicho.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Playbook Gamificado",
+          content: "Clique no botão 'Rodar Plano' na aba de visão geral para gerar um playbook de execução gamificado. O sistema analisa todos os canais e gera diretivas priorizadas com KPIs, nível de prioridade e ações específicas. Visualize na aba 'Playbook' com cards coloridos por prioridade.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Scores táticos automáticos",
+          content: "Os scores táticos (coerência, clareza, segmentação) são computados automaticamente ao carregar o plano — não apenas ao salvar. Isso significa que ao aplicar um template, os badges e indicadores já refletem os dados imediatamente.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Google Ads — Funcionalidades exclusivas",
+          content: "Para Google Ads, o plano tático inclui funcionalidades exclusivas: seleção de extensões recomendadas (Sitelinks, Frases de Destaque, Preço, etc.) e estratégia para os 3 fatores de Índice de Qualidade (relevância do anúncio, landing page, CTR esperado).",
+          difficulty: "Avançado",
+        },
+      ]
+    },
+    {
       id: "audiences",
       title: "Públicos-Alvo",
       description: "Defina e gerencie suas audiências B2B",
@@ -300,7 +361,7 @@ export default function Help() {
     },
     {
       question: "Quais modelos de IA são suportados?",
-      answer: "Google Gemini: Gemini 2.0 Flash, Gemini 3 Flash Preview e Gemini 3 Pro Preview. Anthropic Claude: Claude Sonnet 4, Claude Sonnet 3.7, Claude Haiku 3.5, Claude Haiku 3 e Claude Opus 3. Você escolhe o modelo no seletor antes de cada análise."
+      answer: "Google Gemini: Gemini 3 Flash Preview, Gemini 2.5 Flash, Gemini 2.5 Pro Preview e Gemini 2.0 Flash. Anthropic Claude: Claude Sonnet 4, Claude Sonnet 3.7, Claude Haiku 3.5, Claude Haiku 3 e Claude Opus 3. Você escolhe o modelo no seletor antes de cada análise."
     },
     {
       question: "Como funciona o benchmark competitivo?",
@@ -325,6 +386,18 @@ export default function Help() {
     {
       question: "Como recebo notificações?",
       answer: "Notificações são enviadas em tempo real via Supabase Subscriptions. Você recebe alertas quando análises são concluídas, novos insights são gerados ou quando há atualizações importantes. Acesse pelo ícone de sino no header."
+    },
+    {
+      question: "O que é o Plano Tático e como funciona?",
+      answer: "O Plano Tático é a camada que transforma decisões estratégicas em estruturas de campanha executáveis. Para cada canal (Google, Meta, LinkedIn, TikTok), você define tipo de campanha, funil, lances, grupos de anúncios, frameworks de copy, segmentação e plano de testes. Use templates pré-preenchidos por nicho B2B para começar rapidamente."
+    },
+    {
+      question: "Quais templates táticos estão disponíveis?",
+      answer: "6 templates validados por nicho: SaaS B2B, Consultoria & Serviços, E-commerce & Indústria B2B, Educação Corporativa, Fintech & Financeiro e Saúde Corporativa. Cada template inclui dados pré-preenchidos para os 4 canais, frameworks de copy, segmentação e planos de teste."
+    },
+    {
+      question: "O que é o Playbook Gamificado?",
+      answer: "O Playbook é gerado ao clicar em 'Rodar Plano' na visão geral do plano tático. Ele analisa todos os canais configurados e gera diretivas de execução priorizadas com KPIs, ações específicas e nível de prioridade. É uma forma gamificada de transformar o plano tático em ações concretas."
     },
     {
       question: "Posso cancelar meu plano a qualquer momento?",
@@ -392,7 +465,7 @@ export default function Help() {
               </div>
               <div className="bg-card border rounded-lg p-4 text-center">
                 <Sparkles className="h-6 w-6 text-purple-500 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-foreground">8+</p>
+                <p className="text-2xl font-bold text-foreground">9</p>
                 <p className="text-xs text-muted-foreground">Modelos de IA</p>
               </div>
               <div className="bg-card border rounded-lg p-4 text-center">
@@ -401,9 +474,9 @@ export default function Help() {
                 <p className="text-xs text-muted-foreground">Canais de Mídia</p>
               </div>
               <div className="bg-card border rounded-lg p-4 text-center">
-                <Download className="h-6 w-6 text-emerald-500 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-foreground">5</p>
-                <p className="text-xs text-muted-foreground">Formatos de Export</p>
+                <Crosshair className="h-6 w-6 text-rose-500 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-foreground">6</p>
+                <p className="text-xs text-muted-foreground">Templates Táticos</p>
               </div>
             </div>
 

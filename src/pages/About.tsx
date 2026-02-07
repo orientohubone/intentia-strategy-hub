@@ -207,7 +207,7 @@ export default function About() {
             Pronto para transformar sua estratégia de marketing?
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Junte-se às 500+ empresas que já confiam na Intentia para tomar decisões mais inteligentes.
+            Descubra como a Intentia pode transformar suas decisões de mídia com inteligência e estratégia.
           </p>
           <Button variant="hero" size="xl" onClick={() => navigate('/auth')}>
             Começar Agora

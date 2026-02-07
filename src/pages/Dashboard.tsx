@@ -3,10 +3,9 @@ import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { ProjectCard } from "@/components/ProjectCard";
 import { ChannelCard } from "@/components/ChannelCard";
-import { InsightCard } from "@/components/InsightCard";
 import { StatsCard } from "@/components/StatsCard";
 import { ScoreRing } from "@/components/ScoreRing";
-import { FolderOpen, Target, BarChart3, Zap, FileText, FileSpreadsheet } from "lucide-react";
+import { FolderOpen, Target, BarChart3, Zap, FileText, FileSpreadsheet, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, TrendingUp, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exportDashboardPdf } from "@/lib/reportGenerator";
 import { exportProjectsCsv } from "@/lib/exportCsv";
@@ -53,6 +52,10 @@ export default function Dashboard() {
   const [benchmarksCount, setBenchmarksCount] = useState(0);
   const [insightsThisWeek, setInsightsThisWeek] = useState(0);
   const [projectsThisMonth, setProjectsThisMonth] = useState(0);
+  const [totalInsightsCount, setTotalInsightsCount] = useState(0);
+  const [insightsExpanded, setInsightsExpanded] = useState(false);
+  const [expandedInsightId, setExpandedInsightId] = useState<string | null>(null);
+  const [selectedChannelProjectId, setSelectedChannelProjectId] = useState<string | null>(null);
   const fullName = (user?.user_metadata?.full_name as string | undefined) || user?.email || "Usuário";
 
   useEffect(() => {
@@ -72,6 +75,13 @@ export default function Dashboard() {
         } else {
           setInsights((data || []) as Insight[]);
         }
+
+        // Get total insights count
+        const { count: totalCount, error: totalError } = await supabase
+          .from("insights")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id);
+        if (!totalError) setTotalInsightsCount(totalCount || 0);
 
         // Calculate insights created this week
         const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -217,7 +227,18 @@ export default function Dashboard() {
   }, [projects]);
 
   const latestProject = projects[0];
-  const latestChannelScores = latestProject ? channelScores[latestProject.id] || [] : [];
+  const channelProject = selectedChannelProjectId
+    ? projects.find((p) => p.id === selectedChannelProjectId)
+    : latestProject;
+  const activeChannelScores = channelProject ? channelScores[channelProject.id] || [] : [];
+
+  useEffect(() => {
+    if (projects.length > 0 && !selectedChannelProjectId) {
+      setSelectedChannelProjectId(projects[0]?.id || null);
+    }
+  }, [projects]);
+
+  const visibleInsights = insightsExpanded ? insights : insights.slice(0, 3);
 
   return (
     <div className="flex h-screen bg-background">
@@ -282,7 +303,7 @@ export default function Dashboard() {
               />
               <StatsCard
                 title="Insights Gerados"
-                value={insights.length}
+                value={totalInsightsCount}
                 change={insightsThisWeek}
                 changeLabel={insightsThisWeek > 0 ? "esta semana" : "nenhum novo"}
                 icon={<Zap className="h-5 w-5 text-primary" />}
@@ -360,33 +381,92 @@ export default function Dashboard() {
                     Ver todos
                   </a>
                 </div>
-                <div className="space-y-3">
+                <div className="rounded-xl border border-border bg-card divide-y divide-border">
                   {insights.length === 0 && (
-                    <p className="text-sm text-muted-foreground">Nenhum insight disponível.</p>
+                    <p className="text-sm text-muted-foreground p-4">Nenhum insight disponível.</p>
                   )}
-                  {insights.map((insight) => (
-                    <InsightCard
-                      key={insight.id}
-                      type={insight.type}
-                      title={insight.title}
-                      description={insight.description}
-                      action={insight.action ?? undefined}
-                    />
-                  ))}
+                  {visibleInsights.map((insight) => {
+                    const isOpen = expandedInsightId === insight.id;
+                    const iconMap = { warning: AlertTriangle, opportunity: TrendingUp, improvement: Lightbulb };
+                    const colorMap = { warning: "text-amber-500", opportunity: "text-green-500", improvement: "text-blue-500" };
+                    const bgMap = { warning: "bg-amber-500/10", opportunity: "bg-green-500/10", improvement: "bg-blue-500/10" };
+                    const Icon = iconMap[insight.type];
+                    return (
+                      <button
+                        key={insight.id}
+                        onClick={() => setExpandedInsightId(isOpen ? null : insight.id)}
+                        className="w-full text-left px-3.5 py-2.5 hover:bg-muted/40 transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-6 h-6 rounded-md ${bgMap[insight.type]} flex items-center justify-center shrink-0`}>
+                            <Icon className={`h-3.5 w-3.5 ${colorMap[insight.type]}`} />
+                          </div>
+                          <p className="text-xs font-medium text-foreground flex-1 truncate">{insight.title}</p>
+                          {isOpen ? (
+                            <ChevronUp className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          ) : (
+                            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          )}
+                        </div>
+                        {isOpen && (
+                          <div className="mt-2 ml-9 space-y-1">
+                            <p className="text-[11px] text-muted-foreground leading-relaxed">{insight.description}</p>
+                            {insight.action && (
+                              <p className="text-[11px] text-primary font-medium flex items-center gap-1">
+                                <ArrowRight className="h-3 w-3" />
+                                {insight.action}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {insights.length > 3 && (
+                    <button
+                      onClick={() => setInsightsExpanded(!insightsExpanded)}
+                      className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/40"
+                    >
+                      {insightsExpanded ? (
+                        <>
+                          <ChevronUp className="h-3.5 w-3.5" />
+                          Mostrar menos
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-3.5 w-3.5" />
+                          Ver mais {insights.length - 3}
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Channel Strategy Overview */}
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">
-                Visão por Canal {latestProject ? `- ${latestProject.name}` : ""}
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-foreground">
+                  Visão por Canal {channelProject ? `- ${channelProject.name}` : ""}
+                </h2>
+                {projects.length > 1 && (
+                  <select
+                    className="h-8 rounded-lg border border-border bg-background px-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    value={selectedChannelProjectId || ""}
+                    onChange={(e) => setSelectedChannelProjectId(e.target.value)}
+                  >
+                    {projects.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {latestChannelScores.length === 0 && (
+                {activeChannelScores.length === 0 && (
                   <p className="text-sm text-muted-foreground">Nenhuma análise de canal disponível.</p>
                 )}
-                {latestChannelScores.map((score) => (
+                {activeChannelScores.map((score) => (
                   <ChannelCard
                     key={score.channel}
                     channel={score.channel}

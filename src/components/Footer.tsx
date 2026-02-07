@@ -69,7 +69,7 @@ export function Footer() {
               </li>
               <li>
                 <a href="/cases" className="text-muted-foreground hover:text-primary transition-colors">
-                  Cases de Sucesso
+                  Cases de Uso
                 </a>
               </li>
               <li>

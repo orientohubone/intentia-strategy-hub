@@ -218,8 +218,19 @@ async function callGeminiApi(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
+    const errMsg = errorData?.error?.message || response.statusText;
+    if (response.status === 404 || errMsg.toLowerCase().includes("not found")) {
+      throw new Error(
+        `Modelo "${model}" não encontrado. Sua API key pode não ter acesso a este modelo. Tente outro modelo em Configurações → Integrações de IA.`
+      );
+    }
+    if (response.status === 403 || errMsg.toLowerCase().includes("permission")) {
+      throw new Error(
+        `Sua API key não tem permissão para usar o modelo "${model}". Selecione outro modelo em Configurações → Integrações de IA.`
+      );
+    }
     throw new Error(
-      `Gemini API error (${response.status}): ${errorData?.error?.message || response.statusText}`
+      `Erro na API Gemini (${response.status}): ${errMsg}`
     );
   }
 
@@ -249,7 +260,20 @@ async function callClaudeApi(
     },
   });
 
-  if (error) throw new Error(`Claude API error: ${error.message}`);
+  if (error) {
+    const errMsg = error.message || "";
+    if (errMsg.includes("not_found") || errMsg.includes("404") || errMsg.toLowerCase().includes("not found")) {
+      throw new Error(
+        `Modelo "${model}" não encontrado. Sua API key pode não ter acesso a este modelo. Tente outro modelo em Configurações → Integrações de IA.`
+      );
+    }
+    if (errMsg.includes("permission") || errMsg.includes("403") || errMsg.includes("authentication")) {
+      throw new Error(
+        `Sua API key não tem permissão para usar o modelo "${model}". Selecione outro modelo em Configurações → Integrações de IA.`
+      );
+    }
+    throw new Error(`Erro na API Claude: ${errMsg}`);
+  }
   if (!data?.text) throw new Error("Resposta vazia da API Claude");
   return data.text;
 }

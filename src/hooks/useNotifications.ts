@@ -64,8 +64,15 @@ export function useNotifications() {
         },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setNotifications(prev => [payload.new as Notification, ...prev]);
+            const newNotif = payload.new as Notification;
+            setNotifications(prev => {
+              if (prev.some(n => n.id === newNotif.id)) return prev;
+              return [newNotif, ...prev];
+            });
             setUnreadCount(prev => prev + 1);
+          } else if (payload.eventType === 'DELETE') {
+            const oldNotif = payload.old as { id: string };
+            setNotifications(prev => prev.filter(n => n.id !== oldNotif.id));
           } else if (payload.eventType === 'UPDATE') {
             setNotifications(prev => 
               prev.map(n => n.id === payload.new.id ? payload.new as Notification : n)

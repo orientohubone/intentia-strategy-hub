@@ -7,6 +7,7 @@ import {
   ChevronLeft, 
   Users, 
   Lightbulb, 
+  Crosshair,
   LogOut, 
   Settings, 
   HelpCircle
@@ -30,6 +31,7 @@ const mainNavItems: NavItem[] = [
   { icon: Target, label: "Públicos-Alvo", href: "/audiences" },
   { icon: BarChart3, label: "Benchmark", href: "/benchmark" },
   { icon: Lightbulb, label: "Insights", href: "/insights" },
+  { icon: Crosshair, label: "Plano Tático", href: "/tactical" },
 ];
 
 const bottomNavItems: NavItem[] = [

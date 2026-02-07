@@ -81,7 +81,7 @@ export default function Settings() {
     google_gemini: {
       provider: "google_gemini",
       api_key_encrypted: "",
-      preferred_model: "gemini-2.0-flash",
+      preferred_model: "gemini-3-flash-preview",
       is_active: false,
       last_validated_at: null,
     },

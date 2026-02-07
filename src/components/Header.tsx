@@ -17,7 +17,7 @@ const menuCategories = [
     name: "Empresa",
     items: [
       { name: "Sobre Nós", href: "/about" },
-      { name: "Cases de Sucesso", href: "/cases" },
+      { name: "Cases de Uso", href: "/cases" },
       { name: "Carreiras", href: "/careers" },
       { name: "Contato", href: "/contact" },
     ]

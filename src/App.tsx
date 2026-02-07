@@ -22,6 +22,7 @@ import Audiences from "./pages/Audiences";
 import Benchmark from "./pages/Benchmark";
 import Settings from "./pages/Settings";
 import Help from "./pages/Help";
+import TacticalPlan from "./pages/TacticalPlan";
 import NotFound from "./pages/NotFound";
 import BrandGuide from "./pages/BrandGuide";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -94,6 +95,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/tactical" 
+            element={
+              <ProtectedRoute>
+                <TacticalPlan />
               </ProtectedRoute>
             } 
           />

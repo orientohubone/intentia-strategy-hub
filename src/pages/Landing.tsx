@@ -17,6 +17,8 @@ import {
   FileText,
   Brain,
   GripVertical,
+  Crosshair,
+  Rocket,
 } from "lucide-react";
 
 function ShowcaseSlider() {
@@ -124,6 +126,16 @@ const features = [
     description: "Insights automáticos agrupados por projeto: alertas de risco, oportunidades de mercado e melhorias sugeridas com ações práticas.",
   },
   {
+    icon: Crosshair,
+    title: "Plano Tático por Canal",
+    description: "Transforme estratégia em ação: estruture campanhas para Google, Meta, LinkedIn e TikTok com templates validados por nicho B2B.",
+  },
+  {
+    icon: Rocket,
+    title: "Playbook de Execução Gamificado",
+    description: "Gere diretivas de execução priorizadas com KPIs e ações específicas por canal. Transforme o plano tático em um playbook visual e acionável.",
+  },
+  {
     icon: FileText,
     title: "Relatórios PDF e Exportação CSV",
     description: "Relatórios consolidados por projeto em PDF, exportação por seção e dados em CSV para análise externa. Tudo pronto para apresentar ao cliente.",
@@ -136,7 +148,8 @@ const steps = [
   { number: "03", title: "Enriqueça com IA", description: "Ative a análise por Gemini ou Claude para obter resumo executivo, SWOT, prontidão e recomendações por canal." },
   { number: "04", title: "Compare com concorrentes", description: "Benchmarks automáticos com SWOT, gap analysis e enriquecimento por IA para cada concorrente." },
   { number: "05", title: "Mapeie públicos-alvo", description: "Defina audiências com indústria, porte, localização e keywords para refinar sua estratégia." },
-  { number: "06", title: "Exporte e apresente", description: "Gere relatórios PDF consolidados, exporte dados em CSV e compartilhe insights com seu time." },
+  { number: "06", title: "Monte o plano tático", description: "Estruture campanhas por canal com templates pré-preenchidos por nicho: copy, segmentação, testes e métricas." },
+  { number: "07", title: "Exporte e apresente", description: "Gere relatórios PDF consolidados, exporte dados em CSV e compartilhe insights com seu time." },
 ];
 
 const benefits = [
@@ -145,7 +158,9 @@ const benefits = [
   "Identifique o momento certo de investir em cada canal",
   "Alinhe estratégia antes de criar campanhas",
   "Compare seu posicionamento com concorrentes em tempo real",
+  "Estruture campanhas com templates táticos validados por nicho",
   "Gere relatórios profissionais para apresentar ao cliente",
+  "Transforme planos táticos em playbooks de execução gamificados",
 ];
 
 export default function Landing() {
@@ -171,7 +186,7 @@ export default function Landing() {
             </h1>
             
             <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: "0.1s" }}>
-              Diagnóstico heurístico + inteligência artificial + benchmark competitivo. 
+              Diagnóstico heurístico + inteligência artificial + benchmark competitivo + playbook de execução. 
               Avalie a prontidão do seu negócio B2B para Google, Meta, LinkedIn e TikTok Ads antes de investir.
             </p>
 

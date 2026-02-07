@@ -2,9 +2,9 @@
 
 ## 📊 Visão Geral
 
-**Status do Projeto:** v2.0.0 — Consistência IA + Auth Aprimorado + Email Templates  
-**Data de Atualização:** 06/02/2026  
-**Versão:** 2.0.0
+**Status do Projeto:** v2.2.0 — UX Refinado + Playbook Gamificado + Gemini 3  
+**Data de Atualização:** 07/02/2026  
+**Versão:** 2.2.0
 
 ---
 
@@ -44,9 +44,10 @@
 ### 📊 Dashboard Principal
 - **[COMPLETO]** Dados reais do Supabase (sem mocks)
 - **[COMPLETO]** Cards de projetos com scores e status
-- **[COMPLETO]** Insights estratégicos por projeto (link "Ver todos" → /insights)
-- **[COMPLETO]** Scores por canal (Google, Meta, LinkedIn, TikTok)
-- **[COMPLETO]** Estatísticas dinâmicas (audiences, benchmarks, insights semanais, projetos mensais)
+- **[COMPLETO]** Insights estratégicos compactos — lista colapsável com expand/collapse individual por insight
+- **[COMPLETO]** Inicialmente 3 insights visíveis, botão "Ver mais" para expandir até 6
+- **[COMPLETO]** Scores por canal com seletor de projeto (dropdown para trocar entre projetos)
+- **[COMPLETO]** Estatísticas dinâmicas com total real de insights (count do DB, não limitado pela query)
 - **[COMPLETO]** Nome do usuário do Supabase user_metadata
 - **[COMPLETO]** Welcome Section com card gradient-primary do design system
 - **[COMPLETO]** ScoreRing de prontidão geral no canto direito
@@ -101,7 +102,7 @@
 ### ⚙️ Configurações
 - **[COMPLETO]** Perfil do usuário com avatar upload, nome, empresa, bio
 - **[COMPLETO]** Integrações de IA — API keys por usuário:
-  - Google Gemini (2.0 Flash, 2.5 Flash Preview, 2.5 Pro Preview)
+  - Google Gemini (3 Flash Preview, 2.5 Flash, 2.5 Pro Preview, 2.0 Flash)
   - Anthropic Claude (Sonnet 4, Sonnet 3.7, Haiku 3.5, Haiku 3, Opus 3)
   - Validação de key contra API real
   - Seleção de modelo preferido
@@ -114,6 +115,42 @@
 - **[COMPLETO]** Preferências de idioma e fuso horário
 - **[COMPLETO]** Gerenciamento de conta (senha, exportação, logout, exclusão)
 - **[COMPLETO]** Informações do plano e upgrade
+
+### 🎯 Plano Tático por Canal
+- **[COMPLETO]** Página `/tactical` com seletor de projeto e tabs por canal
+- **[COMPLETO]** Visão Geral: scores táticos consolidados, alertas de incoerência, cards de canal
+- **[COMPLETO]** Plano por Canal (Google, Meta, LinkedIn, TikTok):
+  - Tipo de campanha e papel no funil
+  - Estratégia de lances (conceitual)
+  - Estrutura de grupos de anúncios por intenção/público
+  - Extensões recomendadas (Google Ads)
+  - Fatores de Índice de Qualidade (Google Ads)
+  - Métricas-chave e metas por canal
+- **[COMPLETO]** Frameworks de Copy por canal:
+  - Dor → Solução → Prova → CTA
+  - Comparação
+  - Autoridade
+  - Personalizado
+- **[COMPLETO]** Segmentação: público × canal × mensagem × prioridade
+- **[COMPLETO]** Plano de Testes: hipóteses, o que testar, critérios de sucesso
+- **[COMPLETO]** Score Tático: coerência com estratégia, clareza da estrutura, qualidade da segmentação
+- **[COMPLETO]** Alertas visuais de incoerência com a camada estratégica
+- **[COMPLETO]** Templates táticos pré-preenchidos por nicho B2B (6 templates):
+  - SaaS B2B
+  - Consultoria & Serviços Profissionais
+  - E-commerce & Indústria B2B
+  - Educação Corporativa / EdTech
+  - Fintech & Serviços Financeiros
+  - Saúde Corporativa
+- **[COMPLETO]** Aba "Templates" dentro do plano existente para aplicar/trocar template
+- **[COMPLETO]** Cada template inclui: 4 canais, copy frameworks, segmentação e testes pré-preenchidos
+- **[COMPLETO]** Dependência visual com a camada estratégica (scores, recomendações)
+- **[COMPLETO]** Edição completa: salvar channel plans, copy frameworks, segmentação e testes
+- **[COMPLETO]** Scores táticos computados ao carregar (não só ao salvar) — reflete dados de templates imediatamente
+- **[COMPLETO]** Badges coloridos nas abas com score tático real por canal
+- **[COMPLETO]** Cards de indicadores na overview com scores agregados (média dos canais)
+- **[COMPLETO]** Playbook gamificado: botão "Rodar Plano" gera diretivas de execução com prioridades e KPIs
+- **[COMPLETO]** Aba Playbook com visualização gamificada das diretivas de execução
 
 ### 📚 Centro de Ajuda
 - **[COMPLETO]** Base de conhecimento categorizada (todas as funcionalidades documentadas)
@@ -130,7 +167,7 @@
 - **[COMPLETO]** Inline styles para compatibilidade com clientes de email
 - **[COMPLETO]** Variáveis Supabase: {{ .ConfirmationURL }} e {{ .Token }}
 
-### �🖼️ Upload de Foto de Perfil
+### ��️ Upload de Foto de Perfil
 - **[COMPLETO]** Componente AvatarUpload com preview em tempo real
 - **[COMPLETO]** Validação de arquivo (tipo, tamanho máximo 5MB)
 - **[COMPLETO]** Storage no Supabase com bucket 'avatars'
@@ -139,9 +176,11 @@
 ### 🔔 Sistema de Notificações
 - **[COMPLETO]** Hook useNotifications com gestão completa
 - **[COMPLETO]** Componente NotificationsDropdown no header
-- **[COMPLETO]** Real-time updates via Supabase subscriptions
+- **[COMPLETO]** Real-time updates via Supabase subscriptions com deduplicação (previne flash de duplicatas)
+- **[COMPLETO]** Handler para DELETE events no real-time (mantém state sincronizado)
 - **[COMPLETO]** Tipos: info, success, warning, error
 - **[COMPLETO]** Cores adaptáveis para dark mode (opacity-based)
+- **[COMPLETO]** Fix: nome do projeto preservado na notificação (captura antes de limpar form)
 
 ### 🔍 Análise Heurística de URLs
 - **[COMPLETO]** Edge Function `analyze-url` (fetch HTML → regex/contagem)
@@ -162,8 +201,10 @@
 - **[COMPLETO]** Guard anti-duplicação de notificações (useRef)
 - **[COMPLETO]** Constantes centralizadas de modelos (src/lib/aiModels.ts)
 - **[COMPLETO]** Seletores de IA em Projetos e Benchmark mostram TODOS os modelos do provider
-- **[COMPLETO]** Model IDs reais das APIs (gemini-2.5-flash-preview-05-20, claude-sonnet-4-20250514, etc.)
+- **[COMPLETO]** Model IDs reais das APIs (gemini-3-flash-preview, gemini-2.5-flash, claude-sonnet-4-20250514, etc.)
 - **[COMPLETO]** AI_MODEL_LABELS centralizado (usado em BenchmarkDetailDialog, Projects, Benchmark)
+- **[COMPLETO]** Mensagens de erro melhoradas: identifica quando API key não suporta o modelo selecionado
+- **[COMPLETO]** Erros 404/403 traduzidos com orientação para trocar modelo em Configurações
 
 ### 📦 Exportação de Análises
 - **[COMPLETO]** exportAnalysis.ts — funções de exportação para projetos e benchmarks
@@ -204,6 +245,7 @@
 - **[COMPLETO]** Benchmark (/benchmark) protegido
 - **[COMPLETO]** Settings (/settings) protegido
 - **[COMPLETO]** Help (/help) protegido
+- **[COMPLETO]** Plano Tático (/tactical) protegido
 - **[COMPLETO]** Preços, Sobre, Cases, Blog, Carreiras, Contato
 - **[COMPLETO]** Políticas (Privacidade, Termos, Cookies)
 - **[COMPLETO]** Página 404
@@ -221,6 +263,11 @@
 - **[COMPLETO]** `benchmarks` — Análises competitivas com SWOT e scores
 - **[COMPLETO]** `notifications` — Sistema de notificações
 - **[COMPLETO]** `user_api_keys` — API keys de IA por usuário (google_gemini/anthropic_claude)
+- **[COMPLETO]** `tactical_plans` — Planos táticos por projeto (scores, status)
+- **[COMPLETO]** `tactical_channel_plans` — Planos por canal (campanha, funil, lances, estrutura, métricas)
+- **[COMPLETO]** `copy_frameworks` — Frameworks de copy por canal e tipo
+- **[COMPLETO]** `segmentation_plans` — Segmentação público × canal × mensagem
+- **[COMPLETO]** `testing_plans` — Planos de teste com hipóteses e critérios
 
 ### Supabase Types (Frontend)
 - **[COMPLETO]** `user_api_keys` adicionado aos types (src/integrations/supabase/types.ts)
@@ -342,13 +389,22 @@ O **Intentia Strategy Hub** está na **versão 2.0.0** com funcionalidades avan�
 19. **Email templates** para confirmação, reset de senha e reautenticação
 20. **Supabase types atualizados** com user_api_keys e tenant_settings corrigidos
 21. **Centro de Ajuda** atualizado com documentação completa de todas as features
+22. **Camada Tática** — planos táticos por canal com templates validados por nicho B2B
+23. **Templates Táticos** — 6 templates pré-preenchidos (SaaS, Consultoria, Indústria, EdTech, Fintech, Saúde)
+24. **Schema tático** — 5 novas tabelas com RLS, triggers e indexes
+25. **Playbook Gamificado** — botão "Rodar Plano" gera diretivas de execução com prioridades e KPIs
+26. **Dashboard UX** — insights compactos colapsáveis, seletor de projeto por canal, total real de insights
+27. **Notificações** — deduplicação real-time, handler DELETE, fix nome do projeto
+28. **Gemini 3 Flash Preview** — novo modelo adicionado como padrão, mensagens de erro melhoradas
+29. **Scores Táticos** — computados ao carregar (não só ao salvar), badges coloridos, overview com médias
 
 ### 📋 Próximos Passos
-1. Configurar SMTP custom (Resend) para emails transacionais em produção
-2. Integração com APIs de marketing
-3. Multi-tenancy avançado
-4. Advanced analytics e dashboards customizáveis
+1. Camada Operacional (execução de campanhas a partir do plano tático)
+2. Configurar SMTP custom (Resend) para emails transacionais em produção
+3. Integração com APIs de marketing
+4. Multi-tenancy avançado
+5. Advanced analytics e dashboards customizáveis
 
 ---
 
-**Status:** 🟢 **v2.0.0 — PLATAFORMA COMPLETA**
+**Status:** 🟢 **v2.2.0 — UX REFINADO + PLAYBOOK GAMIFICADO + GEMINI 3**
