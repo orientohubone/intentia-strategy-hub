@@ -19,6 +19,7 @@ import {
   GripVertical,
   Crosshair,
   Rocket,
+  Database,
 } from "lucide-react";
 
 function ShowcaseSlider() {
@@ -135,6 +136,11 @@ const features = [
     icon: Rocket,
     title: "Playbook de Execução Gamificado",
     description: "Gere diretivas de execução priorizadas com KPIs e ações específicas por canal. Transforme o plano tático em um playbook visual e acionável.",
+  },
+  {
+    icon: Database,
+    title: "Dados Estruturados & Comparação",
+    description: "Extração automática de JSON-LD, Open Graph, Twitter Card e Microdata. Compare dados estruturados do seu site com concorrentes em abas unificadas.",
   },
   {
     icon: FileText,
@@ -400,12 +406,12 @@ export default function Landing() {
             <div className="bg-card rounded-xl border border-border p-6 text-center">
               <h3 className="text-xl font-bold text-foreground mb-2">Starter</h3>
               <div className="text-3xl font-bold text-foreground mb-4">Grátis</div>
-              <p className="text-sm text-muted-foreground mb-4">Perfeito para testar sua estratégia</p>
+              <p className="text-sm text-muted-foreground mb-4">Ideal para validar sua estratégia</p>
               <ul className="space-y-3 text-sm text-muted-foreground mb-6">
-                <li>✓ 5 análises de URL por mês</li>
-                <li>✓ Score básico por canal</li>
-                <li>✓ Relatório simples</li>
-                <li>✓ Suporte por email</li>
+                <li>✓ 3 projetos ativos</li>
+                <li>✓ Diagnóstico heurístico de URL</li>
+                <li>✓ Score por canal (4 canais)</li>
+                <li>✓ Insights e alertas automáticos</li>
               </ul>
               <Button variant="outline" className="w-full" onClick={() => navigate('/auth')}>
                 Começar Grátis
@@ -421,13 +427,13 @@ export default function Landing() {
               </div>
               <h3 className="text-xl font-bold mb-2">Professional</h3>
               <div className="text-3xl font-bold mb-4">R$97<span className="text-lg font-normal">/mês</span></div>
-              <p className="text-sm mb-4 opacity-90">Para empresas que levam marketing a sério</p>
+              <p className="text-sm mb-4 opacity-90">Estratégia de mídia completa</p>
               <ul className="space-y-3 text-sm mb-6">
-                <li>✓ Análises ilimitadas de URLs</li>
+                <li>✓ Projetos ilimitados</li>
                 <li>✓ Análise por IA (Gemini & Claude)</li>
-                <li>✓ Benchmark competitivo com IA</li>
-                <li>✓ Relatórios PDF e exportação CSV</li>
-                <li>✓ Insights e alertas estratégicos</li>
+                <li>✓ Benchmark competitivo + SWOT</li>
+                <li>✓ Plano Tático por canal</li>
+                <li>✓ Exportação PDF e CSV</li>
               </ul>
               <Button variant="secondary" className="w-full" onClick={() => navigate('/precos')}>
                 Ver Detalhes
@@ -438,12 +444,12 @@ export default function Landing() {
             <div className="bg-card rounded-xl border border-border p-6 text-center">
               <h3 className="text-xl font-bold text-foreground mb-2">Enterprise</h3>
               <div className="text-3xl font-bold text-foreground mb-4">Personalizado</div>
-              <p className="text-sm text-muted-foreground mb-4">Solução sob medida para grandes empresas</p>
+              <p className="text-sm text-muted-foreground mb-4">Operações de marketing complexas</p>
               <ul className="space-y-3 text-sm text-muted-foreground mb-6">
                 <li>✓ Tudo do Professional</li>
-                <li>✓ API access completo</li>
-                <li>✓ SLA dedicado</li>
-                <li>✓ Consultoria estratégica</li>
+                <li>✓ Múltiplos usuários + API access</li>
+                <li>✓ SLA dedicado 24/7</li>
+                <li>✓ Consultoria estratégica mensal</li>
               </ul>
               <Button variant="outline" className="w-full" onClick={() => navigate('/precos')}>
                 Falar com Vendas

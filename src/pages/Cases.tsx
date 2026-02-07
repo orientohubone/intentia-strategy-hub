@@ -17,6 +17,7 @@ import {
   Target,
   LineChart,
   ShieldCheck,
+  Database,
 } from "lucide-react";
 
 const useCases = [
@@ -122,6 +123,23 @@ const useCases = [
     ],
     outcome: "Visão clara e acionável do que fazer em cada projeto.",
   },
+  {
+    id: 7,
+    icon: Database,
+    color: "from-teal-500 to-cyan-500",
+    iconBg: "bg-teal-500/10 text-teal-600",
+    image: "/dados-estruturados.png",
+    title: "Análise de dados estruturados vs concorrentes",
+    persona: "Especialista em SEO / Growth",
+    scenario: "O especialista precisa auditar os dados estruturados (JSON-LD, Open Graph, Twitter Card) do site e comparar com concorrentes para identificar gaps de visibilidade.",
+    howItWorks: [
+      "A análise heurística extrai automaticamente JSON-LD, Open Graph, Twitter Card e Microdata",
+      "Os mesmos dados são extraídos de cada URL de concorrente cadastrada",
+      "O visualizador unificado mostra abas: seu site + cada concorrente",
+      "Compare quem tem schema.org mais completo, quais OG tags estão presentes e como cada site se apresenta",
+    ],
+    outcome: "Auditoria completa de dados estruturados com comparação competitiva em uma única tela.",
+  },
 ];
 
 const capabilities = [
@@ -131,6 +149,7 @@ const capabilities = [
   { icon: LineChart, label: "Benchmark", desc: "Comparação com concorrentes" },
   { icon: AlertTriangle, label: "Alertas", desc: "Proteção contra desperdício" },
   { icon: ShieldCheck, label: "Dados Seguros", desc: "RLS + criptografia" },
+  { icon: Database, label: "Dados Estruturados", desc: "JSON-LD, OG, Twitter Card" },
 ];
 
 export default function Cases() {

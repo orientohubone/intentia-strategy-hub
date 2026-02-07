@@ -23,6 +23,8 @@ import Settings from "./pages/Settings";
 import Help from "./pages/Help";
 import TacticalPlan from "./pages/TacticalPlan";
 import Alerts from "./pages/Alerts";
+import Checkout from "./pages/Checkout";
+import Subscribe from "./pages/Subscribe";
 import NotFound from "./pages/NotFound";
 import BrandGuide from "./pages/BrandGuide";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -41,6 +43,7 @@ const App = () => (
           <Route path="/" element={<ForceLightMode><Index /></ForceLightMode>} />
           <Route path="/precos" element={<ForceLightMode><Pricing /></ForceLightMode>} />
           <Route path="/auth" element={<ForceLightMode><Auth /></ForceLightMode>} />
+          <Route path="/assinar" element={<ForceLightMode><Subscribe /></ForceLightMode>} />
           <Route path="/sobre" element={<ForceLightMode><About /></ForceLightMode>} />
           <Route path="/cases" element={<ForceLightMode><Cases /></ForceLightMode>} />
           <Route path="/blog" element={<ForceLightMode><Blog /></ForceLightMode>} />
@@ -106,6 +109,14 @@ const App = () => (
             } 
           />
           <Route 
+            path="/checkout" 
+            element={
+              <ProtectedRoute>
+                <Checkout />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="/alertas" 
             element={
               <ProtectedRoute>
@@ -122,7 +133,7 @@ const App = () => (
             } 
           />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<ForceLightMode><NotFound /></ForceLightMode>} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

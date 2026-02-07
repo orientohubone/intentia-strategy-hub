@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,9 @@ import {
   XCircle,
   Sparkles,
   Loader2,
+  Crown,
+  ArrowRight,
+  Zap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -55,7 +59,57 @@ function maskApiKey(key: string): string {
   return key.substring(0, 4) + "••••••••" + key.substring(key.length - 4);
 }
 
+const PLAN_FEATURES: Record<string, { label: string; price: string; features: string[]; color: string; icon: typeof Crown }> = {
+  starter: {
+    label: "Starter",
+    price: "Grátis",
+    color: "border-border",
+    icon: Zap,
+    features: [
+      "3 projetos ativos",
+      "Diagnóstico heurístico de URL (6 dimensões)",
+      "Score por canal: Google, Meta, LinkedIn, TikTok",
+      "Insights automáticos por projeto",
+      "Alertas de investimento prematuro",
+      "1 público-alvo por projeto",
+    ],
+  },
+  professional: {
+    label: "Professional",
+    price: "R$ 97/mês",
+    color: "border-primary",
+    icon: Crown,
+    features: [
+      "Projetos ilimitados",
+      "Diagnóstico heurístico de URL (6 dimensões)",
+      "Análise por IA — Gemini e Claude",
+      "Score por canal com riscos e recomendações",
+      "Benchmark competitivo com SWOT e gap analysis",
+      "Plano Tático por canal",
+      "Alertas estratégicos consolidados",
+      "Públicos-alvo ilimitados com keywords",
+      "Exportação PDF e CSV",
+      "Notificações em tempo real",
+    ],
+  },
+  enterprise: {
+    label: "Enterprise",
+    price: "Personalizado",
+    color: "border-amber-500",
+    icon: Crown,
+    features: [
+      "Tudo do Professional",
+      "API access completo",
+      "Múltiplos usuários por conta",
+      "SLA dedicado com suporte 24/7",
+      "Consultoria estratégica mensal",
+      "Relatórios white-label",
+    ],
+  },
+};
+
 export default function Settings() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [tenantSettings, setTenantSettings] = useState<any>(null);
@@ -926,29 +980,146 @@ export default function Settings() {
             </Card>
 
             {/* Plan Information */}
-            {tenantSettings && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5" />
-                    Plano Atual
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <h3 className="font-semibold capitalize">{tenantSettings.plan}</h3>
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        {tenantSettings.analyses_used || 0} de {tenantSettings.monthly_analyses_limit || 5} análises usadas este mês
-                      </p>
+            {(() => {
+              const currentPlan = tenantSettings?.plan || "starter";
+              const planInfo = PLAN_FEATURES[currentPlan] || PLAN_FEATURES.starter;
+              const PlanIcon = planInfo.icon;
+              const isStarter = currentPlan === "starter";
+              const isProfessional = currentPlan === "professional";
+              const isEnterprise = currentPlan === "enterprise";
+
+              return (
+                <Card className={`${planInfo.color} border-2`}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <CreditCard className="h-5 w-5" />
+                      Plano e Assinatura
+                    </CardTitle>
+                    <CardDescription>
+                      Gerencie seu plano e veja os recursos disponíveis
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    {/* Current Plan Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${
+                          isStarter ? "bg-muted text-muted-foreground" : isProfessional ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-600"
+                        }`}>
+                          <PlanIcon className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-bold text-foreground text-lg">{planInfo.label}</h3>
+                            <Badge variant={isStarter ? "secondary" : "default"} className={isProfessional ? "bg-primary" : isEnterprise ? "bg-amber-500" : ""}>
+                              Ativo
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{planInfo.price}</p>
+                        </div>
+                      </div>
+                      {!isEnterprise && (
+                        <Button
+                          variant={isStarter ? "hero" : "outline"}
+                          size="sm"
+                          className="w-full sm:w-auto"
+                          onClick={() => {
+                            if (isStarter) {
+                              navigate("/checkout?plan=professional");
+                            } else {
+                              navigate("/contato");
+                            }
+                          }}
+                        >
+                          {isStarter ? (
+                            <>
+                              <Crown className="h-4 w-4 mr-1.5" />
+                              Upgrade para Professional
+                            </>
+                          ) : (
+                            <>
+                              Upgrade para Enterprise
+                              <ArrowRight className="h-4 w-4 ml-1.5" />
+                            </>
+                          )}
+                        </Button>
+                      )}
                     </div>
-                    <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                      Fazer Upgrade
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+
+                    {/* Features List */}
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                        Recursos do seu plano
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {planInfo.features.map((feature) => (
+                          <div key={feature} className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
+                            <span className="text-sm text-foreground">{feature}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* What you're missing (Starter only) */}
+                    {isStarter && (
+                      <>
+                        <Separator />
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                            Disponível no Professional
+                          </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {[
+                              "Análise por IA (Gemini & Claude)",
+                              "Benchmark competitivo + SWOT",
+                              "Plano Tático por canal",
+                              "Exportação PDF e CSV",
+                              "Notificações em tempo real",
+                              "Projetos e públicos ilimitados",
+                            ].map((feature) => (
+                              <div key={feature} className="flex items-center gap-2 opacity-60">
+                                <div className="h-4 w-4 border-2 border-border rounded-full flex-shrink-0" />
+                                <span className="text-sm text-muted-foreground">{feature}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <Button
+                            variant="hero"
+                            className="w-full mt-4"
+                            onClick={() => navigate("/checkout?plan=professional")}
+                          >
+                            <Crown className="h-4 w-4 mr-2" />
+                            Fazer Upgrade — R$ 97/mês
+                            <ArrowRight className="h-4 w-4 ml-2" />
+                          </Button>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Usage Stats */}
+                    {tenantSettings && (
+                      <div className="rounded-lg bg-muted/30 p-3">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Análises este mês</span>
+                          <span className="font-semibold text-foreground">
+                            {tenantSettings.analyses_used || 0} / {tenantSettings.monthly_analyses_limit || (isStarter ? 5 : "∞")}
+                          </span>
+                        </div>
+                        {isStarter && (
+                          <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-primary transition-all"
+                              style={{ width: `${Math.min(100, ((tenantSettings.analyses_used || 0) / (tenantSettings.monthly_analyses_limit || 5)) * 100)}%` }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })()}
           </div>
     </DashboardLayout>
   );

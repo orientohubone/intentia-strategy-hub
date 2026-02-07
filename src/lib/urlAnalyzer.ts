@@ -12,6 +12,20 @@ export interface UrlAnalysis {
   channelScores: ChannelScoreResult[];
   insights: InsightResult[];
   overallScore: number;
+  htmlSnapshot: string;
+  structuredData: StructuredDataResult;
+}
+
+export interface StructuredDataResult {
+  jsonLd: any[];
+  microdata: MicrodataItem[];
+  openGraph: Record<string, string>;
+  twitterCard: Record<string, string>;
+}
+
+export interface MicrodataItem {
+  type: string;
+  properties: Record<string, string>;
 }
 
 export interface MetaAnalysis {
@@ -126,6 +140,9 @@ export async function saveAnalysisResults(
       status: "completed",
       heuristic_analysis: analysis,
       heuristic_completed_at: now,
+      html_snapshot: analysis.htmlSnapshot,
+      structured_data: analysis.structuredData,
+      html_snapshot_at: now,
       last_update: now,
     })
     .eq("id", projectId)
@@ -289,7 +306,7 @@ export async function analyzeCompetitors(
         competitorName = url;
       }
 
-      await generateBenchmark(projectId, userId, {
+      await saveCompetitorBenchmark(projectId, userId, {
         name: competitorName,
         niche,
         url,
@@ -302,7 +319,7 @@ export async function analyzeCompetitors(
   }
 }
 
-async function generateBenchmark(
+export async function saveCompetitorBenchmark(
   projectId: string,
   userId: string,
   projectData: { name: string; niche: string; url: string },
@@ -435,6 +452,9 @@ async function generateBenchmark(
         threats: threats.slice(0, 10),
         strategic_insights: strategicInsights,
         recommendations,
+        structured_data: analysis.structuredData || null,
+        html_snapshot: analysis.htmlSnapshot || null,
+        html_snapshot_at: analysis.htmlSnapshot ? new Date().toISOString() : null,
         analysis_date: new Date().toISOString(),
         last_update: new Date().toISOString(),
       },

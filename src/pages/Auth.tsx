@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { BackToHomeButton } from "@/components/BackToHomeButton";
@@ -10,6 +10,8 @@ import { toast } from "sonner";
 
 export default function Auth() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/dashboard";
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
@@ -40,7 +42,7 @@ export default function Auth() {
       if (error) throw error;
 
       toast.success("Login realizado com sucesso!");
-      navigate("/dashboard");
+      navigate(redirectTo);
     } catch (error: any) {
       toast.error(error.message || "Erro ao fazer login");
     } finally {

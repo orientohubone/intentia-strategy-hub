@@ -11,56 +11,70 @@ const plans = [
   {
     name: "Starter",
     price: "Grátis",
-    description: "Perfeito para testar sua estratégia",
+    description: "Ideal para conhecer a plataforma e validar sua estratégia",
     features: [
-      "5 análises de URL por mês",
-      "Score básico por canal",
-      "Relatório simples",
-      "Suporte por email"
+      "3 projetos ativos",
+      "Diagnóstico heurístico de URL (6 dimensões)",
+      "Score por canal: Google, Meta, LinkedIn, TikTok",
+      "Insights automáticos por projeto",
+      "Alertas de investimento prematuro",
+      "1 público-alvo por projeto",
+      "Dark/Light mode",
+      "Suporte por email",
     ],
     notIncluded: [
-      "Análise competitiva",
-      "Alertas em tempo real",
-      "API access"
+      "Análise por IA (Gemini / Claude)",
+      "Benchmark competitivo (SWOT)",
+      "Plano Tático por canal",
+      "Exportação PDF e CSV",
+      "Notificações em tempo real",
     ],
     cta: "Começar Grátis",
-    popular: false
+    popular: false,
   },
   {
     name: "Professional",
     price: "R$ 97",
-    description: "Para empresas que levam marketing a sério",
+    description: "Para empresas que levam estratégia de mídia a sério",
     features: [
-      "Análises ilimitadas de URLs",
-      "Score avançado por canal",
-      "Benchmark competitivo",
-      "Alertas estratégicos em tempo real",
-      "Relatórios detalhados",
+      "Projetos ilimitados",
+      "Diagnóstico heurístico de URL (6 dimensões)",
+      "Análise por IA — Gemini e Claude (use sua API key)",
+      "Score por canal com riscos e recomendações",
+      "Benchmark competitivo com SWOT e gap analysis",
+      "Plano Tático por canal (campanha, funil, copy, segmentação)",
+      "Alertas estratégicos consolidados",
+      "Insights agrupados por projeto",
+      "Públicos-alvo ilimitados com keywords",
+      "Exportação PDF e CSV",
+      "Notificações em tempo real",
       "Suporte prioritário",
-      "Exportação de dados"
     ],
     notIncluded: [
-      "API access"
+      "API access",
+      "Consultoria estratégica",
     ],
     cta: "Assinar Agora",
-    popular: true
+    popular: true,
   },
   {
     name: "Enterprise",
     price: "Personalizado",
-    description: "Solução sob medida para grandes empresas",
+    description: "Solução sob medida para operações de marketing complexas",
     features: [
       "Tudo do Professional",
       "API access completo",
-      "SLA dedicado",
-      "Consultoria estratégica",
+      "Múltiplos usuários por conta",
+      "SLA dedicado com suporte 24/7",
+      "Consultoria estratégica mensal",
+      "Onboarding e treinamento da equipe",
       "Integrações customizadas",
-      "Treinamento da equipe"
+      "Relatórios white-label",
     ],
     notIncluded: [],
     cta: "Falar com Consultor",
-    popular: false
-  }
+    popular: false,
+  },
 ];
 
 export default function Pricing() {
@@ -131,7 +145,11 @@ export default function Pricing() {
                 <Button 
                   className="w-full" 
                   variant={plan.popular ? "hero" : "outline"}
-                  onClick={() => plan.name === "Enterprise" ? navigate('/#contact') : navigate('/auth')}
+                  onClick={() => {
+                    if (plan.name === "Enterprise") navigate('/contato');
+                    else if (plan.name === "Professional") navigate('/assinar');
+                    else navigate('/auth');
+                  }}
                 >
                   {plan.cta}
                   <ArrowRight className="h-4 w-4 ml-2" />
@@ -154,7 +172,7 @@ export default function Pricing() {
                 Posso mudar de plano a qualquer momento?
               </h3>
               <p className="text-muted-foreground">
-                Sim! Você pode upgrade ou downgrade seu plano a qualquer momento. As alterações serão refletidas na próxima cobrança.
+                Sim! Você pode fazer upgrade ou downgrade a qualquer momento. As alterações são refletidas na próxima cobrança.
               </p>
             </div>
             <div className="bg-card rounded-lg p-6 border border-border">
@@ -162,7 +180,23 @@ export default function Pricing() {
                 O plano grátis tem limite de tempo?
               </h3>
               <p className="text-muted-foreground">
-                Não. O plano Starter é gratuito para sempre, perfeito para conhecer a plataforma e testar análises básicas.
+                Não. O plano Starter é gratuito para sempre, com até 3 projetos ativos. Ideal para validar a plataforma antes de investir.
+              </p>
+            </div>
+            <div className="bg-card rounded-lg p-6 border border-border">
+              <h3 className="font-semibold text-foreground mb-2">
+                Preciso de API key para usar a análise por IA?
+              </h3>
+              <p className="text-muted-foreground">
+                Sim. No plano Professional, você configura sua própria API key do Google Gemini ou Anthropic Claude nas configurações. Assim, você tem controle total sobre custos e modelos.
+              </p>
+            </div>
+            <div className="bg-card rounded-lg p-6 border border-border">
+              <h3 className="font-semibold text-foreground mb-2">
+                O que é o Plano Tático?
+              </h3>
+              <p className="text-muted-foreground">
+                É um módulo exclusivo do Professional que permite estruturar campanhas canal por canal — tipo de campanha, etapa do funil, lances, extensões, copy frameworks, segmentação e testes A/B.
               </p>
             </div>
             <div className="bg-card rounded-lg p-6 border border-border">

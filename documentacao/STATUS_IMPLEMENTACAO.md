@@ -2,9 +2,9 @@
 
 ## 📊 Visão Geral
 
-**Status do Projeto:** v2.3.0 — Mobile-First + UX Refinado + Playbook Gamificado  
+**Status do Projeto:** v2.5.0 — Dados Estruturados + Progress Tracker  
 **Data de Atualização:** 07/02/2026  
-**Versão:** 2.3.0
+**Versão:** 2.5.0
 
 ---
 
@@ -116,7 +116,7 @@
 - **[COMPLETO]** Configurações de notificações (email, relatórios semanais)
 - **[COMPLETO]** Preferências de idioma e fuso horário
 - **[COMPLETO]** Gerenciamento de conta (senha, exportação, logout, exclusão)
-- **[COMPLETO]** Informações do plano e upgrade
+- **[COMPLETO]** Card de Plano detalhado com features, "Disponível no Professional" (Starter), barra de uso, CTA de upgrade contextual
 
 ### 🎯 Plano Tático por Canal
 - **[COMPLETO]** Página `/tactical` com seletor de projeto e tabs por canal
@@ -154,12 +154,56 @@
 - **[COMPLETO]** Playbook gamificado: botão "Rodar Plano" gera diretivas de execução com prioridades e KPIs
 - **[COMPLETO]** Aba Playbook com visualização gamificada das diretivas de execução
 
+### 🛡️ Alertas Estratégicos
+- **[COMPLETO]** Página dedicada `/alertas` consolidando todos os alertas do sistema
+- **[COMPLETO]** 4 categorias: Investimento Prematuro (score < 50), Canal Não Recomendado, Riscos por Canal, Alertas da Análise
+- **[COMPLETO]** Filtros por projeto e tipo de alerta
+- **[COMPLETO]** Cards expandíveis com detalhes, riscos e links para Projetos/Plano Tático
+- **[COMPLETO]** Box informativo "Como interpretar os alertas"
+- **[COMPLETO]** Empty state quando não há alertas
+- **[COMPLETO]** Item na sidebar com ícone ShieldAlert
+
+### 📸 Cases com Screenshots do Sistema
+- **[COMPLETO]** Imagens reais do sistema substituem ilustrações genéricas nos 6 cases
+- **[COMPLETO]** Estilo showcase com border-beam animado (mesmo da Landing)
+- **[COMPLETO]** Hover zoom (scale 105%) com overlay "Clique para ampliar"
+- **[COMPLETO]** Lightbox fullscreen ao clicar — fecha com ESC, clique ou botão X
+- **[COMPLETO]** Mapeamento: Diagnostico-url, benchmark, analise-ia, score-canal, alertas-estrategicos, insights-acionaveis
+
+### 💳 Planos e Checkout
+- **[COMPLETO]** Planos detalhados refletindo todas as funcionalidades implementadas:
+  - Starter (Grátis): 3 projetos, diagnóstico heurístico, score por canal, insights, alertas, 1 público-alvo
+  - Professional (R$97/mês): Projetos ilimitados, IA, benchmark SWOT, plano tático, exportação, notificações
+  - Enterprise (Personalizado): Tudo do Pro + API access, multi-usuários, SLA 24/7, consultoria, white-label
+- **[COMPLETO]** Checkout público (`/assinar`) — self-service para visitantes:
+  - Dados da conta (nome, email, senha, empresa)
+  - Pagamento (cartão com formatação, PIX, boleto)
+  - Simula pagamento → cria conta → tenant_settings com plan: professional
+  - Tela de processamento + tela de sucesso
+  - Tratamento de email já registrado
+- **[COMPLETO]** Checkout interno (`/checkout`) — upgrade para usuários autenticados (Starter→Professional)
+- **[COMPLETO]** FAQ atualizado com perguntas sobre IA e Plano Tático
+- **[COMPLETO]** Landing page pricing preview atualizado
+
+### 🌐 URLs Traduzidas para Português
+- **[COMPLETO]** `/contact` → `/contato`, `/pricing` → `/precos`, `/about` → `/sobre`
+- **[COMPLETO]** `/privacy-policy` → `/politica-de-privacidade`, `/terms-of-service` → `/termos-de-servico`
+- **[COMPLETO]** `/cookie-policy` → `/politica-de-cookies`
+- **[COMPLETO]** `#features` → `#funcionalidades`, `#how-it-works` → `#como-funciona`, `#pricing` → `#precos`
+- **[COMPLETO]** Atualizados em: Header, HeaderDebug, Footer, LandingNav, Landing, About, App.tsx
+
+### 🔒 ProtectedRoute com Redirect
+- **[COMPLETO]** ProtectedRoute preserva URL destino como `?redirect=` ao redirecionar para `/auth`
+- **[COMPLETO]** Auth.tsx lê `?redirect=` e redireciona após login (fallback: `/dashboard`)
+
 ### 📚 Centro de Ajuda
 - **[COMPLETO]** Base de conhecimento categorizada (todas as funcionalidades documentadas)
 - **[COMPLETO]** Busca inteligente de artigos e tutoriais
 - **[COMPLETO]** FAQ com perguntas frequentes atualizadas
 - **[COMPLETO]** Canais de suporte (email, chat, base)
 - **[COMPLETO]** Conteúdo atualizado para refletir todas as features implementadas
+- **[COMPLETO]** Seção "Dados Estruturados" com artigos sobre JSON-LD, OG, Twitter Card, Microdata e HTML Snapshot
+- **[COMPLETO]** FAQ sobre dados estruturados e comparação com concorrentes
 
 ### � Email Templates (Supabase Auth)
 - **[COMPLETO]** Template de confirmação de cadastro (email-confirmacao-cadastro.html)
@@ -191,6 +235,26 @@
 - **[COMPLETO]** Insights gerados: warnings, opportunities, improvements
 - **[COMPLETO]** Benchmarks automáticos: SWOT + gap analysis para concorrentes
 - **[COMPLETO]** urlAnalyzer.ts no frontend para salvar resultados no DB
+- **[COMPLETO]** Extração de dados estruturados: JSON-LD, Open Graph, Twitter Card, Microdata
+- **[COMPLETO]** HTML Snapshot limpo (scripts/styles/SVG removidos)
+- **[COMPLETO]** Progress Tracker visual step-by-step durante análise
+
+### 📊 Dados Estruturados & Snapshot
+- **[COMPLETO]** StructuredDataViewer com abas unificadas (site principal + concorrentes)
+- **[COMPLETO]** Extração automática de JSON-LD, Open Graph, Twitter Card e Microdata
+- **[COMPLETO]** HTML Snapshot com copy e preview (truncado a 50KB na visualização)
+- **[COMPLETO]** Abas por site: Building2 (principal) + Swords (concorrentes)
+- **[COMPLETO]** Fallback inteligente: sintetiza OG tags do meta quando Edge Function não retorna dados
+- **[COMPLETO]** Dados de concorrentes salvos em benchmarks.structured_data e benchmarks.html_snapshot
+- **[COMPLETO]** Badges resumo com contagem de JSON-LD, OG tags, Twitter, Microdata e tamanho HTML
+- **[COMPLETO]** Seções expansíveis com copy individual por tipo de dado
+
+### ⏳ Progress Tracker de Análise
+- **[COMPLETO]** AnalysisProgressTracker — componente visual step-by-step
+- **[COMPLETO]** Etapas: Conectando → Baixando HTML → Analisando proposta → Scores → Insights → Concorrentes
+- **[COMPLETO]** Progresso de concorrentes com barra individual
+- **[COMPLETO]** Animações: check marks, spinner, barra de progresso
+- **[COMPLETO]** Integrado em handleProjectSubmit e handleReanalyze
 
 ### 🧠 Análise por IA
 - **[COMPLETO]** aiAnalyzer.ts — motor de análise IA (runAiAnalysis + runBenchmarkAiAnalysis)
@@ -248,9 +312,12 @@
 - **[COMPLETO]** Settings (/settings) protegido
 - **[COMPLETO]** Help (/help) protegido
 - **[COMPLETO]** Plano Tático (/tactical) protegido
-- **[COMPLETO]** Preços, Sobre, Cases, Blog, Contato
+- **[COMPLETO]** Preços (planos detalhados), Sobre, Cases (screenshots + lightbox), Blog, Contato
 - **[COMPLETO]** Políticas (Privacidade, Termos, Cookies)
+- **[COMPLETO]** Assinar (`/assinar`) — checkout público self-service
 - **[COMPLETO]** Página 404
+- **[COMPLETO]** Alertas (`/alertas`) — alertas estratégicos consolidados
+- **[COMPLETO]** Checkout (`/checkout`) — upgrade interno autenticado
 
 ### 📱 Mobile-First Responsiveness
 - **[COMPLETO]** DashboardLayout wrapper compartilhado (sidebar + header + main com padding responsivo)
@@ -275,11 +342,11 @@
 
 ### Tabelas Implementadas
 - **[COMPLETO]** `tenant_settings` — Configurações do tenant (empresa, plano, limites)
-- **[COMPLETO]** `projects` — Projetos com URL, nicho, competitor_urls, score, status
+- **[COMPLETO]** `projects` — Projetos com URL, nicho, competitor_urls, score, status, html_snapshot (text), structured_data (jsonb)
 - **[COMPLETO]** `project_channel_scores` — Scores por canal (google/meta/linkedin/tiktok)
 - **[COMPLETO]** `insights` — Insights estratégicos (warning/opportunity/improvement)
 - **[COMPLETO]** `audiences` — Públicos-alvo com keywords e vinculação a projetos
-- **[COMPLETO]** `benchmarks` — Análises competitivas com SWOT e scores
+- **[COMPLETO]** `benchmarks` — Análises competitivas com SWOT, scores, structured_data (jsonb), html_snapshot (text)
 - **[COMPLETO]** `notifications` — Sistema de notificações
 - **[COMPLETO]** `user_api_keys` — API keys de IA por usuário (google_gemini/anthropic_claude)
 - **[COMPLETO]** `tactical_plans` — Planos táticos por projeto (scores, status)
@@ -396,7 +463,7 @@
 
 ## 🎯 Conclusão
 
-O **Intentia Strategy Hub** está na **versão 2.3.0** com funcionalidades avançadas:
+O **Intentia Strategy Hub** está na **versão 2.5.0** com funcionalidades avançadas:
 
 ### ✅ Entregáveis Concluídos
 1. **Autenticação redesenhada** com split layout, design system e fluxo "Esqueceu sua senha"
@@ -434,6 +501,21 @@ O **Intentia Strategy Hub** está na **versão 2.3.0** com funcionalidades avan�
 32. **BackToHomeButton** scroll-aware
 33. **NotificationsDropdown** responsivo (fixed mobile, absolute desktop)
 34. **API Keys** protegidas contra autofill de senha
+35. **Alertas Estratégicos** — página dedicada com 4 categorias, filtros e cards expandíveis
+36. **Cases com screenshots** do sistema + hover zoom + lightbox fullscreen
+37. **Planos detalhados** refletindo todas as features (Starter/Professional/Enterprise)
+38. **Checkout público** (`/assinar`) — self-service para visitantes (pagamento → criação de conta)
+39. **Checkout interno** (`/checkout`) — upgrade para usuários autenticados
+40. **URLs traduzidas** para português (rotas públicas e âncoras)
+41. **ProtectedRoute com redirect** — preserva destino após login
+42. **Card de Plano** detalhado nas Settings com features, barra de uso e CTA contextual
+43. **Dados Estruturados** — extração e visualização unificada (JSON-LD, OG, Twitter Card, Microdata) com abas por site
+44. **HTML Snapshot** — versão limpa do HTML para referência, com copy e preview
+45. **Progress Tracker** — indicador visual step-by-step durante análise
+46. **Dados de concorrentes** — structured_data e html_snapshot salvos nos benchmarks
+47. **Landing page** atualizada com feature de dados estruturados
+48. **Cases** atualizado com case de análise de dados estruturados
+49. **Central de Ajuda** atualizada com seção de dados estruturados
 
 ### 📋 Próximos Passos — Etapa Operacional (v3.0)
 1. Gestão de campanhas (criar/editar/monitorar campanhas reais)
@@ -447,4 +529,4 @@ O **Intentia Strategy Hub** está na **versão 2.3.0** com funcionalidades avan�
 
 ---
 
-**Status:** 🟢 **v2.3.0 — MOBILE-FIRST + UX REFINADO + PLAYBOOK GAMIFICADO**
+**Status:** 🟢 **v2.5.0 — DADOS ESTRUTURADOS + PROGRESS TRACKER**

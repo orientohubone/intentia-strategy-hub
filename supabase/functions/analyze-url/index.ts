@@ -17,6 +17,20 @@ interface UrlAnalysis {
   channelScores: ChannelScoreAnalysis[];
   insights: InsightAnalysis[];
   overallScore: number;
+  htmlSnapshot: string;
+  structuredData: StructuredDataResult;
+}
+
+interface StructuredDataResult {
+  jsonLd: any[];
+  microdata: MicrodataItem[];
+  openGraph: Record<string, string>;
+  twitterCard: Record<string, string>;
+}
+
+interface MicrodataItem {
+  type: string;
+  properties: Record<string, string>;
 }
 
 interface MetaAnalysis {
@@ -85,6 +99,119 @@ interface InsightAnalysis {
   title: string;
   description: string;
   action: string;
+}
+
+// =====================================================
+// STRUCTURED DATA EXTRACTION
+// =====================================================
+
+function extractJsonLd(html: string): any[] {
+  const results: any[] = [];
+  const regex = /<script[^>]*type=["']application\/ld\+json["'][^>]*>(.*?)<\/script>/gis;
+  let match;
+  while ((match = regex.exec(html)) !== null) {
+    try {
+      const parsed = JSON.parse(match[1].trim());
+      // Handle @graph arrays
+      if (Array.isArray(parsed)) {
+        results.push(...parsed);
+      } else if (parsed["@graph"] && Array.isArray(parsed["@graph"])) {
+        results.push(...parsed["@graph"]);
+      } else {
+        results.push(parsed);
+      }
+    } catch {
+      // Invalid JSON-LD, skip
+    }
+  }
+  return results;
+}
+
+function extractMicrodata(html: string): MicrodataItem[] {
+  const items: MicrodataItem[] = [];
+  const itemRegex = /<[^>]*itemscope[^>]*itemtype=["']([^"']*)["'][^>]*>(.*?)<\/(?:div|section|article|span|li|tr)>/gis;
+  let match;
+  while ((match = itemRegex.exec(html)) !== null) {
+    const type = match[1];
+    const block = match[2];
+    const properties: Record<string, string> = {};
+    const propRegex = /itemprop=["']([^"']*)["'][^>]*(?:content=["']([^"']*)["']|>([^<]*))/gi;
+    let propMatch;
+    while ((propMatch = propRegex.exec(block)) !== null) {
+      const key = propMatch[1];
+      const value = (propMatch[2] || propMatch[3] || "").trim();
+      if (key && value) properties[key] = value;
+    }
+    if (Object.keys(properties).length > 0) {
+      items.push({ type, properties });
+    }
+  }
+  return items.slice(0, 20);
+}
+
+function extractOpenGraph(html: string): Record<string, string> {
+  const og: Record<string, string> = {};
+  const regex = /<meta[^>]*(?:property|name)=["'](og:[^"']*)["'][^>]*content=["']([^"']*)["']/gi;
+  let match;
+  while ((match = regex.exec(html)) !== null) {
+    og[match[1]] = match[2];
+  }
+  // Also try reversed order (content before property)
+  const regex2 = /<meta[^>]*content=["']([^"']*)["'][^>]*(?:property|name)=["'](og:[^"']*)["']/gi;
+  while ((match = regex2.exec(html)) !== null) {
+    if (!og[match[2]]) og[match[2]] = match[1];
+  }
+  return og;
+}
+
+function extractTwitterCard(html: string): Record<string, string> {
+  const tc: Record<string, string> = {};
+  const regex = /<meta[^>]*(?:property|name)=["'](twitter:[^"']*)["'][^>]*content=["']([^"']*)["']/gi;
+  let match;
+  while ((match = regex.exec(html)) !== null) {
+    tc[match[1]] = match[2];
+  }
+  const regex2 = /<meta[^>]*content=["']([^"']*)["'][^>]*(?:property|name)=["'](twitter:[^"']*)["']/gi;
+  while ((match = regex2.exec(html)) !== null) {
+    if (!tc[match[2]]) tc[match[2]] = match[1];
+  }
+  return tc;
+}
+
+function extractStructuredData(html: string): StructuredDataResult {
+  return {
+    jsonLd: extractJsonLd(html),
+    microdata: extractMicrodata(html),
+    openGraph: extractOpenGraph(html),
+    twitterCard: extractTwitterCard(html),
+  };
+}
+
+// =====================================================
+// HTML SNAPSHOT (cleaned)
+// =====================================================
+
+function cleanHtmlForSnapshot(html: string): string {
+  let cleaned = html;
+  // Remove inline scripts
+  cleaned = cleaned.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, "");
+  // Remove inline styles
+  cleaned = cleaned.replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, "");
+  // Remove HTML comments
+  cleaned = cleaned.replace(/<!--[\s\S]*?-->/g, "");
+  // Remove SVG blocks (usually large and not useful for analysis)
+  cleaned = cleaned.replace(/<svg[^>]*>[\s\S]*?<\/svg>/gi, "");
+  // Remove noscript
+  cleaned = cleaned.replace(/<noscript[^>]*>[\s\S]*?<\/noscript>/gi, "");
+  // Collapse whitespace
+  cleaned = cleaned.replace(/\s{2,}/g, " ");
+  // Trim
+  cleaned = cleaned.trim();
+  // Limit to 500KB to avoid DB bloat
+  if (cleaned.length > 500000) {
+    cleaned = cleaned.substring(0, 500000) + "\n<!-- TRUNCATED AT 500KB -->";
+  }
+  return cleaned;
 }
 
 // =====================================================
@@ -269,7 +396,13 @@ function analyzeHTML(html: string, url: string): UrlAnalysis {
   // --- INSIGHTS ---
   const insights = generateInsights(meta, content, technical, scores, channelScores);
 
-  return { meta, content, technical, scores, channelScores, insights, overallScore };
+  // --- STRUCTURED DATA ---
+  const structuredData = extractStructuredData(html);
+
+  // --- HTML SNAPSHOT (cleaned) ---
+  const htmlSnapshot = cleanHtmlForSnapshot(html);
+
+  return { meta, content, technical, scores, channelScores, insights, overallScore, htmlSnapshot, structuredData };
 }
 
 // =====================================================

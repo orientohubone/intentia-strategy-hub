@@ -8,9 +8,9 @@
 **UI Framework:** shadcn/ui + Tailwind CSS  
 **Backend:** Supabase (PostgreSQL + Auth + Edge Functions)  
 **Propósito:** Plataforma de análise estratégica para marketing B2B  
-**Versão:** 2.3.0
+**Versão:** 2.5.0
 
-## Status Atual: ✅ v2.3.0 (Mobile-First + Etapa Estratégica Completa)
+## Status Atual: ✅ v2.5.0 (Dados Estruturados + Progress Tracker)
 
 ### Funcionalidades Implementadas
 
@@ -88,7 +88,51 @@
 - **Notificações** (email, relatórios semanais)
 - **Preferências** (idioma, fuso horário, auto-save)
 - **Gerenciamento de conta** (senha, exportação, logout, exclusão)
-- **Plano atual** com uso de análises
+- **Card de Plano detalhado** com features do plano atual, "Disponível no Professional" (Starter), barra de uso, CTA de upgrade contextual
+
+#### 19. Alertas Estratégicos ✅
+- **Página dedicada** `/alertas` consolidando todos os alertas do sistema
+- **4 categorias:** Investimento Prematuro (score < 50), Canal Não Recomendado, Riscos por Canal, Alertas da Análise Heurística
+- **Filtros** por projeto e tipo de alerta
+- **Cards expandíveis** com detalhes, riscos e links para Projetos/Plano Tático
+- **Box informativo** "Como interpretar os alertas"
+- **Empty state** quando não há alertas
+- **Sidebar** com ícone ShieldAlert
+
+#### 20. Cases com Screenshots do Sistema ✅
+- **Imagens reais** do sistema substituem ilustrações genéricas nos 6 cases
+- **Estilo showcase** com border-beam animado (mesmo da Landing)
+- **Hover zoom** (scale 105%) com overlay "Clique para ampliar"
+- **Lightbox fullscreen** ao clicar — fecha com ESC, clique ou botão X
+- **Mapeamento:** Diagnostico-url.png, benchmark.png, analise-ia.png, score-canal.png, alertas-estrategicos.png, insights-acionaveis.png
+
+#### 21. Planos e Checkout ✅
+- **Planos detalhados** refletindo todas as funcionalidades implementadas:
+  - **Starter (Grátis):** 3 projetos, diagnóstico heurístico, score por canal, insights, alertas, 1 público-alvo
+  - **Professional (R$97/mês):** Projetos ilimitados, IA (Gemini+Claude), benchmark SWOT, plano tático, exportação, notificações
+  - **Enterprise (Personalizado):** Tudo do Pro + API access, multi-usuários, SLA 24/7, consultoria, white-label
+- **Checkout público** (`/assinar`) — self-service para visitantes do site:
+  - Dados da conta (nome, email, senha, empresa)
+  - Pagamento (cartão com formatação, PIX, boleto)
+  - Simula pagamento → cria conta → tenant_settings com plan: professional
+  - Tela de processamento + tela de sucesso
+  - Tratamento de email já registrado
+- **Checkout interno** (`/checkout`) — upgrade para usuários autenticados (Starter→Professional):
+  - Pagamento (cartão/PIX/boleto)
+  - Atualiza tenant_settings.plan
+  - Tela de sucesso com features desbloqueadas
+- **FAQ atualizado** com perguntas sobre IA e Plano Tático
+
+#### 22. URLs Traduzidas para Português ✅
+- `/contact` → `/contato`, `/pricing` → `/precos`, `/about` → `/sobre`
+- `/privacy-policy` → `/politica-de-privacidade`, `/terms-of-service` → `/termos-de-servico`
+- `/cookie-policy` → `/politica-de-cookies`
+- `#features` → `#funcionalidades`, `#how-it-works` → `#como-funciona`, `#pricing` → `#precos`
+- Atualizados em: Header, HeaderDebug, Footer, LandingNav, Landing, About, App.tsx
+
+#### 23. ProtectedRoute com Redirect ✅
+- **ProtectedRoute** preserva URL destino como `?redirect=` ao redirecionar para `/auth`
+- **Auth.tsx** lê `?redirect=` e redireciona após login (fallback: `/dashboard`)
 
 #### 8. Centro de Ajuda ✅
 - **Base de conhecimento** categorizada
@@ -109,6 +153,26 @@
 - **Channel scores:** Google, Meta, LinkedIn, TikTok com objetivos e riscos
 - **Insights gerados:** warnings, opportunities, improvements
 - **Benchmarks automáticos:** SWOT + gap analysis para concorrentes
+- **Extração de dados estruturados:** JSON-LD, Open Graph, Twitter Card, Microdata
+- **HTML Snapshot:** versão limpa do HTML (sem scripts/styles/SVG) para referência
+- **Progress Tracker:** indicador visual step-by-step durante análise (heurística + concorrentes)
+
+#### 24. Dados Estruturados & Snapshot ✅
+- **Visualizador unificado** com abas: site principal + cada concorrente
+- **Extração automática** de JSON-LD, Open Graph, Twitter Card e Microdata
+- **HTML Snapshot** limpo (scripts/styles removidos) com copy e preview
+- **Abas por site:** ícone Building2 (principal) + Swords (concorrentes)
+- **Fallback inteligente:** sintetiza OG tags do meta quando Edge Function não retorna dados
+- **Dados de concorrentes** salvos na tabela `benchmarks` (structured_data, html_snapshot)
+- **Badges resumo:** contagem de JSON-LD, OG tags, Twitter, Microdata e tamanho HTML
+- **Seções expansíveis:** cada tipo de dado em accordion com copy individual
+
+#### 25. Progress Tracker de Análise ✅
+- **AnalysisProgressTracker** — componente visual step-by-step
+- **Etapas:** Conectando → Baixando HTML → Analisando proposta → Scores → Insights → Concorrentes
+- **Progresso de concorrentes:** barra individual por concorrente
+- **Animações:** check marks, spinner, barra de progresso
+- **Integrado** em handleProjectSubmit e handleReanalyze
 
 #### 11. Análise por IA (Projetos) ✅
 - **aiAnalyzer.ts** — motor de análise IA com `runAiAnalysis()`
@@ -151,10 +215,11 @@
 - **12 testes passando** (100%)
 
 #### 17. Páginas Institucionais ✅
-- **Preços** com planos Starter/Professional/Enterprise
-- **Sobre, Cases, Blog, Contato**
+- **Preços** com planos detalhados (Starter/Professional/Enterprise) refletindo features reais
+- **Sobre, Cases (com screenshots + lightbox), Blog, Contato**
 - **Políticas:** Privacidade, Termos, Cookies
 - **Página 404** personalizada
+- **Assinar** (`/assinar`) — checkout público self-service
 
 #### 18. Mobile-First Responsiveness ✅
 - **DashboardLayout** wrapper compartilhado (sidebar + header + main com padding responsivo)
@@ -220,6 +285,8 @@ intentia-strategy-hub/
 │   │   ├── AvatarUpload.tsx
 │   │   ├── BackToHomeButton.tsx # Botão voltar scroll-aware
 │   │   ├── NotificationsDropdown.tsx # Dropdown responsivo
+│   │   ├── AnalysisProgressTracker.tsx # Progress tracker step-by-step
+│   │   ├── StructuredDataViewer.tsx # Viewer unificado com abas (principal + concorrentes)
 │   │   └── *.tsx          # Outros componentes
 │   ├── pages/             # Páginas principais
 │   │   ├── Index.tsx      # Home/Landing
@@ -232,6 +299,9 @@ intentia-strategy-hub/
 │   │   ├── Auth.tsx       # Login/Signup (split layout)
 │   │   ├── Help.tsx       # Centro de ajuda
 │   │   ├── TacticalPlan.tsx # Plano tático por canal
+│   │   ├── Alerts.tsx     # Alertas estratégicos consolidados
+│   │   ├── Checkout.tsx   # Checkout interno (upgrade autenticado)
+│   │   ├── Subscribe.tsx  # Checkout público (assinatura self-service)
 │   │   └── NotFound.tsx   # Página 404
 │   ├── integrations/      # Integrações externas
 │   │   └── supabase/      # Cliente Supabase
@@ -254,6 +324,8 @@ intentia-strategy-hub/
 │   ├── audiences_schema.sql
 │   ├── add_project_to_audiences.sql
 │   ├── benchmark_ai_analysis.sql  # Migration: ai_analysis em benchmarks
+│   ├── add_html_snapshot_structured_data.sql  # Migration: html_snapshot + structured_data em projects
+│   ├── add_benchmarks_structured_data.sql     # Migration: structured_data + html_snapshot em benchmarks
 │   └── functions/
 │       ├── analyze-url/   # Edge Function de análise heurística
 │       │   └── index.ts
@@ -272,11 +344,11 @@ intentia-strategy-hub/
 
 **Tabelas:**
 - `tenant_settings` — Configurações do tenant (empresa, plano, limites)
-- `projects` — Projetos com URL, nicho, competitor_urls, score, status
+- `projects` — Projetos com URL, nicho, competitor_urls, score, status, html_snapshot (text), structured_data (jsonb)
 - `project_channel_scores` — Scores por canal (google/meta/linkedin/tiktok)
 - `insights` — Insights estratégicos (warning/opportunity/improvement)
 - `audiences` — Públicos-alvo com keywords e vinculação a projetos
-- `benchmarks` — Análises competitivas com SWOT, scores e ai_analysis (jsonb)
+- `benchmarks` — Análises competitivas com SWOT, scores, ai_analysis (jsonb), structured_data (jsonb), html_snapshot (text)
 - `notifications` — Sistema de notificações
 - `user_api_keys` — API keys de IA por usuário (google_gemini/anthropic_claude)
 
@@ -348,48 +420,65 @@ intentia-strategy-hub/
 ### Rotas da Aplicação
 
 ```typescript
+// Páginas públicas
 /                    # Landing page (light mode forçado)
-/auth                # Login/Signup (split layout)
-/pricing             # Página de preços
-/about               # Sobre
-/cases               # Cases
+/auth                # Login/Signup (split layout) — suporta ?redirect=
+/assinar             # Checkout público self-service (Professional)
+/precos              # Página de preços
+/sobre               # Sobre
+/cases               # Cases de uso (com screenshots + lightbox)
 /blog                # Blog
-/contact             # Contato
-/privacy-policy      # Política de privacidade
-/terms-of-service    # Termos de serviço
-/cookie-policy       # Política de cookies
-/dashboard           # Dashboard principal (protegido)
-/projects            # CRUD de projetos (protegido)
-/insights            # Insights agrupados por projeto (protegido)
-/audiences           # CRUD de públicos-alvo (protegido)
-/benchmark           # Benchmark competitivo (protegido)
-/settings            # Configurações + API keys (protegido)
-/help                # Centro de ajuda (protegido)
-/tactical            # Plano tático por canal (protegido)
+/contato             # Contato
+/politica-de-privacidade  # Política de privacidade
+/termos-de-servico        # Termos de serviço
+/politica-de-cookies      # Política de cookies
 /brand               # Guia de marca
+
+// Páginas protegidas (requer autenticação)
+/dashboard           # Dashboard principal
+/projects            # CRUD de projetos + análise
+/insights            # Insights agrupados por projeto
+/audiences           # CRUD de públicos-alvo
+/benchmark           # Benchmark competitivo
+/settings            # Configurações + API keys + plano
+/help                # Centro de ajuda
+/tactical            # Plano tático por canal
+/alertas             # Alertas estratégicos consolidados
+/checkout            # Checkout interno (upgrade autenticado)
 /*                   # Página 404
 ```
 
-### Fluxo do Usuário
+### Fluxos do Usuário
 
-1. **Acesso Inicial:** Landing page com apresentação do produto
-2. **Cadastro/Login:** Tela redesenhada com split layout (form + gradient)
-3. **Dashboard:** Visualização de projetos, métricas e insights recentes
-4. **Criação de Projeto:** Nome, nicho, URL + URLs de concorrentes
-5. **Análise Heurística:** Automática ao analisar URL (fetch HTML → scores + insights)
-6. **Configurar API Keys:** Settings → Integrações de IA (Gemini/Claude)
-7. **Análise por IA:** Sob demanda — selecionar modelo → clicar ✨ → resultados detalhados
-8. **Exportar Análise:** JSON, MD, HTML ou PDF
-9. **Benchmark:** Comparação com concorrentes via análise SWOT
-10. **Enriquecer Benchmark com IA:** Selecionar modelo → análise competitiva aprofundada
-11. **Exportar Benchmark IA:** JSON, MD, HTML ou PDF
-12. **Insights:** Visualização agrupada por projeto com dialog + fullscreen
+#### Fluxo de Assinatura (visitante do site)
+1. **Landing/Preços** → "Assinar Agora" → `/assinar`
+2. **Checkout público:** preenche dados da conta + pagamento
+3. **Pagamento confirmado** → conta criada com plano Professional
+4. **Confirma email** → faz login → acesso completo
+
+#### Fluxo de Upgrade (usuário autenticado Starter)
+1. **Settings** → Card de plano → "Fazer Upgrade" → `/checkout?plan=professional`
+2. **Checkout interno:** escolhe pagamento → confirma
+3. **Plano atualizado** → features desbloqueadas
+
+#### Fluxo de Análise
+1. **Criação de Projeto:** Nome, nicho, URL + URLs de concorrentes
+2. **Análise Heurística:** Automática ao analisar URL (fetch HTML → scores + insights + dados estruturados + HTML snapshot)
+3. **Progress Tracker:** Indicador visual step-by-step durante toda a análise
+4. **Dados Estruturados:** Visualizador unificado com abas (principal + concorrentes)
+5. **Configurar API Keys:** Settings → Integrações de IA (Gemini/Claude)
+6. **Análise por IA:** Sob demanda — selecionar modelo → clicar ✨ → resultados detalhados
+7. **Exportar Análise:** JSON, MD, HTML ou PDF
+8. **Benchmark:** Comparação com concorrentes via análise SWOT + dados estruturados
+9. **Enriquecer Benchmark com IA:** Selecionar modelo → análise competitiva aprofundada
+10. **Alertas:** Visualização consolidada de riscos e investimentos prematuros
+11. **Insights:** Visualização agrupada por projeto com dialog + fullscreen
 
 ### Fluxo de Análise (Arquitetura)
 
 ```
 1. Análise Heurística (automática)
-   URL → Edge Function (fetch HTML) → regex/contagem → scores + insights → salva no DB
+   URL → Edge Function (fetch HTML) → regex/contagem → scores + insights + dados estruturados + HTML snapshot → salva no DB
    
 2. Notificação (após heurística)
    Análise concluída → notifica usuário → libera análise por IA
@@ -494,15 +583,15 @@ O projeto está configurado para deploy via:
 
 ## Resumo
 
-O **Intentia Strategy Hub** está na **versão 2.3.0** — mobile-first + etapa estratégica completa:
+O **Intentia Strategy Hub** está na **versão 2.5.0** — dados estruturados + progress tracker:
 
-1. **Autenticação** redesenhada com split layout e design system
+1. **Autenticação** redesenhada com split layout, redirect após login
 2. **Dashboard** com dados reais, Welcome Section e ScoreRing
 3. **Análise heurística de URLs** automática via Edge Function
 4. **Análise por IA de projetos** sob demanda com seletor de modelo (Gemini/Claude)
 5. **Enriquecimento de benchmark por IA** com análise competitiva aprofundada
 6. **Exportação completa** de análises IA em JSON, Markdown, HTML e PDF
-7. **Relatórios PDF consolidados** por projeto e por seção (Dashboard, Insights, Benchmarks)
+7. **Relatórios PDF consolidados** por projeto e por seção
 8. **Exportação CSV** de projetos, insights, benchmarks, audiences e channels
 9. **12 testes automatizados** passando (exportCsv + exportAnalysis)
 10. **Insights agrupados por projeto** com cards visuais, dialog e fullscreen
@@ -511,9 +600,18 @@ O **Intentia Strategy Hub** está na **versão 2.3.0** — mobile-first + etapa 
 13. **CRUD completo** para projetos, públicos-alvo e benchmarks
 14. **Dark mode** isolado (sistema vs site público)
 15. **Notificações** real-time com cores adaptáveis
-16. **Schema SQL** completo com RLS + user_api_keys
-17. **Design system** consistente com variáveis CSS + animações lab-bubble
-18. **Mobile-first** — todas as páginas e componentes responsivos com DashboardLayout
-19. **Plano Tático** por canal com templates validados por nicho B2B + playbook gamificado
+16. **Mobile-first** — todas as páginas e componentes responsivos
+17. **Plano Tático** por canal com templates validados por nicho B2B + playbook gamificado
+18. **Alertas Estratégicos** — página dedicada com 4 categorias, filtros e cards expandíveis
+19. **Cases com screenshots** do sistema + hover zoom + lightbox fullscreen
+20. **Planos detalhados** refletindo todas as features (Starter/Professional/Enterprise)
+21. **Checkout público** (`/assinar`) — self-service para visitantes (pagamento → criação de conta)
+22. **Checkout interno** (`/checkout`) — upgrade para usuários autenticados
+23. **URLs traduzidas** para português (rotas públicas e âncoras)
+24. **ProtectedRoute com redirect** — preserva destino após login
+25. **Dados Estruturados** — extração e visualização unificada (JSON-LD, OG, Twitter Card, Microdata) com abas por site
+26. **HTML Snapshot** — versão limpa do HTML para referência, com copy e preview
+27. **Progress Tracker** — indicador visual step-by-step durante análise heurística e de concorrentes
+28. **Dados de concorrentes** — structured_data e html_snapshot salvos nos benchmarks
 
 Próximos passos: **Etapa Operacional** (execução de campanhas, integração com APIs de marketing, multi-tenancy avançado).

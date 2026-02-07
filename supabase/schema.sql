@@ -58,6 +58,9 @@ create table if not exists public.projects (
   heuristic_completed_at timestamptz,
   ai_analysis jsonb,
   ai_completed_at timestamptz,
+  html_snapshot text,
+  structured_data jsonb,
+  html_snapshot_at timestamptz,
   last_update timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

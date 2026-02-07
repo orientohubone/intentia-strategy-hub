@@ -7,8 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { useTenantData } from "@/hooks/useTenantData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { analyzeUrl, saveAnalysisResults, analyzeCompetitors, cleanBenchmarks } from "@/lib/urlAnalyzer";
+import { analyzeUrl, saveAnalysisResults, analyzeCompetitors, cleanBenchmarks, saveCompetitorBenchmark } from "@/lib/urlAnalyzer";
 import type { UrlAnalysis } from "@/lib/urlAnalyzer";
+import { AnalysisProgressTracker } from "@/components/AnalysisProgressTracker";
+import { StructuredDataViewer } from "@/components/StructuredDataViewer";
+import type { CompetitorStructuredData } from "@/components/StructuredDataViewer";
 import { runAiAnalysis, getUserActiveKeys } from "@/lib/aiAnalyzer";
 import { AI_MODEL_LABELS, getModelsForProvider } from "@/lib/aiModels";
 import type { AiAnalysisResult, UserApiKey } from "@/lib/aiAnalyzer";
@@ -58,6 +61,8 @@ import {
   Pencil,
   Trash2,
   FolderOpen,
+  ChevronDown,
+  ChevronsUpDown,
 } from "lucide-react";
 
 type Insight = {
@@ -95,6 +100,9 @@ export default function Projects() {
   const [channelScores, setChannelScores] = useState<Record<string, ChannelScore[]>>({});
   const [insights, setInsights] = useState<Record<string, Insight[]>>({});
   const [analyzing, setAnalyzing] = useState(false);
+  const [analysisComplete, setAnalysisComplete] = useState(false);
+  const [competitorTotal, setCompetitorTotal] = useState(0);
+  const [currentCompetitorIndex, setCurrentCompetitorIndex] = useState(0);
   const [formState, setFormState] = useState({
     name: "",
     niche: "",
@@ -111,6 +119,37 @@ export default function Projects() {
   const [selectedAiModel, setSelectedAiModel] = useState<string>("");
   const notificationSentRef = useRef<string | null>(null);
   const aiNotificationSentRef = useRef<string | null>(null);
+  const [competitorSdMap, setCompetitorSdMap] = useState<Record<string, CompetitorStructuredData[]>>({});
+  const SECTION_KEYS = ["heuristic", "ai", "overview", "channels", "insights"] as const;
+  type SectionKey = typeof SECTION_KEYS[number];
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, Set<SectionKey>>>({});
+
+  const isSectionCollapsed = (projectId: string, section: SectionKey) =>
+    collapsedSections[projectId]?.has(section) ?? false;
+
+  const toggleSection = (projectId: string, section: SectionKey) => {
+    setCollapsedSections((prev) => {
+      const current = new Set(prev[projectId] || []);
+      if (current.has(section)) current.delete(section);
+      else current.add(section);
+      return { ...prev, [projectId]: current };
+    });
+  };
+
+  const collapseAll = (projectId: string) => {
+    setCollapsedSections((prev) => ({
+      ...prev,
+      [projectId]: new Set(SECTION_KEYS),
+    }));
+  };
+
+  const expandAll = (projectId: string) => {
+    setCollapsedSections((prev) => ({
+      ...prev,
+      [projectId]: new Set(),
+    }));
+  };
+
   const [editingInsightId, setEditingInsightId] = useState<string | null>(null);
   const [editingInsight, setEditingInsight] = useState<Partial<Insight>>({});
   const [insightDraft, setInsightDraft] = useState({
@@ -164,6 +203,12 @@ export default function Projects() {
         .eq("project_id", activeProjectId)
         .order("created_at", { ascending: false });
 
+      // Fetch competitor benchmarks with structured data
+      const { data: benchmarkData } = await (supabase as any)
+        .from("benchmarks")
+        .select("competitor_name, competitor_url, structured_data, html_snapshot, html_snapshot_at")
+        .eq("project_id", activeProjectId);
+
       setChannelScores((prev) => ({
         ...prev,
         [activeProjectId]: (scoreData || []) as ChannelScore[],
@@ -172,6 +217,18 @@ export default function Projects() {
         ...prev,
         [activeProjectId]: (insightData || []) as Insight[],
       }));
+      if (benchmarkData && benchmarkData.length > 0) {
+        setCompetitorSdMap((prev) => ({
+          ...prev,
+          [activeProjectId]: benchmarkData.map((b: any) => ({
+            name: b.competitor_name,
+            url: b.competitor_url,
+            structuredData: b.structured_data || null,
+            htmlSnapshot: b.html_snapshot || null,
+            htmlSnapshotAt: b.html_snapshot_at || null,
+          })),
+        }));
+      }
     };
 
     fetchDetails();
@@ -241,6 +298,9 @@ export default function Projects() {
       // Run URL analysis in background
       if (user) {
         setAnalyzing(true);
+        setAnalysisComplete(false);
+        setCompetitorTotal(competitorUrls.length);
+        setCurrentCompetitorIndex(0);
         try {
           const analysis = await analyzeUrl(urlToAnalyze);
           await saveAnalysisResults(projectId, user.id, analysis);
@@ -250,9 +310,24 @@ export default function Projects() {
           await cleanBenchmarks(projectId, user.id);
           // Analyze competitors and generate benchmarks
           if (competitorUrls.length > 0) {
-            toast.info(`Analisando ${competitorUrls.length} concorrente(s)...`);
-            await analyzeCompetitors(projectId, user.id, competitorUrls, projectNiche);
+            for (let i = 0; i < competitorUrls.length; i++) {
+              setCurrentCompetitorIndex(i);
+              try {
+                const compAnalysis = await analyzeUrl(competitorUrls[i]);
+                let competitorName: string;
+                try {
+                  competitorName = new URL(competitorUrls[i]).hostname.replace("www.", "");
+                } catch {
+                  competitorName = competitorUrls[i];
+                }
+                // Save benchmark (reuse internal logic)
+                await saveCompetitorBenchmark(projectId, user.id, { name: competitorName, niche: projectNiche, url: competitorUrls[i] }, compAnalysis);
+              } catch (err: any) {
+                console.error(`[benchmark] Erro ao analisar concorrente ${competitorUrls[i]}:`, err.message);
+              }
+            }
           }
+          setAnalysisComplete(true);
           toast.success(`Análise concluída! Score: ${analysis.overallScore}/100`);
           // Single notification — guarded by ref to prevent duplicates
           if (notificationSentRef.current !== projectId) {
@@ -319,10 +394,13 @@ export default function Projects() {
     const project = projects.find((p) => p.id === projectId);
     if (!project || !user) return;
 
+    const competitors = project.competitor_urls || [];
     setAnalyzing(true);
+    setAnalysisComplete(false);
+    setCompetitorTotal(competitors.length);
+    setCurrentCompetitorIndex(0);
     try {
       await updateProject(projectId, { status: "analyzing" });
-      toast.info("Reanalisando URL...");
       const analysis = await analyzeUrl(project.url);
       await saveAnalysisResults(projectId, user.id, analysis);
       // Store heuristic results in local state
@@ -330,11 +408,24 @@ export default function Projects() {
       // Clean old benchmarks for this project
       await cleanBenchmarks(projectId, user.id);
       // Analyze competitors if any
-      const competitors = project.competitor_urls || [];
       if (competitors.length > 0) {
-        toast.info(`Analisando ${competitors.length} concorrente(s)...`);
-        await analyzeCompetitors(projectId, user.id, competitors, project.niche);
+        for (let i = 0; i < competitors.length; i++) {
+          setCurrentCompetitorIndex(i);
+          try {
+            const compAnalysis = await analyzeUrl(competitors[i]);
+            let competitorName: string;
+            try {
+              competitorName = new URL(competitors[i]).hostname.replace("www.", "");
+            } catch {
+              competitorName = competitors[i];
+            }
+            await saveCompetitorBenchmark(projectId, user.id, { name: competitorName, niche: project.niche, url: competitors[i] }, compAnalysis);
+          } catch (err: any) {
+            console.error(`[benchmark] Erro ao analisar concorrente ${competitors[i]}:`, err.message);
+          }
+        }
       }
+      setAnalysisComplete(true);
       toast.success(`Reanálise concluída! Score: ${analysis.overallScore}/100`);
       // Single notification — guarded by ref to prevent duplicates
       if (notificationSentRef.current !== projectId) {
@@ -574,7 +665,7 @@ export default function Projects() {
                   {analyzing ? (
                     <>
                       <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2"></span>
-                      Analisando URL...
+                      Análise em andamento...
                     </>
                   ) : editingId ? "Salvar alterações" : "Criar projeto e analisar URL"}
                 </Button>
@@ -586,13 +677,16 @@ export default function Projects() {
                     Cancelar
                   </Button>
                 )}
-                {analyzing && (
-                  <span className="text-sm text-muted-foreground">
-                    Analisando proposta de valor, clareza, jornada e canais...
-                  </span>
-                )}
               </div>
             </form>
+
+            {/* Analysis Progress Tracker */}
+            <AnalysisProgressTracker
+              isAnalyzing={analyzing}
+              competitorCount={competitorTotal}
+              currentCompetitor={currentCompetitorIndex}
+              isComplete={analysisComplete}
+            />
 
             {loading && <p className="text-sm text-muted-foreground">Carregando projetos...</p>}
             {!loading && projectList.length === 0 && (
@@ -692,6 +786,28 @@ export default function Projects() {
 
                     {isActive && (
                       <div className="space-y-6">
+                        {/* Collapse / Expand All */}
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground gap-1.5"
+                            onClick={() => expandAll(project.id)}
+                          >
+                            <ChevronsUpDown className="h-3.5 w-3.5" />
+                            Expandir todas
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground gap-1.5"
+                            onClick={() => collapseAll(project.id)}
+                          >
+                            <ChevronsUpDown className="h-3.5 w-3.5 rotate-90" />
+                            Colapsar todas
+                          </Button>
+                        </div>
+
                         {/* Heuristic Analysis Results */}
                         {(heuristicResults[project.id] || project.heuristic_analysis) && (() => {
                           const ha = (heuristicResults[project.id] || project.heuristic_analysis) as UrlAnalysis;
@@ -709,7 +825,12 @@ export default function Projects() {
                           return (
                             <div className="border border-border rounded-xl p-4 sm:p-6 space-y-4">
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                                  onClick={() => toggleSection(project.id, "heuristic")}
+                                >
+                                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isSectionCollapsed(project.id, "heuristic") ? "-rotate-90" : ""}`} />
                                   <FileSearch className="h-5 w-5 text-primary" />
                                   <h3 className="text-base font-semibold text-foreground">Análise Heurística</h3>
                                   <Badge variant="outline" className="text-xs">
@@ -717,7 +838,7 @@ export default function Projects() {
                                       ? new Date(project.heuristic_completed_at).toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
                                       : "Concluída"}
                                   </Badge>
-                                </div>
+                                </button>
                                 <div className="flex items-center gap-1.5">
                                   {hasAiKeys ? (
                                     <>
@@ -764,6 +885,7 @@ export default function Projects() {
                                 </div>
                               </div>
 
+                              {!isSectionCollapsed(project.id, "heuristic") && (<>
                               {/* Score Grid */}
                               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                                 {scoreItems.map((item) => {
@@ -845,6 +967,37 @@ export default function Projects() {
                                 </div>
                               )}
 
+                              {/* Structured Data & HTML Snapshot (unified: principal + competitors) */}
+                              {(() => {
+                                // Build structured data from Edge Function response, DB columns, or synthesize from meta
+                                const sd = ha.structuredData || (project as any).structured_data;
+                                const hs = ha.htmlSnapshot || (project as any).html_snapshot;
+                                // If no structured data from Edge Function, synthesize OG from existing meta
+                                const fallbackSd = !sd && ha.meta ? {
+                                  jsonLd: [],
+                                  microdata: [],
+                                  openGraph: Object.fromEntries(
+                                    [
+                                      ha.meta.ogTitle && ["og:title", ha.meta.ogTitle],
+                                      ha.meta.ogDescription && ["og:description", ha.meta.ogDescription],
+                                      ha.meta.ogImage && ["og:image", ha.meta.ogImage],
+                                      ha.meta.language && ["og:locale", ha.meta.language],
+                                    ].filter(Boolean) as [string, string][]
+                                  ),
+                                  twitterCard: {},
+                                } : null;
+                                const finalSd = sd || fallbackSd;
+                                return (
+                                  <StructuredDataViewer
+                                    structuredData={finalSd}
+                                    htmlSnapshot={hs}
+                                    htmlSnapshotAt={(project as any).html_snapshot_at}
+                                    competitors={competitorSdMap[project.id] || []}
+                                    projectName={project.name}
+                                  />
+                                );
+                              })()}
+
                               {/* AI Analysis Status / Results */}
                               {project.status === "completed" && !aiResults[project.id] && !project.ai_analysis && aiAnalyzing !== project.id && (
                                 <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 flex items-center gap-3">
@@ -882,6 +1035,7 @@ export default function Projects() {
                                   </div>
                                 </div>
                               )}
+                            </>)}
                             </div>
                           );
                         })()}
@@ -906,7 +1060,12 @@ export default function Projects() {
                           return (
                             <div className="border border-primary/20 rounded-xl p-4 sm:p-6 space-y-5 bg-primary/[0.02]">
                               <div className="flex items-center justify-between flex-wrap gap-2">
-                                <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                                  onClick={() => toggleSection(project.id, "ai")}
+                                >
+                                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isSectionCollapsed(project.id, "ai") ? "-rotate-90" : ""}`} />
                                   <Sparkles className="h-5 w-5 text-primary" />
                                   <h3 className="text-base font-semibold text-foreground">Análise por IA</h3>
                                   <Badge variant="outline" className="text-xs">
@@ -917,7 +1076,7 @@ export default function Projects() {
                                       {new Date(ai.analyzedAt).toLocaleDateString("pt-BR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                                     </span>
                                   )}
-                                </div>
+                                </button>
                                 <div className="flex items-center gap-1">
                                   {(() => {
                                     const ha = heuristicResults[project.id] || project.heuristic_analysis as UrlAnalysis | undefined;
@@ -942,6 +1101,7 @@ export default function Projects() {
                                 </div>
                               </div>
 
+                              {!isSectionCollapsed(project.id, "ai") && (<>
                               {/* Summary */}
                               <div className="bg-muted/40 rounded-lg p-3">
                                 <p className="text-sm text-foreground leading-relaxed">{ai.summary}</p>
@@ -1040,37 +1200,62 @@ export default function Projects() {
                                   <p className="text-[11px] text-muted-foreground leading-relaxed">{ai.competitivePosition}</p>
                                 </div>
                               )}
+                            </>)}
                             </div>
                           );
                         })()}
 
                         {/* Project Score Overview */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                          <div className="bg-muted/50 rounded-xl p-4 text-center">
-                            <p className="text-sm text-muted-foreground mb-1">Score Geral</p>
-                            <p className={`text-3xl font-bold ${
-                              project.score >= 70 ? "text-green-600" : project.score >= 50 ? "text-yellow-600" : "text-red-500"
-                            }`}>{project.score}</p>
-                            <p className="text-xs text-muted-foreground mt-1">de 100</p>
+                        <div className="border border-border rounded-xl p-4 sm:p-6 space-y-4">
+                          <button
+                            type="button"
+                            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => toggleSection(project.id, "overview")}
+                          >
+                            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isSectionCollapsed(project.id, "overview") ? "-rotate-90" : ""}`} />
+                            <TrendingUp className="h-5 w-5 text-primary" />
+                            <h3 className="text-base font-semibold text-foreground">Visão Geral do Projeto</h3>
+                          </button>
+                          {!isSectionCollapsed(project.id, "overview") && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="bg-muted/50 rounded-xl p-4 text-center">
+                              <p className="text-sm text-muted-foreground mb-1">Score Geral</p>
+                              <p className={`text-3xl font-bold ${
+                                project.score >= 70 ? "text-green-600" : project.score >= 50 ? "text-yellow-600" : "text-red-500"
+                              }`}>{project.score}</p>
+                              <p className="text-xs text-muted-foreground mt-1">de 100</p>
+                            </div>
+                            <div className="bg-muted/50 rounded-xl p-4 text-center">
+                              <p className="text-sm text-muted-foreground mb-1">Status</p>
+                              <p className="text-lg font-semibold text-foreground capitalize">{project.status === "completed" ? "Concluído" : project.status === "analyzing" ? "Analisando..." : "Pendente"}</p>
+                            </div>
+                            <div className="bg-muted/50 rounded-xl p-4 text-center sm:col-span-2 lg:col-span-1">
+                              <p className="text-sm text-muted-foreground mb-1">Última Análise</p>
+                              <p className="text-lg font-semibold text-foreground">
+                                {project.last_update ? new Date(project.last_update).toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                              </p>
+                            </div>
                           </div>
-                          <div className="bg-muted/50 rounded-xl p-4 text-center">
-                            <p className="text-sm text-muted-foreground mb-1">Status</p>
-                            <p className="text-lg font-semibold text-foreground capitalize">{project.status === "completed" ? "Concluído" : project.status === "analyzing" ? "Analisando..." : "Pendente"}</p>
-                          </div>
-                          <div className="bg-muted/50 rounded-xl p-4 text-center sm:col-span-2 lg:col-span-1">
-                            <p className="text-sm text-muted-foreground mb-1">Última Análise</p>
-                            <p className="text-lg font-semibold text-foreground">
-                              {project.last_update ? new Date(project.last_update).toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric" }) : "—"}
-                            </p>
-                          </div>
+                          )}
                         </div>
 
                         {/* Channel Scores Cards */}
                         <div className="border border-border rounded-xl p-4 sm:p-6 space-y-4">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-base font-semibold text-foreground">Scores por Canal</h3>
-                            <Button size="sm" variant="outline" onClick={() => handleChannelSave(project.id)}>Salvar alterações</Button>
+                            <button
+                              type="button"
+                              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => toggleSection(project.id, "channels")}
+                            >
+                              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isSectionCollapsed(project.id, "channels") ? "-rotate-90" : ""}`} />
+                              <Globe className="h-5 w-5 text-primary" />
+                              <h3 className="text-base font-semibold text-foreground">Scores por Canal</h3>
+                            </button>
+                            {!isSectionCollapsed(project.id, "channels") && (
+                              <Button size="sm" variant="outline" onClick={() => handleChannelSave(project.id)}>Salvar alterações</Button>
+                            )}
                           </div>
+                          {!isSectionCollapsed(project.id, "channels") && (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {channelList.map((channel) => {
                               const existing = scores.find((item) => item.channel === channel) || { channel, score: 0 } as ChannelScore;
@@ -1134,12 +1319,22 @@ export default function Projects() {
                               );
                             })}
                           </div>
+                          )}
                         </div>
 
                         {/* Insights Section */}
                         <div className="border border-border rounded-xl p-4 sm:p-6 space-y-4">
-                          <h3 className="text-base font-semibold text-foreground">Insights ({projectInsights.length})</h3>
+                          <button
+                            type="button"
+                            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => toggleSection(project.id, "insights")}
+                          >
+                            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isSectionCollapsed(project.id, "insights") ? "-rotate-90" : ""}`} />
+                            <AlertTriangle className="h-5 w-5 text-primary" />
+                            <h3 className="text-base font-semibold text-foreground">Insights ({projectInsights.length})</h3>
+                          </button>
                           
+                          {!isSectionCollapsed(project.id, "insights") && (<>
                           {projectInsights.length === 0 ? (
                             <p className="text-sm text-muted-foreground py-4 text-center">Nenhum insight gerado. Clique em "Reanalisar URL" para gerar insights automáticos.</p>
                           ) : (
@@ -1223,6 +1418,7 @@ export default function Projects() {
                               <Button size="sm" onClick={() => handleInsightCreate(project.id)}>Adicionar insight</Button>
                             </div>
                           </details>
+                          </>)}
                         </div>
                       </div>
                     )}

@@ -29,6 +29,7 @@ import {
   Globe,
   Crosshair,
   BookOpen,
+  Database,
 } from "lucide-react";
 
 export default function Help() {
@@ -271,6 +272,40 @@ export default function Help() {
       ]
     },
     {
+      id: "structured-data",
+      title: "Dados Estruturados & Snapshot",
+      description: "JSON-LD, Open Graph, Twitter Card, Microdata e HTML Snapshot",
+      icon: <Database className="h-5 w-5" />,
+      color: "text-teal-600",
+      articles: [
+        {
+          title: "O que são dados estruturados",
+          content: "Dados estruturados são informações embutidas no HTML que ajudam mecanismos de busca e redes sociais a entender o conteúdo da página. A Intentia extrai automaticamente 4 tipos: JSON-LD (schema.org), Open Graph (Facebook/LinkedIn), Twitter Card e Microdata.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Visualizador unificado com abas",
+          content: "Após a análise, o visualizador de dados estruturados mostra abas para cada site analisado: seu site principal (ícone de prédio) e cada concorrente (ícone de espadas). Clique nas abas para alternar entre os dados de cada site. Cada aba mostra JSON-LD, OG, Twitter Card, Microdata e HTML Snapshot.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "JSON-LD e Open Graph",
+          content: "JSON-LD é o formato preferido pelo Google para dados estruturados (ex: Organization, Product, Article). Open Graph são meta tags usadas pelo Facebook e LinkedIn para gerar previews ao compartilhar links. A Intentia extrai ambos e mostra em seções expansíveis com preview de imagens OG.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "HTML Snapshot",
+          content: "O HTML Snapshot é uma versão limpa do HTML da página (sem scripts, styles e SVGs). Útil para referência rápida do conteúdo sem precisar acessar o site. Você pode copiar o HTML com um clique e expandir/colapsar a visualização.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Comparando dados estruturados com concorrentes",
+          content: "Ao adicionar URLs de concorrentes ao projeto, a Intentia extrai os dados estruturados de cada um. Use as abas no visualizador para comparar: quem tem JSON-LD mais completo, quais OG tags estão presentes, e como cada site se apresenta para mecanismos de busca e redes sociais.",
+          difficulty: "Intermediário",
+        },
+      ]
+    },
+    {
       id: "audiences",
       title: "Públicos-Alvo",
       description: "Defina e gerencie suas audiências B2B",
@@ -397,6 +432,14 @@ export default function Help() {
     {
       question: "O que é o Playbook Gamificado?",
       answer: "O Playbook é gerado ao clicar em 'Rodar Plano' na visão geral do plano tático. Ele analisa todos os canais configurados e gera diretivas de execução priorizadas com KPIs, ações específicas e nível de prioridade. É uma forma gamificada de transformar o plano tático em ações concretas."
+    },
+    {
+      question: "O que são os dados estruturados extraídos pela análise?",
+      answer: "A Intentia extrai automaticamente 4 tipos de dados estruturados de cada URL analisada: JSON-LD (schema.org, usado pelo Google), Open Graph (meta tags para Facebook/LinkedIn), Twitter Card (meta tags para Twitter/X) e Microdata. Esses dados mostram como a página se apresenta para mecanismos de busca e redes sociais."
+    },
+    {
+      question: "Posso comparar dados estruturados com concorrentes?",
+      answer: "Sim! Ao adicionar URLs de concorrentes ao projeto, a Intentia extrai os dados estruturados de cada um. No visualizador unificado, use as abas para alternar entre seu site e cada concorrente, comparando JSON-LD, Open Graph, Twitter Card e Microdata lado a lado."
     },
     {
       question: "Posso cancelar meu plano a qualquer momento?",

@@ -163,8 +163,10 @@ export default function PrivacyPolicy() {
               Se você tiver dúvidas sobre esta política de privacidade ou como seus dados são usados, entre em contato:
             </p>
             <div className="space-y-2 text-sm">
-              <p><strong>Email:</strong> privacy@intentia.com.br</p>
-              <p><strong>Endereço:</strong> Av. Paulista, 1000 - 14º andar, São Paulo, SP 01310-100</p>
+              <p><strong>Email:</strong> intentia@orientohub.com.br</p>
+              <p><strong>Telefone:</strong> +55 (14) 99861-8547</p>
+              <p><strong>Endereço:</strong> Rua Eduardo Paulo de Souza, 296 — Pompeia, SP 17584-284</p>
+              <p><strong>Horário:</strong> Segunda a Sexta, 9h às 18h (horário de Brasília)</p>
             </div>
           </div>
         </div>

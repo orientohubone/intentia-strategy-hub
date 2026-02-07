@@ -223,7 +223,7 @@ export default function CookiePolicy() {
                 </p>
                 <ul className="list-disc list-inside space-y-1 text-sm">
                   <li>Limpar cookies do navegador</li>
-                  <li>Solicitar exclusão via privacy@intentia.com.br</li>
+                  <li>Solicitar exclusão via intentia@orientohub.com.br</li>
                   <li>Usar ferramentas de privacidade de navegadores</li>
                 </ul>
               </div>
@@ -253,8 +253,10 @@ export default function CookiePolicy() {
               Se você tiver perguntas sobre nossa política de cookies ou como gerenciá-los, entre em contato:
             </p>
             <div className="space-y-2 text-sm">
-              <p><strong>Email:</strong> privacy@intentia.com.br</p>
-              <p><strong>Endereço:</strong> Av. Paulista, 1000 - 14º andar, São Paulo, SP 01310-100</p>
+              <p><strong>Email:</strong> intentia@orientohub.com.br</p>
+              <p><strong>Telefone:</strong> +55 (14) 99861-8547</p>
+              <p><strong>Endereço:</strong> Rua Eduardo Paulo de Souza, 296 — Pompeia, SP 17584-284</p>
+              <p><strong>Horário:</strong> Segunda a Sexta, 9h às 18h (horário de Brasília)</p>
             </div>
           </div>
         </div>
