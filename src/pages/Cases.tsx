@@ -1,3 +1,4 @@
+import { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/Footer";
@@ -24,6 +25,7 @@ const useCases = [
     icon: Search,
     color: "from-primary to-orange-500",
     iconBg: "bg-primary/10 text-primary",
+    image: "/Diagnostico-url.png",
     title: "Diagnóstico de URL antes de investir",
     persona: "Gestor de Marketing B2B",
     scenario: "Antes de alocar budget em mídia paga, o gestor precisa entender se o site da empresa está preparado para receber tráfego qualificado.",
@@ -40,6 +42,7 @@ const useCases = [
     icon: BarChart3,
     color: "from-blue-500 to-cyan-500",
     iconBg: "bg-blue-500/10 text-blue-600",
+    image: "/benchmark.png",
     title: "Benchmark competitivo automatizado",
     persona: "Analista de Estratégia Digital",
     scenario: "O analista precisa comparar o posicionamento digital da empresa com os principais concorrentes do nicho.",
@@ -56,6 +59,7 @@ const useCases = [
     icon: Brain,
     color: "from-purple-500 to-violet-500",
     iconBg: "bg-purple-500/10 text-purple-600",
+    image: "/analise-ia.png",
     title: "Análise aprofundada com IA",
     persona: "Diretor de Marketing",
     scenario: "Após o diagnóstico heurístico, o diretor quer uma análise mais profunda usando inteligência artificial para embasar decisões estratégicas.",
@@ -72,6 +76,7 @@ const useCases = [
     icon: Layers,
     color: "from-green-500 to-emerald-500",
     iconBg: "bg-green-500/10 text-green-600",
+    image: "/score-canal.png",
     title: "Score por canal de mídia",
     persona: "Gestor de Tráfego Pago",
     scenario: "O gestor precisa decidir em qual canal investir primeiro: Google, Meta, LinkedIn ou TikTok.",
@@ -88,6 +93,7 @@ const useCases = [
     icon: AlertTriangle,
     color: "from-amber-500 to-yellow-500",
     iconBg: "bg-amber-500/10 text-amber-600",
+    image: "/alertas-estrategicos.png",
     title: "Alertas de investimento prematuro",
     persona: "CEO / Fundador",
     scenario: "O fundador está pressionado para investir em ads, mas não sabe se a empresa está realmente pronta.",
@@ -104,6 +110,7 @@ const useCases = [
     icon: Zap,
     color: "from-rose-500 to-pink-500",
     iconBg: "bg-rose-500/10 text-rose-600",
+    image: "/insights-acionaveis.png",
     title: "Insights estratégicos por projeto",
     persona: "Equipe de Marketing",
     scenario: "A equipe precisa de uma visão consolidada dos insights gerados para cada projeto, organizados por prioridade.",
@@ -128,6 +135,18 @@ const capabilities = [
 
 export default function Cases() {
   const navigate = useNavigate();
+  const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null);
+
+  const closeLightbox = useCallback(() => setLightbox(null), []);
+
+  useEffect(() => {
+    if (!lightbox) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeLightbox();
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [lightbox, closeLightbox]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -179,17 +198,31 @@ export default function Cases() {
                   index % 2 === 1 ? "lg:grid-flow-col-dense" : ""
                 }`}
               >
-                {/* Visual Card */}
+                {/* Visual Card — Screenshot Showcase */}
                 <div className={`lg:col-span-2 ${index % 2 === 1 ? "lg:col-start-4" : ""}`}>
-                  <div className={`relative rounded-2xl overflow-hidden bg-gradient-to-br ${uc.color} p-[1px]`}>
-                    <div className="bg-card rounded-2xl p-8 flex flex-col items-center justify-center min-h-[280px] space-y-4">
-                      <div className={`w-16 h-16 rounded-2xl ${uc.iconBg} flex items-center justify-center`}>
-                        <uc.icon className="h-8 w-8" />
+                  <div className="relative rounded-2xl">
+                    <div className="border-beam rounded-2xl" />
+                    <div
+                      className="relative rounded-2xl border border-border shadow-xl overflow-hidden bg-card cursor-zoom-in group/img"
+                      onClick={() => setLightbox({ src: uc.image, alt: uc.title })}
+                    >
+                      <img
+                        src={uc.image}
+                        alt={uc.title}
+                        className="w-full h-auto block transition-transform duration-500 ease-out group-hover/img:scale-105"
+                        draggable={false}
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/5 transition-colors duration-300 flex items-center justify-center">
+                        <span className="opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 bg-black/60 text-white text-xs font-medium px-3 py-1.5 rounded-full backdrop-blur-sm">
+                          Clique para ampliar
+                        </span>
                       </div>
-                      <p className="text-lg font-bold text-foreground text-center leading-snug">{uc.title}</p>
-                      <span className="inline-flex items-center rounded-full bg-muted text-muted-foreground text-xs font-medium px-3 py-1">
-                        {uc.persona}
-                      </span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2 mt-3">
+                      <div className={`w-7 h-7 rounded-lg ${uc.iconBg} flex items-center justify-center`}>
+                        <uc.icon className="h-3.5 w-3.5" />
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground">{uc.persona}</span>
                     </div>
                   </div>
                 </div>
@@ -249,6 +282,33 @@ export default function Cases() {
           </Button>
         </div>
       </section>
+
+      {/* Lightbox Fullscreen */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 sm:p-8 cursor-zoom-out animate-in fade-in duration-200"
+          onClick={closeLightbox}
+        >
+          <div className="relative max-w-6xl w-full max-h-[90vh] flex items-center justify-center">
+            <img
+              src={lightbox.src}
+              alt={lightbox.alt}
+              className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl"
+              draggable={false}
+            />
+            <button
+              onClick={closeLightbox}
+              className="absolute -top-2 -right-2 sm:top-2 sm:right-2 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors backdrop-blur-sm"
+              aria-label="Fechar"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+            <p className="absolute -bottom-8 left-0 right-0 text-center text-xs text-white/60">
+              {lightbox.alt} — Pressione ESC ou clique para fechar
+            </p>
+          </div>
+        </div>
+      )}
 
       <Footer />
       <BackToTop />

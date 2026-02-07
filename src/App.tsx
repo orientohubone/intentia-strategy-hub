@@ -22,6 +22,7 @@ import Benchmark from "./pages/Benchmark";
 import Settings from "./pages/Settings";
 import Help from "./pages/Help";
 import TacticalPlan from "./pages/TacticalPlan";
+import Alerts from "./pages/Alerts";
 import NotFound from "./pages/NotFound";
 import BrandGuide from "./pages/BrandGuide";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -38,15 +39,15 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<ForceLightMode><Index /></ForceLightMode>} />
-          <Route path="/pricing" element={<ForceLightMode><Pricing /></ForceLightMode>} />
+          <Route path="/precos" element={<ForceLightMode><Pricing /></ForceLightMode>} />
           <Route path="/auth" element={<ForceLightMode><Auth /></ForceLightMode>} />
-          <Route path="/about" element={<ForceLightMode><About /></ForceLightMode>} />
+          <Route path="/sobre" element={<ForceLightMode><About /></ForceLightMode>} />
           <Route path="/cases" element={<ForceLightMode><Cases /></ForceLightMode>} />
           <Route path="/blog" element={<ForceLightMode><Blog /></ForceLightMode>} />
-          <Route path="/contact" element={<ForceLightMode><Contact /></ForceLightMode>} />
-          <Route path="/privacy-policy" element={<ForceLightMode><PrivacyPolicy /></ForceLightMode>} />
-          <Route path="/terms-of-service" element={<ForceLightMode><TermsOfService /></ForceLightMode>} />
-          <Route path="/cookie-policy" element={<ForceLightMode><CookiePolicy /></ForceLightMode>} />
+          <Route path="/contato" element={<ForceLightMode><Contact /></ForceLightMode>} />
+          <Route path="/politica-de-privacidade" element={<ForceLightMode><PrivacyPolicy /></ForceLightMode>} />
+          <Route path="/termos-de-servico" element={<ForceLightMode><TermsOfService /></ForceLightMode>} />
+          <Route path="/politica-de-cookies" element={<ForceLightMode><CookiePolicy /></ForceLightMode>} />
           <Route path="/brand" element={<ForceLightMode><BrandGuide /></ForceLightMode>} />
           <Route 
             path="/dashboard" 
@@ -101,6 +102,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <TacticalPlan />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/alertas" 
+            element={
+              <ProtectedRoute>
+                <Alerts />
               </ProtectedRoute>
             } 
           />

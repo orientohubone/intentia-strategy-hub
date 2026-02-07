@@ -9,9 +9,9 @@ export function LandingNav() {
   const navigate = useNavigate();
 
   const navLinks = [
-    { label: "Funcionalidades", href: "#features" },
-    { label: "Como Funciona", href: "#how-it-works" },
-    { label: "Preços", href: "#pricing" },
+    { label: "Funcionalidades", href: "#funcionalidades" },
+    { label: "Como Funciona", href: "#como-funciona" },
+    { label: "Preços", href: "#precos" },
   ];
 
   return (

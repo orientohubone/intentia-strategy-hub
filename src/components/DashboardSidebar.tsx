@@ -8,6 +8,7 @@ import {
   Users, 
   Lightbulb, 
   Crosshair,
+  ShieldAlert,
   LogOut, 
   Settings, 
   HelpCircle,
@@ -33,6 +34,7 @@ const mainNavItems: NavItem[] = [
   { icon: BarChart3, label: "Benchmark", href: "/benchmark" },
   { icon: Lightbulb, label: "Insights", href: "/insights" },
   { icon: Crosshair, label: "Plano Tático", href: "/tactical" },
+  { icon: ShieldAlert, label: "Alertas", href: "/alertas" },
 ];
 
 const bottomNavItems: NavItem[] = [

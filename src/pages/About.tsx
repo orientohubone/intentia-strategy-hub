@@ -29,7 +29,7 @@ export default function About() {
           <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Estamos em uma missão para ajudar empresas B2B a tomar decisões mais inteligentes sobre investimentos em marketing digital através de dados e estratégia.
           </p>
-          <Button variant="hero" size="xl" onClick={() => navigate('/pricing')}>
+          <Button variant="hero" size="xl" onClick={() => navigate('/precos')}>
             Conheça Nossos Planos
             <ArrowRight className="h-5 w-5 ml-2" />
           </Button>

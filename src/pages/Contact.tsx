@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 
 const contactInfo = [
   {
@@ -85,12 +86,22 @@ export default function Contact() {
     setLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { error } = await supabase
+        .from('contact_messages' as any)
+        .insert({
+          name: formData.name,
+          email: formData.email,
+          company: formData.company || null,
+          phone: formData.phone || null,
+          message: formData.message,
+        });
+
+      if (error) throw error;
       
       toast.success("Mensagem enviada com sucesso! Entraremos em contato em breve.");
       setFormData({ name: "", email: "", company: "", phone: "", message: "" });
     } catch (error) {
+      console.error('Error sending contact message:', error);
       toast.error("Erro ao enviar mensagem. Tente novamente.");
     } finally {
       setLoading(false);

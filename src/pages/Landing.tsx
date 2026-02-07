@@ -196,7 +196,7 @@ export default function Landing() {
                 Começar Análise Grátis
                 <ArrowRight className="h-5 w-5" />
               </Button>
-              <Button variant="hero-outline" size="xl" onClick={() => navigate('/pricing')}>
+              <Button variant="hero-outline" size="xl" onClick={() => navigate('/precos')}>
                 Ver Preços
               </Button>
             </div>
@@ -208,7 +208,7 @@ export default function Landing() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-secondary/30">
+      <section id="funcionalidades" className="py-20 bg-secondary/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <span className="inline-block px-4 py-1 rounded-full bg-accent text-accent-foreground text-sm font-medium mb-4">
@@ -237,14 +237,14 @@ export default function Landing() {
       </section>
 
       {/* How it Works */}
-      <section id="how-it-works" className="py-20">
+      <section id="como-funciona" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <span className="inline-block px-4 py-1 rounded-full bg-accent text-accent-foreground text-sm font-medium mb-4">
               Como Funciona
             </span>
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-              Da URL ao relatório estratégico em <span className="text-primary">6 passos</span>
+              Da URL ao relatório estratégico em <span className="text-primary">7 passos</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Um fluxo completo que combina análise automática, inteligência artificial e benchmark competitivo.
@@ -384,7 +384,7 @@ export default function Landing() {
       </section>
 
       {/* Pricing Preview Section */}
-      <section id="pricing" className="py-20 bg-muted/30">
+      <section id="precos" className="py-20 bg-muted/30">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
@@ -429,7 +429,7 @@ export default function Landing() {
                 <li>✓ Relatórios PDF e exportação CSV</li>
                 <li>✓ Insights e alertas estratégicos</li>
               </ul>
-              <Button variant="secondary" className="w-full" onClick={() => navigate('/pricing')}>
+              <Button variant="secondary" className="w-full" onClick={() => navigate('/precos')}>
                 Ver Detalhes
               </Button>
             </div>
@@ -445,7 +445,7 @@ export default function Landing() {
                 <li>✓ SLA dedicado</li>
                 <li>✓ Consultoria estratégica</li>
               </ul>
-              <Button variant="outline" className="w-full" onClick={() => navigate('/pricing')}>
+              <Button variant="outline" className="w-full" onClick={() => navigate('/precos')}>
                 Falar com Vendas
               </Button>
             </div>
@@ -455,7 +455,7 @@ export default function Landing() {
             <p className="text-sm text-muted-foreground mb-4">
               Todos os planos incluem suporte por email
             </p>
-            <Button variant="ghost" onClick={() => navigate('/pricing')}>
+            <Button variant="ghost" onClick={() => navigate('/precos')}>
               Ver todos os recursos e detalhes
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
@@ -477,7 +477,7 @@ export default function Landing() {
               Começar Análise Grátis
               <ArrowRight className="h-5 w-5" />
             </Button>
-            <Button variant="outline" size="xl" onClick={() => navigate('/pricing')}>
+            <Button variant="outline" size="xl" onClick={() => navigate('/precos')}>
               Ver Preços
             </Button>
           </div>

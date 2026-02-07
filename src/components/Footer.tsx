@@ -31,27 +31,27 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-foreground">Produtos</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="/#features" className="text-muted-foreground hover:text-primary transition-colors">
+                <a href="/#funcionalidades" className="text-muted-foreground hover:text-primary transition-colors">
                   Diagnóstico de URL
                 </a>
               </li>
               <li>
-                <a href="/#features" className="text-muted-foreground hover:text-primary transition-colors">
+                <a href="/#funcionalidades" className="text-muted-foreground hover:text-primary transition-colors">
                   Benchmark Estratégico
                 </a>
               </li>
               <li>
-                <a href="/#features" className="text-muted-foreground hover:text-primary transition-colors">
+                <a href="/#funcionalidades" className="text-muted-foreground hover:text-primary transition-colors">
                   Score por Canal
                 </a>
               </li>
               <li>
-                <a href="/#features" className="text-muted-foreground hover:text-primary transition-colors">
+                <a href="/#funcionalidades" className="text-muted-foreground hover:text-primary transition-colors">
                   Alertas Estratégicos
                 </a>
               </li>
               <li>
-                <a href="/pricing" className="text-muted-foreground hover:text-primary transition-colors">
+                <a href="/precos" className="text-muted-foreground hover:text-primary transition-colors">
                   Planos e Preços
                 </a>
               </li>
@@ -63,7 +63,7 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-foreground">Empresa</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="/about" className="text-muted-foreground hover:text-primary transition-colors">
+                <a href="/sobre" className="text-muted-foreground hover:text-primary transition-colors">
                   Sobre Nós
                 </a>
               </li>
@@ -78,7 +78,7 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="/contact" className="text-muted-foreground hover:text-primary transition-colors">
+                <a href="/contato" className="text-muted-foreground hover:text-primary transition-colors">
                   Contato
                 </a>
               </li>
@@ -117,13 +117,13 @@ export function Footer() {
               <div>Uma solução do ecossistema <a href="https://orientohub.com.br" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">orientohub.com.br</a></div>
             </div>
             <div className="flex flex-wrap justify-center sm:justify-end gap-x-6 gap-y-2 text-sm">
-              <a href="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors">
+              <a href="/politica-de-privacidade" className="text-muted-foreground hover:text-primary transition-colors">
                 Política de Privacidade
               </a>
-              <a href="/terms-of-service" className="text-muted-foreground hover:text-primary transition-colors">
+              <a href="/termos-de-servico" className="text-muted-foreground hover:text-primary transition-colors">
                 Termos de Serviço
               </a>
-              <a href="/cookie-policy" className="text-muted-foreground hover:text-primary transition-colors">
+              <a href="/politica-de-cookies" className="text-muted-foreground hover:text-primary transition-colors">
                 Política de Cookies
               </a>
             </div>

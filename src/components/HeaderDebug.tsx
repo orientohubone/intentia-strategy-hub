@@ -8,26 +8,26 @@ const menuCategories = [
   {
     name: "Produto",
     items: [
-      { name: "Funcionalidades", href: "#features" },
-      { name: "Como Funciona", href: "#how-it-works" },
-      { name: "Preços", href: "/pricing" },
+      { name: "Funcionalidades", href: "#funcionalidades" },
+      { name: "Como Funciona", href: "#como-funciona" },
+      { name: "Preços", href: "/precos" },
     ]
   },
   {
     name: "Empresa",
     items: [
-      { name: "Sobre Nós", href: "/about" },
+      { name: "Sobre Nós", href: "/sobre" },
       { name: "Cases de Uso", href: "/cases" },
 
-      { name: "Contato", href: "/contact" },
+      { name: "Contato", href: "/contato" },
     ]
   },
   {
     name: "Recursos",
     items: [
       { name: "Blog", href: "/blog" },
-      { name: "Política de Privacidade", href: "/privacy-policy" },
-      { name: "Termos de Serviço", href: "/terms-of-service" },
+      { name: "Política de Privacidade", href: "/politica-de-privacidade" },
+      { name: "Termos de Serviço", href: "/termos-de-servico" },
     ]
   }
 ];
