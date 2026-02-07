@@ -1,7 +1,12 @@
+import { useRef, useEffect, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
 import { BackToHomeButton } from "@/components/BackToHomeButton";
+import { Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BrandCasesPosts } from "@/components/BrandCasesPosts";
+import { BrandLandingPosts } from "@/components/BrandLandingPosts";
 
 const primaryHSL = "hsl(16, 100%, 55%)";
 const primaryHex = "#FF6B2B";
@@ -53,7 +58,222 @@ const spacingScale = [
   { name: "64px", token: "16", usage: "Padding vertical de seções hero" },
 ];
 
+function drawLogo(ctx: CanvasRenderingContext2D, x: number, y: number, fontSize: number) {
+  ctx.font = `800 ${fontSize}px Inter, system-ui, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const text = "intentia";
+  const dot = ".";
+  const textWidth = ctx.measureText(text).width;
+  const dotWidth = ctx.measureText(dot).width;
+  const totalWidth = textWidth + dotWidth;
+  const startX = x - totalWidth / 2;
+  ctx.fillStyle = "#151A23";
+  ctx.fillText(text, startX + textWidth / 2, y);
+  ctx.fillStyle = "#FF6B2B";
+  ctx.fillText(dot, startX + textWidth + dotWidth / 2, y);
+}
+
+function drawProfileCard(canvas: HTMLCanvasElement) {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const W = 1080, H = 1080;
+  canvas.width = W;
+  canvas.height = H;
+  // Background
+  ctx.fillStyle = "#FCFCFC";
+  ctx.fillRect(0, 0, W, H);
+  // Subtle radial glow
+  const grad = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W * 0.55);
+  grad.addColorStop(0, "rgba(255,107,43,0.06)");
+  grad.addColorStop(1, "rgba(255,107,43,0)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+  // Logo centered
+  drawLogo(ctx, W / 2, H / 2, 96);
+  // Tagline
+  ctx.font = "400 24px Inter, system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#6B7280";
+  ctx.fillText("Estratégia antes da mídia.", W / 2, H / 2 + 80);
+}
+
+function drawBrandPostCard(canvas: HTMLCanvasElement): Promise<void> {
+  return new Promise((resolve) => {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) { resolve(); return; }
+    const W = 1080, H = 1350;
+    canvas.width = W;
+    canvas.height = H;
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = "/dashboard-intentia.png";
+
+    img.onload = () => {
+      // Dark background
+      ctx.fillStyle = "#151A23";
+      ctx.fillRect(0, 0, W, H);
+
+      // Primary gradient accent bar at top
+      const barGrad = ctx.createLinearGradient(0, 0, W, 0);
+      barGrad.addColorStop(0, "#FF6B2B");
+      barGrad.addColorStop(1, "#FF8F5E");
+      ctx.fillStyle = barGrad;
+      ctx.fillRect(0, 0, W, 8);
+
+      // Logo (white version)
+      const logoY = 100;
+      ctx.font = "800 72px Inter, system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const text = "intentia";
+      const dot = ".";
+      const tw = ctx.measureText(text).width;
+      const dw = ctx.measureText(dot).width;
+      const total = tw + dw;
+      const sx = W / 2 - total / 2;
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillText(text, sx + tw / 2, logoY);
+      ctx.fillStyle = "#FF6B2B";
+      ctx.fillText(dot, sx + tw + dw / 2, logoY);
+
+      // Tagline
+      ctx.font = "500 28px Inter, system-ui, sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,0.7)";
+      ctx.textAlign = "center";
+      ctx.fillText("Estratégia antes da mídia.", W / 2, logoY + 60);
+
+      // Dashboard showcase image
+      const showcaseY = logoY + 110;
+      const pad = 60;
+      const imgW = W - pad * 2;
+      const imgH = (img.height / img.width) * imgW;
+      const showcaseH = Math.min(imgH, 480);
+
+      // Showcase container with rounded corners and shadow
+      ctx.save();
+      ctx.shadowColor = "rgba(255,107,43,0.25)";
+      ctx.shadowBlur = 40;
+      ctx.shadowOffsetY = 8;
+      ctx.beginPath();
+      ctx.roundRect(pad, showcaseY, imgW, showcaseH, 16);
+      ctx.clip();
+      ctx.drawImage(img, 0, 0, img.width, img.height * (showcaseH / imgH), pad, showcaseY, imgW, showcaseH);
+      ctx.restore();
+
+      // Showcase border
+      ctx.strokeStyle = "rgba(255,255,255,0.1)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(pad, showcaseY, imgW, showcaseH, 16);
+      ctx.stroke();
+
+      // Content below showcase
+      const contentY = showcaseY + showcaseH + 60;
+
+      // Divider line
+      ctx.strokeStyle = "rgba(255,107,43,0.4)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(W / 2 - 60, contentY);
+      ctx.lineTo(W / 2 + 60, contentY);
+      ctx.stroke();
+
+      // Description block
+      ctx.font = "400 24px Inter, system-ui, sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,0.6)";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const lines = [
+        "Plataforma de análise estratégica",
+        "para marketing B2B.",
+        "",
+        "Diagnóstico de URL · Benchmark · Scores",
+        "Insights · Dados Estruturados · IA",
+      ];
+      lines.forEach((line, i) => {
+        ctx.fillText(line, W / 2, contentY + 50 + i * 38);
+      });
+
+      // Features pills
+      const pillY = contentY + 260;
+      const pills = ["Análise Heurística", "Benchmark SWOT", "Score por Canal", "Insights com IA"];
+      const pillW = 220, pillH = 42, pillGap = 16;
+      const row1 = pills.slice(0, 2);
+      const row2 = pills.slice(2, 4);
+      const row1W = row1.length * pillW + (row1.length - 1) * pillGap;
+      const row2W = row2.length * pillW + (row2.length - 1) * pillGap;
+
+      [{ items: row1, totalW: row1W, y: pillY }, { items: row2, totalW: row2W, y: pillY + pillH + pillGap }].forEach(({ items, totalW: tw2, y }) => {
+        let px = (W - tw2) / 2;
+        items.forEach((label) => {
+          ctx.beginPath();
+          ctx.roundRect(px, y, pillW, pillH, 21);
+          ctx.fillStyle = "rgba(255,107,43,0.12)";
+          ctx.fill();
+          ctx.strokeStyle = "rgba(255,107,43,0.3)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.font = "500 17px Inter, system-ui, sans-serif";
+          ctx.fillStyle = "#FF6B2B";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(label, px + pillW / 2, y + pillH / 2);
+          px += pillW + pillGap;
+        });
+      });
+
+      // Bottom URL
+      ctx.font = "400 22px Inter, system-ui, sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,0.4)";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("intentia.com.br", W / 2, H - 60);
+
+      // Bottom accent bar
+      ctx.fillStyle = barGrad;
+      ctx.fillRect(0, H - 8, W, 8);
+
+      resolve();
+    };
+
+    img.onerror = () => {
+      // Fallback: draw without image
+      ctx.fillStyle = "#151A23";
+      ctx.fillRect(0, 0, W, H);
+      ctx.font = "500 28px Inter, system-ui, sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,0.5)";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("Imagem não encontrada", W / 2, H / 2);
+      resolve();
+    };
+  });
+}
+
 export default function BrandGuide() {
+  const profileCanvasRef = useRef<HTMLCanvasElement>(null);
+  const brandPostCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    // Load Inter font before drawing
+    document.fonts.ready.then(() => {
+      if (profileCanvasRef.current) drawProfileCard(profileCanvasRef.current);
+      if (brandPostCanvasRef.current) drawBrandPostCard(brandPostCanvasRef.current);
+    });
+  }, []);
+
+  const handleDownload = useCallback((canvasRef: React.RefObject<HTMLCanvasElement | null>, filename: string) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const link = document.createElement("a");
+    link.download = filename;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -1005,6 +1225,74 @@ export default function BrandGuide() {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* ─── 13. APLICAÇÃO DE MARCA — POSTS PARA DOWNLOAD ─── */}
+        <section className="space-y-10">
+          <div className="space-y-3">
+            <h2 className="text-2xl font-bold text-foreground tracking-tight">13. Aplicação de Marca</h2>
+            <div className="w-12 h-0.5 bg-primary rounded-full" />
+          </div>
+
+          <p className="text-muted-foreground leading-relaxed max-w-2xl">
+            Posts prontos para uso nas redes sociais. Clique em <strong className="text-foreground">Baixar PNG</strong> para salvar a imagem em alta resolução.
+          </p>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            {/* Card 1: Profile — 1080×1080 */}
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h3 className="text-lg font-semibold text-foreground">Foto de Perfil</h3>
+                <p className="text-xs text-muted-foreground">1080 × 1080px — Logo versão principal, fundo claro</p>
+              </div>
+              <div className="rounded-xl border border-border overflow-hidden bg-muted/30">
+                <canvas
+                  ref={profileCanvasRef}
+                  className="w-full h-auto"
+                  style={{ aspectRatio: "1 / 1" }}
+                />
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => handleDownload(profileCanvasRef, "intentia-perfil-1080x1080.png")}
+              >
+                <Download className="h-4 w-4" />
+                Baixar PNG — 1080×1080
+              </Button>
+            </div>
+
+            {/* Card 2: Brand Post — 1080×1350 */}
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h3 className="text-lg font-semibold text-foreground">Primeiro Post — Marca</h3>
+                <p className="text-xs text-muted-foreground">1080 × 1350px — Apresentação da marca para feed</p>
+              </div>
+              <div className="rounded-xl border border-border overflow-hidden bg-muted/30">
+                <canvas
+                  ref={brandPostCanvasRef}
+                  className="w-full h-auto"
+                  style={{ aspectRatio: "1080 / 1350" }}
+                />
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => handleDownload(brandPostCanvasRef, "intentia-brand-post-1080x1350.png")}
+              >
+                <Download className="h-4 w-4" />
+                Baixar PNG — 1080×1350
+              </Button>
+            </div>
+          </div>
+
+          {/* Cases de Uso — Carrossel */}
+          <BrandCasesPosts />
+
+          {/* Landing Page — Carrossel */}
+          <BrandLandingPosts />
         </section>
 
         {/* ─── FOOTER ─── */}
