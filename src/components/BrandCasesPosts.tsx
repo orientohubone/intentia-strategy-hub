@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from "react";
-import { Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const CASES = [
@@ -420,6 +420,144 @@ function drawCasePost(canvas: HTMLCanvasElement, caseData: typeof CASES[1]): Pro
   });
 }
 
+const CAPTIONS: string[] = [
+  // 0 - Todos os Cases
+  `🚀 Conheça os 7 cases de uso da Intentia
+
+A plataforma que analisa sua presença digital antes de investir em mídia paga.
+
+✅ Diagnóstico de URL — avalie a prontidão do site
+✅ Benchmark Competitivo — compare com concorrentes
+✅ Análise com IA — insights de nível consultoria
+✅ Score por Canal — Google, Meta, LinkedIn e TikTok
+✅ Alertas Estratégicos — proteção contra desperdício
+✅ Insights por Projeto — ações organizadas
+✅ Dados Estruturados — JSON-LD, OG e Twitter Card
+
+Estratégia antes da mídia. 🎯
+
+#MarketingB2B #EstratégiaDigital #MídiaPaga #Intentia #MarketingEstratégico`,
+
+  // 1 - Diagnóstico de URL
+  `🎯 Case: Diagnóstico de URL
+
+Antes de investir em mídia, avalie se o site está pronto.
+
+Como funciona:
+1️⃣ Cadastre a URL do projeto
+2️⃣ Análise heurística automática
+3️⃣ Scores de 0 a 100 por dimensão
+4️⃣ Identifique pontos críticos
+
+💡 Resultado: Evite desperdício de budget em páginas que não convertem.
+
+Para: Gestor de Marketing B2B
+
+#DiagnósticoDigital #MarketingB2B #AnáliseDeSite #Intentia`,
+
+  // 2 - Benchmark Competitivo
+  `📊 Case: Benchmark Competitivo
+
+Compare seu posicionamento digital com concorrentes.
+
+Como funciona:
+1️⃣ Adicione URLs de concorrentes
+2️⃣ Análise SWOT comparativa
+3️⃣ Identifique gaps e oportunidades
+4️⃣ Scores lado a lado
+
+💡 Resultado: Decisões baseadas em dados reais, não em percepção.
+
+Para: Analista de Estratégia Digital
+
+#Benchmark #AnáliseCompetitiva #SWOT #Intentia #MarketingB2B`,
+
+  // 3 - Análise com IA
+  `🧠 Case: Análise com IA
+
+Insights estratégicos de nível consultoria em minutos.
+
+Como funciona:
+1️⃣ Configure sua API key
+2️⃣ Solicite análise por IA
+3️⃣ Receba insights aprofundados
+4️⃣ Recomendações por canal
+
+💡 Resultado: Análise profunda com inteligência artificial sob demanda.
+
+Para: Diretor de Marketing
+
+#InteligênciaArtificial #IA #MarketingDigital #Intentia #Gemini #Claude`,
+
+  // 4 - Score por Canal
+  `💡 Case: Score por Canal
+
+Saiba em qual canal investir primeiro.
+
+Como funciona:
+1️⃣ Avaliação por canal automática
+2️⃣ Scores com objetivos e riscos
+3️⃣ Alertas de investimento prematuro
+4️⃣ Priorização por potencial de retorno
+
+💡 Resultado: Alocação de budget orientada por dados, canal por canal.
+
+Para: Gestor de Tráfego Pago
+
+#TráfegoPago #GoogleAds #MetaAds #LinkedIn #TikTok #Intentia`,
+
+  // 5 - Alertas Estratégicos
+  `🛡️ Case: Alertas Estratégicos
+
+Proteção contra desperdício de budget.
+
+Como funciona:
+1️⃣ Análise de maturidade digital
+2️⃣ Detecção automática de riscos
+3️⃣ Alertas visuais com explicações
+4️⃣ Ações corretivas sugeridas
+
+💡 Resultado: Nunca mais invista em mídia no momento errado.
+
+Para: CEO / Fundador
+
+#AlertasEstratégicos #ProteçãoDeBudget #MarketingB2B #Intentia`,
+
+  // 6 - Insights por Projeto
+  `📋 Case: Insights por Projeto
+
+Visão consolidada do que fazer em cada projeto.
+
+Como funciona:
+1️⃣ Insights gerados automaticamente
+2️⃣ Agrupados por projeto
+3️⃣ Classificados por prioridade
+4️⃣ Visualização detalhada em dialog
+
+💡 Resultado: Ações claras e organizadas para cada projeto.
+
+Para: Equipe de Marketing
+
+#Insights #GestãoDeProjetos #MarketingEstratégico #Intentia`,
+
+  // 7 - Dados Estruturados
+  `🗄️ Case: Dados Estruturados
+
+Auditoria completa de JSON-LD, OG e Twitter Card.
+
+Como funciona:
+1️⃣ Extração automática de structured data
+2️⃣ Comparação com concorrentes
+3️⃣ Visualizador unificado por abas
+4️⃣ Identifique gaps de visibilidade
+
+💡 Resultado: Comparação competitiva de dados estruturados em uma tela.
+
+Para: Especialista em SEO / Growth
+
+#SEO #DadosEstruturados #SchemaMarkup #OpenGraph #Intentia`,
+];
+
 export function BrandCasesPosts() {
   const canvasRefs = useRef<(HTMLCanvasElement | null)[]>(new Array(CASES.length).fill(null));
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -445,6 +583,17 @@ export function BrandCasesPosts() {
     link.download = CASES[index].filename;
     link.href = canvas.toDataURL("image/png");
     link.click();
+  }, []);
+
+  const handleDownloadCaption = useCallback((index: number) => {
+    const caption = CAPTIONS[index];
+    if (!caption) return;
+    const blob = new Blob([caption], { type: "text/plain;charset=utf-8" });
+    const link = document.createElement("a");
+    link.download = CASES[index].filename.replace(".png", "-legenda.txt");
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    URL.revokeObjectURL(link.href);
   }, []);
 
   const prev = () => setCurrentIndex((i) => (i === 0 ? CASES.length - 1 : i - 1));
@@ -494,16 +643,27 @@ export function BrandCasesPosts() {
 
               {/* Download button */}
               <div className="mt-3 flex items-center justify-between">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                  onClick={() => handleDownload(currentIndex)}
-                  disabled={!ready}
-                >
-                  <Download className="h-4 w-4" />
-                  Baixar PNG
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => handleDownload(currentIndex)}
+                    disabled={!ready}
+                  >
+                    <Download className="h-4 w-4" />
+                    Baixar PNG
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => handleDownloadCaption(currentIndex)}
+                  >
+                    <FileText className="h-4 w-4" />
+                    Baixar Legenda
+                  </Button>
+                </div>
 
                 {/* Dots */}
                 <div className="flex gap-1.5">

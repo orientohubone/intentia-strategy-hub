@@ -418,6 +418,111 @@ export type Database = {
           updated_at?: string
         }
       }
+      user_data_backups: {
+        Row: {
+          id: string
+          user_id: string
+          backup_type: "auto" | "manual" | "pre_delete"
+          backup_data: Json
+          tables_included: string[]
+          record_counts: Json
+          size_bytes: number | null
+          checksum: string | null
+          notes: string | null
+          created_at: string
+          expires_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          backup_type: "auto" | "manual" | "pre_delete"
+          backup_data: Json
+          tables_included: string[]
+          record_counts: Json
+          size_bytes?: number | null
+          checksum?: string | null
+          notes?: string | null
+          created_at?: string
+          expires_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          backup_type?: "auto" | "manual" | "pre_delete"
+          backup_data?: Json
+          tables_included?: string[]
+          record_counts?: Json
+          size_bytes?: number | null
+          checksum?: string | null
+          notes?: string | null
+          created_at?: string
+          expires_at?: string
+        }
+      }
+      audit_log: {
+        Row: {
+          id: string
+          user_id: string | null
+          table_name: string
+          record_id: string | null
+          operation: "INSERT" | "UPDATE" | "DELETE"
+          old_data: Json | null
+          new_data: Json | null
+          changed_fields: string[] | null
+          ip_address: string | null
+          user_agent: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          table_name: string
+          record_id?: string | null
+          operation: "INSERT" | "UPDATE" | "DELETE"
+          old_data?: Json | null
+          new_data?: Json | null
+          changed_fields?: string[] | null
+          ip_address?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          table_name?: string
+          record_id?: string | null
+          operation?: "INSERT" | "UPDATE" | "DELETE"
+          old_data?: Json | null
+          new_data?: Json | null
+          changed_fields?: string[] | null
+          ip_address?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+      }
+      rate_limits: {
+        Row: {
+          id: string
+          user_id: string
+          action_type: string
+          window_start: string
+          request_count: number
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          action_type: string
+          window_start?: string
+          request_count?: number
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          action_type?: string
+          window_start?: string
+          request_count?: number
+        }
+      }
     }
     Views: {
       v_project_summary: {

@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from "react";
-import { Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // ─── SHARED HELPERS ───
@@ -349,7 +349,7 @@ function drawHero(canvas: HTMLCanvasElement): Promise<void> {
       ctx.fillStyle = "#FFFFFF";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("Começar Análise Grátis →", W / 2, ctaY + ctaH / 2);
+      ctx.fillText("Veja o Poder da Intentia →", W / 2, ctaY + ctaH / 2);
 
       drawFooterUrl(ctx, W, H);
       resolve();
@@ -889,7 +889,7 @@ function drawCTA(canvas: HTMLCanvasElement) {
   ctx.fillStyle = "#FFFFFF";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("Começar Análise Grátis →", W / 2, ctaY + ctaH / 2);
+  ctx.fillText("Veja o Poder da Intentia →", W / 2, ctaY + ctaH / 2);
 
   // Secondary
   const secY = ctaY + ctaH + 20;
@@ -901,10 +901,176 @@ function drawCTA(canvas: HTMLCanvasElement) {
   ctx.stroke();
   ctx.font = "500 18px Inter, system-ui, sans-serif";
   ctx.fillStyle = "rgba(255,255,255,0.6)";
-  ctx.fillText("Ver Preços", W / 2, secY + secH / 2);
+  ctx.fillText("Saiba Mais", W / 2, secY + secH / 2);
 
   drawFooterUrl(ctx, W, H);
 }
+
+// ─── CAPTIONS ───
+
+const CAPTIONS: string[] = [
+  // 0 - Hero
+  `🎯 Descubra onde investir em mídia paga — antes de gastar.
+
+A Intentia analisa sua presença digital e mostra exatamente o que precisa ser ajustado antes de investir em tráfego pago.
+
+✅ Diagnóstico completo de URL
+✅ Scores por canal (Google, Meta, LinkedIn, TikTok)
+✅ Insights estratégicos com IA
+✅ Benchmark competitivo
+
+Estratégia antes da mídia. Sempre.
+
+🔗 intentia.com.br
+
+#MarketingB2B #EstratégiaDigital #MídiaPaga #Intentia #TráfegoPago`,
+
+  // 1 - Funcionalidades 1/3
+  `⚡ Funcionalidades da Intentia (1/3)
+
+🎯 Diagnóstico Heurístico de URL
+Análise automática de proposta de valor, clareza, jornada, SEO, conversão e conteúdo — tudo em segundos.
+
+✨ Análise por IA (Gemini & Claude)
+Enriqueça diagnósticos com IA. Use sua API key para insights aprofundados.
+
+📊 Benchmark Competitivo com IA
+Compare posicionamento com concorrentes via SWOT, gap analysis e enriquecimento por IA.
+
+➡️ Deslize para ver mais funcionalidades
+
+#Intentia #MarketingB2B #DiagnósticoDigital #Benchmark`,
+
+  // 2 - Funcionalidades 2/3
+  `⚡ Funcionalidades da Intentia (2/3)
+
+💡 Score por Canal de Mídia
+Scores individuais para Google, Meta, LinkedIn e TikTok Ads com objetivos e riscos.
+
+🛡️ Alertas e Insights Estratégicos
+Insights automáticos agrupados por projeto: alertas, oportunidades e melhorias.
+
+🎯 Plano Tático por Canal
+Estruture campanhas para Google, Meta, LinkedIn e TikTok com templates validados por nicho B2B.
+
+➡️ Deslize para ver mais funcionalidades
+
+#ScorePorCanal #AlertasEstratégicos #PlanoTático #Intentia`,
+
+  // 3 - Funcionalidades 3/3
+  `⚡ Funcionalidades da Intentia (3/3)
+
+🚀 Playbook de Execução Gamificado
+Diretivas de execução priorizadas com KPIs e ações específicas por canal.
+
+🗄️ Dados Estruturados & Comparação
+Extração automática de JSON-LD, Open Graph, Twitter Card e Microdata com comparação.
+
+📄 Relatórios PDF e Exportação CSV
+Relatórios consolidados em PDF, exportação por seção e dados em CSV.
+
+Tudo que você precisa para decidir com inteligência. 🧠
+
+#Playbook #DadosEstruturados #Relatórios #Intentia #MarketingB2B`,
+
+  // 4 - Como Funciona
+  `🔄 Como funciona a Intentia — 7 passos
+
+1️⃣ Cadastre a URL do projeto
+2️⃣ Diagnóstico heurístico automático
+3️⃣ Adicione concorrentes para benchmark
+4️⃣ Ative análise por IA (Gemini ou Claude)
+5️⃣ Receba scores por canal de mídia
+6️⃣ Visualize insights e alertas estratégicos
+7️⃣ Exporte relatórios em PDF e CSV
+
+Da URL ao relatório completo — sem achismo.
+
+🔗 intentia.com.br
+
+#ComoFunciona #MarketingB2B #Intentia #EstratégiaDigital`,
+
+  // 5 - Inteligência Artificial
+  `🤖 Inteligência Artificial na Intentia
+
+Use sua própria API key para análises de nível consultoria:
+
+🔵 Google Gemini — Flash, Pro e Preview
+🟣 Anthropic Claude — Sonnet, Haiku e Opus
+
+O que a IA faz por você:
+✅ Análise semântica profunda
+✅ Recomendações por canal
+✅ Comparação inteligente com concorrentes
+✅ Insights que humanos levariam horas para gerar
+
+🔒 Suas chaves ficam seguras — nunca armazenamos em texto puro.
+
+#IA #InteligênciaArtificial #Gemini #Claude #Intentia #MarketingB2B`,
+
+  // 6 - Benefícios + Números
+  `📈 Por que escolher a Intentia?
+
+✅ Economize budget evitando investimentos prematuros
+✅ Decisões baseadas em dados, não em achismo
+✅ Análise de nível consultoria em minutos
+✅ Benchmark competitivo automatizado
+✅ Alertas antes de desperdiçar verba
+✅ Insights acionáveis por projeto
+✅ Compatível com Google, Meta, LinkedIn e TikTok
+✅ Relatórios prontos para apresentar
+
+📊 6 scores por dimensão
+📱 4 canais avaliados
+🤖 8+ modelos de IA
+📄 5 formatos de export
+
+#Benefícios #MarketingB2B #Intentia #ROI #EstratégiaDigital`,
+
+  // 7 - Para Quem É
+  `👥 Para quem é a Intentia?
+
+Se você trabalha com marketing B2B, a Intentia é pra você:
+
+🎯 Gestor de Marketing B2B
+Valide se o site está pronto antes de investir em mídia.
+
+📊 Analista de Estratégia Digital
+Compare posicionamento com concorrentes de forma objetiva.
+
+🧠 Diretor de Marketing
+Análises de nível consultoria para embasar decisões.
+
+💡 Gestor de Tráfego Pago
+Decida em qual canal investir primeiro com dados concretos.
+
+🛡️ CEO / Fundador
+Saiba se é o momento certo de investir em ads.
+
+🗄️ Especialista em SEO / Growth
+Audite dados estruturados e compare com concorrentes.
+
+#ParaQuemÉ #MarketingB2B #Intentia #Personas`,
+
+  // 8 - CTA
+  `🚀 Estratégia antes da mídia.
+
+A Intentia é a plataforma que analisa, compara e recomenda — antes de você investir um centavo em mídia paga.
+
+✅ Diagnóstico de URL
+✅ Benchmark com concorrentes
+✅ Scores por canal
+✅ Análise com IA
+✅ Alertas estratégicos
+✅ Plano tático
+✅ Relatórios exportáveis
+
+Veja o poder da Intentia. 💡
+
+🔗 intentia.com.br
+
+#Intentia #MarketingB2B #EstratégiaDigital #MídiaPaga #TráfegoPago`,
+];
 
 // ─── COMPONENT ───
 
@@ -936,6 +1102,17 @@ export function BrandLandingPosts() {
     link.download = POSTS[index].filename;
     link.href = canvas.toDataURL("image/png");
     link.click();
+  }, []);
+
+  const handleDownloadCaption = useCallback((index: number) => {
+    const caption = CAPTIONS[index];
+    if (!caption) return;
+    const blob = new Blob([caption], { type: "text/plain;charset=utf-8" });
+    const link = document.createElement("a");
+    link.download = POSTS[index].filename.replace(".png", "-legenda.txt");
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    URL.revokeObjectURL(link.href);
   }, []);
 
   const prev = () => setCurrentIndex((i) => (i === 0 ? POSTS.length - 1 : i - 1));
@@ -981,16 +1158,27 @@ export function BrandLandingPosts() {
               </div>
 
               <div className="mt-3 flex items-center justify-between">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                  onClick={() => handleDownload(currentIndex)}
-                  disabled={!ready}
-                >
-                  <Download className="h-4 w-4" />
-                  Baixar PNG
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => handleDownload(currentIndex)}
+                    disabled={!ready}
+                  >
+                    <Download className="h-4 w-4" />
+                    Baixar PNG
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => handleDownloadCaption(currentIndex)}
+                  >
+                    <FileText className="h-4 w-4" />
+                    Baixar Legenda
+                  </Button>
+                </div>
 
                 <div className="flex gap-1.5">
                   {POSTS.map((_, i) => (

@@ -8,9 +8,9 @@
 **UI Framework:** shadcn/ui + Tailwind CSS  
 **Backend:** Supabase (PostgreSQL + Auth + Edge Functions)  
 **Propósito:** Plataforma de análise estratégica para marketing B2B  
-**Versão:** 2.5.0
+**Versão:** 2.6.0
 
-## Status Atual: ✅ v2.5.0 (Dados Estruturados + Progress Tracker)
+## Status Atual: ✅ v2.6.0 (Segurança, Backup & Guardrails)
 
 ### Funcionalidades Implementadas
 
@@ -79,15 +79,21 @@
 - **Perfil do usuário** com avatar upload, nome, empresa, bio
 - **Integrações de IA** — API keys por usuário:
   - Google Gemini (3 Flash Preview, 2.5 Flash, 2.5 Pro Preview, 2.0 Flash)
-  - Anthropic Claude (Sonnet 4, Sonnet 3.7, Haiku 3.5, Haiku 3, Opus 3)
+  - Anthropic Claude (Claude Sonnet 4, Sonnet 3.7, Haiku 3.5, Haiku 3, Opus 3)
   - Validação de key contra API real
   - Seleção de modelo preferido
   - Badge de status (Ativa/Não configurada)
   - Máscara de key com toggle de visibilidade
   - Proteção contra autofill de senha (autoComplete="new-password", data-1p-ignore, data-lpignore)
+- **Backup & Segurança de Dados** — card dedicado:
+  - Info box sobre proteção RLS
+  - Criar Backup (snapshot completo no servidor via RPC)
+  - Exportar Dados (download JSON de 12 tabelas)
+  - Lista de backups com tipo, contagem, tamanho, expiração
+  - Download e exclusão individual de backups
 - **Notificações** (email, relatórios semanais)
 - **Preferências** (idioma, fuso horário, auto-save)
-- **Gerenciamento de conta** (senha, exportação, logout, exclusão)
+- **Gerenciamento de conta** (senha, logout, exclusão)
 - **Card de Plano detalhado** com features do plano atual, "Disponível no Professional" (Starter), barra de uso, CTA de upgrade contextual
 
 #### 19. Alertas Estratégicos ✅
@@ -135,10 +141,11 @@
 - **Auth.tsx** lê `?redirect=` e redireciona após login (fallback: `/dashboard`)
 
 #### 8. Centro de Ajuda ✅
-- **Base de conhecimento** categorizada
+- **Base de conhecimento** categorizada (11 categorias)
 - **Busca inteligente** de artigos e tutoriais
-- **FAQ** com perguntas frequentes
+- **FAQ** com perguntas frequentes (17 perguntas)
 - **Canais de suporte** (email, chat, base)
+- **Categoria Segurança & Backup** com 8 artigos (RLS, backups, auditoria, soft delete, rate limiting, API keys)
 
 #### 9. Dark Mode ✅
 - **ThemeProvider** (next-themes) integrado no App.tsx
@@ -254,11 +261,14 @@
 
 **Backend/Database:**
 - Supabase (PostgreSQL + Auth + Real-time + Edge Functions)
-- Row Level Security (RLS) por user_id em todas as tabelas
+- Row Level Security (RLS) por user_id em todas as 16+ tabelas
 - Triggers para updated_at automático
-- Views para dashboard queries
-- Edge Functions (analyze-url, ai-analyze)
-- Storage bucket (avatars)
+- Audit log automático em 13+ tabelas
+- Views com security_invoker para dashboard queries
+- Edge Functions (analyze-url, ai-analyze, export-user-data)
+- Storage bucket (avatars) com isolamento por user_id
+- Rate limiting por plano
+- Soft delete com retenção de 30 dias
 
 **Desenvolvimento:**
 - ESLint + TypeScript ESLint
@@ -295,13 +305,14 @@ intentia-strategy-hub/
 │   │   ├── Insights.tsx   # Insights agrupados por projeto
 │   │   ├── Audiences.tsx  # CRUD de públicos-alvo
 │   │   ├── Benchmark.tsx  # Benchmark competitivo
-│   │   ├── Settings.tsx   # Configurações + API keys de IA
+│   │   ├── Settings.tsx   # Configurações + API keys + Backup
 │   │   ├── Auth.tsx       # Login/Signup (split layout)
 │   │   ├── Help.tsx       # Centro de ajuda
 │   │   ├── TacticalPlan.tsx # Plano tático por canal
 │   │   ├── Alerts.tsx     # Alertas estratégicos consolidados
 │   │   ├── Checkout.tsx   # Checkout interno (upgrade autenticado)
 │   │   ├── Subscribe.tsx  # Checkout público (assinatura self-service)
+│   │   ├── Security.tsx   # Página pública de segurança
 │   │   └── NotFound.tsx   # Página 404
 │   ├── integrations/      # Integrações externas
 │   │   └── supabase/      # Cliente Supabase
@@ -326,10 +337,17 @@ intentia-strategy-hub/
 │   ├── benchmark_ai_analysis.sql  # Migration: ai_analysis em benchmarks
 │   ├── add_html_snapshot_structured_data.sql  # Migration: html_snapshot + structured_data em projects
 │   ├── add_benchmarks_structured_data.sql     # Migration: structured_data + html_snapshot em benchmarks
+│   ├── security_hardening.sql    # Correções de RLS, views, anti-escalação
+│   ├── audit_log.sql             # Tabela audit_log + triggers em 13 tabelas
+│   ├── user_backup.sql           # Tabela user_data_backups + funções de snapshot
+│   ├── guardrails.sql            # Soft delete, rate limiting, limites por plano
+│   ├── EXECUTION_ORDER.md        # Guia de execução dos SQLs
 │   └── functions/
 │       ├── analyze-url/   # Edge Function de análise heurística
 │       │   └── index.ts
-│       └── ai-analyze/    # Edge Function proxy para Claude API
+│       ├── ai-analyze/    # Edge Function proxy para Claude API
+│       │   └── index.ts
+│       └── export-user-data/  # Edge Function de backup/export
 │           └── index.ts
 ├── documentacao/          # Documentação do projeto
 │   ├── AGENTS.md          # Este arquivo
@@ -351,17 +369,29 @@ intentia-strategy-hub/
 - `benchmarks` — Análises competitivas com SWOT, scores, ai_analysis (jsonb), structured_data (jsonb), html_snapshot (text)
 - `notifications` — Sistema de notificações
 - `user_api_keys` — API keys de IA por usuário (google_gemini/anthropic_claude)
+- `audit_log` — Log de auditoria automático (INSERT/UPDATE/DELETE em 13+ tabelas)
+- `user_data_backups` — Snapshots JSON de dados do usuário (manual/auto/pre_delete)
+- `rate_limits` — Controle de rate limiting por ação e usuário
 
 **Storage Buckets:**
-- `avatars` — Fotos de perfil dos usuários
+- `avatars` — Fotos de perfil dos usuários (isolado por user_id)
 
-**Features:**
-- Row Level Security (RLS) por user_id em todas as tabelas
+**Features de Segurança:**
+- Row Level Security (RLS) por user_id em todas as 16+ tabelas
 - Triggers para updated_at automático
+- Audit triggers em 13+ tabelas (mascarando campos sensíveis)
 - Índices para performance
-- Views para dashboard (v_project_summary, v_dashboard_stats)
+- Views com security_invoker (v_project_summary, v_dashboard_stats, v_benchmark_summary, v_benchmark_stats)
 - Constraint unique(user_id, provider) em user_api_keys
 - Relacionamentos com foreign keys e cascade delete
+- Trigger anti-escalação de plano (prevent_plan_escalation)
+- Trigger anti-reset de contadores (prevent_analyses_counter_reset)
+- Soft delete em projects, audiences, benchmarks, tactical_plans
+- Rate limiting por plano (Starter: 10/hr, Pro: 50/hr, Enterprise: 200/hr)
+- Limites de projetos por plano (Starter: 3, Pro/Enterprise: ilimitado)
+- Limites de análises por plano (Starter: 5/mês)
+- Backup automático antes de exclusão de projetos
+- Cleanup automático: audit logs (90d), backups (90d), soft-deleted (30d), rate limits (7d)
 
 ### Componentes Principais
 
@@ -433,6 +463,7 @@ intentia-strategy-hub/
 /termos-de-servico        # Termos de serviço
 /politica-de-cookies      # Política de cookies
 /brand               # Guia de marca
+/seguranca           # Segurança e proteção de dados
 
 // Páginas protegidas (requer autenticação)
 /dashboard           # Dashboard principal
@@ -556,7 +587,12 @@ npm run test:watch   # Testes em modo watch
 - [x] Navegação SPA completa
 - [x] UI consistente e acessível (design system)
 - [x] Schema SQL completo + RLS + user_api_keys
-- [x] Edge Functions: analyze-url, ai-analyze
+- [x] Edge Functions: analyze-url, ai-analyze, export-user-data
+- [x] Security hardening (RLS fixes, views, anti-escalação)
+- [x] Audit log automático em 13+ tabelas
+- [x] Sistema de backup (manual + automático + export JSON)
+- [x] Guardrails (soft delete, rate limiting, limites por plano)
+- [x] Página pública de Segurança (/seguranca)
 - [x] Animação lab-bubble para feedback visual durante IA
 - [x] Guard anti-duplicação de notificações (useRef)
 
@@ -571,7 +607,7 @@ npm run test:watch   # Testes em modo watch
 - **Escalabilidade:** Arquitetura modular com Supabase + API keys por usuário (custo zero para plataforma)
 - **Manutenibilidade:** TypeScript e componentes reutilizáveis
 - **Acessibilidade:** Componentes Radix UI com suporte ARIA (WCAG 2.1 AA)
-- **Segurança:** RLS policies isolando dados por usuário, API keys armazenadas por tenant
+- **Segurança:** RLS em 16+ tabelas, audit log, backup automático, rate limiting, soft delete, anti-escalação, mascaramento de dados sensíveis
 - **Design System:** Variáveis CSS consistentes (--primary: hsl(16 100% 55%), --gradient-primary, etc.)
 
 ## Deploy
@@ -583,7 +619,7 @@ O projeto está configurado para deploy via:
 
 ## Resumo
 
-O **Intentia Strategy Hub** está na **versão 2.5.0** — dados estruturados + progress tracker:
+O **Intentia Strategy Hub** está na **versão 2.6.0** — segurança robusta, backup e guardrails:
 
 1. **Autenticação** redesenhada com split layout, redirect após login
 2. **Dashboard** com dados reais, Welcome Section e ScoreRing
@@ -613,5 +649,12 @@ O **Intentia Strategy Hub** está na **versão 2.5.0** — dados estruturados + 
 26. **HTML Snapshot** — versão limpa do HTML para referência, com copy e preview
 27. **Progress Tracker** — indicador visual step-by-step durante análise heurística e de concorrentes
 28. **Dados de concorrentes** — structured_data e html_snapshot salvos nos benchmarks
+29. **Security Hardening** — RLS fixes, views com security_invoker, anti-escalação de plano, anti-reset de contadores
+30. **Audit Log** — registro automático de INSERT/UPDATE/DELETE em 13+ tabelas com mascaramento de dados sensíveis
+31. **Backup System** — backup manual e automático, export JSON completo, snapshot antes de exclusões
+32. **Guardrails** — soft delete (30 dias), rate limiting por plano, limites de projetos e análises
+33. **Página de Segurança** — `/seguranca` com 4 pilares, guardrails, infraestrutura e fluxo de proteção
+34. **Settings Backup Card** — criar backup, exportar dados, listar/baixar/excluir backups
+35. **Central de Ajuda** — categoria Segurança & Backup com 8 artigos + 2 FAQs adicionais
 
 Próximos passos: **Etapa Operacional** (execução de campanhas, integração com APIs de marketing, multi-tenancy avançado).

@@ -82,6 +82,11 @@ export function Footer() {
                   Contato
                 </a>
               </li>
+              <li>
+                <a href="/seguranca" className="text-muted-foreground hover:text-primary transition-colors">
+                  Segurança
+                </a>
+              </li>
             </ul>
           </div>
 

@@ -2,9 +2,9 @@
 
 ## 📊 Visão Geral
 
-**Status do Projeto:** v2.5.0 — Dados Estruturados + Progress Tracker  
+**Status do Projeto:** v2.6.0 — Segurança, Backup & Guardrails  
 **Data de Atualização:** 07/02/2026  
-**Versão:** 2.5.0
+**Versão:** 2.6.0
 
 ---
 
@@ -115,8 +115,14 @@
   - Proteção contra autofill de senha (autoComplete="new-password", data-1p-ignore, data-lpignore)
 - **[COMPLETO]** Configurações de notificações (email, relatórios semanais)
 - **[COMPLETO]** Preferências de idioma e fuso horário
-- **[COMPLETO]** Gerenciamento de conta (senha, exportação, logout, exclusão)
+- **[COMPLETO]** Gerenciamento de conta (senha, logout, exclusão)
 - **[COMPLETO]** Card de Plano detalhado com features, "Disponível no Professional" (Starter), barra de uso, CTA de upgrade contextual
+- **[COMPLETO]** Backup & Segurança de Dados — card dedicado:
+  - Info box sobre proteção RLS
+  - Criar Backup (snapshot completo no servidor via RPC)
+  - Exportar Dados (download JSON de 12 tabelas)
+  - Lista de backups com tipo, contagem, tamanho, expiração
+  - Download e exclusão individual de backups
 
 ### 🎯 Plano Tático por Canal
 - **[COMPLETO]** Página `/tactical` com seletor de projeto e tabs por canal
@@ -197,13 +203,15 @@
 - **[COMPLETO]** Auth.tsx lê `?redirect=` e redireciona após login (fallback: `/dashboard`)
 
 ### 📚 Centro de Ajuda
-- **[COMPLETO]** Base de conhecimento categorizada (todas as funcionalidades documentadas)
+- **[COMPLETO]** Base de conhecimento categorizada (11 categorias)
 - **[COMPLETO]** Busca inteligente de artigos e tutoriais
-- **[COMPLETO]** FAQ com perguntas frequentes atualizadas
+- **[COMPLETO]** FAQ com perguntas frequentes atualizadas (17 perguntas)
 - **[COMPLETO]** Canais de suporte (email, chat, base)
 - **[COMPLETO]** Conteúdo atualizado para refletir todas as features implementadas
 - **[COMPLETO]** Seção "Dados Estruturados" com artigos sobre JSON-LD, OG, Twitter Card, Microdata e HTML Snapshot
 - **[COMPLETO]** FAQ sobre dados estruturados e comparação com concorrentes
+- **[COMPLETO]** Categoria "Segurança & Backup" com 8 artigos (RLS, backups, auditoria, soft delete, rate limiting, API keys)
+- **[COMPLETO]** FAQ sobre backup de dados e recuperação de projetos excluídos
 
 ### � Email Templates (Supabase Auth)
 - **[COMPLETO]** Template de confirmação de cadastro (email-confirmacao-cadastro.html)
@@ -318,6 +326,7 @@
 - **[COMPLETO]** Página 404
 - **[COMPLETO]** Alertas (`/alertas`) — alertas estratégicos consolidados
 - **[COMPLETO]** Checkout (`/checkout`) — upgrade interno autenticado
+- **[COMPLETO]** Segurança (`/seguranca`) — página pública com 4 pilares, guardrails, infraestrutura
 
 ### 📱 Mobile-First Responsiveness
 - **[COMPLETO]** DashboardLayout wrapper compartilhado (sidebar + header + main com padding responsivo)
@@ -354,22 +363,42 @@
 - **[COMPLETO]** `copy_frameworks` — Frameworks de copy por canal e tipo
 - **[COMPLETO]** `segmentation_plans` — Segmentação público × canal × mensagem
 - **[COMPLETO]** `testing_plans` — Planos de teste com hipóteses e critérios
+- **[COMPLETO]** `audit_log` — Log de auditoria automático (INSERT/UPDATE/DELETE em 13+ tabelas)
+- **[COMPLETO]** `user_data_backups` — Snapshots JSON de dados do usuário (manual/auto/pre_delete)
+- **[COMPLETO]** `rate_limits` — Controle de rate limiting por ação e usuário
 
 ### Supabase Types (Frontend)
 - **[COMPLETO]** `user_api_keys` adicionado aos types (src/integrations/supabase/types.ts)
 - **[COMPLETO]** `tenant_settings` Insert/Update types corrigidos (evita resolução para `never`)
 - **[COMPLETO]** Remoção de casts `(supabase as any)` no Settings.tsx
+- **[COMPLETO]** `user_data_backups`, `audit_log`, `rate_limits` adicionados aos types
 
 ### Storage Buckets
-- **[COMPLETO]** `avatars` — Fotos de perfil dos usuários
+- **[COMPLETO]** `avatars` — Fotos de perfil dos usuários (isolado por user_id)
 
 ### Features do Database
-- **[COMPLETO]** Row Level Security (RLS) por user_id em todas as tabelas
+- **[COMPLETO]** Row Level Security (RLS) por user_id em todas as 16+ tabelas
 - **[COMPLETO]** Triggers para updated_at automático
+- **[COMPLETO]** Audit triggers em 13+ tabelas (mascarando campos sensíveis)
 - **[COMPLETO]** Índices para performance
-- **[COMPLETO]** Views para dashboard (v_project_summary, v_dashboard_stats)
+- **[COMPLETO]** Views com security_invoker (v_project_summary, v_dashboard_stats, v_benchmark_summary, v_benchmark_stats)
 - **[COMPLETO]** Constraint unique(user_id, provider) em user_api_keys
 - **[COMPLETO]** Relacionamentos com foreign keys e cascade delete
+- **[COMPLETO]** Trigger anti-escalação de plano (prevent_plan_escalation)
+- **[COMPLETO]** Trigger anti-reset de contadores (prevent_analyses_counter_reset)
+- **[COMPLETO]** Soft delete em projects, audiences, benchmarks, tactical_plans
+- **[COMPLETO]** Rate limiting por plano (Starter: 10/hr, Pro: 50/hr, Enterprise: 200/hr)
+- **[COMPLETO]** Limites de projetos por plano (Starter: 3, Pro/Enterprise: ilimitado)
+- **[COMPLETO]** Limites de análises por plano (Starter: 5/mês)
+- **[COMPLETO]** Backup automático antes de exclusão de projetos
+- **[COMPLETO]** Cleanup automático: audit logs (90d), backups (90d), soft-deleted (30d), rate limits (7d)
+
+### SQL Scripts de Segurança
+- **[COMPLETO]** `security_hardening.sql` — Correções de RLS, views, anti-escalação
+- **[COMPLETO]** `audit_log.sql` — Tabela audit_log + triggers em 13 tabelas
+- **[COMPLETO]** `user_backup.sql` — Tabela user_data_backups + funções de snapshot
+- **[COMPLETO]** `guardrails.sql` — Soft delete, rate limiting, limites por plano
+- **[COMPLETO]** `EXECUTION_ORDER.md` — Guia de execução dos SQLs + cron jobs
 
 ---
 
@@ -391,9 +420,9 @@
 - **[COMPLETO]** Supabase (PostgreSQL + Auth + Real-time + Edge Functions)
 - **[COMPLETO]** Autenticação integrada (signInWithPassword, signUp)
 - **[COMPLETO]** Banco de dados PostgreSQL com RLS
-- **[COMPLETO]** Edge Functions (analyze-url, ai-analyze)
+- **[COMPLETO]** Edge Functions (analyze-url, ai-analyze, export-user-data)
 - **[COMPLETO]** Real-time subscriptions
-- **[COMPLETO]** Storage (avatars bucket)
+- **[COMPLETO]** Storage (avatars bucket com isolamento por user_id)
 
 ### Desenvolvimento
 - **[COMPLETO]** ESLint + TypeScript ESLint
@@ -463,7 +492,7 @@
 
 ## 🎯 Conclusão
 
-O **Intentia Strategy Hub** está na **versão 2.5.0** com funcionalidades avançadas:
+O **Intentia Strategy Hub** está na **versão 2.6.0** com funcionalidades avançadas:
 
 ### ✅ Entregáveis Concluídos
 1. **Autenticação redesenhada** com split layout, design system e fluxo "Esqueceu sua senha"
@@ -516,6 +545,13 @@ O **Intentia Strategy Hub** está na **versão 2.5.0** com funcionalidades avan�
 47. **Landing page** atualizada com feature de dados estruturados
 48. **Cases** atualizado com case de análise de dados estruturados
 49. **Central de Ajuda** atualizada com seção de dados estruturados
+50. **Security Hardening** — RLS fixes, views com security_invoker, anti-escalação de plano
+51. **Audit Log** — registro automático de INSERT/UPDATE/DELETE em 13+ tabelas
+52. **Backup System** — backup manual e automático, export JSON completo
+53. **Guardrails** — soft delete (30 dias), rate limiting por plano, limites de projetos e análises
+54. **Página de Segurança** — `/seguranca` com 4 pilares, guardrails, infraestrutura e fluxo de proteção
+55. **Settings Backup Card** — criar backup, exportar dados, listar/baixar/excluir backups
+56. **Central de Ajuda** — categoria Segurança & Backup com 8 artigos + 2 FAQs adicionais
 
 ### 📋 Próximos Passos — Etapa Operacional (v3.0)
 1. Gestão de campanhas (criar/editar/monitorar campanhas reais)
@@ -529,4 +565,4 @@ O **Intentia Strategy Hub** está na **versão 2.5.0** com funcionalidades avan�
 
 ---
 
-**Status:** 🟢 **v2.5.0 — DADOS ESTRUTURADOS + PROGRESS TRACKER**
+**Status:** 🟢 **v2.6.0 — SEGURANÇA, BACKUP & GUARDRAILS**

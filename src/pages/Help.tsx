@@ -30,6 +30,7 @@ import {
   Crosshair,
   BookOpen,
   Database,
+  HardDrive,
 } from "lucide-react";
 
 export default function Help() {
@@ -382,6 +383,55 @@ export default function Help() {
         },
       ]
     },
+    {
+      id: "security",
+      title: "Segurança & Backup de Dados",
+      description: "Proteção de dados, backups, auditoria e guardrails",
+      icon: <HardDrive className="h-5 w-5" />,
+      color: "text-red-600",
+      articles: [
+        {
+          title: "Isolamento de dados (RLS)",
+          content: "Todos os seus dados são isolados por conta usando Row Level Security (RLS) do PostgreSQL. Isso significa que nenhum outro usuário pode acessar, visualizar ou modificar seus dados — nem mesmo por acidente. Cada tabela do sistema tem políticas de segurança que verificam o user_id em todas as operações.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Criando backups manuais",
+          content: "Vá em Configurações → Backup & Segurança de Dados → Criar Backup. O sistema gera um snapshot completo de todos os seus dados (projetos, insights, benchmarks, públicos-alvo, planos táticos, etc.) e armazena no servidor. Você pode baixar o backup em JSON a qualquer momento.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Backups automáticos",
+          content: "O sistema cria backups automáticos antes de exclusões importantes, como deletar um projeto. Isso garante que você sempre tenha uma cópia dos dados antes de qualquer operação destrutiva. Backups automáticos são retidos por 90 dias.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Exportar todos os dados",
+          content: "Em Configurações → Backup & Segurança de Dados → Exportar Dados, você pode baixar um arquivo JSON completo com todos os seus dados de todas as 12 tabelas do sistema. O arquivo inclui contagem de registros e exclui dados sensíveis como API keys e HTML snapshots grandes.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Log de auditoria",
+          content: "Todas as operações no banco de dados (criar, editar, excluir) são registradas automaticamente em um log de auditoria. O log captura os dados antes e depois de cada alteração, permitindo rastreabilidade completa. Campos sensíveis como API keys são removidos dos logs.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Soft delete e recuperação",
+          content: "Projetos, públicos-alvo, benchmarks e planos táticos não são excluídos permanentemente. Eles ficam em estado de 'lixeira' por 30 dias antes da exclusão definitiva, permitindo recuperação em caso de exclusão acidental.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Rate limiting e limites por plano",
+          content: "O sistema implementa limites de requisições por hora para prevenir abuso. Cada plano tem seus próprios limites: Starter (10 projetos/hora, 3 projetos ativos, 5 análises/mês), Professional (50/hora, ilimitado) e Enterprise (200/hora, ilimitado).",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Proteção de API keys",
+          content: "Suas chaves de API de IA (Gemini/Claude) são armazenadas com isolamento por usuário. Elas nunca aparecem em logs de auditoria, backups ou exportações — são sempre mascaradas automaticamente para sua segurança.",
+          difficulty: "Intermediário",
+        },
+      ]
+    },
   ];
 
   const faqItems = [
@@ -415,7 +465,7 @@ export default function Help() {
     },
     {
       question: "Meus dados estão seguros?",
-      answer: "Sim. Utilizamos Supabase com PostgreSQL e Row Level Security (RLS) — cada usuário só acessa seus próprios dados. API keys são armazenadas de forma segura por usuário. A autenticação é gerenciada pelo Supabase Auth."
+      answer: "Sim. Implementamos múltiplas camadas de segurança: Row Level Security (RLS) em todas as 16+ tabelas, audit log automático em 13+ tabelas, backups automáticos antes de exclusões, soft delete com recuperação em 30 dias, rate limiting por plano, proteção contra escalação de privilégios e mascaramento de dados sensíveis. API keys são isoladas por usuário e nunca expostas em logs ou exportações. Saiba mais na página de Segurança."
     },
     {
       question: "Como recebo notificações?",
@@ -444,6 +494,14 @@ export default function Help() {
     {
       question: "Posso cancelar meu plano a qualquer momento?",
       answer: "Sim! Todos os planos são flexíveis, sem compromisso de longo prazo. Você pode fazer upgrade, downgrade ou cancelar quando quiser. As alterações são refletidas na próxima cobrança."
+    },
+    {
+      question: "Como faço backup dos meus dados?",
+      answer: "Vá em Configurações → Backup & Segurança de Dados. Você pode criar backups manuais (snapshot completo no servidor) ou exportar todos os dados em JSON para download local. Backups automáticos também são criados antes de exclusões importantes como deletar projetos."
+    },
+    {
+      question: "O que acontece se eu excluir um projeto por acidente?",
+      answer: "Projetos excluídos ficam em estado de 'soft delete' por 30 dias antes da exclusão permanente. Além disso, um backup automático é criado antes da exclusão. Você pode recuperar seus dados através dos backups salvos em Configurações."
     },
   ];
 

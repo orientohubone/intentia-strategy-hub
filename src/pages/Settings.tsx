@@ -37,6 +37,10 @@ import {
   Crown,
   ArrowRight,
   Zap,
+  HardDrive,
+  Clock,
+  FileJson,
+  ShieldCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -157,9 +161,16 @@ export default function Settings() {
   const [validatingKey, setValidatingKey] = useState<ApiKeyProvider | null>(null);
   const [savingKey, setSavingKey] = useState<ApiKeyProvider | null>(null);
 
+  // Backup state
+  const [backups, setBackups] = useState<any[]>([]);
+  const [loadingBackups, setLoadingBackups] = useState(false);
+  const [creatingBackup, setCreatingBackup] = useState(false);
+  const [exportingData, setExportingData] = useState(false);
+
   useEffect(() => {
     loadUserData();
     loadApiKeys();
+    loadBackups();
   }, []);
 
   const loadUserData = async () => {
@@ -431,28 +442,133 @@ export default function Settings() {
     }
   };
 
-  const handleExportData = async () => {
+  const loadBackups = async () => {
     try {
-      // Export all user data
-      const [projects, insights, audiences, benchmarks] = await Promise.all([
-        supabase.from("projects").select("*").eq("user_id", user.id),
-        supabase.from("insights").select("*").eq("user_id", user.id),
-        supabase.from("audiences").select("*").eq("user_id", user.id),
-        supabase.from("benchmarks").select("*").eq("user_id", user.id),
-      ]);
+      setLoadingBackups(true);
+      const { data: { user: u } } = await supabase.auth.getUser();
+      if (!u) return;
+      const { data, error } = await supabase
+        .from("user_data_backups")
+        .select("id, backup_type, record_counts, size_bytes, notes, created_at, expires_at")
+        .eq("user_id", u.id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (!error && data) setBackups(data);
+    } catch {
+      // silently fail
+    } finally {
+      setLoadingBackups(false);
+    }
+  };
 
-      const exportData = {
+  const handleCreateBackup = async () => {
+    if (!user) return;
+    try {
+      setCreatingBackup(true);
+      const { data, error } = await supabase.rpc("create_user_backup", {
+        _user_id: user.id,
+        _backup_type: "manual",
+        _notes: "Backup manual via Configurações",
+      });
+      if (error) throw error;
+      toast.success("Backup criado com sucesso!");
+      loadBackups();
+    } catch (error: any) {
+      toast.error("Erro ao criar backup: " + error.message);
+    } finally {
+      setCreatingBackup(false);
+    }
+  };
+
+  const handleDownloadBackup = async (backupId: string, createdAt: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("user_data_backups")
+        .select("backup_data")
+        .eq("id", backupId)
+        .single();
+      if (error) throw error;
+      const blob = new Blob([JSON.stringify(data.backup_data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const dateStr = new Date(createdAt).toISOString().split("T")[0];
+      a.href = url;
+      a.download = `intentia-backup-${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Backup baixado!");
+    } catch (error: any) {
+      toast.error("Erro ao baixar backup: " + error.message);
+    }
+  };
+
+  const handleDeleteBackup = async (backupId: string) => {
+    if (!confirm("Tem certeza que deseja excluir este backup?")) return;
+    try {
+      const { error } = await supabase
+        .from("user_data_backups")
+        .delete()
+        .eq("id", backupId);
+      if (error) throw error;
+      toast.success("Backup excluído.");
+      loadBackups();
+    } catch (error: any) {
+      toast.error("Erro ao excluir backup: " + error.message);
+    }
+  };
+
+  const handleExportData = async () => {
+    if (!user) return;
+    try {
+      setExportingData(true);
+      const tables = [
+        { key: "tenant_settings", table: "tenant_settings" },
+        { key: "projects", table: "projects" },
+        { key: "project_channel_scores", table: "project_channel_scores" },
+        { key: "insights", table: "insights" },
+        { key: "audiences", table: "audiences" },
+        { key: "benchmarks", table: "benchmarks" },
+        { key: "notifications", table: "notifications" },
+        { key: "tactical_plans", table: "tactical_plans" },
+        { key: "tactical_channel_plans", table: "tactical_channel_plans" },
+        { key: "copy_frameworks", table: "copy_frameworks" },
+        { key: "segmentation_plans", table: "segmentation_plans" },
+        { key: "testing_plans", table: "testing_plans" },
+      ];
+
+      const exportData: Record<string, any> = {
+        version: "2.5.0",
+        exported_at: new Date().toISOString(),
         user: {
           email: user.email,
           full_name: user.user_metadata?.full_name,
           company_name: tenantSettings?.company_name,
         },
-        projects: projects.data || [],
-        insights: insights.data || [],
-        audiences: audiences.data || [],
-        benchmarks: benchmarks.data || [],
-        exportDate: new Date().toISOString(),
       };
+
+      const counts: Record<string, number> = {};
+
+      for (const t of tables) {
+        const { data } = await supabase
+          .from(t.table)
+          .select("*")
+          .eq("user_id", user.id);
+        const rows = data || [];
+        // Remove html_snapshot from projects (too large)
+        if (t.key === "projects") {
+          exportData[t.key] = rows.map((r: any) => {
+            const { html_snapshot, ...rest } = r;
+            return rest;
+          });
+        } else {
+          exportData[t.key] = rows;
+        }
+        counts[t.key] = rows.length;
+      }
+
+      exportData.record_counts = counts;
 
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -464,9 +580,11 @@ export default function Settings() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast.success("Dados exportados com sucesso!");
+      toast.success("Dados exportados com sucesso! (" + Object.values(counts).reduce((a, b) => a + b, 0) + " registros)");
     } catch (error: any) {
       toast.error("Erro ao exportar dados: " + error.message);
+    } finally {
+      setExportingData(false);
     }
   };
 
@@ -932,6 +1050,174 @@ export default function Settings() {
               </CardContent>
             </Card>
 
+            {/* Backup & Data Security */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <HardDrive className="h-5 w-5" />
+                  Backup & Segurança de Dados
+                </CardTitle>
+                <CardDescription>
+                  Crie backups dos seus dados, exporte e gerencie a segurança da sua conta
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                {/* Info box */}
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 sm:p-4">
+                  <div className="flex gap-2 sm:gap-3">
+                    <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-foreground">Seus dados estão protegidos</p>
+                      <p className="text-xs text-muted-foreground">
+                        Todos os dados são isolados por conta com Row Level Security (RLS). 
+                        Backups automáticos são criados antes de exclusões importantes. 
+                        Você pode criar backups manuais a qualquer momento.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={handleCreateBackup}
+                    disabled={creatingBackup}
+                    className="justify-start h-auto py-3"
+                  >
+                    {creatingBackup ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Database className="h-4 w-4 mr-2" />
+                    )}
+                    <div className="text-left">
+                      <div className="text-sm font-medium">Criar Backup</div>
+                      <div className="text-[10px] text-muted-foreground">Snapshot completo no servidor</div>
+                    </div>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    onClick={handleExportData}
+                    disabled={exportingData}
+                    className="justify-start h-auto py-3"
+                  >
+                    {exportingData ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <FileJson className="h-4 w-4 mr-2" />
+                    )}
+                    <div className="text-left">
+                      <div className="text-sm font-medium">Exportar Dados</div>
+                      <div className="text-[10px] text-muted-foreground">Download JSON completo</div>
+                    </div>
+                  </Button>
+                </div>
+
+                <Separator />
+
+                {/* Backup list */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-foreground">Backups Salvos</h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={loadBackups}
+                      disabled={loadingBackups}
+                      className="h-7 px-2 text-xs"
+                    >
+                      <RefreshCw className={`h-3 w-3 mr-1 ${loadingBackups ? "animate-spin" : ""}`} />
+                      Atualizar
+                    </Button>
+                  </div>
+
+                  {backups.length === 0 ? (
+                    <div className="text-center py-6 text-muted-foreground">
+                      <HardDrive className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">Nenhum backup encontrado</p>
+                      <p className="text-xs mt-1">Crie seu primeiro backup para proteger seus dados</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {backups.map((backup) => {
+                        const totalRecords = backup.record_counts
+                          ? Object.values(backup.record_counts as Record<string, number>).reduce((a: number, b: number) => a + b, 0)
+                          : 0;
+                        const sizeKB = backup.size_bytes ? (backup.size_bytes / 1024).toFixed(1) : "—";
+                        const createdDate = new Date(backup.created_at);
+                        const expiresDate = backup.expires_at ? new Date(backup.expires_at) : null;
+
+                        return (
+                          <div
+                            key={backup.id}
+                            className="rounded-lg border border-border p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                          >
+                            <div className="flex items-start gap-3 min-w-0">
+                              <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
+                                backup.backup_type === "auto"
+                                  ? "bg-amber-500/10 text-amber-500"
+                                  : "bg-primary/10 text-primary"
+                              }`}>
+                                {backup.backup_type === "auto" ? (
+                                  <Clock className="h-4 w-4" />
+                                ) : (
+                                  <HardDrive className="h-4 w-4" />
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium text-foreground truncate">
+                                    {backup.backup_type === "auto" ? "Backup Automático" : "Backup Manual"}
+                                  </span>
+                                  <Badge variant="outline" className="text-[10px] shrink-0">
+                                    {totalRecords} registros
+                                  </Badge>
+                                </div>
+                                <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
+                                  <span>{createdDate.toLocaleDateString("pt-BR")} às {createdDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                                  <span>·</span>
+                                  <span>{sizeKB} KB</span>
+                                  {expiresDate && (
+                                    <>
+                                      <span>·</span>
+                                      <span>Expira {expiresDate.toLocaleDateString("pt-BR")}</span>
+                                    </>
+                                  )}
+                                </div>
+                                {backup.notes && (
+                                  <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{backup.notes}</p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex gap-1.5 shrink-0 self-end sm:self-center">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={() => handleDownloadBackup(backup.id, backup.created_at)}
+                              >
+                                <Download className="h-3 w-3 mr-1" />
+                                Baixar
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteBackup(backup.id)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Account Management */}
             <Card>
               <CardHeader>
@@ -948,11 +1234,6 @@ export default function Settings() {
                   <Button variant="outline" onClick={handlePasswordReset} className="w-full justify-start">
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Redefinir Senha
-                  </Button>
-                  
-                  <Button variant="outline" onClick={handleExportData} className="w-full justify-start">
-                    <Download className="h-4 w-4 mr-2" />
-                    Exportar Meus Dados
                   </Button>
                   
                   <Button variant="outline" onClick={handleLogout} className="w-full justify-start">
