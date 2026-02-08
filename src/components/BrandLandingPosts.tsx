@@ -260,15 +260,15 @@ function drawIcon(ctx: CanvasRenderingContext2D, key: string, cx: number, cy: nu
 // ─── POST DEFINITIONS ───
 
 const POSTS = [
-  { id: "hero", title: "Hero — Proposta de Valor", filename: "intentia-landing-hero-1080x1350.png" },
-  { id: "features-1", title: "Funcionalidades (1/3)", filename: "intentia-landing-features1-1080x1350.png" },
-  { id: "features-2", title: "Funcionalidades (2/3)", filename: "intentia-landing-features2-1080x1350.png" },
-  { id: "features-3", title: "Funcionalidades (3/3)", filename: "intentia-landing-features3-1080x1350.png" },
-  { id: "how-it-works", title: "Como Funciona — 7 Passos", filename: "intentia-landing-como-funciona-1080x1350.png" },
-  { id: "ai", title: "Inteligência Artificial", filename: "intentia-landing-ia-1080x1350.png" },
-  { id: "benefits", title: "Benefícios + Números", filename: "intentia-landing-beneficios-1080x1350.png" },
-  { id: "personas", title: "Para Quem É a Intentia", filename: "intentia-landing-personas-1080x1350.png" },
-  { id: "cta", title: "CTA — Chamada Final", filename: "intentia-landing-cta-1080x1350.png" },
+  { id: "hero", title: "Hero — Proposta de Valor", filename: "intentia-landing-hero-1080x1350.jpg" },
+  { id: "features-1", title: "Funcionalidades (1/3)", filename: "intentia-landing-features1-1080x1350.jpg" },
+  { id: "features-2", title: "Funcionalidades (2/3)", filename: "intentia-landing-features2-1080x1350.jpg" },
+  { id: "features-3", title: "Funcionalidades (3/3)", filename: "intentia-landing-features3-1080x1350.jpg" },
+  { id: "how-it-works", title: "Como Funciona — 7 Passos", filename: "intentia-landing-como-funciona-1080x1350.jpg" },
+  { id: "ai", title: "Inteligência Artificial", filename: "intentia-landing-ia-1080x1350.jpg" },
+  { id: "benefits", title: "Benefícios + Números", filename: "intentia-landing-beneficios-1080x1350.jpg" },
+  { id: "personas", title: "Para Quem É a Intentia", filename: "intentia-landing-personas-1080x1350.jpg" },
+  { id: "cta", title: "CTA — Chamada Final", filename: "intentia-landing-cta-1080x1350.jpg" },
 ];
 
 const W = 1080, H = 1350;
@@ -1100,7 +1100,7 @@ export function BrandLandingPosts() {
     if (!canvas) return;
     const link = document.createElement("a");
     link.download = POSTS[index].filename;
-    link.href = canvas.toDataURL("image/png");
+    link.href = canvas.toDataURL("image/jpeg", 0.95);
     link.click();
   }, []);
 
@@ -1109,7 +1109,7 @@ export function BrandLandingPosts() {
     if (!caption) return;
     const blob = new Blob([caption], { type: "text/plain;charset=utf-8" });
     const link = document.createElement("a");
-    link.download = POSTS[index].filename.replace(".png", "-legenda.txt");
+    link.download = POSTS[index].filename.replace(".jpg", "-legenda.txt");
     link.href = URL.createObjectURL(blob);
     link.click();
     URL.revokeObjectURL(link.href);
@@ -1167,7 +1167,7 @@ export function BrandLandingPosts() {
                     disabled={!ready}
                   >
                     <Download className="h-4 w-4" />
-                    Baixar PNG
+                    Baixar JPG
                   </Button>
                   <Button
                     variant="outline"
@@ -1217,7 +1217,7 @@ export function BrandLandingPosts() {
           }}
         >
           <Download className="h-4 w-4" />
-          Baixar Todos ({POSTS.length} posts)
+          Baixar Todos JPG ({POSTS.length} posts)
         </Button>
       </div>
     </div>

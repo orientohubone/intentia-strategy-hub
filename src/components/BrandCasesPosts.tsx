@@ -7,7 +7,7 @@ const CASES = [
     id: "all",
     title: "Todos os Cases",
     subtitle: "Visão geral de todas as funcionalidades",
-    filename: "intentia-cases-todos-1080x1350.png",
+    filename: "intentia-cases-todos-1080x1350.jpg",
     items: [
       { label: "Diagnóstico de URL", desc: "Avalie a prontidão do site antes de investir", color: "#FF6B2B" },
       { label: "Benchmark Competitivo", desc: "Compare posicionamento com concorrentes", color: "#3B82F6" },
@@ -22,7 +22,7 @@ const CASES = [
     id: "case-1",
     title: "Diagnóstico de URL",
     subtitle: "Antes de investir em mídia, avalie se o site está pronto.",
-    filename: "intentia-case-diagnostico-1080x1350.png",
+    filename: "intentia-case-diagnostico-1080x1350.jpg",
     image: "/Diagnostico-url.png",
     persona: "Gestor de Marketing B2B",
     color: "#FF6B2B",
@@ -38,7 +38,7 @@ const CASES = [
     id: "case-2",
     title: "Benchmark Competitivo",
     subtitle: "Compare seu posicionamento digital com concorrentes.",
-    filename: "intentia-case-benchmark-1080x1350.png",
+    filename: "intentia-case-benchmark-1080x1350.jpg",
     image: "/benchmark.png",
     persona: "Analista de Estratégia Digital",
     color: "#3B82F6",
@@ -54,7 +54,7 @@ const CASES = [
     id: "case-3",
     title: "Análise com IA",
     subtitle: "Insights estratégicos de nível consultoria em minutos.",
-    filename: "intentia-case-ia-1080x1350.png",
+    filename: "intentia-case-ia-1080x1350.jpg",
     image: "/analise-ia.png",
     persona: "Diretor de Marketing",
     color: "#8B5CF6",
@@ -70,7 +70,7 @@ const CASES = [
     id: "case-4",
     title: "Score por Canal",
     subtitle: "Saiba em qual canal investir primeiro.",
-    filename: "intentia-case-score-canal-1080x1350.png",
+    filename: "intentia-case-score-canal-1080x1350.jpg",
     image: "/score-canal.png",
     persona: "Gestor de Tráfego Pago",
     color: "#22C55E",
@@ -86,7 +86,7 @@ const CASES = [
     id: "case-5",
     title: "Alertas Estratégicos",
     subtitle: "Proteção contra desperdício de budget.",
-    filename: "intentia-case-alertas-1080x1350.png",
+    filename: "intentia-case-alertas-1080x1350.jpg",
     image: "/alertas-estrategicos.png",
     persona: "CEO / Fundador",
     color: "#F59E0B",
@@ -102,7 +102,7 @@ const CASES = [
     id: "case-6",
     title: "Insights por Projeto",
     subtitle: "Visão consolidada do que fazer em cada projeto.",
-    filename: "intentia-case-insights-1080x1350.png",
+    filename: "intentia-case-insights-1080x1350.jpg",
     image: "/insights-acionaveis.png",
     persona: "Equipe de Marketing",
     color: "#F43F5E",
@@ -118,7 +118,7 @@ const CASES = [
     id: "case-7",
     title: "Dados Estruturados",
     subtitle: "Auditoria completa de JSON-LD, OG e Twitter Card.",
-    filename: "intentia-case-dados-estruturados-1080x1350.png",
+    filename: "intentia-case-dados-estruturados-1080x1350.jpg",
     image: "/dados-estruturados.png",
     persona: "Especialista em SEO / Growth",
     color: "#14B8A6",
@@ -581,7 +581,7 @@ export function BrandCasesPosts() {
     if (!canvas) return;
     const link = document.createElement("a");
     link.download = CASES[index].filename;
-    link.href = canvas.toDataURL("image/png");
+    link.href = canvas.toDataURL("image/jpeg", 0.95);
     link.click();
   }, []);
 
@@ -590,7 +590,7 @@ export function BrandCasesPosts() {
     if (!caption) return;
     const blob = new Blob([caption], { type: "text/plain;charset=utf-8" });
     const link = document.createElement("a");
-    link.download = CASES[index].filename.replace(".png", "-legenda.txt");
+    link.download = CASES[index].filename.replace(".jpg", "-legenda.txt");
     link.href = URL.createObjectURL(blob);
     link.click();
     URL.revokeObjectURL(link.href);
@@ -652,7 +652,7 @@ export function BrandCasesPosts() {
                     disabled={!ready}
                   >
                     <Download className="h-4 w-4" />
-                    Baixar PNG
+                    Baixar JPG
                   </Button>
                   <Button
                     variant="outline"
@@ -703,7 +703,7 @@ export function BrandCasesPosts() {
           }}
         >
           <Download className="h-4 w-4" />
-          Baixar Todos ({CASES.length} posts)
+          Baixar Todos JPG ({CASES.length} posts)
         </Button>
       </div>
     </div>

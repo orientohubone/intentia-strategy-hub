@@ -119,6 +119,7 @@ export function Footer() {
           <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
             <div className="text-sm text-muted-foreground space-y-1">
               <div>© 2026 Intentia. Estratégia antes da mídia.</div>
+              <div className="text-xs">CNPJ: 64.999.887/0001-56</div>
               <div>Uma solução do ecossistema <a href="https://orientohub.com.br" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">orientohub.com.br</a></div>
             </div>
             <div className="flex flex-wrap justify-center sm:justify-end gap-x-6 gap-y-2 text-sm">

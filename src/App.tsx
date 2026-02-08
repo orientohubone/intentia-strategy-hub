@@ -27,6 +27,7 @@ import Checkout from "./pages/Checkout";
 import Subscribe from "./pages/Subscribe";
 import NotFound from "./pages/NotFound";
 import BrandGuide from "./pages/BrandGuide";
+import BrandPosts from "./pages/BrandPosts";
 import Security from "./pages/Security";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ForceLightMode } from "@/components/ForceLightMode";
@@ -53,6 +54,7 @@ const App = () => (
           <Route path="/termos-de-servico" element={<ForceLightMode><TermsOfService /></ForceLightMode>} />
           <Route path="/politica-de-cookies" element={<ForceLightMode><CookiePolicy /></ForceLightMode>} />
           <Route path="/brand" element={<ForceLightMode><BrandGuide /></ForceLightMode>} />
+          <Route path="/brand/posts" element={<ForceLightMode><BrandPosts /></ForceLightMode>} />
           <Route path="/seguranca" element={<ForceLightMode><Security /></ForceLightMode>} />
           <Route 
             path="/dashboard" 
