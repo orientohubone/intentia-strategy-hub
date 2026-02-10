@@ -150,7 +150,7 @@ export async function saveAnalysisResults(
 
   if (projectError) {
     console.error("Error updating project:", projectError);
-    throw new Error("Erro ao atualizar projeto com resultados da análise");
+    throw new Error(`Erro ao atualizar projeto com resultados da análise: ${projectError.message || projectError.code || JSON.stringify(projectError)}`);
   }
 
   // 2. Upsert channel scores

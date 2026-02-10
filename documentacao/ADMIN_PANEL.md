@@ -334,13 +334,38 @@ Para configurar o painel admin do zero:
 
 ## 🔮 Próximos Passos
 
-### 🔴 Prioridade Alta — Sincronização & Gestão
+### ✅ Prioridade Alta — Sincronização & Gestão (Concluído)
 
-- [ ] **Sincronizar Feature Flags com o sistema do usuário** — Atualmente, alterar o status de uma feature no admin (ex: manutenção, desativado, em desenvolvimento) não reflete na experiência do usuário. É necessário integrar o hook `useFeatureFlags` em todas as páginas protegidas para que o status global da feature seja verificado em tempo real e bloqueie/exiba avisos conforme o estado definido no admin.
+- [x] **Sincronizar Feature Flags com o sistema do usuário** — O componente `FeatureGate` (`src/components/FeatureGate.tsx`) foi criado e integrado em todas as páginas protegidas (Projects, Insights, Benchmark, Audiences, Alerts, TacticalPlan). Quando o admin altera o status de uma feature (manutenção, desativado, em desenvolvimento, descontinuado), o usuário vê uma tela de bloqueio com ícone, badge e mensagem correspondente ao status.
 
-- [ ] **Sincronizar Controle de Planos com o sistema** — Os switches de habilitar/desabilitar features por plano na aba "Controle de Planos" ainda não refletem no acesso real do usuário. O `useFeatureFlags` precisa consultar `plan_features` para verificar se a feature está habilitada para o plano do usuário antes de renderizar cada funcionalidade.
+- [x] **Sincronizar Controle de Planos com o sistema** — O hook `useFeatureFlags` (`src/hooks/useFeatureFlags.ts`) consulta `feature_flags`, `plan_features` e `user_feature_overrides` para verificar o acesso real do usuário. A prioridade de verificação é: status global → override por usuário → acesso do plano. Features bloqueadas pelo plano exibem tela de upgrade.
 
-- [ ] **Adicionar controle de features por cliente na aba Clientes** — Permitir ativar/desativar features individualmente para cada cliente, independente do plano. Isso viabiliza acordos comerciais fora do padrão de assinatura convencional (ex: liberar benchmark para um cliente starter específico). Deve usar a tabela `user_feature_overrides` já existente no schema.
+- [x] **Adicionar controle de features por cliente na aba Clientes** — Na aba "Clientes" do admin, cada cliente expandido agora mostra switches individuais para cada feature. O admin pode habilitar/desabilitar features independente do plano (usando `user_feature_overrides`). Overrides são indicados com badge roxo e podem ser removidos para voltar ao padrão do plano.
+
+### Arquivos Criados/Modificados
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/components/FeatureGate.tsx` | **Novo** — Componente wrapper que verifica feature flags e exibe fallback visual |
+| `src/hooks/useFeatureFlags.ts` | **Atualizado** — Adicionado suporte a `user_feature_overrides` com prioridade: global → override → plano |
+| `src/pages/AdminPanel.tsx` | **Atualizado** — Carrega overrides, funções toggle/remove, UI interativa na aba Clientes |
+| `src/pages/Projects.tsx` | **Atualizado** — Integrado `FeatureGate` com key `url_heuristic_analysis` |
+| `src/pages/Insights.tsx` | **Atualizado** — Integrado `FeatureGate` com key `strategic_insights` |
+| `src/pages/Benchmark.tsx` | **Atualizado** — Integrado `FeatureGate` com key `benchmark_swot` |
+| `src/pages/Audiences.tsx` | **Atualizado** — Integrado `FeatureGate` com key `audiences` |
+| `src/pages/Alerts.tsx` | **Atualizado** — Integrado `FeatureGate` com key `strategic_alerts` |
+| `src/pages/TacticalPlan.tsx` | **Atualizado** — Integrado `FeatureGate` com key `tactical_plan` |
+
+### Mapeamento Feature Key → Página
+
+| Feature Key | Página |
+|-------------|--------|
+| `url_heuristic_analysis` | `/projects` |
+| `strategic_insights` | `/insights` |
+| `benchmark_swot` | `/benchmark` |
+| `audiences` | `/audiences` |
+| `strategic_alerts` | `/alertas` |
+| `tactical_plan` | `/tactical` |
 
 ### 🟡 Melhorias Futuras
 

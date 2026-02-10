@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { FeatureGate } from "@/components/FeatureGate";
 import { SEO } from "@/components/SEO";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -191,6 +192,7 @@ export default function Alerts() {
   };
 
   return (
+    <FeatureGate featureKey="strategic_alerts" withLayout={false} pageTitle="Alertas Estratégicos">
     <DashboardLayout>
       <SEO title="Alertas" noindex />
       <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
@@ -660,5 +662,6 @@ export default function Alerts() {
         )}
       </div>
     </DashboardLayout>
+    </FeatureGate>
   );
 }

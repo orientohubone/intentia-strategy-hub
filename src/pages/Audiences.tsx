@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { FeatureGate } from "@/components/FeatureGate";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTenantData } from "@/hooks/useTenantData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Users, Target, TrendingUp, Globe, FileSpreadsheet, FolderOpen, ChevronDown, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
+import { Users, Target, TrendingUp, Globe, FileSpreadsheet, FolderOpen, ChevronDown, ChevronsDownUp, ChevronsUpDown, BarChart3 } from "lucide-react";
 import { exportAudiencesCsv } from "@/lib/exportCsv";
 
 type Audience = {
@@ -35,7 +36,7 @@ const sizeConfig = {
 
 export default function Audiences() {
   const { user } = useAuth();
-  const { projects } = useTenantData();
+  const { projects, tenantSettings } = useTenantData();
   const [audiences, setAudiences] = useState<Audience[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -191,6 +192,7 @@ export default function Audiences() {
   }, [filteredAudiences]);
 
   return (
+    <FeatureGate featureKey="audiences" withLayout={false} pageTitle="Públicos-Alvo">
     <DashboardLayout>
       <SEO title="Públicos-Alvo" noindex />
           <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
@@ -314,11 +316,37 @@ export default function Audiences() {
                       />
                     </div>
                   </div>
-                  <div className="flex gap-3">
+                  <div className="flex items-center gap-3">
                     <Button type="submit">{editingId ? "Salvar" : "Criar Público"}</Button>
                     <Button type="button" variant="outline" onClick={resetForm}>
                       Cancelar
                     </Button>
+                    {tenantSettings && (() => {
+                      const used = audiences.length;
+                      const limit = (tenantSettings as any).max_audiences ?? 5;
+                      const isUnlimited = limit < 0;
+                      const remaining = isUnlimited ? Infinity : limit - used;
+                      const atLimit = !isUnlimited && remaining <= 0;
+                      const nearLimit = !isUnlimited && remaining > 0 && remaining <= 2;
+                      return (
+                        <div className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border ${
+                          atLimit
+                            ? "bg-red-500/10 border-red-500/20 text-red-500"
+                            : nearLimit
+                              ? "bg-amber-500/10 border-amber-500/20 text-amber-500"
+                              : "bg-muted/50 border-border text-muted-foreground"
+                        }`}>
+                          <BarChart3 className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="font-medium">
+                            {isUnlimited
+                              ? `${used} públicos`
+                              : `${used}/${limit} públicos`}
+                          </span>
+                          {atLimit && <span className="text-[10px]">• Limite atingido</span>}
+                          {nearLimit && <span className="text-[10px]">• {remaining} restante{remaining > 1 ? "s" : ""}</span>}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </form>
               </div>
@@ -425,5 +453,6 @@ export default function Audiences() {
             })}
           </div>
     </DashboardLayout>
+    </FeatureGate>
   );
 }

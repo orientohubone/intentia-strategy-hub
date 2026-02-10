@@ -22,6 +22,12 @@ export interface PlanFeatureAccess {
   limit_period: string | null;
 }
 
+export interface UserFeatureOverride {
+  feature_key: string;
+  is_enabled: boolean;
+  reason: string | null;
+}
+
 export type FeatureStatus = "available" | "plan_blocked" | "disabled" | "development" | "maintenance" | "deprecated";
 
 export interface FeatureCheck {
@@ -38,6 +44,7 @@ export function useFeatureFlags() {
   const { user } = useAuth();
   const [features, setFeatures] = useState<FeatureFlag[]>([]);
   const [planAccess, setPlanAccess] = useState<PlanFeatureAccess[]>([]);
+  const [userOverrides, setUserOverrides] = useState<UserFeatureOverride[]>([]);
   const [userPlan, setUserPlan] = useState<string>("starter");
   const [loading, setLoading] = useState(true);
 
@@ -66,8 +73,15 @@ export function useFeatureFlags() {
         .select("feature_key, is_enabled, usage_limit, limit_period")
         .eq("plan", plan);
 
+      // Load per-user feature overrides
+      const { data: overrides } = await (supabase as any)
+        .from("user_feature_overrides")
+        .select("feature_key, is_enabled, reason")
+        .eq("user_id", user.id);
+
       if (flags) setFeatures(flags);
       if (pf) setPlanAccess(pf);
+      if (overrides) setUserOverrides(overrides);
     } catch (err) {
       console.error("[feature-flags] Error loading:", err);
     } finally {
@@ -92,8 +106,15 @@ export function useFeatureFlags() {
     return map;
   }, [planAccess]);
 
+  const overrideMap = useMemo(() => {
+    const map = new Map<string, UserFeatureOverride>();
+    for (const o of userOverrides) map.set(o.feature_key, o);
+    return map;
+  }, [userOverrides]);
+
   /**
    * Check if a feature is available for the current user.
+   * Priority: global status → user override → plan access
    * Returns { available, status, message }
    */
   const checkFeature = useCallback(
@@ -103,7 +124,7 @@ export function useFeatureFlags() {
       // Feature doesn't exist in flags — allow by default (backwards compat)
       if (!flag) return { available: true, status: "available" };
 
-      // Check global status first
+      // Check global status first (admin can disable globally regardless of overrides)
       if (flag.status === "disabled") {
         return { available: false, status: "disabled", message: "Recurso desativado." };
       }
@@ -129,7 +150,21 @@ export function useFeatureFlags() {
         };
       }
 
-      // Feature is active — check plan access
+      // Feature is active — check per-user override first
+      const override = overrideMap.get(featureKey);
+      if (override) {
+        if (override.is_enabled) {
+          return { available: true, status: "available" };
+        } else {
+          return {
+            available: false,
+            status: "plan_blocked",
+            message: "Este recurso não está disponível no seu plano atual. Faça upgrade para desbloquear.",
+          };
+        }
+      }
+
+      // No override — check plan access
       const pa = planAccessMap.get(featureKey);
       if (pa && !pa.is_enabled) {
         return {
@@ -141,7 +176,7 @@ export function useFeatureFlags() {
 
       return { available: true, status: "available" };
     },
-    [featureMap, planAccessMap]
+    [featureMap, planAccessMap, overrideMap]
   );
 
   /**

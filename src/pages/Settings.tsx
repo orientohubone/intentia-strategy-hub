@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ import {
   Clock,
   FileJson,
   ShieldCheck,
+  Lock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -72,12 +74,12 @@ const PLAN_FEATURES: Record<string, { label: string; price: string; features: st
     color: "border-border",
     icon: Zap,
     features: [
-      "3 projetos ativos",
+      "5 projetos ativos",
       "Diagnóstico heurístico de URL (6 dimensões)",
       "Score por canal: Google, Meta, LinkedIn, TikTok",
       "Insights automáticos por projeto",
       "Alertas de investimento prematuro",
-      "1 público-alvo por projeto",
+      "5 públicos-alvo por projeto",
     ],
   },
   professional: {
@@ -117,6 +119,8 @@ const PLAN_FEATURES: Record<string, { label: string; price: string; features: st
 export default function Settings() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isFeatureAvailable } = useFeatureFlags();
+  const canAiKeys = isFeatureAvailable("ai_api_keys");
   const [loading, setLoading] = useState(false);
   const [tenantSettings, setTenantSettings] = useState<any>(null);
   const [tenantLoading, setTenantLoading] = useState(true);
@@ -805,6 +809,19 @@ export default function Settings() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {!canAiKeys && (
+                  <div className="flex items-center gap-3 p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <Lock className="h-5 w-5 text-amber-500 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Integrações de IA indisponíveis no seu plano</p>
+                      <p className="text-xs text-muted-foreground">Faça upgrade para o plano Professional para configurar API keys e usar análise por IA.</p>
+                    </div>
+                    <Button size="sm" variant="outline" className="flex-shrink-0 ml-auto" onClick={() => navigate("/checkout")}>
+                      Fazer Upgrade
+                    </Button>
+                  </div>
+                )}
+                <div className={!canAiKeys ? "opacity-40 pointer-events-none select-none" : ""}>
                 {/* Google Gemini */}
                 {(() => {
                   const provider: ApiKeyProvider = "google_gemini";
@@ -1044,6 +1061,7 @@ export default function Settings() {
                     </div>
                   );
                 })()}
+                </div>
 
                 <div className="rounded-lg bg-muted/50 p-3">
                   <p className="text-xs text-muted-foreground leading-relaxed">

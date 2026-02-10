@@ -84,6 +84,17 @@ interface TenantUser {
   created_at: string;
   analyses_used: number;
   monthly_analyses_limit: number;
+  max_audiences: number;
+}
+
+interface UserFeatureOverride {
+  id: string;
+  user_id: string;
+  feature_key: string;
+  is_enabled: boolean;
+  reason: string | null;
+  admin_id: string | null;
+  created_at: string;
 }
 
 // =====================================================
@@ -133,6 +144,7 @@ export default function AdminPanel() {
   const [features, setFeatures] = useState<FeatureFlag[]>([]);
   const [planFeatures, setPlanFeatures] = useState<PlanFeature[]>([]);
   const [users, setUsers] = useState<TenantUser[]>([]);
+  const [userOverrides, setUserOverrides] = useState<UserFeatureOverride[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -178,17 +190,25 @@ export default function AdminPanel() {
   const loadUsers = useCallback(async () => {
     const { data, error } = await (supabase as any)
       .from("tenant_settings")
-      .select("user_id, company_name, plan, full_name, email, created_at, analyses_used, monthly_analyses_limit")
+      .select("user_id, company_name, plan, full_name, email, created_at, analyses_used, monthly_analyses_limit, max_audiences")
       .order("created_at", { ascending: false });
 
     if (!error && data) setUsers(data);
   }, []);
 
+  const loadOverrides = useCallback(async () => {
+    const { data, error } = await (supabase as any)
+      .from("user_feature_overrides")
+      .select("*");
+
+    if (!error && data) setUserOverrides(data);
+  }, []);
+
   const loadAll = useCallback(async () => {
     setLoading(true);
-    await Promise.all([loadFeatures(), loadPlanFeatures(), loadUsers()]);
+    await Promise.all([loadFeatures(), loadPlanFeatures(), loadUsers(), loadOverrides()]);
     setLoading(false);
-  }, [loadFeatures, loadPlanFeatures, loadUsers]);
+  }, [loadFeatures, loadPlanFeatures, loadUsers, loadOverrides]);
 
   useEffect(() => {
     loadAll();
@@ -275,6 +295,95 @@ export default function AdminPanel() {
     }
     setSaving(null);
   };
+
+  const toggleUserFeatureOverride = async (userId: string, featureKey: string, enable: boolean) => {
+    const savingKey = `override-${userId}-${featureKey}`;
+    setSaving(savingKey);
+
+    // Check if override already exists
+    const existing = userOverrides.find((o) => o.user_id === userId && o.feature_key === featureKey);
+
+    if (existing) {
+      // Update existing override
+      const { error } = await (supabase as any)
+        .from("user_feature_overrides")
+        .update({ is_enabled: enable, reason: enable ? "Liberado pelo admin" : "Bloqueado pelo admin" })
+        .eq("id", existing.id);
+
+      if (error) {
+        toast.error("Erro ao atualizar override.");
+        console.error("[admin] Override update error:", error);
+      } else {
+        toast.success(`Override ${enable ? "habilitado" : "desabilitado"} para ${featureKey}.`);
+        await loadOverrides();
+      }
+    } else {
+      // Create new override
+      const { error } = await (supabase as any)
+        .from("user_feature_overrides")
+        .insert({
+          user_id: userId,
+          feature_key: featureKey,
+          is_enabled: enable,
+          reason: enable ? "Liberado pelo admin" : "Bloqueado pelo admin",
+          admin_id: admin?.id || null,
+        });
+
+      if (error) {
+        toast.error("Erro ao criar override.");
+        console.error("[admin] Override insert error:", error);
+      } else {
+        toast.success(`Override criado: ${featureKey} ${enable ? "habilitado" : "desabilitado"}.`);
+        await loadOverrides();
+      }
+    }
+    setSaving(null);
+  };
+
+  const removeUserFeatureOverride = async (userId: string, featureKey: string) => {
+    const savingKey = `override-${userId}-${featureKey}`;
+    setSaving(savingKey);
+
+    const { error } = await (supabase as any)
+      .from("user_feature_overrides")
+      .delete()
+      .eq("user_id", userId)
+      .eq("feature_key", featureKey);
+
+    if (error) {
+      toast.error("Erro ao remover override.");
+      console.error("[admin] Override delete error:", error);
+    } else {
+      toast.success("Override removido. Voltou ao padrão do plano.");
+      await loadOverrides();
+    }
+    setSaving(null);
+  };
+
+  const updateUserLimits = async (userId: string, field: string, value: number) => {
+    const savingKey = `limit-${userId}-${field}`;
+    setSaving(savingKey);
+
+    const { error } = await (supabase as any)
+      .from("tenant_settings")
+      .update({ [field]: value })
+      .eq("user_id", userId);
+
+    if (error) {
+      toast.error(`Erro ao atualizar ${field}.`);
+      console.error("[admin] Limit update error:", error);
+    } else {
+      toast.success("Limite atualizado com sucesso.");
+      await loadUsers();
+    }
+    setSaving(null);
+  };
+
+  const getUserOverrides = (userId: string) =>
+    userOverrides.filter((o) => o.user_id === userId);
+
+  const getUserOverride = (userId: string, featureKey: string) =>
+    userOverrides.find((o) => o.user_id === userId && o.feature_key === featureKey);
 
   const handleLogout = () => {
     logout();
@@ -939,32 +1048,191 @@ export default function AdminPanel() {
                               })}
                             </div>
 
+                            {/* Manual limits control */}
+                            <div className="pt-2 border-t border-slate-800/50">
+                              <p className="text-[10px] text-slate-600 uppercase tracking-wider mb-3">
+                                Limites & Uso
+                              </p>
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                {/* Analyses used */}
+                                <div className="space-y-1">
+                                  <label className="text-[10px] text-slate-500">Análises usadas</label>
+                                  <div className="flex items-center gap-1">
+                                    <Input
+                                      type="number"
+                                      min={0}
+                                      className="h-7 text-xs bg-slate-900 border-slate-700 text-white w-full"
+                                      defaultValue={user.analyses_used}
+                                      onBlur={(e) => {
+                                        const val = parseInt(e.target.value);
+                                        if (!isNaN(val) && val !== user.analyses_used) {
+                                          updateUserLimits(user.user_id, "analyses_used", val);
+                                        }
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                          (e.target as HTMLInputElement).blur();
+                                        }
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                                {/* Monthly analyses limit */}
+                                <div className="space-y-1">
+                                  <label className="text-[10px] text-slate-500">Limite mensal</label>
+                                  <div className="flex items-center gap-1">
+                                    <Input
+                                      type="number"
+                                      min={-1}
+                                      className="h-7 text-xs bg-slate-900 border-slate-700 text-white w-full"
+                                      defaultValue={user.monthly_analyses_limit}
+                                      onBlur={(e) => {
+                                        const val = parseInt(e.target.value);
+                                        if (!isNaN(val) && val !== user.monthly_analyses_limit) {
+                                          updateUserLimits(user.user_id, "monthly_analyses_limit", val);
+                                        }
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                          (e.target as HTMLInputElement).blur();
+                                        }
+                                      }}
+                                    />
+                                    <span className="text-[9px] text-slate-600 whitespace-nowrap">-1 = ∞</span>
+                                  </div>
+                                </div>
+                                {/* Max audiences */}
+                                <div className="space-y-1">
+                                  <label className="text-[10px] text-slate-500">Públicos-alvo</label>
+                                  <div className="flex items-center gap-1">
+                                    <Input
+                                      type="number"
+                                      min={-1}
+                                      className="h-7 text-xs bg-slate-900 border-slate-700 text-white w-full"
+                                      defaultValue={user.max_audiences ?? 5}
+                                      onBlur={(e) => {
+                                        const val = parseInt(e.target.value);
+                                        if (!isNaN(val) && val !== (user.max_audiences ?? 5)) {
+                                          updateUserLimits(user.user_id, "max_audiences", val);
+                                        }
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                          (e.target as HTMLInputElement).blur();
+                                        }
+                                      }}
+                                    />
+                                    <span className="text-[9px] text-slate-600 whitespace-nowrap">-1 = ∞</span>
+                                  </div>
+                                </div>
+                                {/* Quick actions */}
+                                <div className="space-y-1">
+                                  <label className="text-[10px] text-slate-500">Ações rápidas</label>
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 text-[10px] border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800"
+                                      onClick={() => updateUserLimits(user.user_id, "analyses_used", 0)}
+                                      disabled={saving?.startsWith(`limit-${user.user_id}`)}
+                                    >
+                                      Zerar análises
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 text-[10px] border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800"
+                                      onClick={() => {
+                                        updateUserLimits(user.user_id, "monthly_analyses_limit", -1);
+                                        updateUserLimits(user.user_id, "max_audiences", -1);
+                                      }}
+                                      disabled={saving?.startsWith(`limit-${user.user_id}`) || (user.monthly_analyses_limit === -1 && (user.max_audiences ?? 5) === -1)}
+                                    >
+                                      Tudo ilimitado
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 text-[10px] border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800"
+                                      onClick={() => {
+                                        updateUserLimits(user.user_id, "monthly_analyses_limit", 5);
+                                        updateUserLimits(user.user_id, "max_audiences", 5);
+                                      }}
+                                      disabled={saving?.startsWith(`limit-${user.user_id}`) || (user.monthly_analyses_limit === 5 && (user.max_audiences ?? 5) === 5)}
+                                    >
+                                      Padrão Starter
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
                             {/* Feature overrides for this user */}
                             <div className="pt-2 border-t border-slate-800/50">
-                              <p className="text-[10px] text-slate-600 uppercase tracking-wider mb-2">
-                                Features do plano {PLAN_CONFIG[user.plan]?.label}
-                              </p>
-                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                              <div className="flex items-center justify-between mb-3">
+                                <p className="text-[10px] text-slate-600 uppercase tracking-wider">
+                                  Controle de Features — {PLAN_CONFIG[user.plan]?.label}
+                                </p>
+                                {getUserOverrides(user.user_id).length > 0 && (
+                                  <Badge className="text-[9px] bg-purple-500/10 text-purple-400 border-purple-500/20">
+                                    {getUserOverrides(user.user_id).length} override{getUserOverrides(user.user_id).length > 1 ? "s" : ""}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
                                 {features.map((feature) => {
                                   const pf = getPlanFeature(feature.feature_key, user.plan);
-                                  const isEnabled = pf?.is_enabled ?? false;
+                                  const planEnabled = pf?.is_enabled ?? false;
                                   const isFeatureActive = feature.status === "active";
-                                  const available = isEnabled && isFeatureActive;
+                                  const override = getUserOverride(user.user_id, feature.feature_key);
+                                  const hasOverride = !!override;
+                                  const effectiveAccess = hasOverride ? override.is_enabled : (planEnabled && isFeatureActive);
+                                  const isSavingOverride = saving === `override-${user.user_id}-${feature.feature_key}`;
+
                                   return (
                                     <div
                                       key={feature.feature_key}
-                                      className={`flex items-center gap-1.5 px-2 py-1.5 rounded text-[10px] ${
-                                        available
-                                          ? "text-green-500 bg-green-500/5"
-                                          : "text-slate-600 bg-slate-800/30"
+                                      className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[10px] transition-colors ${
+                                        hasOverride
+                                          ? override.is_enabled
+                                            ? "bg-purple-500/10 border border-purple-500/20"
+                                            : "bg-red-500/5 border border-red-500/20"
+                                          : effectiveAccess
+                                            ? "bg-green-500/5 hover:bg-green-500/10"
+                                            : "bg-slate-800/30 hover:bg-slate-800/50"
                                       }`}
                                     >
-                                      {available ? (
-                                        <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
-                                      ) : (
-                                        <XCircle className="h-3 w-3 flex-shrink-0" />
+                                      {/* Toggle switch */}
+                                      <Switch
+                                        checked={effectiveAccess}
+                                        onCheckedChange={(checked) => toggleUserFeatureOverride(user.user_id, feature.feature_key, checked)}
+                                        disabled={isSavingOverride || !isFeatureActive}
+                                        className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-red-500/60 flex-shrink-0 scale-75"
+                                      />
+
+                                      {/* Feature name */}
+                                      <span className={`flex-1 truncate ${effectiveAccess ? "text-slate-200" : "text-slate-500"}`}>
+                                        {feature.feature_name}
+                                      </span>
+
+                                      {/* Override indicator + remove button */}
+                                      {hasOverride && (
+                                        <button
+                                          onClick={() => removeUserFeatureOverride(user.user_id, feature.feature_key)}
+                                          disabled={isSavingOverride}
+                                          title="Remover override (voltar ao padrão do plano)"
+                                          className="text-[8px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors flex-shrink-0"
+                                        >
+                                          override ✕
+                                        </button>
                                       )}
-                                      <span className="truncate">{feature.feature_name}</span>
+
+                                      {/* Status indicators */}
+                                      {!isFeatureActive && (
+                                        <span className="text-[8px] text-slate-600 flex-shrink-0">
+                                          ({STATUS_CONFIG[feature.status]?.label || feature.status})
+                                        </span>
+                                      )}
                                     </div>
                                   );
                                 })}

@@ -236,7 +236,7 @@ export default function Landing() {
                 name: "Starter",
                 price: "0",
                 priceCurrency: "BRL",
-                description: "3 projetos, diagnóstico heurístico, scores por canal, insights e alertas estratégicos.",
+                description: "5 projetos, diagnóstico heurístico, scores por canal, insights e alertas estratégicos.",
               },
               {
                 "@type": "Offer",
@@ -730,7 +730,7 @@ export default function Landing() {
               <div className="text-3xl font-bold text-foreground mb-4">Grátis</div>
               <p className="text-sm text-muted-foreground mb-4">Ideal para validar sua estratégia</p>
               <ul className="space-y-3 text-sm text-muted-foreground mb-6">
-                <li>✓ 3 projetos ativos</li>
+                <li>✓ 5 projetos ativos</li>
                 <li>✓ Diagnóstico heurístico de URL</li>
                 <li>✓ Score por canal (4 canais)</li>
                 <li>✓ Insights e alertas automáticos</li>

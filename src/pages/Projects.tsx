@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,8 @@ import {
   FolderOpen,
   ChevronDown,
   ChevronsUpDown,
+  ShieldAlert,
+  BarChart3,
 } from "lucide-react";
 
 type Insight = {
@@ -89,8 +92,14 @@ const channelList: ChannelScore["channel"][] = ["google", "meta", "linkedin", "t
 
 export default function Projects() {
   const { user } = useAuth();
+  const { isFeatureAvailable, checkFeature } = useFeatureFlags();
+  const canAnalyze = isFeatureAvailable("url_heuristic_analysis");
+  const heuristicCheck = checkFeature("url_heuristic_analysis");
+  const canAiAnalysis = isFeatureAvailable("ai_project_analysis");
+  const canAiKeys = isFeatureAvailable("ai_api_keys");
   const {
     projects,
+    tenantSettings,
     loading,
     createProject,
     updateProject,
@@ -269,17 +278,19 @@ export default function Projects() {
       const projectName = formState.name.trim();
       const projectNiche = formState.niche.trim();
 
+      const shouldAnalyze = canAnalyze;
+
       if (editingId) {
         const result = await updateProject(editingId, {
           name: projectName,
           niche: projectNiche,
           url: urlToAnalyze,
           competitor_urls: competitorUrls,
-          status: "analyzing",
+          status: shouldAnalyze ? "analyzing" : formState.status,
           last_update: new Date().toISOString(),
         });
         projectId = editingId;
-        toast.success("Projeto atualizado! Iniciando análise...");
+        toast.success(shouldAnalyze ? "Projeto atualizado! Iniciando análise..." : "Projeto atualizado!");
       } else {
         const result = await createProject({
           name: projectName,
@@ -287,18 +298,18 @@ export default function Projects() {
           url: urlToAnalyze,
           competitor_urls: competitorUrls,
           score: 0,
-          status: "analyzing",
+          status: shouldAnalyze ? "analyzing" : "pending",
           last_update: new Date().toISOString(),
         });
         projectId = result.id;
-        toast.success("Projeto criado! Iniciando análise...");
+        toast.success(shouldAnalyze ? "Projeto criado! Iniciando análise..." : "Projeto criado! Análise heurística indisponível no momento.");
       }
 
       setFormState({ name: "", niche: "", url: "", competitorUrls: "", status: "pending" });
       setEditingId(null);
 
-      // Run URL analysis in background
-      if (user) {
+      // Run URL analysis in background (only if feature is available)
+      if (user && shouldAnalyze) {
         setAnalyzing(true);
         setAnalysisComplete(false);
         setCompetitorTotal(competitorUrls.length);
@@ -663,6 +674,23 @@ export default function Projects() {
                   Adicione as URLs dos seus principais concorrentes para gerar um benchmark comparativo automático.
                 </p>
               </div>
+              {!canAnalyze && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs">
+                  <ShieldAlert className="h-4 w-4 flex-shrink-0" />
+                  <span>
+                    {heuristicCheck.status === "plan_blocked"
+                      ? "O Diagnóstico Heurístico de URL não está disponível no seu plano atual. Faça upgrade para desbloquear esta funcionalidade."
+                      : heuristicCheck.status === "disabled"
+                        ? "O Diagnóstico Heurístico de URL está temporariamente desativado."
+                        : heuristicCheck.status === "maintenance"
+                          ? "O Diagnóstico Heurístico de URL está em manutenção. Voltamos em breve."
+                          : heuristicCheck.status === "development"
+                            ? "O Diagnóstico Heurístico de URL está em desenvolvimento. Em breve!"
+                            : heuristicCheck.message || "Diagnóstico heurístico indisponível no momento."}
+                    {" "}O projeto será criado sem análise automática.
+                  </span>
+                </div>
+              )}
               <div className="flex items-center gap-3">
                 <Button type="submit" disabled={analyzing}>
                   {analyzing ? (
@@ -670,7 +698,7 @@ export default function Projects() {
                       <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2"></span>
                       Análise em andamento...
                     </>
-                  ) : editingId ? "Salvar alterações" : "Criar projeto e analisar URL"}
+                  ) : editingId ? "Salvar alterações" : canAnalyze ? "Criar projeto e analisar URL" : "Criar projeto"}
                 </Button>
                 {editingId && (
                   <Button type="button" variant="outline" disabled={analyzing} onClick={() => {
@@ -680,6 +708,32 @@ export default function Projects() {
                     Cancelar
                   </Button>
                 )}
+                {tenantSettings && canAnalyze && (() => {
+                  const used = tenantSettings.analyses_used;
+                  const limit = tenantSettings.monthly_analyses_limit;
+                  const isUnlimited = limit < 0;
+                  const remaining = isUnlimited ? Infinity : limit - used;
+                  const atLimit = !isUnlimited && remaining <= 0;
+                  const nearLimit = !isUnlimited && remaining > 0 && remaining <= 2;
+                  return (
+                    <div className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border ${
+                      atLimit
+                        ? "bg-red-500/10 border-red-500/20 text-red-500"
+                        : nearLimit
+                          ? "bg-amber-500/10 border-amber-500/20 text-amber-500"
+                          : "bg-muted/50 border-border text-muted-foreground"
+                    }`}>
+                      <BarChart3 className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="font-medium">
+                        {isUnlimited
+                          ? `${used} análises`
+                          : `${used}/${limit} análises`}
+                      </span>
+                      {atLimit && <span className="text-[10px]">• Limite atingido</span>}
+                      {nearLimit && <span className="text-[10px]">• {remaining} restante{remaining > 1 ? "s" : ""}</span>}
+                    </div>
+                  );
+                })()}
               </div>
             </form>
 
@@ -716,7 +770,7 @@ export default function Projects() {
                                 <button
                                   className="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-muted transition-colors disabled:opacity-50"
                                   onClick={() => handleReanalyze(project.id)}
-                                  disabled={analyzing}
+                                  disabled={analyzing || !canAnalyze}
                                 >
                                   <RefreshCw className={`h-3 w-3 ${analyzing ? "animate-spin" : ""}`} />
                                 </button>
@@ -843,7 +897,7 @@ export default function Projects() {
                                   </Badge>
                                 </button>
                                 <div className="flex items-center gap-1.5">
-                                  {hasAiKeys ? (
+                                  {hasAiKeys && canAiAnalysis ? (
                                     <>
                                       <Select
                                         value={selectedAiModel}
@@ -864,8 +918,8 @@ export default function Projects() {
                                       <Button
                                         size="icon"
                                         className="h-8 w-8 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 flex-shrink-0"
-                                        disabled={project.status !== "completed" || analyzing || aiAnalyzing === project.id}
-                                        title={project.status !== "completed" ? "Aguardando conclusão da análise heurística" : "Executar análise por IA"}
+                                        disabled={project.status !== "completed" || analyzing || aiAnalyzing === project.id || !canAiAnalysis}
+                                        title={!canAiAnalysis ? "Análise por IA indisponível no seu plano" : project.status !== "completed" ? "Aguardando conclusão da análise heurística" : "Executar análise por IA"}
                                         onClick={() => handleAiAnalysis(project.id)}
                                       >
                                         {aiAnalyzing === project.id ? (
@@ -1014,17 +1068,21 @@ export default function Projects() {
 
                               {/* AI Analysis Status / Results */}
                               {project.status === "completed" && !aiResults[project.id] && !project.ai_analysis && aiAnalyzing !== project.id && (
-                                <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 flex items-center gap-3">
-                                  <Sparkles className="h-5 w-5 text-primary flex-shrink-0" />
+                                <div className={`rounded-lg border border-dashed p-3 flex items-center gap-3 ${canAiAnalysis ? "border-primary/30 bg-primary/5" : "border-amber-500/30 bg-amber-500/5"}`}>
+                                  <Sparkles className={`h-5 w-5 flex-shrink-0 ${canAiAnalysis ? "text-primary" : "text-amber-500"}`} />
                                   <div className="flex-1">
-                                    <p className="text-xs font-medium text-foreground">Análise por IA disponível</p>
+                                    <p className="text-xs font-medium text-foreground">
+                                      {canAiAnalysis ? "Análise por IA disponível" : "Análise por IA indisponível no seu plano"}
+                                    </p>
                                     <p className="text-[11px] text-muted-foreground">
-                                      {hasAiKeys
-                                        ? "Clique em \"Analisar com IA\" para obter insights semânticos aprofundados."
-                                        : "Configure suas API keys em Configurações → Integrações de IA para habilitar."}
+                                      {!canAiAnalysis
+                                        ? "Faça upgrade para o plano Professional para desbloquear a análise por IA."
+                                        : hasAiKeys
+                                          ? "Clique em \"Analisar com IA\" para obter insights semânticos aprofundados."
+                                          : "Configure suas API keys em Configurações → Integrações de IA para habilitar."}
                                     </p>
                                   </div>
-                                  {!hasAiKeys && (
+                                  {canAiAnalysis && !hasAiKeys && (
                                     <Button size="sm" variant="outline" className="text-xs flex-shrink-0" onClick={() => window.location.href = "/settings"}>
                                       Configurar
                                     </Button>

@@ -14,12 +14,12 @@ const plans = [
     price: "Grátis",
     description: "Ideal para conhecer a plataforma e validar sua estratégia",
     features: [
-      "3 projetos ativos",
+      "5 projetos ativos",
       "Diagnóstico heurístico de URL (6 dimensões)",
       "Score por canal: Google, Meta, LinkedIn, TikTok",
       "Insights automáticos por projeto",
       "Alertas de investimento prematuro",
-      "1 público-alvo por projeto",
+      "5 públicos-alvo por projeto",
       "Dark/Light mode",
       "Suporte por email",
     ],
@@ -107,7 +107,7 @@ export default function Pricing() {
                 name: "O plano grátis tem limite de tempo?",
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: "Não. O plano Starter é gratuito para sempre, com até 3 projetos ativos. Ideal para validar a plataforma antes de investir.",
+                  text: "Não. O plano Starter é gratuito para sempre, com até 5 projetos ativos. Ideal para validar a plataforma antes de investir.",
                 },
               },
               {
@@ -236,7 +236,7 @@ export default function Pricing() {
                 O plano grátis tem limite de tempo?
               </h3>
               <p className="text-muted-foreground">
-                Não. O plano Starter é gratuito para sempre, com até 3 projetos ativos. Ideal para validar a plataforma antes de investir.
+                Não. O plano Starter é gratuito para sempre, com até 5 projetos ativos. Ideal para validar a plataforma antes de investir.
               </p>
             </div>
             <div className="bg-card rounded-lg p-6 border border-border">

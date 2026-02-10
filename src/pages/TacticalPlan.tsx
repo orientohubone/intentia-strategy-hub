@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { FeatureGate } from "@/components/FeatureGate";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -675,6 +676,7 @@ export default function TacticalPlan() {
   ];
 
   return (
+    <FeatureGate featureKey="tactical_plan" withLayout={false} pageTitle="Plano Tático">
     <DashboardLayout>
       <SEO title="Plano Tático" noindex />
           <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
@@ -1252,5 +1254,6 @@ export default function TacticalPlan() {
             )}
           </div>
     </DashboardLayout>
+    </FeatureGate>
   );
 }

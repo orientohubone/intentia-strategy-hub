@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { FeatureGate } from "@/components/FeatureGate";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -105,6 +107,8 @@ type ProjectGroup = {
 
 export default function Insights() {
   const { user } = useAuth();
+  const { isFeatureAvailable } = useFeatureFlags();
+  const canAiEnrichment = isFeatureAvailable("ai_benchmark_enrichment");
   const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -280,6 +284,7 @@ export default function Insights() {
   };
 
   return (
+    <FeatureGate featureKey="strategic_insights" withLayout={false} pageTitle="Insights Estratégicos">
     <DashboardLayout>
       <SEO title="Insights" noindex />
           <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
@@ -455,7 +460,7 @@ export default function Insights() {
                   </button>
                   {/* Enrich with AI — same pattern as Projects */}
                   <div className="flex items-center gap-1.5 shrink-0">
-                    {hasAiKeys ? (
+                    {hasAiKeys && canAiEnrichment ? (
                       <>
                         <Select
                           value={selectedAiModel}
@@ -854,5 +859,6 @@ export default function Insights() {
         </DialogContent>
       </Dialog>
     </DashboardLayout>
+    </FeatureGate>
   );
 }

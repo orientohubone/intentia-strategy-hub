@@ -478,7 +478,7 @@ export default function Help() {
         },
         {
           title: "Rate limiting e limites por plano",
-          content: "O sistema implementa limites de requisições por hora para prevenir abuso. Cada plano tem seus próprios limites: Starter (10 projetos/hora, 3 projetos ativos, 5 análises/mês), Professional (50/hora, ilimitado) e Enterprise (200/hora, ilimitado).",
+          content: "O sistema implementa limites de requisições por hora para prevenir abuso. Cada plano tem seus próprios limites: Starter (10 projetos/hora, 5 projetos ativos, 5 análises/mês), Professional (50/hora, ilimitado) e Enterprise (200/hora, ilimitado).",
           difficulty: "Intermediário",
         },
         {

@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { FeatureGate } from "@/components/FeatureGate";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { SEO } from "@/components/SEO";
 import { BenchmarkCard } from "@/components/BenchmarkCard";
 import { BenchmarkDetailDialog, BenchmarkDetail } from "@/components/BenchmarkDetailDialog";
@@ -51,6 +53,8 @@ export default function Benchmark() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterProject, setFilterProject] = useState<string>("all");
+  const { isFeatureAvailable } = useFeatureFlags();
+  const canAiEnrichment = isFeatureAvailable("ai_benchmark_enrichment");
   const [sortBy, setSortBy] = useState<string>("created_at");
   const [stats, setStats] = useState<any>(null);
   const [selectedBenchmark, setSelectedBenchmark] = useState<BenchmarkDetail | null>(null);
@@ -294,6 +298,7 @@ export default function Benchmark() {
 
   if (loading) {
     return (
+      <FeatureGate featureKey="benchmark_swot" withLayout={false} pageTitle="Benchmark Competitivo">
       <DashboardLayout>
         <SEO title="Benchmark" noindex />
             <div className="max-w-6xl mx-auto">
@@ -313,10 +318,12 @@ export default function Benchmark() {
               </div>
             </div>
       </DashboardLayout>
+      </FeatureGate>
     );
   }
 
   return (
+    <FeatureGate featureKey="benchmark_swot" withLayout={false} pageTitle="Benchmark Competitivo">
     <DashboardLayout>
       <SEO title="Benchmark" noindex />
           <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
@@ -577,7 +584,7 @@ export default function Benchmark() {
         benchmark={selectedBenchmark}
         open={detailOpen}
         onOpenChange={setDetailOpen}
-        hasAiKeys={hasAiKeys}
+        hasAiKeys={hasAiKeys && canAiEnrichment}
         availableAiModels={availableAiModels}
         selectedAiModel={selectedAiModel}
         onAiModelChange={setSelectedAiModel}
@@ -586,5 +593,6 @@ export default function Benchmark() {
         aiResult={selectedBenchmark ? aiResults[selectedBenchmark.id] || null : null}
       />
     </DashboardLayout>
+    </FeatureGate>
   );
 }

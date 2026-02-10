@@ -309,9 +309,10 @@ export default function Status() {
   const categories = [...new Set(services.map((s) => s.category))];
 
   // Calculate metrics from real data
-  const overallUptime = uptimeData.length > 0
-    ? (uptimeData.reduce((sum, d) => sum + d.uptime, 0) / uptimeData.length).toFixed(3)
-    : "100.000";
+  const rawUptime = uptimeData.length > 0
+    ? uptimeData.reduce((sum, d) => sum + d.uptime, 0) / uptimeData.length
+    : 100;
+  const overallUptime = rawUptime === 100 ? "100" : rawUptime.toFixed(2).replace(/\.?0+$/, "");
 
   const incidentCount30d = incidents.length;
   const resolvedIncidents = incidents.filter((i) => i.status === "resolved" && i.resolved_at && i.created_at);

@@ -503,23 +503,17 @@ Todas as 4 Edge Functions foram deployadas com **JWT verification desabilitada**
 
 ---
 
-## 18. Configuração do Cron (collect-uptime)
+## 18. Cron (collect-uptime) — Configurado
 
-A função `collect-uptime` deve ser chamada **uma vez por dia** para registrar o uptime de cada serviço.
+A função `collect-uptime` roda **automaticamente 1x por dia** via pg_cron do Supabase.
 
-### Opção A: Cron externo (cron-job.org, EasyCron, etc.)
+**Configuração ativa:**
+- **Horário:** 23:55 UTC (20:55 Brasília)
+- **Frequência:** Diária
+- **Método:** pg_cron + pg_net (extensões habilitadas no Supabase)
+- **Job name:** `collect-uptime-daily`
 
-Configurar um job diário (ex: 23:55 UTC) com:
-
-```
-URL:    https://ccmubburnrrxmkhydxoz.supabase.co/functions/v1/collect-uptime
-Método: POST
-Header: Authorization: Bearer <SUPABASE_ANON_KEY>
-Body:   {} (vazio)
-```
-
-### Opção B: Supabase pg_cron (se habilitado)
-
+**SQL utilizado:**
 ```sql
 SELECT cron.schedule(
   'collect-uptime-daily',
@@ -527,11 +521,23 @@ SELECT cron.schedule(
   $$
   SELECT net.http_post(
     url := 'https://ccmubburnrrxmkhydxoz.supabase.co/functions/v1/collect-uptime',
-    headers := '{"Authorization": "Bearer <SUPABASE_ANON_KEY>"}'::jsonb,
+    headers := '{"Content-Type": "application/json"}'::jsonb,
     body := '{}'::jsonb
   );
   $$
 );
+```
+
+**Comandos úteis:**
+```sql
+-- Ver jobs ativos
+SELECT * FROM cron.job;
+
+-- Ver execuções recentes
+SELECT * FROM cron.job_run_details ORDER BY start_time DESC LIMIT 10;
+
+-- Pausar o job
+SELECT cron.unschedule('collect-uptime-daily');
 ```
 
 ---
