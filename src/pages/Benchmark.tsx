@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Search, Filter, TrendingUp, Target, BarChart3, Users, FileText, FileSpreadsheet, FolderOpen, ChevronDown, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { exportBenchmarksPdf } from "@/lib/reportGenerator";
 import { exportBenchmarksCsv } from "@/lib/exportCsv";
+import { getUserBenchmarkLimit } from "@/lib/urlAnalyzer";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -53,8 +54,10 @@ export default function Benchmark() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterProject, setFilterProject] = useState<string>("all");
-  const { isFeatureAvailable } = useFeatureFlags();
+  const { isFeatureAvailable, userPlan } = useFeatureFlags();
   const canAiEnrichment = isFeatureAvailable("ai_benchmark_enrichment");
+  const isStarter = userPlan === "starter";
+  const [benchmarkLimit, setBenchmarkLimit] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<string>("created_at");
   const [stats, setStats] = useState<any>(null);
   const [selectedBenchmark, setSelectedBenchmark] = useState<BenchmarkDetail | null>(null);
@@ -81,6 +84,12 @@ export default function Benchmark() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Load benchmark limit for Starter plan
+  useEffect(() => {
+    if (!user || !isStarter) return;
+    getUserBenchmarkLimit(user.id).then((limit) => setBenchmarkLimit(limit));
+  }, [user, isStarter]);
 
   // Load AI keys
   useEffect(() => {
@@ -334,6 +343,20 @@ export default function Benchmark() {
                 <p className="text-muted-foreground text-xs sm:text-sm mt-1">
                   Análise comparativa com concorrentes — gerada automaticamente a partir das URLs cadastradas nos projetos.
                 </p>
+                {isStarter && benchmarkLimit !== null && (
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${
+                      benchmarks.length >= benchmarkLimit
+                        ? "bg-red-500/10 text-red-500 border-red-500/30"
+                        : "bg-amber-500/10 text-amber-500 border-amber-500/30"
+                    }`}>
+                      {benchmarks.length >= benchmarkLimit
+                        ? `Esgotado (${benchmarks.length}/${benchmarkLimit})`
+                        : `${benchmarks.length}/${benchmarkLimit} benchmarks`
+                      } — Starter
+                    </Badge>
+                  </div>
+                )}
               </div>
               {benchmarks.length > 0 && (
                 <div className="flex items-center gap-1.5 shrink-0">

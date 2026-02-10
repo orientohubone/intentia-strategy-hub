@@ -1,85 +1,158 @@
+import { useState } from "react";
 import { Header } from "@/components/Header";
 import { SEO, buildBreadcrumb } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { ScoreRing } from "@/components/ScoreRing";
 import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
 import { BackToHomeButton } from "@/components/BackToHomeButton";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, MapPin, Clock, DollarSign, Users, Zap, Target, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Check, X, Minus, ChevronDown, ChevronUp, Sparkles, Shield, Zap } from "lucide-react";
 
+/* ─── Plan data (synthesized) ─── */
 const plans = [
   {
+    key: "starter",
     name: "Starter",
-    price: "Grátis",
-    description: "Ideal para conhecer a plataforma e validar sua estratégia",
-    features: [
+    badge: null,
+    icon: <Zap className="h-5 w-5" />,
+    priceLabel: "Grátis",
+    subtitle: "Para sempre",
+    description: "Valide sua estratégia antes de investir",
+    highlights: [
       "5 projetos ativos",
-      "Diagnóstico heurístico de URL (6 dimensões)",
-      "Score por canal: Google, Meta, LinkedIn, TikTok",
-      "Insights automáticos por projeto",
-      "Alertas de investimento prematuro",
-      "5 públicos-alvo por projeto",
-      "Dark/Light mode",
-      "Suporte por email",
-    ],
-    notIncluded: [
-      "Análise por IA (Gemini / Claude)",
-      "Benchmark competitivo (SWOT)",
-      "Plano Tático por canal",
-      "Exportação PDF e CSV",
-      "Notificações em tempo real",
+      "Diagnóstico heurístico (6 dimensões)",
+      "Score por canal de mídia",
+      "Insights automáticos",
     ],
     cta: "Começar Grátis",
     popular: false,
   },
   {
+    key: "professional",
     name: "Professional",
-    price: "R$ 97",
-    description: "Para empresas que levam estratégia de mídia a sério",
-    features: [
+    badge: "Mais Popular",
+    icon: <Sparkles className="h-5 w-5" />,
+    price: 97,
+    priceLabel: null,
+    subtitle: null,
+    description: "Estratégia de mídia com IA e benchmark",
+    highlights: [
       "Projetos ilimitados",
-      "Diagnóstico heurístico de URL (6 dimensões)",
-      "Análise por IA — Gemini e Claude (use sua API key)",
-      "Score por canal com riscos e recomendações",
-      "Benchmark competitivo com SWOT e gap analysis",
-      "Plano Tático por canal (campanha, funil, copy, segmentação)",
-      "Alertas estratégicos consolidados",
-      "Insights agrupados por projeto",
-      "Públicos-alvo ilimitados com keywords",
-      "Exportação PDF e CSV",
-      "Notificações em tempo real",
-      "Suporte prioritário",
-    ],
-    notIncluded: [
-      "API access",
-      "Consultoria estratégica",
+      "Análise por IA (Gemini + Claude)",
+      "Benchmark competitivo com SWOT",
+      "Plano Tático por canal",
     ],
     cta: "Assinar Agora",
     popular: true,
   },
   {
+    key: "enterprise",
     name: "Enterprise",
-    price: "Personalizado",
-    description: "Solução sob medida para operações de marketing complexas",
-    features: [
+    badge: null,
+    icon: <Shield className="h-5 w-5" />,
+    priceLabel: "Sob medida",
+    subtitle: "Fale conosco",
+    description: "Para operações de marketing complexas",
+    highlights: [
       "Tudo do Professional",
-      "API access completo",
-      "Múltiplos usuários por conta",
-      "SLA dedicado com suporte 24/7",
-      "Consultoria estratégica mensal",
-      "Onboarding e treinamento da equipe",
-      "Integrações customizadas",
-      "Relatórios white-label",
+      "API access + integrações",
+      "Múltiplos usuários",
+      "Consultoria estratégica",
     ],
-    notIncluded: [],
     cta: "Falar com Consultor",
     popular: false,
   },
 ];
 
+/* ─── Feature comparison table ─── */
+type FeatureValue = boolean | string;
+
+interface FeatureCategory {
+  category: string;
+  features: {
+    name: string;
+    starter: FeatureValue;
+    professional: FeatureValue;
+    enterprise: FeatureValue;
+  }[];
+}
+
+const featureComparison: FeatureCategory[] = [
+  {
+    category: "Diagnóstico e Análise",
+    features: [
+      { name: "Diagnóstico heurístico de URL", starter: true, professional: true, enterprise: true },
+      { name: "Dimensões analisadas", starter: "6", professional: "6", enterprise: "6" },
+      { name: "Score por canal (Google, Meta, LinkedIn, TikTok)", starter: true, professional: true, enterprise: true },
+      { name: "Insights automáticos por projeto", starter: true, professional: true, enterprise: true },
+      { name: "Alertas de investimento prematuro", starter: true, professional: true, enterprise: true },
+      { name: "Análise por IA (Gemini / Claude)", starter: false, professional: true, enterprise: true },
+      { name: "Riscos e recomendações por canal", starter: false, professional: true, enterprise: true },
+    ],
+  },
+  {
+    category: "Estratégia e Planejamento",
+    features: [
+      { name: "Benchmark competitivo (SWOT)", starter: "5", professional: "Ilimitados", enterprise: "Ilimitados" },
+      { name: "Gap analysis", starter: false, professional: true, enterprise: true },
+      { name: "Plano Tático por canal", starter: false, professional: true, enterprise: true },
+      { name: "Copy frameworks e segmentação", starter: false, professional: true, enterprise: true },
+      { name: "Alertas estratégicos consolidados", starter: false, professional: true, enterprise: true },
+      { name: "Consultoria estratégica mensal", starter: false, professional: false, enterprise: true },
+    ],
+  },
+  {
+    category: "Projetos e Públicos",
+    features: [
+      { name: "Projetos ativos", starter: "5", professional: "Ilimitados", enterprise: "Ilimitados" },
+      { name: "Públicos-alvo por projeto", starter: "5", professional: "Ilimitados", enterprise: "Ilimitados" },
+      { name: "Keywords por público", starter: true, professional: true, enterprise: true },
+      { name: "URLs de concorrentes", starter: true, professional: true, enterprise: true },
+    ],
+  },
+  {
+    category: "Exportação e Integrações",
+    features: [
+      { name: "Exportação PDF", starter: false, professional: true, enterprise: true },
+      { name: "Exportação CSV", starter: false, professional: true, enterprise: true },
+      { name: "API access", starter: false, professional: false, enterprise: true },
+      { name: "Integrações customizadas", starter: false, professional: false, enterprise: true },
+    ],
+  },
+  {
+    category: "Plataforma e Suporte",
+    features: [
+      { name: "Dark / Light mode", starter: true, professional: true, enterprise: true },
+      { name: "Notificações em tempo real", starter: false, professional: true, enterprise: true },
+      { name: "Múltiplos usuários por conta", starter: false, professional: false, enterprise: true },
+      { name: "Onboarding e treinamento", starter: false, professional: false, enterprise: true },
+      { name: "Suporte", starter: "Email", professional: "Prioritário", enterprise: "24/7 dedicado" },
+      { name: "SLA dedicado", starter: false, professional: false, enterprise: true },
+    ],
+  },
+];
+
+/* ─── Helper to render cell value ─── */
+function FeatureCell({ value }: { value: FeatureValue }) {
+  if (value === true) return <Check className="h-5 w-5 text-primary mx-auto" />;
+  if (value === false) return <Minus className="h-4 w-4 text-muted-foreground/40 mx-auto" />;
+  return <span className="text-sm font-medium text-foreground">{value}</span>;
+}
+
 export default function Pricing() {
   const navigate = useNavigate();
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>(
+    Object.fromEntries(featureComparison.map((c) => [c.category, true]))
+  );
+
+  const toggleCategory = (cat: string) =>
+    setExpandedCategories((prev) => ({ ...prev, [cat]: !prev[cat] }));
+
+  const handleCta = (key: string) => {
+    if (key === "enterprise") navigate("/contato");
+    else if (key === "professional") navigate("/assinar");
+    else navigate("/auth");
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -139,73 +212,82 @@ export default function Pricing() {
         ]}
       />
       <Header />
+
       {/* Hero Section */}
-      <section className="pt-32 pb-16">
+      <section className="pt-32 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6">
-            Escolha seu plano de <span className="text-gradient bg-gradient-to-r from-primary to-orange-600 bg-clip-text text-transparent">estratégia</span>
+            Escolha seu plano de{" "}
+            <span className="bg-gradient-to-r from-primary to-orange-600 bg-clip-text text-transparent">
+              estratégia
+            </span>
           </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Planos flexíveis para empresas de todos os tamanhos. Comece grátis e evolua conforme sua necessidade.
+          <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+            Comece grátis e evolua conforme sua necessidade. Sem surpresas.
           </p>
         </div>
       </section>
 
-      {/* Pricing Cards */}
-      <section className="pb-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {plans.map((plan, index) => (
+      {/* ─── Pricing Cards (synthesized) ─── */}
+      <section className="pb-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
+            {plans.map((plan) => (
               <div
-                key={plan.name}
-                className={`relative rounded-2xl border ${
-                  plan.popular 
-                    ? 'border-primary shadow-2xl scale-105' 
-                    : 'border-border bg-card'
-                } p-8`}
+                key={plan.key}
+                className={`relative flex flex-col rounded-2xl border transition-all duration-300 ${
+                  plan.popular
+                    ? "border-primary shadow-2xl shadow-primary/10 md:scale-105 bg-card"
+                    : "border-border bg-card hover:border-primary/30 hover:shadow-lg"
+                } p-7`}
               >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium">
-                      Mais Popular
+                {plan.badge && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                    <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-xs font-semibold tracking-wide uppercase">
+                      {plan.badge}
                     </span>
                   </div>
                 )}
 
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-foreground mb-2">{plan.name}</h3>
-                  <div className="mb-4">
-                    <span className="text-4xl font-bold text-foreground">{plan.price}</span>
-                    {plan.price !== "Grátis" && plan.price !== "Personalizado" && (
-                      <span className="text-muted-foreground">/mês</span>
+                {/* Header */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className={`p-2 rounded-lg ${plan.popular ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                      {plan.icon}
+                    </div>
+                    <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
+                  </div>
+
+                  <div className="flex items-baseline gap-1 mb-1">
+                    <span className="text-4xl font-bold text-foreground">
+                      {plan.priceLabel || `R$ ${plan.price}`}
+                    </span>
+                    {!plan.priceLabel && (
+                      <span className="text-muted-foreground text-sm">/mês</span>
                     )}
                   </div>
-                  <p className="text-muted-foreground">{plan.description}</p>
+                  {plan.priceLabel && plan.subtitle && (
+                    <span className="text-sm text-muted-foreground">{plan.subtitle}</span>
+                  )}
+                  <p className="text-sm text-muted-foreground mt-3">{plan.description}</p>
                 </div>
 
-                <div className="space-y-4 mb-8">
-                  {plan.features.map((feature) => (
-                    <div key={feature} className="flex items-center gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                      <span className="text-sm text-foreground">{feature}</span>
-                    </div>
-                  ))}
-                  {plan.notIncluded.map((feature) => (
-                    <div key={feature} className="flex items-center gap-3 opacity-50">
-                      <div className="h-5 w-5 border-2 border-border rounded-full flex-shrink-0" />
-                      <span className="text-sm text-muted-foreground">{feature}</span>
+                {/* Highlights */}
+                <div className="space-y-3 mb-7 flex-1">
+                  {plan.highlights.map((h) => (
+                    <div key={h} className="flex items-start gap-2.5">
+                      <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-foreground">{h}</span>
                     </div>
                   ))}
                 </div>
 
-                <Button 
-                  className="w-full" 
+                {/* CTA */}
+                <Button
+                  className="w-full"
                   variant={plan.popular ? "hero" : "outline"}
-                  onClick={() => {
-                    if (plan.name === "Enterprise") navigate('/contato');
-                    else if (plan.name === "Professional") navigate('/assinar');
-                    else navigate('/auth');
-                  }}
+                  size="lg"
+                  onClick={() => handleCta(plan.key)}
                 >
                   {plan.cta}
                   <ArrowRight className="h-4 w-4 ml-2" />
@@ -216,59 +298,146 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="py-20 bg-muted/50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-foreground mb-12">
-            Perguntas Frequentes
-          </h2>
-          <div className="space-y-6">
-            <div className="bg-card rounded-lg p-6 border border-border">
-              <h3 className="font-semibold text-foreground mb-2">
-                Posso mudar de plano a qualquer momento?
-              </h3>
-              <p className="text-muted-foreground">
-                Sim! Você pode fazer upgrade ou downgrade a qualquer momento. As alterações são refletidas na próxima cobrança.
-              </p>
+      {/* ─── Feature Comparison Table ─── */}
+      <section className="py-20 bg-muted/30">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-foreground mb-3">
+              Compare todos os recursos
+            </h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Veja em detalhes o que cada plano oferece para tomar a melhor decisão.
+            </p>
+          </div>
+
+          <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
+            {/* Table header */}
+            <div className="grid grid-cols-4 gap-0 border-b border-border bg-muted/50">
+              <div className="p-4 lg:p-5">
+                <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                  Recurso
+                </span>
+              </div>
+              {plans.map((plan) => (
+                <div key={plan.key} className="p-4 lg:p-5 text-center">
+                  <span className={`text-sm font-bold ${plan.popular ? "text-primary" : "text-foreground"}`}>
+                    {plan.name}
+                  </span>
+                </div>
+              ))}
             </div>
-            <div className="bg-card rounded-lg p-6 border border-border">
-              <h3 className="font-semibold text-foreground mb-2">
-                O plano grátis tem limite de tempo?
-              </h3>
-              <p className="text-muted-foreground">
-                Não. O plano Starter é gratuito para sempre, com até 5 projetos ativos. Ideal para validar a plataforma antes de investir.
-              </p>
-            </div>
-            <div className="bg-card rounded-lg p-6 border border-border">
-              <h3 className="font-semibold text-foreground mb-2">
-                Preciso de API key para usar a análise por IA?
-              </h3>
-              <p className="text-muted-foreground">
-                Sim. No plano Professional, você configura sua própria API key do Google Gemini ou Anthropic Claude nas configurações. Assim, você tem controle total sobre custos e modelos.
-              </p>
-            </div>
-            <div className="bg-card rounded-lg p-6 border border-border">
-              <h3 className="font-semibold text-foreground mb-2">
-                O que é o Plano Tático?
-              </h3>
-              <p className="text-muted-foreground">
-                É um módulo exclusivo do Professional que permite estruturar campanhas canal por canal — tipo de campanha, etapa do funil, lances, extensões, copy frameworks, segmentação e testes A/B.
-              </p>
-            </div>
-            <div className="bg-card rounded-lg p-6 border border-border">
-              <h3 className="font-semibold text-foreground mb-2">
-                Qual forma de pagamento aceitam?
-              </h3>
-              <p className="text-muted-foreground">
-                Aceitamos cartão de crédito, boleto bancário e PIX para planos Professional. Enterprise tem condições especiais.
-              </p>
+
+            {/* Categories */}
+            {featureComparison.map((cat) => (
+              <div key={cat.category}>
+                {/* Category header */}
+                <button
+                  onClick={() => toggleCategory(cat.category)}
+                  className="w-full grid grid-cols-4 gap-0 border-b border-border bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer"
+                >
+                  <div className="col-span-4 p-4 lg:px-5 flex items-center gap-2">
+                    {expandedCategories[cat.category] ? (
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="text-sm font-semibold text-foreground">{cat.category}</span>
+                  </div>
+                </button>
+
+                {/* Feature rows */}
+                {expandedCategories[cat.category] &&
+                  cat.features.map((feature, idx) => (
+                    <div
+                      key={feature.name}
+                      className={`grid grid-cols-4 gap-0 border-b border-border/50 ${
+                        idx % 2 === 0 ? "" : "bg-muted/10"
+                      } hover:bg-muted/20 transition-colors`}
+                    >
+                      <div className="p-3.5 lg:px-5 flex items-center">
+                        <span className="text-sm text-foreground">{feature.name}</span>
+                      </div>
+                      <div className="p-3.5 flex items-center justify-center">
+                        <FeatureCell value={feature.starter} />
+                      </div>
+                      <div className="p-3.5 flex items-center justify-center">
+                        <FeatureCell value={feature.professional} />
+                      </div>
+                      <div className="p-3.5 flex items-center justify-center">
+                        <FeatureCell value={feature.enterprise} />
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            ))}
+
+            {/* Table footer CTAs */}
+            <div className="grid grid-cols-4 gap-0 bg-muted/30">
+              <div className="p-5" />
+              {plans.map((plan) => (
+                <div key={plan.key} className="p-4 lg:p-5 flex justify-center">
+                  <Button
+                    variant={plan.popular ? "hero" : "outline"}
+                    size="sm"
+                    onClick={() => handleCta(plan.key)}
+                  >
+                    {plan.cta}
+                  </Button>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
+      {/* ─── FAQ ─── */}
       <section className="py-20">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-center text-foreground mb-12">
+            Perguntas Frequentes
+          </h2>
+          <div className="space-y-4">
+            {[
+              {
+                q: "Posso mudar de plano a qualquer momento?",
+                a: "Sim! Você pode fazer upgrade ou downgrade a qualquer momento. As alterações são refletidas na próxima cobrança.",
+              },
+              {
+                q: "O plano grátis tem limite de tempo?",
+                a: "Não. O plano Starter é gratuito para sempre, com até 5 projetos ativos. Ideal para validar a plataforma antes de investir.",
+              },
+              {
+                q: "Preciso de API key para usar a análise por IA?",
+                a: "Sim. No plano Professional, você configura sua própria API key do Google Gemini ou Anthropic Claude nas configurações. Controle total sobre custos e modelos.",
+              },
+              {
+                q: "O que é o Plano Tático?",
+                a: "Módulo exclusivo do Professional para estruturar campanhas canal por canal — tipo de campanha, etapa do funil, lances, copy frameworks, segmentação e testes A/B.",
+              },
+              {
+                q: "Qual forma de pagamento aceitam?",
+                a: "Cartão de crédito, boleto bancário e PIX para planos Professional. Enterprise tem condições especiais.",
+              },
+            ].map((faq) => (
+              <details
+                key={faq.q}
+                className="group bg-card rounded-xl border border-border overflow-hidden"
+              >
+                <summary className="flex items-center justify-between p-5 cursor-pointer list-none hover:bg-muted/30 transition-colors">
+                  <span className="font-semibold text-foreground pr-4">{faq.q}</span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform group-open:rotate-180" />
+                </summary>
+                <div className="px-5 pb-5 pt-0">
+                  <p className="text-muted-foreground text-sm leading-relaxed">{faq.a}</p>
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── CTA ─── */}
+      <section className="py-20 bg-muted/30">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-foreground mb-4">
             Pronto para tomar decisões mais inteligentes?
@@ -276,15 +445,16 @@ export default function Pricing() {
           <p className="text-lg text-muted-foreground mb-8">
             Comece grátis e veja como a Intentia pode transformar sua estratégia de mídia paga.
           </p>
-          <Button variant="hero" size="xl" onClick={() => navigate('/auth')}>
+          <Button variant="hero" size="xl" onClick={() => navigate("/auth")}>
             Começar Análise Grátis
             <ArrowRight className="h-5 w-5 ml-2" />
           </Button>
         </div>
       </section>
+
       {/* Footer */}
       <Footer />
-      
+
       {/* Back to Top Button */}
       <BackToTop />
       {/* Back to Home Button */}

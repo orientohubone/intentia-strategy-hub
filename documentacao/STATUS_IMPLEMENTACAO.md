@@ -583,6 +583,14 @@ O **Intentia Strategy Hub** está na **versão 2.8.0** com funcionalidades avan�
 72. **Expandir/Recolher todos** — botões globais em todas as páginas com seções colapsáveis
 73. **Migration SQL** — `insights_ai_enrichment.sql` com source, ai_enrichment, priority, ai_provider, ai_model, ai_enriched_at
 74. **runInsightsAiEnrichment()** — função em aiAnalyzer.ts para enriquecer insights existentes e gerar novos
+75. **Página de Preços redesenhada** — cards sintetizados, tabela comparativa de features por plano com categorias colapsáveis, FAQ accordion, remoção do toggle anual (não implementado) e white-label
+76. **Benchmark liberado no Starter** — tabela de preços atualizada: Benchmark SWOT = "5" para Starter, "Ilimitados" para Professional/Enterprise
+77. **Limite de benchmarks (Starter)** — máximo 5 benchmarks por usuário no plano Starter, com verificação em `Projects.tsx` e `countUserBenchmarks()` em `urlAnalyzer.ts`
+78. **Indicador de limite no Benchmark** — badge `X/5 benchmarks (Starter)` na página de Benchmark, muda de amarelo para vermelho ao atingir o limite
+79. **Limites editáveis por feature (Admin)** — inputs de `usage_limit` + select de `limit_period` na aba Controle de Planos, conectados à função `updatePlanLimit()` existente
+80. **Limites & Uso unificados (Admin Clientes)** — seção única com limites do tenant (azul: análises usadas, limite mensal, públicos-alvo) + limites por feature do plano (verde: inputs editáveis), legenda de cores, botões de ação rápida no header
+81. **SQL atualizado** — `benchmark_swot` starter `usage_limit` de 2 → 5 em `admin_schema.sql`
+82. **Admin Architecture atualizado** — Starter: "5 benchmarks/mês", Professional: "Benchmarks ilimitados", Enterprise: "SLA dedicado" (removido white-label)
 
 ### 📋 Próximos Passos — Etapa Operacional (v3.0)
 1. Gestão de campanhas (criar/editar/monitorar campanhas reais)
@@ -596,4 +604,4 @@ O **Intentia Strategy Hub** está na **versão 2.8.0** com funcionalidades avan�
 
 ---
 
-**Status:** 🟢 **v2.9.0 — ENRIQUECIMENTO IA DE INSIGHTS + UX COLAPSÁVEL**
+**Status:** 🟢 **v3.0.0 — PRICING REDESIGN + BENCHMARK LIMITS + ADMIN LIMITS UI**

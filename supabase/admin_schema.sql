@@ -202,7 +202,7 @@ INSERT INTO plan_features (feature_key, plan, is_enabled, usage_limit, limit_per
   ('ai_project_analysis', 'starter', false, NULL, NULL),
   ('ai_benchmark_enrichment', 'starter', false, NULL, NULL),
   ('ai_api_keys', 'starter', false, NULL, NULL),
-  ('benchmark_swot', 'starter', true, 2, 'monthly'),
+  ('benchmark_swot', 'starter', true, 5, 'monthly'),
   ('benchmark_gap_analysis', 'starter', false, NULL, NULL),
   ('tactical_plan', 'starter', false, NULL, NULL),
   ('tactical_templates', 'starter', false, NULL, NULL),

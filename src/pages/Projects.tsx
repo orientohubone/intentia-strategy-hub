@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useTenantData } from "@/hooks/useTenantData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { analyzeUrl, saveAnalysisResults, analyzeCompetitors, cleanBenchmarks, saveCompetitorBenchmark } from "@/lib/urlAnalyzer";
+import { analyzeUrl, saveAnalysisResults, analyzeCompetitors, cleanBenchmarks, saveCompetitorBenchmark, checkBenchmarkLimit } from "@/lib/urlAnalyzer";
 import type { UrlAnalysis } from "@/lib/urlAnalyzer";
 import { AnalysisProgressTracker } from "@/components/AnalysisProgressTracker";
 import { StructuredDataViewer } from "@/components/StructuredDataViewer";
@@ -321,9 +321,16 @@ export default function Projects() {
           setHeuristicResults(prev => ({ ...prev, [projectId]: analysis }));
           // Clean old benchmarks for this project before generating new ones
           await cleanBenchmarks(projectId, user.id);
-          // Analyze competitors and generate benchmarks
+          // Analyze competitors and generate benchmarks (with plan limit enforcement)
           if (competitorUrls.length > 0) {
             for (let i = 0; i < competitorUrls.length; i++) {
+              // Check limit before each competitor (saveCompetitorBenchmark also checks, but we avoid unnecessary URL fetches)
+              const limitCheck = await checkBenchmarkLimit(user.id);
+              if (!limitCheck.allowed) {
+                toast.info(`Limite de ${limitCheck.limit} benchmarks atingido no plano Starter. Faça upgrade para ilimitados.`);
+                break;
+              }
+
               setCurrentCompetitorIndex(i);
               try {
                 const compAnalysis = await analyzeUrl(competitorUrls[i]);
@@ -333,7 +340,7 @@ export default function Projects() {
                 } catch {
                   competitorName = competitorUrls[i];
                 }
-                // Save benchmark (reuse internal logic)
+                // Save benchmark (reuse internal logic — also enforces limit internally)
                 await saveCompetitorBenchmark(projectId, user.id, { name: competitorName, niche: projectNiche, url: competitorUrls[i] }, compAnalysis);
               } catch (err: any) {
                 console.error(`[benchmark] Erro ao analisar concorrente ${competitorUrls[i]}:`, err.message);

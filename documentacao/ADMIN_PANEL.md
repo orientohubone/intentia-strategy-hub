@@ -2,7 +2,7 @@
 
 ## 📊 Visão Geral
 
-**Versão:** 2.8.0  
+**Versão:** 3.0.0  
 **Rota:** `/admin` (protegida) | `/admin/login` (login)  
 **Acesso:** CNPJ + Senha (autenticação separada do Supabase Auth)  
 **Sessão:** 4 horas com expiração automática  
@@ -51,7 +51,7 @@ O Painel Administrativo é uma área restrita ao founder/administrador da Intent
 | `src/hooks/useFeatureFlags.ts` | Hook para verificar disponibilidade de features por plano |
 | `src/components/AdminProtectedRoute.tsx` | Guard de rota — redireciona para `/admin/login` se não autenticado |
 | `src/pages/AdminLogin.tsx` | Tela de login (dark theme) |
-| `src/pages/AdminPanel.tsx` | Painel principal com 3 abas |
+| `src/pages/AdminPanel.tsx` | Painel principal com 5 abas (Features, Planos, Clientes, Status, Arquitetura) |
 
 ### Arquivos SQL
 
@@ -218,17 +218,20 @@ Override de features por usuário específico.
 
 | Plano | Preço | Features Habilitadas |
 |-------|-------|---------------------|
-| **Starter** | Grátis | Heurística (5/mês), Dados Estruturados (viewer), Scores, Insights, Alertas, 1 Público, Notificações, Dark Mode |
-| **Professional** | R$97/mês | Tudo do Starter + IA, Benchmark completo, Tático, Exportação, Brand, Backup, ilimitado |
-| **Enterprise** | Sob consulta | Tudo do Professional + API, multi-user, SLA, white-label |
+| **Starter** | Grátis | Heurística (5/mês), Dados Estruturados (viewer), Benchmark SWOT (5/mês), Scores, Insights, Alertas, Públicos (5), Notificações, Dark Mode |
+| **Professional** | R$97/mês | Tudo do Starter + IA, Benchmark ilimitado, Tático, Exportação, Brand, Backup, ilimitado |
+| **Enterprise** | Sob consulta | Tudo do Professional + API, multi-user, SLA dedicado |
 
 ### Funcionalidades da Aba
 
-- **Visão por plano** — card para cada plano com lista de todas as features
+- **Visão por plano** — card para cada plano com lista de todas as features agrupadas por categoria
 - **Switch** para habilitar/desabilitar cada feature no plano
-- **Badges** de limites de uso (ex: "5/monthly")
+- **Input de limite editável** — campo numérico inline para definir `usage_limit` (vazio = sem limite, -1 = ilimitado)
+- **Select de período** — dropdown inline para `limit_period` (Mensal, Diário, Total, Sem período)
 - **Badge de status** da feature (ativo, desativado, etc.)
 - **Contador** de features habilitadas vs total
+- **Categorias colapsáveis** dentro de cada plano
+- **Expandir/Colapsar** todos os planos e categorias
 
 ---
 
@@ -250,7 +253,12 @@ Override de features por usuário específico.
 - **Lista expandível** — clique no cliente para ver detalhes
 - **Alterar plano** do cliente via botões (Starter/Professional/Enterprise)
 - **Alteração segura** — usa RPC `admin_change_user_plan()` que bypassa o trigger `prevent_plan_escalation`
-- **Visualização de features** disponíveis para o plano do cliente
+- **Limites & Uso unificados** — seção única com:
+  - 🔵 **Limites do tenant** (destacados em azul): análises usadas, limite mensal de análises, máx. públicos-alvo — editáveis por usuário
+  - 🟢 **Limites por feature do plano** (em verde): input de `usage_limit` + select de `limit_period` para cada feature habilitada — alterações afetam todos os usuários do plano
+  - **Legenda de cores** explicando a diferença entre limites do usuário e do plano
+  - **Ações rápidas** no header: Zerar análises, Tudo ilimitado, Padrão Starter
+- **Controle de features por cliente** — switches individuais para override de features (usando `user_feature_overrides`)
 - **Busca** por empresa, nome ou email
 - **Filtro** por plano
 - **Audit log** — toda alteração de plano é registrada em `admin_audit_log`
@@ -373,4 +381,4 @@ Para configurar o painel admin do zero:
 - [ ] Adicionar aba de Audit Log no painel (visualizar ações realizadas)
 - [ ] Dashboard de métricas no admin (signups, análises, conversões)
 - [ ] Notificações admin (novo signup, upgrade de plano, etc.)
-- [ ] Gestão de planos com limites editáveis por feature/plano
+- [x] Gestão de planos com limites editáveis por feature/plano (v3.0.0)

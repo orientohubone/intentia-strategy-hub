@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { X, Plus, Target, AlertTriangle, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { checkBenchmarkLimit } from "@/lib/urlAnalyzer";
+import { useAuth } from "@/hooks/useAuth";
 
 interface BenchmarkFormProps {
   projectId?: string;
@@ -124,11 +126,22 @@ export function BenchmarkForm({
     }
   };
 
+  const { user } = useAuth();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProject) {
       toast.error("Selecione um projeto");
       return;
+    }
+
+    // Enforce benchmark limit for new benchmarks (not edits)
+    if (!benchmarkId && user) {
+      const limitCheck = await checkBenchmarkLimit(user.id);
+      if (!limitCheck.allowed) {
+        toast.error(`Limite de ${limitCheck.limit} benchmarks atingido no plano Starter. Faça upgrade para criar mais.`);
+        return;
+      }
     }
 
     setLoading(true);

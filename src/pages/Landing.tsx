@@ -83,7 +83,7 @@ function ShowcaseSlider() {
         <div className="relative rounded-2xl border border-border shadow-xl overflow-hidden">
         {/* Light mode — full width base */}
         <img
-          src="/intentia-light1.png"
+          src="/intentia-light2.png"
           alt="Intentia Dashboard - Light Mode"
           className="w-full h-auto block pointer-events-none"
           draggable={false}
@@ -94,7 +94,7 @@ function ShowcaseSlider() {
           style={{ clipPath: `inset(0 ${100 - sliderPos}% 0 0)` }}
         >
           <img
-            src="/intentia-dark1.png"
+            src="/intentia-dark2.png"
             alt="Intentia Dashboard - Dark Mode"
             className="w-full h-auto block pointer-events-none"
             draggable={false}
@@ -236,7 +236,7 @@ export default function Landing() {
                 name: "Starter",
                 price: "0",
                 priceCurrency: "BRL",
-                description: "5 projetos, diagnóstico heurístico, scores por canal, insights e alertas estratégicos.",
+                description: "5 projetos, diagnóstico heurístico, scores por canal, insights, alertas estratégicos e benchmark SWOT (5/mês).",
               },
               {
                 "@type": "Offer",
@@ -734,6 +734,8 @@ export default function Landing() {
                 <li>✓ Diagnóstico heurístico de URL</li>
                 <li>✓ Score por canal (4 canais)</li>
                 <li>✓ Insights e alertas automáticos</li>
+                <li>✓ Benchmark SWOT (5/mês)</li>
+                <li>✓ 5 públicos-alvo</li>
               </ul>
               <Button variant="outline" className="w-full" onClick={() => navigate('/auth')}>
                 Começar Grátis
@@ -753,9 +755,10 @@ export default function Landing() {
               <ul className="space-y-3 text-sm mb-6">
                 <li>✓ Projetos ilimitados</li>
                 <li>✓ Análise por IA (Gemini & Claude)</li>
-                <li>✓ Benchmark competitivo + SWOT</li>
+                <li>✓ Benchmark ilimitado + Gap Analysis</li>
                 <li>✓ Plano Tático por canal</li>
                 <li>✓ Exportação PDF e CSV</li>
+                <li>✓ Públicos-alvo ilimitados</li>
               </ul>
               <Button variant="secondary" className="w-full" onClick={() => navigate('/precos')}>
                 Ver Detalhes

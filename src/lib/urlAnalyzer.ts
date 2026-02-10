@@ -261,6 +261,63 @@ export async function createAnalysisNotification(
 }
 
 // =====================================================
+// BENCHMARK LIMIT ENFORCEMENT
+// =====================================================
+
+export async function countUserBenchmarks(userId: string): Promise<number> {
+  const { count, error } = await (supabase as any)
+    .from("benchmarks")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("[benchmark] Erro ao contar benchmarks:", error);
+    return 0;
+  }
+  return count || 0;
+}
+
+/**
+ * Get the benchmark limit for a user based on their plan.
+ * Returns null if unlimited (Professional/Enterprise).
+ */
+export async function getUserBenchmarkLimit(userId: string): Promise<number | null> {
+  // Get user plan
+  const { data: tenant } = await (supabase as any)
+    .from("tenant_settings")
+    .select("plan")
+    .eq("user_id", userId)
+    .single();
+
+  const plan = tenant?.plan || "starter";
+
+  // Professional and Enterprise have no limit
+  if (plan !== "starter") return null;
+
+  // Get limit from plan_features
+  const { data: pf } = await (supabase as any)
+    .from("plan_features")
+    .select("usage_limit")
+    .eq("feature_key", "benchmark_swot")
+    .eq("plan", "starter")
+    .single();
+
+  return pf?.usage_limit ?? 5;
+}
+
+/**
+ * Check if user can create more benchmarks.
+ * Returns { allowed, current, limit } — limit is null if unlimited.
+ */
+export async function checkBenchmarkLimit(userId: string): Promise<{ allowed: boolean; current: number; limit: number | null }> {
+  const limit = await getUserBenchmarkLimit(userId);
+  if (limit === null) return { allowed: true, current: 0, limit: null };
+
+  const current = await countUserBenchmarks(userId);
+  return { allowed: current < limit, current, limit };
+}
+
+// =====================================================
 // CLEAN OLD BENCHMARKS for a project
 // =====================================================
 
@@ -325,6 +382,13 @@ export async function saveCompetitorBenchmark(
   projectData: { name: string; niche: string; url: string },
   analysis: UrlAnalysis
 ): Promise<void> {
+  // Enforce benchmark limit before saving
+  const limitCheck = await checkBenchmarkLimit(userId);
+  if (!limitCheck.allowed) {
+    console.warn(`[benchmark] Limite atingido (${limitCheck.current}/${limitCheck.limit}). Benchmark não salvo para ${projectData.url}`);
+    return;
+  }
+
   // Derive SWOT from analysis
   const strengths: string[] = [];
   const weaknesses: string[] = [];

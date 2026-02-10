@@ -79,6 +79,7 @@ const PLAN_FEATURES: Record<string, { label: string; price: string; features: st
       "Score por canal: Google, Meta, LinkedIn, TikTok",
       "Insights automáticos por projeto",
       "Alertas de investimento prematuro",
+      "Benchmark competitivo SWOT (5/mês)",
       "5 públicos-alvo por projeto",
     ],
   },
@@ -111,7 +112,7 @@ const PLAN_FEATURES: Record<string, { label: string; price: string; features: st
       "Múltiplos usuários por conta",
       "SLA dedicado com suporte 24/7",
       "Consultoria estratégica mensal",
-      "Relatórios white-label",
+      "Integrações customizadas",
     ],
   },
 };
@@ -1376,7 +1377,7 @@ export default function Settings() {
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {[
                               "Análise por IA (Gemini & Claude)",
-                              "Benchmark competitivo + SWOT",
+                              "Benchmark ilimitado + Gap Analysis",
                               "Plano Tático por canal",
                               "Exportação PDF e CSV",
                               "Notificações em tempo real",

@@ -48,6 +48,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import AdminStatusTab from "@/components/AdminStatusTab";
+import AdminArchitectureTab from "@/components/AdminArchitectureTab";
 
 // =====================================================
 // TYPES
@@ -140,7 +141,7 @@ export default function AdminPanel() {
   const { admin, logout } = useAdminAuth();
 
   // State
-  const [activeTab, setActiveTab] = useState<"features" | "plans" | "users" | "status">("features");
+  const [activeTab, setActiveTab] = useState<"features" | "plans" | "users" | "status" | "architecture">("features");
   const [features, setFeatures] = useState<FeatureFlag[]>([]);
   const [planFeatures, setPlanFeatures] = useState<PlanFeature[]>([]);
   const [users, setUsers] = useState<TenantUser[]>([]);
@@ -515,6 +516,7 @@ export default function AdminPanel() {
             { key: "plans" as const, label: "Controle de Planos", icon: Settings2 },
             { key: "users" as const, label: "Clientes", icon: Users },
             { key: "status" as const, label: "Status Page", icon: Activity },
+            { key: "architecture" as const, label: "Arquitetura", icon: Layers },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -532,7 +534,7 @@ export default function AdminPanel() {
         </div>
 
         {/* Search + Filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        {activeTab !== "architecture" && <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
             <Input
@@ -584,7 +586,7 @@ export default function AdminPanel() {
               </SelectContent>
             </Select>
           )}
-        </div>
+        </div>}
 
         {/* Content */}
         {loading ? (
@@ -905,10 +907,44 @@ export default function AdminPanel() {
                                             </p>
                                           </div>
                                           <div className="flex items-center gap-2 flex-shrink-0">
-                                            {pf?.usage_limit && (
-                                              <Badge className="text-[9px] bg-amber-500/10 text-amber-500 border-amber-500/20">
-                                                {pf.usage_limit}/{pf.limit_period}
-                                              </Badge>
+                                            {isEnabled && (
+                                              <div className="flex items-center gap-1">
+                                                <Input
+                                                  type="number"
+                                                  min={-1}
+                                                  placeholder="∞"
+                                                  className="h-6 w-14 text-[10px] bg-slate-900 border-slate-700 text-white text-center px-1"
+                                                  defaultValue={pf?.usage_limit ?? ""}
+                                                  title="Limite de uso (-1 = ilimitado, vazio = sem limite)"
+                                                  onBlur={(e) => {
+                                                    const raw = e.target.value.trim();
+                                                    const newLimit = raw === "" ? null : parseInt(raw);
+                                                    const currentLimit = pf?.usage_limit ?? null;
+                                                    if (newLimit !== currentLimit) {
+                                                      const period = newLimit !== null ? (pf?.limit_period || "monthly") : null;
+                                                      updatePlanLimit(feature.feature_key, plan, newLimit, period);
+                                                    }
+                                                  }}
+                                                  onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                                                />
+                                                <Select
+                                                  value={pf?.limit_period || "none"}
+                                                  onValueChange={(val) => {
+                                                    const period = val === "none" ? null : val;
+                                                    updatePlanLimit(feature.feature_key, plan, pf?.usage_limit ?? null, period);
+                                                  }}
+                                                >
+                                                  <SelectTrigger className="h-6 w-[72px] text-[9px] bg-slate-900 border-slate-700 text-slate-400 px-1.5">
+                                                    <SelectValue />
+                                                  </SelectTrigger>
+                                                  <SelectContent>
+                                                    <SelectItem value="none">Sem período</SelectItem>
+                                                    <SelectItem value="monthly">Mensal</SelectItem>
+                                                    <SelectItem value="daily">Diário</SelectItem>
+                                                    <SelectItem value="total">Total</SelectItem>
+                                                  </SelectContent>
+                                                </Select>
+                                              </div>
                                             )}
                                             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                                               feature.status === "active" ? "bg-green-500" :
@@ -939,6 +975,10 @@ export default function AdminPanel() {
                 ===================================================== */}
             {activeTab === "status" && (
               <AdminStatusTab />
+            )}
+
+            {activeTab === "architecture" && (
+              <AdminArchitectureTab />
             )}
 
             {activeTab === "users" && (
@@ -1048,123 +1088,185 @@ export default function AdminPanel() {
                               })}
                             </div>
 
-                            {/* Manual limits control */}
+                            {/* Unified Limits & Usage */}
                             <div className="pt-2 border-t border-slate-800/50">
-                              <p className="text-[10px] text-slate-600 uppercase tracking-wider mb-3">
-                                Limites & Uso
-                              </p>
-                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                {/* Analyses used */}
-                                <div className="space-y-1">
-                                  <label className="text-[10px] text-slate-500">Análises usadas</label>
-                                  <div className="flex items-center gap-1">
+                              <div className="flex items-center justify-between mb-3">
+                                <p className="text-[10px] text-slate-600 uppercase tracking-wider">
+                                  Limites & Uso — Plano {PLAN_CONFIG[user.plan]?.label}
+                                </p>
+                                <div className="flex items-center gap-1.5">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-6 text-[9px] border-slate-700 text-slate-500 hover:text-white hover:bg-slate-800 px-2"
+                                    onClick={() => updateUserLimits(user.user_id, "analyses_used", 0)}
+                                    disabled={saving?.startsWith(`limit-${user.user_id}`)}
+                                  >
+                                    Zerar análises
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-6 text-[9px] border-slate-700 text-slate-500 hover:text-white hover:bg-slate-800 px-2"
+                                    onClick={() => {
+                                      updateUserLimits(user.user_id, "monthly_analyses_limit", -1);
+                                      updateUserLimits(user.user_id, "max_audiences", -1);
+                                    }}
+                                    disabled={saving?.startsWith(`limit-${user.user_id}`) || (user.monthly_analyses_limit === -1 && (user.max_audiences ?? 5) === -1)}
+                                  >
+                                    Tudo ilimitado
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-6 text-[9px] border-slate-700 text-slate-500 hover:text-white hover:bg-slate-800 px-2"
+                                    onClick={() => {
+                                      updateUserLimits(user.user_id, "monthly_analyses_limit", 5);
+                                      updateUserLimits(user.user_id, "max_audiences", 5);
+                                    }}
+                                    disabled={saving?.startsWith(`limit-${user.user_id}`) || (user.monthly_analyses_limit === 5 && (user.max_audiences ?? 5) === 5)}
+                                  >
+                                    Padrão Starter
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                {/* Tenant-level limits — highlighted */}
+                                <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-blue-500/5 border border-blue-500/10">
+                                  <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
+                                  <span className="text-[11px] text-blue-300 flex-1 min-w-0 truncate font-medium">
+                                    Análises usadas este mês
+                                  </span>
+                                  <div className="flex items-center gap-1 flex-shrink-0">
                                     <Input
                                       type="number"
                                       min={0}
-                                      className="h-7 text-xs bg-slate-900 border-slate-700 text-white w-full"
+                                      className="h-6 w-14 text-[10px] bg-slate-900 border-slate-700 text-white text-center px-1"
                                       defaultValue={user.analyses_used}
+                                      title="Quantidade de análises já usadas"
                                       onBlur={(e) => {
                                         const val = parseInt(e.target.value);
                                         if (!isNaN(val) && val !== user.analyses_used) {
                                           updateUserLimits(user.user_id, "analyses_used", val);
                                         }
                                       }}
-                                      onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                          (e.target as HTMLInputElement).blur();
-                                        }
-                                      }}
+                                      onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
                                     />
+                                    <span className="text-[9px] text-slate-600 w-[72px] text-center">usadas</span>
                                   </div>
                                 </div>
-                                {/* Monthly analyses limit */}
-                                <div className="space-y-1">
-                                  <label className="text-[10px] text-slate-500">Limite mensal</label>
-                                  <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-blue-500/5 border border-blue-500/10">
+                                  <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
+                                  <span className="text-[11px] text-blue-300 flex-1 min-w-0 truncate font-medium">
+                                    Limite mensal de análises
+                                  </span>
+                                  <div className="flex items-center gap-1 flex-shrink-0">
                                     <Input
                                       type="number"
                                       min={-1}
-                                      className="h-7 text-xs bg-slate-900 border-slate-700 text-white w-full"
+                                      placeholder="∞"
+                                      className="h-6 w-14 text-[10px] bg-slate-900 border-slate-700 text-white text-center px-1"
                                       defaultValue={user.monthly_analyses_limit}
+                                      title="Limite mensal de análises (-1 = ilimitado)"
                                       onBlur={(e) => {
                                         const val = parseInt(e.target.value);
                                         if (!isNaN(val) && val !== user.monthly_analyses_limit) {
                                           updateUserLimits(user.user_id, "monthly_analyses_limit", val);
                                         }
                                       }}
-                                      onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                          (e.target as HTMLInputElement).blur();
-                                        }
-                                      }}
+                                      onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
                                     />
-                                    <span className="text-[9px] text-slate-600 whitespace-nowrap">-1 = ∞</span>
+                                    <span className="text-[9px] text-slate-600 w-[72px] text-center">-1 = ∞</span>
                                   </div>
                                 </div>
-                                {/* Max audiences */}
-                                <div className="space-y-1">
-                                  <label className="text-[10px] text-slate-500">Públicos-alvo</label>
-                                  <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-blue-500/5 border border-blue-500/10">
+                                  <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
+                                  <span className="text-[11px] text-blue-300 flex-1 min-w-0 truncate font-medium">
+                                    Máx. públicos-alvo
+                                  </span>
+                                  <div className="flex items-center gap-1 flex-shrink-0">
                                     <Input
                                       type="number"
                                       min={-1}
-                                      className="h-7 text-xs bg-slate-900 border-slate-700 text-white w-full"
+                                      placeholder="∞"
+                                      className="h-6 w-14 text-[10px] bg-slate-900 border-slate-700 text-white text-center px-1"
                                       defaultValue={user.max_audiences ?? 5}
+                                      title="Máximo de públicos-alvo (-1 = ilimitado)"
                                       onBlur={(e) => {
                                         const val = parseInt(e.target.value);
                                         if (!isNaN(val) && val !== (user.max_audiences ?? 5)) {
                                           updateUserLimits(user.user_id, "max_audiences", val);
                                         }
                                       }}
-                                      onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                          (e.target as HTMLInputElement).blur();
-                                        }
-                                      }}
+                                      onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
                                     />
-                                    <span className="text-[9px] text-slate-600 whitespace-nowrap">-1 = ∞</span>
+                                    <span className="text-[9px] text-slate-600 w-[72px] text-center">-1 = ∞</span>
                                   </div>
                                 </div>
-                                {/* Quick actions */}
-                                <div className="space-y-1">
-                                  <label className="text-[10px] text-slate-500">Ações rápidas</label>
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-7 text-[10px] border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800"
-                                      onClick={() => updateUserLimits(user.user_id, "analyses_used", 0)}
-                                      disabled={saving?.startsWith(`limit-${user.user_id}`)}
-                                    >
-                                      Zerar análises
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-7 text-[10px] border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800"
-                                      onClick={() => {
-                                        updateUserLimits(user.user_id, "monthly_analyses_limit", -1);
-                                        updateUserLimits(user.user_id, "max_audiences", -1);
-                                      }}
-                                      disabled={saving?.startsWith(`limit-${user.user_id}`) || (user.monthly_analyses_limit === -1 && (user.max_audiences ?? 5) === -1)}
-                                    >
-                                      Tudo ilimitado
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-7 text-[10px] border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800"
-                                      onClick={() => {
-                                        updateUserLimits(user.user_id, "monthly_analyses_limit", 5);
-                                        updateUserLimits(user.user_id, "max_audiences", 5);
-                                      }}
-                                      disabled={saving?.startsWith(`limit-${user.user_id}`) || (user.monthly_analyses_limit === 5 && (user.max_audiences ?? 5) === 5)}
-                                    >
-                                      Padrão Starter
-                                    </Button>
-                                  </div>
-                                </div>
+
+                                {/* Plan feature limits */}
+                                {features
+                                  .filter((f) => {
+                                    const pf = getPlanFeature(f.feature_key, user.plan);
+                                    return pf?.is_enabled;
+                                  })
+                                  .map((feature) => {
+                                    const pf = getPlanFeature(feature.feature_key, user.plan);
+                                    return (
+                                      <div
+                                        key={feature.feature_key}
+                                        className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800/30 transition-colors"
+                                      >
+                                        <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+                                        <span className="text-[11px] text-slate-300 flex-1 min-w-0 truncate">
+                                          {feature.feature_name}
+                                        </span>
+                                        <div className="flex items-center gap-1 flex-shrink-0">
+                                          <Input
+                                            type="number"
+                                            min={-1}
+                                            placeholder="∞"
+                                            className="h-6 w-14 text-[10px] bg-slate-900 border-slate-700 text-white text-center px-1"
+                                            defaultValue={pf?.usage_limit ?? ""}
+                                            title="Limite de uso (-1 = ilimitado, vazio = sem limite)"
+                                            onBlur={(e) => {
+                                              const raw = e.target.value.trim();
+                                              const newLimit = raw === "" ? null : parseInt(raw);
+                                              const currentLimit = pf?.usage_limit ?? null;
+                                              if (newLimit !== currentLimit) {
+                                                const period = newLimit !== null ? (pf?.limit_period || "monthly") : null;
+                                                updatePlanLimit(feature.feature_key, user.plan, newLimit, period);
+                                              }
+                                            }}
+                                            onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                                          />
+                                          <Select
+                                            value={pf?.limit_period || "none"}
+                                            onValueChange={(val) => {
+                                              const period = val === "none" ? null : val;
+                                              updatePlanLimit(feature.feature_key, user.plan, pf?.usage_limit ?? null, period);
+                                            }}
+                                          >
+                                            <SelectTrigger className="h-6 w-[72px] text-[9px] bg-slate-900 border-slate-700 text-slate-400 px-1.5">
+                                              <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              <SelectItem value="none">Sem período</SelectItem>
+                                              <SelectItem value="monthly">Mensal</SelectItem>
+                                              <SelectItem value="daily">Diário</SelectItem>
+                                              <SelectItem value="total">Total</SelectItem>
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
                               </div>
+                              <p className="text-[9px] text-slate-600 mt-2 ml-3">
+                                <span className="inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block" /> Limites do usuário</span>
+                                <span className="mx-2">·</span>
+                                <span className="inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" /> Limites do plano {PLAN_CONFIG[user.plan]?.label} (afeta todos do plano)</span>
+                              </p>
                             </div>
 
                             {/* Feature overrides for this user */}
