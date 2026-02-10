@@ -64,6 +64,16 @@ interface ProjectOption {
   status: string;
 }
 
+interface ProjectAudience {
+  id: string;
+  name: string;
+  description: string;
+  industry: string | null;
+  company_size: string | null;
+  location: string | null;
+  keywords: string[];
+}
+
 interface TacticalPlanData {
   id: string;
   project_id: string;
@@ -91,6 +101,7 @@ export default function TacticalPlan() {
   const [tacticalPlan, setTacticalPlan] = useState<TacticalPlanData | null>(null);
   const [channelScores, setChannelScores] = useState<ChannelScore[]>([]);
   const [channelTacticalScores, setChannelTacticalScores] = useState<ChannelTacticalScore[]>([]);
+  const [projectAudiences, setProjectAudiences] = useState<ProjectAudience[]>([]);
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [loading, setLoading] = useState(true);
   const [loadingPlan, setLoadingPlan] = useState(false);
@@ -108,6 +119,7 @@ export default function TacticalPlan() {
       setLoadingPlan(true);
       loadTacticalPlan();
       loadChannelScores().then((scores) => loadChannelTacticalScores(scores));
+      loadProjectAudiences();
     }
   }, [selectedProjectId, user]);
 
@@ -130,6 +142,27 @@ export default function TacticalPlan() {
       console.error("Error loading projects:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadProjectAudiences = async () => {
+    if (!user || !selectedProjectId) {
+      setProjectAudiences([]);
+      return;
+    }
+    try {
+      const { data, error } = await (supabase as any)
+        .from("audiences")
+        .select("id, name, description, industry, company_size, location, keywords")
+        .eq("user_id", user.id)
+        .eq("project_id", selectedProjectId)
+        .order("name");
+
+      if (error) throw error;
+      setProjectAudiences(data || []);
+    } catch (err) {
+      console.error("Error loading project audiences:", err);
+      setProjectAudiences([]);
     }
   };
 
@@ -676,6 +709,12 @@ export default function TacticalPlan() {
                     </option>
                   ))}
                 </select>
+                {projectAudiences.length > 0 && (
+                  <Badge variant="outline" className="text-[10px] gap-1 shrink-0">
+                    <Users className="h-3 w-3" />
+                    {projectAudiences.length} público{projectAudiences.length !== 1 ? "s" : ""}
+                  </Badge>
+                )}
               </div>
             </div>
 
@@ -708,8 +747,8 @@ export default function TacticalPlan() {
                 </div>
 
                 {/* Strategic dependency info */}
-                <div className="max-w-lg mx-auto">
-                  <div className="grid grid-cols-2 gap-3">
+                <div className="max-w-2xl mx-auto">
+                  <div className="grid grid-cols-3 gap-3">
                     <div className="flex items-center gap-2 p-3 rounded-lg border border-border bg-card text-left">
                       {selectedProject.score > 0 ? (
                         <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
@@ -728,6 +767,16 @@ export default function TacticalPlan() {
                       )}
                       <span className="text-xs text-muted-foreground">
                         Scores por canal: <strong className="text-foreground">{channelScores.length}/4</strong>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 p-3 rounded-lg border border-border bg-card text-left">
+                      {projectAudiences.length > 0 ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-400 shrink-0" />
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        Públicos-alvo: <strong className="text-foreground">{projectAudiences.length}</strong>
                       </span>
                     </div>
                   </div>
@@ -931,6 +980,7 @@ export default function TacticalPlan() {
                     tacticalPlan={tacticalPlan}
                     channelScores={channelScores}
                     projectName={selectedProject?.name || ""}
+                    projectAudiences={projectAudiences}
                     onTabChange={setActiveTab}
                   />
                 ) : activeTab === "playbook" ? (
@@ -1194,6 +1244,7 @@ export default function TacticalPlan() {
                     tacticalPlanId={tacticalPlan.id}
                     channelScore={getChannelStratScore(activeTab as ChannelKey) || null}
                     projectId={selectedProjectId!}
+                    projectAudiences={projectAudiences}
                     onScoreUpdate={refreshScores}
                   />
                 )}

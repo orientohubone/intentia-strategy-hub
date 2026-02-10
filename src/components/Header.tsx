@@ -10,6 +10,7 @@ const menuCategories = [
     items: [
       { name: "Funcionalidades", href: "/#funcionalidades" },
       { name: "Como Funciona", href: "/#como-funciona" },
+      { name: "Plano Tático", href: "/plano-tatico" },
       { name: "Preços", href: "/precos" },
     ]
   },
@@ -19,6 +20,7 @@ const menuCategories = [
       { name: "Sobre Nós", href: "/sobre" },
       { name: "Cases de Uso", href: "/cases" },
       { name: "Segurança", href: "/seguranca" },
+      { name: "Status", href: "/status" },
       { name: "Contato", href: "/contato" },
     ]
   },

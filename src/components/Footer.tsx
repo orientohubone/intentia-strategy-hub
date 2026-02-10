@@ -51,6 +51,11 @@ export function Footer() {
                 </a>
               </li>
               <li>
+                <a href="/plano-tatico" className="text-muted-foreground hover:text-primary transition-colors">
+                  Plano Tático
+                </a>
+              </li>
+              <li>
                 <a href="/precos" className="text-muted-foreground hover:text-primary transition-colors">
                   Planos e Preços
                 </a>
@@ -85,6 +90,11 @@ export function Footer() {
               <li>
                 <a href="/seguranca" className="text-muted-foreground hover:text-primary transition-colors">
                   Segurança
+                </a>
+              </li>
+              <li>
+                <a href="/status" className="text-muted-foreground hover:text-primary transition-colors">
+                  Status
                 </a>
               </li>
             </ul>
@@ -131,6 +141,9 @@ export function Footer() {
               </a>
               <a href="/politica-de-cookies" className="text-muted-foreground hover:text-primary transition-colors">
                 Política de Cookies
+              </a>
+              <a href="/status" className="text-muted-foreground hover:text-primary transition-colors">
+                Status
               </a>
             </div>
           </div>

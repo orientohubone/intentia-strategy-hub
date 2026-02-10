@@ -32,11 +32,22 @@ interface ChannelScore {
   risks: string[] | null;
 }
 
+interface ProjectAudience {
+  id: string;
+  name: string;
+  description: string;
+  industry: string | null;
+  company_size: string | null;
+  location: string | null;
+  keywords: string[];
+}
+
 interface Props {
   channel: ChannelKey;
   tacticalPlanId: string;
   channelScore: ChannelScore | null;
   projectId: string;
+  projectAudiences?: ProjectAudience[];
   onScoreUpdate?: () => void;
 }
 
@@ -79,6 +90,7 @@ interface TestPlan {
 
 interface SegmentationEntry {
   id?: string;
+  audience_id?: string | null;
   audience_name: string;
   targeting_criteria: Record<string, string>;
   message_angle: string;
@@ -104,7 +116,7 @@ const defaultChannelPlan: ChannelPlanData = {
   alerts: [],
 };
 
-export function TacticalChannelView({ channel, tacticalPlanId, channelScore, projectId, onScoreUpdate }: Props) {
+export function TacticalChannelView({ channel, tacticalPlanId, channelScore, projectId, projectAudiences = [], onScoreUpdate }: Props) {
   const { user } = useAuth();
   const config = CHANNELS[channel];
 
@@ -127,6 +139,12 @@ export function TacticalChannelView({ channel, tacticalPlanId, channelScore, pro
   useEffect(() => {
     loadChannelData();
   }, [channel, tacticalPlanId, user]);
+
+  useEffect(() => {
+    if (projectAudiences.length > 0 && !loading) {
+      setExpandedSections((prev) => ({ ...prev, segmentation: true }));
+    }
+  }, [projectAudiences, loading]);
 
   const toggleSection = (key: string) => {
     setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -219,6 +237,7 @@ export function TacticalChannelView({ channel, tacticalPlanId, channelScore, pro
       setSegmentations(
         (segs || []).map((s: any) => ({
           id: s.id,
+          audience_id: s.audience_id || null,
           audience_name: s.audience_name,
           targeting_criteria: s.targeting_criteria || {},
           message_angle: s.message_angle || "",
@@ -344,6 +363,7 @@ export function TacticalChannelView({ channel, tacticalPlanId, channelScore, pro
           tactical_plan_id: tacticalPlanId,
           user_id: user.id,
           channel,
+          audience_id: seg.audience_id || null,
           audience_name: seg.audience_name,
           targeting_criteria: seg.targeting_criteria,
           message_angle: seg.message_angle,
@@ -469,8 +489,33 @@ export function TacticalChannelView({ channel, tacticalPlanId, channelScore, pro
   const addSegmentation = () => {
     setSegmentations((prev) => [
       ...prev,
-      { audience_name: "", targeting_criteria: {}, message_angle: "", priority: "medium", notes: "" },
+      { audience_id: null, audience_name: "", targeting_criteria: {}, message_angle: "", priority: "medium", notes: "" },
     ]);
+  };
+
+  const importAudience = (audience: ProjectAudience) => {
+    const alreadyImported = segmentations.some((s) => s.audience_id === audience.id);
+    if (alreadyImported) {
+      toast.info(`"${audience.name}" já está adicionado neste canal.`);
+      return;
+    }
+    const criteria: Record<string, string> = {};
+    if (audience.industry) criteria.industry = audience.industry;
+    if (audience.company_size) criteria.company_size = audience.company_size;
+    if (audience.location) criteria.location = audience.location;
+    if (audience.keywords?.length > 0) criteria.keywords = audience.keywords.join(", ");
+    setSegmentations((prev) => [
+      ...prev,
+      {
+        audience_id: audience.id,
+        audience_name: audience.name,
+        targeting_criteria: criteria,
+        message_angle: "",
+        priority: "medium",
+        notes: audience.description || "",
+      },
+    ]);
+    toast.success(`Público "${audience.name}" importado!`);
   };
 
   const removeSegmentation = (index: number) => {
@@ -843,10 +888,50 @@ export function TacticalChannelView({ channel, tacticalPlanId, channelScore, pro
       />
       {expandedSections.segmentation && (
         <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+          {/* Import from project audiences */}
+          {projectAudiences.length > 0 && (
+            <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 space-y-2">
+              <p className="text-[10px] font-medium text-primary uppercase tracking-wider">Importar do Projeto</p>
+              <div className="flex flex-wrap gap-2">
+                {projectAudiences.map((aud) => {
+                  const alreadyUsed = segmentations.some((s) => s.audience_id === aud.id);
+                  return (
+                    <button
+                      key={aud.id}
+                      onClick={() => importAudience(aud)}
+                      disabled={alreadyUsed}
+                      className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                        alreadyUsed
+                          ? "border-border bg-muted text-muted-foreground cursor-not-allowed opacity-50"
+                          : "border-primary/30 bg-card text-foreground hover:border-primary hover:bg-primary/10"
+                      }`}
+                    >
+                      <Users className="h-3 w-3" />
+                      {aud.name}
+                      {alreadyUsed && <CheckCircle2 className="h-3 w-3 text-green-500" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {projectAudiences.length === 0 && segmentations.length === 0 && (
+            <div className="flex items-start gap-2 p-3 rounded-lg border border-blue-500/30 bg-blue-500/5">
+              <Info className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
+              <p className="text-xs text-muted-foreground">
+                Nenhum público-alvo vinculado a este projeto. Cadastre públicos na seção <strong>Públicos-Alvo</strong> e vincule ao projeto para importá-los aqui automaticamente.
+              </p>
+            </div>
+          )}
           {segmentations.map((seg, i) => (
             <div key={i} className="border border-border rounded-lg p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <Badge variant="outline" className="text-[10px]">Segmento {i + 1}</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-[10px]">Segmento {i + 1}</Badge>
+                  {seg.audience_id && (
+                    <Badge className="text-[10px] bg-primary/10 text-primary border-primary/30">Vinculado</Badge>
+                  )}
+                </div>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeSegmentation(i)}>
                   <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                 </Button>
@@ -911,6 +996,27 @@ export function TacticalChannelView({ channel, tacticalPlanId, channelScore, pro
                   />
                 </div>
               </div>
+              {/* Targeting criteria badges (from imported audience) */}
+              {Object.keys(seg.targeting_criteria).length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border/50">
+                  {Object.entries(seg.targeting_criteria).map(([key, value]) => {
+                    const labels: Record<string, string> = {
+                      industry: "Indústria",
+                      company_size: "Porte",
+                      location: "Local",
+                      keywords: "Keywords",
+                    };
+                    return (
+                      <span
+                        key={key}
+                        className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
+                      >
+                        {labels[key] || key}: {value}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ))}
           <Button variant="outline" size="sm" onClick={addSegmentation}>

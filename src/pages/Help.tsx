@@ -248,6 +248,16 @@ export default function Help() {
           difficulty: "Intermediário",
         },
         {
+          title: "Importação de Públicos-Alvo",
+          content: "O Plano Tático consome automaticamente os públicos-alvo vinculados ao projeto. Na seção de Segmentação de cada canal, uma barra 'Importar do Projeto' exibe os públicos cadastrados com botões de importação rápida. Ao importar, o segmento é criado com nome, critérios de targeting (indústria, porte, localização, keywords) e descrição pré-preenchidos. A seção de segmentação abre automaticamente quando há públicos disponíveis.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Públicos-Alvo na Visão Geral",
+          content: "Na aba 'Visão Geral' do plano tático, um card dedicado exibe todos os públicos-alvo vinculados ao projeto com nome, descrição, indústria, porte, localização e keywords. Se nenhum público estiver vinculado, um info box orienta a cadastrar na seção Públicos-Alvo. O header do projeto também mostra um badge com a contagem de públicos.",
+          difficulty: "Iniciante",
+        },
+        {
           title: "Score Tático e Alertas",
           content: "Cada canal recebe um score tático que mede: coerência com a estratégia, clareza da estrutura e qualidade da segmentação. Alertas visuais aparecem quando o plano tático não respeita as recomendações da camada estratégica.",
           difficulty: "Intermediário",
@@ -362,6 +372,11 @@ export default function Help() {
         {
           title: "Vinculação com projetos",
           content: "Cada público-alvo pode ser vinculado a projetos específicos. Isso permite refinar a estratégia de cada projeto com base nas características da audiência definida.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Consumo pelo Plano Tático",
+          content: "Públicos-alvo vinculados a um projeto são consumidos automaticamente pelo Plano Tático. Na seção de Segmentação de cada canal, os públicos aparecem como botões de importação rápida, pré-preenchendo nome, critérios de targeting e descrição. Isso garante que a segmentação tática esteja alinhada com os públicos definidos na camada estratégica.",
           difficulty: "Intermediário",
         },
       ]
@@ -519,6 +534,10 @@ export default function Help() {
     {
       question: "Quais templates táticos estão disponíveis?",
       answer: "6 templates validados por nicho: SaaS B2B, Consultoria & Serviços, E-commerce & Indústria B2B, Educação Corporativa, Fintech & Financeiro e Saúde Corporativa. Cada template inclui dados pré-preenchidos para os 4 canais, frameworks de copy, segmentação e planos de teste."
+    },
+    {
+      question: "Como os públicos-alvo se conectam ao plano tático?",
+      answer: "Públicos-alvo vinculados a um projeto são automaticamente disponibilizados no Plano Tático. Na seção de Segmentação de cada canal, botões de importação rápida permitem adicionar públicos com um clique, pré-preenchendo nome, critérios de targeting (indústria, porte, localização, keywords) e descrição. Isso garante alinhamento entre a estratégia de audiência e a execução tática."
     },
     {
       question: "O que é o Playbook Gamificado?",

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -115,15 +116,16 @@ const PLAN_FEATURES: Record<string, { label: string; price: string; features: st
 
 export default function Settings() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
   const [tenantSettings, setTenantSettings] = useState<any>(null);
+  const [tenantLoading, setTenantLoading] = useState(true);
   const [formData, setFormData] = useState({
     companyName: "",
-    email: "",
-    fullName: "",
-    bio: "",
-    avatarUrl: "",
+    email: user?.email || "",
+    fullName: (user?.user_metadata?.full_name as string) || "",
+    bio: (user?.user_metadata?.bio as string) || "",
+    avatarUrl: (user?.user_metadata?.avatar_url as string) || "",
     language: "pt-BR",
     timezone: "America/Sao_Paulo",
     emailNotifications: true,
@@ -168,39 +170,43 @@ export default function Settings() {
   const [creatingBackup, setCreatingBackup] = useState(false);
   const [exportingData, setExportingData] = useState(false);
 
+  // Sync formData when user object becomes available or changes
   useEffect(() => {
-    loadUserData();
-    loadApiKeys();
-    loadBackups();
-  }, []);
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        email: user.email || prev.email,
+        fullName: (user.user_metadata?.full_name as string) || prev.fullName,
+        bio: (user.user_metadata?.bio as string) || prev.bio,
+        avatarUrl: (user.user_metadata?.avatar_url as string) || prev.avatarUrl,
+      }));
+      loadTenantSettings();
+      loadApiKeys();
+      loadBackups();
+    }
+  }, [user]);
 
-  const loadUserData = async () => {
+  const loadTenantSettings = async () => {
+    if (!user) return;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUser(user);
-        
-        // Load tenant settings
-        const { data: tenant } = await supabase
-          .from("tenant_settings")
-          .select("*")
-          .eq("user_id", user.id)
-          .single();
-        
-        if (tenant) {
-          setTenantSettings(tenant);
-          setFormData(prev => ({
-            ...prev,
-            companyName: tenant.company_name || "",
-            email: user.email || "",
-            fullName: user.user_metadata?.full_name || "",
-            bio: user.user_metadata?.bio || "",
-            avatarUrl: user.user_metadata?.avatar_url || "",
-          }));
-        }
+      setTenantLoading(true);
+      const { data: tenant } = await supabase
+        .from("tenant_settings")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+      
+      if (tenant) {
+        setTenantSettings(tenant);
+        setFormData(prev => ({
+          ...prev,
+          companyName: tenant.company_name || "",
+        }));
       }
     } catch (error) {
-      console.error("Error loading user data:", error);
+      console.error("Error loading tenant settings:", error);
+    } finally {
+      setTenantLoading(false);
     }
   };
 
@@ -231,7 +237,7 @@ export default function Settings() {
       }
 
       toast.success("Perfil atualizado com sucesso!");
-      loadUserData();
+      loadTenantSettings();
     } catch (error: any) {
       toast.error("Erro ao atualizar perfil: " + error.message);
     } finally {
@@ -241,7 +247,6 @@ export default function Settings() {
 
   const loadApiKeys = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data, error } = await supabase
@@ -283,7 +288,6 @@ export default function Settings() {
 
     setSavingKey(provider);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
       const entry = apiKeys[provider];
@@ -446,12 +450,11 @@ export default function Settings() {
   const loadBackups = async () => {
     try {
       setLoadingBackups(true);
-      const { data: { user: u } } = await supabase.auth.getUser();
-      if (!u) return;
+      if (!user) return;
       const { data, error } = await supabase
         .from("user_data_backups")
         .select("id, backup_type, record_counts, size_bytes, notes, created_at, expires_at")
-        .eq("user_id", u.id)
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(10);
       if (!error && data) setBackups(data);

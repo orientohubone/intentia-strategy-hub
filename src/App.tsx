@@ -30,6 +30,8 @@ import NotFound from "./pages/NotFound";
 import BrandGuide from "./pages/BrandGuide";
 import BrandPosts from "./pages/BrandPosts";
 import Security from "./pages/Security";
+import TacticalPlanPage from "./pages/TacticalPlanPage";
+import Status from "./pages/Status";
 import AdminLogin from "./pages/AdminLogin";
 import AdminPanel from "./pages/AdminPanel";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -61,6 +63,8 @@ const App = () => (
           <Route path="/brand" element={<ForceLightMode><BrandGuide /></ForceLightMode>} />
           <Route path="/brand/posts" element={<ForceLightMode><BrandPosts /></ForceLightMode>} />
           <Route path="/seguranca" element={<ForceLightMode><Security /></ForceLightMode>} />
+          <Route path="/status" element={<ForceLightMode><Status /></ForceLightMode>} />
+          <Route path="/plano-tatico" element={<ForceLightMode><TacticalPlanPage /></ForceLightMode>} />
           <Route 
             path="/dashboard" 
             element={

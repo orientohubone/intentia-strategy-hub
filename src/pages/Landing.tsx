@@ -2,6 +2,10 @@ import { useState, useRef, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
 import { BackToHomeButton } from "@/components/BackToHomeButton";
@@ -26,6 +30,14 @@ import {
   Code2,
   AlertTriangle,
   Copy,
+  TrendingUp,
+  Search,
+  ShieldAlert,
+  GitCompareArrows,
+  FlaskConical,
+  CircleDot,
+  Layers,
+  Lock,
 } from "lucide-react";
 
 function ShowcaseSlider() {
@@ -107,7 +119,7 @@ function ShowcaseSlider() {
   );
 }
 
-const features = [
+const features: { icon: React.ElementType; title: string; description: string; link?: string }[] = [
   {
     icon: Target,
     title: "Diagnóstico Heurístico de URL",
@@ -137,11 +149,13 @@ const features = [
     icon: Crosshair,
     title: "Plano Tático por Canal",
     description: "Transforme estratégia em ação: estruture campanhas para Google, Meta, LinkedIn e TikTok com templates validados por nicho B2B.",
+    link: "/plano-tatico",
   },
   {
     icon: Rocket,
     title: "Playbook de Execução Gamificado",
     description: "Gere diretivas de execução priorizadas com KPIs e ações específicas por canal. Transforme o plano tático em um playbook visual e acionável.",
+    link: "/plano-tatico",
   },
   {
     icon: Database,
@@ -290,15 +304,35 @@ export default function Landing() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, i) => (
-              <div key={i} className="card-elevated p-6 group">
-                <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center mb-4 group-hover:bg-primary transition-colors">
-                  <feature.icon className="h-6 w-6 text-primary group-hover:text-primary-foreground transition-colors" />
+            {features.map((feature, i) => {
+              const content = (
+                <>
+                  <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center mb-4 group-hover:bg-primary transition-colors">
+                    <feature.icon className="h-6 w-6 text-primary group-hover:text-primary-foreground transition-colors" />
+                  </div>
+                  <h3 className="font-semibold text-foreground mb-2">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+                  {feature.link && (
+                    <span className="inline-flex items-center gap-1 text-xs text-primary font-medium mt-3 group-hover:gap-2 transition-all">
+                      Saiba mais <ArrowRight className="h-3 w-3" />
+                    </span>
+                  )}
+                </>
+              );
+              return feature.link ? (
+                <div
+                  key={i}
+                  className="card-elevated p-6 group cursor-pointer"
+                  onClick={() => { navigate(feature.link!); window.scrollTo(0, 0); }}
+                >
+                  {content}
                 </div>
-                <h3 className="font-semibold text-foreground mb-2">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
-              </div>
-            ))}
+              ) : (
+                <div key={i} className="card-elevated p-6 group">
+                  {content}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -335,69 +369,204 @@ export default function Landing() {
       {/* AI Section */}
       <section className="py-20 bg-secondary/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <span className="inline-block px-4 py-1 rounded-full bg-accent text-accent-foreground text-sm font-medium mb-4">
-                Inteligência Artificial
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
-                Sua própria IA, seus próprios insights
-              </h2>
-              <p className="text-lg text-muted-foreground mb-6">
-                Conecte sua API key do Google Gemini ou Anthropic Claude e desbloqueie análises semânticas profundas — 
-                sem custo adicional da plataforma. Você paga apenas o que consumir direto na API.
-              </p>
-              <div className="space-y-4">
-                {[
-                  { title: "Análise de Projetos", desc: "Resumo executivo, prontidão para investimento, SWOT, recomendações por canal e posição competitiva." },
-                  { title: "Enriquecimento de Benchmark", desc: "Vantagens e desvantagens competitivas, gaps estratégicos, oportunidades de diferenciação e plano de ação." },
-                  { title: "Exportação completa", desc: "Exporte resultados da IA em JSON, Markdown, HTML estilizado ou PDF — para projetos e benchmarks." },
-                ].map((item, i) => (
-                  <div key={i} className="flex gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+          <div className="text-center mb-14">
+            <span className="inline-block px-4 py-1 rounded-full bg-accent text-accent-foreground text-sm font-medium mb-4">
+              Inteligência Artificial
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+              Enriquecimento por IA em <span className="text-primary">3 camadas</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              Conecte sua API key do Google Gemini ou Anthropic Claude e enriqueça automaticamente seus projetos, benchmarks e insights — 
+              sem custo adicional da plataforma.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+
+            {/* Card 1: Projetos — simula painel de análise */}
+            <Card className="overflow-hidden border-border/60 hover:border-primary/40 transition-colors">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <FlaskConical className="h-5 w-5 text-primary" />
+                    </div>
                     <div>
-                      <p className="text-sm font-semibold text-foreground">{item.title}</p>
-                      <p className="text-sm text-muted-foreground">{item.desc}</p>
+                      <p className="text-sm font-bold text-foreground leading-tight">Enriquecimento de Projetos</p>
+                      <p className="text-xs text-muted-foreground">Análise semântica profunda</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-4">
-              <div className="card-elevated p-6 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <Sparkles className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">Google Gemini</p>
-                    <p className="text-xs text-muted-foreground">Gemini 3 Flash Preview · 2.5 Flash · 2.5 Pro Preview · 2.0 Flash</p>
-                  </div>
+                  <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">IA</Badge>
                 </div>
-              </div>
-              <div className="card-elevated p-6 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-                    <Brain className="h-5 w-5 text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">Anthropic Claude</p>
-                    <p className="text-xs text-muted-foreground">Claude Sonnet 4 · Sonnet 3.7 · Haiku 3.5 · Opus 3</p>
-                  </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  A IA analisa o HTML capturado e gera um diagnóstico executivo completo do projeto.
+                </p>
+                <Separator />
+                <div className="space-y-2.5">
+                  {[
+                    { icon: FileText, label: "Resumo executivo", detail: "Síntese estratégica" },
+                    { icon: TrendingUp, label: "Score de prontidão", detail: "0–100 por critério" },
+                    { icon: Target, label: "Análise SWOT", detail: "Forças e fraquezas" },
+                    { icon: Layers, label: "Recomendações por canal", detail: "Google · Meta · LinkedIn · TikTok" },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 p-2 rounded-md bg-muted/50">
+                      <item.icon className="h-4 w-4 text-primary flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-foreground">{item.label}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{item.detail}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-              <div className="card-elevated p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                    <Shield className="h-5 w-5 text-green-600" />
+              </CardContent>
+              <CardFooter className="pt-0">
+                <div className="w-full space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-muted-foreground">Profundidade da análise</span>
+                    <span className="font-medium text-primary">Avançada</span>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">Suas chaves, seu controle</p>
-                    <p className="text-xs text-muted-foreground">API keys armazenadas com segurança por usuário</p>
-                  </div>
+                  <Progress value={85} className="h-1.5" />
                 </div>
-              </div>
-            </div>
+              </CardFooter>
+            </Card>
+
+            {/* Card 2: Benchmarks — simula painel comparativo */}
+            <Card className="overflow-hidden border-border/60 hover:border-blue-500/40 transition-colors">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                      <GitCompareArrows className="h-5 w-5 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-foreground leading-tight">Enriquecimento de Benchmarks</p>
+                      <p className="text-xs text-muted-foreground">Inteligência competitiva</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] border-blue-500/30 text-blue-500">IA</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Cada concorrente é analisado pela IA com vantagens, gaps e plano de ação prioritizado.
+                </p>
+                <Separator />
+                <div className="space-y-2.5">
+                  {[
+                    { icon: Shield, label: "Vantagens competitivas", detail: "O que você faz melhor" },
+                    { icon: Search, label: "Gaps estratégicos", detail: "Onde estão as lacunas" },
+                    { icon: Lightbulb, label: "Oportunidades", detail: "Diferenciação de mercado" },
+                    { icon: Crosshair, label: "Plano de ação", detail: "Priorizado por impacto" },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 p-2 rounded-md bg-muted/50">
+                      <item.icon className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-foreground">{item.label}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{item.detail}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+              <CardFooter className="pt-0">
+                <div className="w-full space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-muted-foreground">Cobertura competitiva</span>
+                    <span className="font-medium text-blue-500">Completa</span>
+                  </div>
+                  <Progress value={92} className="h-1.5 [&>div]:bg-blue-500" />
+                </div>
+              </CardFooter>
+            </Card>
+
+            {/* Card 3: Insights — simula painel de alertas */}
+            <Card className="overflow-hidden border-border/60 hover:border-emerald-500/40 transition-colors">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                      <Lightbulb className="h-5 w-5 text-emerald-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-foreground leading-tight">Enriquecimento de Insights</p>
+                      <p className="text-xs text-muted-foreground">Dados brutos → ações</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-500">IA</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  A IA transforma métricas em insights acionáveis com alertas, oportunidades e melhorias por projeto.
+                </p>
+                <Separator />
+                <div className="space-y-2.5">
+                  {[
+                    { icon: ShieldAlert, label: "Alertas de risco", detail: "Priorizados por severidade" },
+                    { icon: TrendingUp, label: "Oportunidades de mercado", detail: "Identificadas por padrão" },
+                    { icon: CircleDot, label: "Melhorias estratégicas", detail: "Ações com impacto mensurável" },
+                    { icon: Rocket, label: "Próximos passos", detail: "Roadmap por projeto" },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 p-2 rounded-md bg-muted/50">
+                      <item.icon className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-foreground">{item.label}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{item.detail}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+              <CardFooter className="pt-0">
+                <div className="w-full space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-muted-foreground">Acionabilidade</span>
+                    <span className="font-medium text-emerald-500">Alta</span>
+                  </div>
+                  <Progress value={78} className="h-1.5 [&>div]:bg-emerald-500" />
+                </div>
+              </CardFooter>
+            </Card>
+          </div>
+
+          {/* AI Providers row */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            <Card className="border-border/60">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="h-4 w-4 text-blue-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground leading-tight">Google Gemini</p>
+                  <p className="text-[10px] text-muted-foreground truncate">3 Flash · 2.5 Flash · 2.5 Pro · 2.0 Flash</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-border/60">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                  <Brain className="h-4 w-4 text-orange-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground leading-tight">Anthropic Claude</p>
+                  <p className="text-[10px] text-muted-foreground truncate">Sonnet 4 · Sonnet 3.7 · Haiku 3.5 · Opus 3</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-border/60">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                  <Lock className="h-4 w-4 text-green-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground leading-tight">Suas chaves, seu controle</p>
+                  <p className="text-[10px] text-muted-foreground truncate">API keys criptografadas por usuário</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
