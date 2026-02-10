@@ -523,6 +523,246 @@ export type Database = {
           request_count?: number
         }
       }
+      campaigns: {
+        Row: {
+          id: string
+          user_id: string
+          project_id: string
+          tactical_plan_id: string | null
+          tactical_channel_plan_id: string | null
+          name: string
+          channel: "google" | "meta" | "linkedin" | "tiktok"
+          status: "draft" | "active" | "paused" | "completed" | "archived"
+          objective: string | null
+          notes: string | null
+          budget_total: number
+          budget_spent: number
+          start_date: string | null
+          end_date: string | null
+          is_deleted: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          project_id: string
+          tactical_plan_id?: string | null
+          tactical_channel_plan_id?: string | null
+          name: string
+          channel: "google" | "meta" | "linkedin" | "tiktok"
+          status?: "draft" | "active" | "paused" | "completed" | "archived"
+          objective?: string | null
+          notes?: string | null
+          budget_total?: number
+          budget_spent?: number
+          start_date?: string | null
+          end_date?: string | null
+          is_deleted?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          project_id?: string
+          tactical_plan_id?: string | null
+          tactical_channel_plan_id?: string | null
+          name?: string
+          channel?: "google" | "meta" | "linkedin" | "tiktok"
+          status?: "draft" | "active" | "paused" | "completed" | "archived"
+          objective?: string | null
+          notes?: string | null
+          budget_total?: number
+          budget_spent?: number
+          start_date?: string | null
+          end_date?: string | null
+          is_deleted?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      campaign_metrics: {
+        Row: {
+          id: string
+          campaign_id: string
+          user_id: string
+          period_start: string
+          period_end: string
+          impressions: number
+          clicks: number
+          ctr: number
+          cpc: number
+          cpm: number
+          conversions: number
+          cpa: number
+          roas: number
+          cost: number
+          reach: number
+          frequency: number
+          video_views: number
+          vtr: number
+          leads: number
+          cpl: number
+          quality_score: number
+          avg_position: number
+          search_impression_share: number
+          engagement_rate: number
+          revenue: number
+          sessions: number
+          first_visits: number
+          leads_month: number
+          mql_rate: number
+          sql_rate: number
+          clients_web: number
+          revenue_web: number
+          avg_ticket: number
+          google_ads_cost: number
+          cac_month: number
+          cost_per_conversion: number
+          ltv: number
+          cac_ltv_ratio: number
+          cac_ltv_benchmark: number
+          roi_accumulated: number
+          roi_period_months: number
+          notes: string
+          source: "manual" | "api" | "import"
+          custom_metrics: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          campaign_id: string
+          user_id: string
+          period_start: string
+          period_end: string
+          impressions?: number
+          clicks?: number
+          ctr?: number
+          cpc?: number
+          cpm?: number
+          conversions?: number
+          cpa?: number
+          roas?: number
+          cost?: number
+          reach?: number
+          frequency?: number
+          video_views?: number
+          vtr?: number
+          leads?: number
+          cpl?: number
+          quality_score?: number
+          avg_position?: number
+          search_impression_share?: number
+          engagement_rate?: number
+          revenue?: number
+          sessions?: number
+          first_visits?: number
+          leads_month?: number
+          mql_rate?: number
+          sql_rate?: number
+          clients_web?: number
+          revenue_web?: number
+          avg_ticket?: number
+          google_ads_cost?: number
+          cac_month?: number
+          cost_per_conversion?: number
+          ltv?: number
+          cac_ltv_ratio?: number
+          cac_ltv_benchmark?: number
+          roi_accumulated?: number
+          roi_period_months?: number
+          notes?: string
+          source?: "manual" | "api" | "import"
+          custom_metrics?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          campaign_id?: string
+          user_id?: string
+          period_start?: string
+          period_end?: string
+          impressions?: number
+          clicks?: number
+          ctr?: number
+          cpc?: number
+          cpm?: number
+          conversions?: number
+          cpa?: number
+          roas?: number
+          cost?: number
+          reach?: number
+          frequency?: number
+          video_views?: number
+          vtr?: number
+          leads?: number
+          cpl?: number
+          quality_score?: number
+          avg_position?: number
+          search_impression_share?: number
+          engagement_rate?: number
+          revenue?: number
+          sessions?: number
+          first_visits?: number
+          leads_month?: number
+          mql_rate?: number
+          sql_rate?: number
+          clients_web?: number
+          revenue_web?: number
+          avg_ticket?: number
+          google_ads_cost?: number
+          cac_month?: number
+          cost_per_conversion?: number
+          ltv?: number
+          cac_ltv_ratio?: number
+          cac_ltv_benchmark?: number
+          roi_accumulated?: number
+          roi_period_months?: number
+          notes?: string
+          source?: "manual" | "api" | "import"
+          custom_metrics?: Json
+          created_at?: string
+        }
+      }
+      budget_allocations: {
+        Row: {
+          id: string
+          user_id: string
+          project_id: string
+          channel: "google" | "meta" | "linkedin" | "tiktok"
+          month: number
+          year: number
+          planned_budget: number
+          actual_spent: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          project_id: string
+          channel: "google" | "meta" | "linkedin" | "tiktok"
+          month: number
+          year: number
+          planned_budget?: number
+          actual_spent?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          project_id?: string
+          channel?: "google" | "meta" | "linkedin" | "tiktok"
+          month?: number
+          year?: number
+          planned_budget?: number
+          actual_spent?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       v_project_summary: {
@@ -589,6 +829,84 @@ export type Database = {
           min_competitor_score: number
           score_range: number
           top_competitors: string[]
+        }
+        Insert: never
+        Update: never
+      }
+      v_campaign_metrics_summary: {
+        Row: {
+          campaign_id: string
+          user_id: string
+          campaign_name: string
+          channel: "google" | "meta" | "linkedin" | "tiktok"
+          project_id: string
+          total_entries: number
+          total_impressions: number
+          total_clicks: number
+          total_conversions: number
+          total_leads: number
+          total_cost: number
+          total_revenue: number
+          total_sessions: number
+          total_first_visits: number
+          total_leads_month: number
+          total_clients_web: number
+          total_revenue_web: number
+          total_google_ads_cost: number
+          avg_ctr: number
+          avg_cpc: number
+          avg_cpa: number
+          avg_cpl: number
+          calc_roas: number
+          avg_mql_rate: number
+          avg_sql_rate: number
+          avg_ticket: number
+          calc_cac: number
+          avg_ltv: number
+          avg_cac_ltv_ratio: number
+          avg_roi_accumulated: number
+          max_roi_period_months: number
+          first_period: string
+          last_period: string
+        }
+        Insert: never
+        Update: never
+      }
+      v_campaign_summary: {
+        Row: {
+          id: string
+          user_id: string
+          project_id: string
+          project_name: string
+          campaign_name: string
+          channel: "google" | "meta" | "linkedin" | "tiktok"
+          status: "draft" | "active" | "paused" | "completed" | "archived"
+          objective: string | null
+          budget_total: number
+          budget_spent: number
+          start_date: string | null
+          end_date: string | null
+          created_at: string
+          updated_at: string
+          budget_pacing: number
+          total_impressions: number
+          total_clicks: number
+          total_conversions: number
+          total_cost: number
+        }
+        Insert: never
+        Update: never
+      }
+      v_operational_stats: {
+        Row: {
+          user_id: string
+          total_campaigns: number
+          active_campaigns: number
+          paused_campaigns: number
+          completed_campaigns: number
+          draft_campaigns: number
+          total_budget: number
+          total_spent: number
         }
         Insert: never
         Update: never

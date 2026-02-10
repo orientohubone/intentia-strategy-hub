@@ -24,6 +24,7 @@ import Settings from "./pages/Settings";
 import Help from "./pages/Help";
 import TacticalPlan from "./pages/TacticalPlan";
 import Alerts from "./pages/Alerts";
+import Operations from "./pages/Operations";
 import Checkout from "./pages/Checkout";
 import Subscribe from "./pages/Subscribe";
 import NotFound from "./pages/NotFound";
@@ -134,6 +135,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Alerts />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/operations" 
+            element={
+              <ProtectedRoute>
+                <Operations />
               </ProtectedRoute>
             } 
           />

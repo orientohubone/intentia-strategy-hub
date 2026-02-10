@@ -2,9 +2,9 @@
 
 ## 📊 Visão Geral
 
-**Status do Projeto:** v2.9.0 — Enriquecimento IA de Insights + UX Colapsável  
+**Status do Projeto:** v3.1.0 — Etapa Operacional: Fundação (Fase 1)  
 **Data de Atualização:** 10/02/2026  
-**Versão:** 2.9.0
+**Versão:** 3.1.0
 
 ---
 
@@ -592,16 +592,40 @@ O **Intentia Strategy Hub** está na **versão 2.8.0** com funcionalidades avan�
 81. **SQL atualizado** — `benchmark_swot` starter `usage_limit` de 2 → 5 em `admin_schema.sql`
 82. **Admin Architecture atualizado** — Starter: "5 benchmarks/mês", Professional: "Benchmarks ilimitados", Enterprise: "SLA dedicado" (removido white-label)
 
-### 📋 Próximos Passos — Etapa Operacional (v3.0)
-1. Gestão de campanhas (criar/editar/monitorar campanhas reais)
-2. Integração com APIs de marketing (Google Ads, Meta Ads, LinkedIn Ads)
-3. Dashboard operacional com métricas de performance (CPC, CTR, ROAS, CPL)
-4. Alertas automáticos de performance
-5. Calendário de campanhas e timeline visual
-6. Gestão de budget por canal e projeto
-7. Relatórios de performance automatizados
-8. Configurar SMTP custom (Resend) para emails transacionais
+### � Etapa Operacional — Fase 1: Fundação (v3.1)
+83. **Schema Operacional** — tabelas `campaigns`, `campaign_metrics`, `budget_allocations` com RLS, triggers, indexes e audit
+84. **Views Operacionais** — `v_campaign_summary` (join com projetos + métricas agregadas + pacing) e `v_operational_stats` (contadores por status + budget total/gasto)
+85. **Tipos Operacionais** — `operationalTypes.ts` com interfaces, labels, cores e fluxo de status (draft→active→paused→completed→archived)
+86. **Supabase Types** — `campaigns`, `campaign_metrics`, `budget_allocations`, `v_campaign_summary`, `v_operational_stats` adicionados ao `types.ts`
+87. **Página Operações** — `/operations` com CRUD completo de campanhas, stats cards, filtros (status/canal/projeto/busca), agrupamento por projeto colapsável
+88. **Sidebar Operações** — item "Operações" com ícone Megaphone na DashboardSidebar
+89. **Rota Protegida** — `/operations` com ProtectedRoute + FeatureGate no App.tsx
+90. **Cards de Campanha** — badges de status e canal coloridos, objetivo, budget com pacing bar, datas, ações de transição de status
+91. **Fluxo de Status** — transições controladas (Rascunho→Ativa→Pausada→Concluída→Arquivada) com auto-preenchimento de datas
+92. **Soft Delete** — campanhas excluídas via `is_deleted` (recuperáveis em 30 dias)
+
+### � Etapa Operacional — Fase 2: Métricas e Performance (v3.2)
+93. **Migração de Métricas** — campos específicos por canal: reach, frequency, video_views, vtr, leads, cpl, quality_score, avg_position, search_impression_share, engagement_rate, revenue, notes, source
+94. **View v_campaign_metrics_summary** — agregação de KPIs por campanha (totais, médias, ROAS calculado, período)
+95. **Tipos Expandidos** — `MetricsSummary`, `MetricFieldConfig`, `MetricSource`, `COMMON_METRICS`, `CHANNEL_SPECIFIC_METRICS` em operationalTypes.ts
+96. **Supabase Types Atualizados** — campaign_metrics com 13 novos campos + v_campaign_metrics_summary view
+97. **CampaignMetricsForm** — formulário de input manual com métricas gerais + específicas por canal (Google/Meta/LinkedIn/TikTok), período, observações
+98. **CampaignPerformanceCards** — KPI cards: Impressões, Cliques (CTR), Conversões (CPA), Custo (CPC), Receita (ROAS) + métricas por canal (Leads/CPL)
+99. **Integração Operations.tsx** — botão BarChart3 por campanha, seção expandível com performance cards + formulário de registro de métricas
+100. **Métricas por Canal** — Google (Quality Score, Posição Média, Impression Share), Meta (Alcance, Frequência), LinkedIn (Leads, CPL, Engagement Rate), TikTok (Video Views, VTR)
+
+### �📋 Próximos Passos — Etapa Operacional (v3.x)
+1. ~~Gestão de campanhas (criar/editar/monitorar campanhas reais)~~ ✅
+2. ~~Input manual de métricas por campanha (CPC, CTR, CPL, ROAS, conversões)~~ ✅
+3. ~~Cards de performance com KPIs~~ ✅
+4. Comparativo Tático vs Real (gap analysis operacional)
+5. Alertas automáticos de performance
+6. Gestão de budget por canal e projeto com pacing
+7. Calendário de campanhas e timeline visual
+8. Integração com APIs de marketing (Google Ads, Meta Ads, LinkedIn Ads)
+9. Relatórios de performance automatizados
+10. Configurar SMTP custom (Resend) para emails transacionais
 
 ---
 
-**Status:** 🟢 **v3.0.0 — PRICING REDESIGN + BENCHMARK LIMITS + ADMIN LIMITS UI**
+**Status:** 🟢 **v3.2.0 — ETAPA OPERACIONAL: MÉTRICAS E PERFORMANCE (FASE 2)**
