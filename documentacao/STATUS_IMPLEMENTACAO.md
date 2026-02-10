@@ -614,18 +614,29 @@ O **Intentia Strategy Hub** está na **versão 2.8.0** com funcionalidades avan�
 99. **Integração Operations.tsx** — botão BarChart3 por campanha, seção expandível com performance cards + formulário de registro de métricas
 100. **Métricas por Canal** — Google (Quality Score, Posição Média, Impression Share), Meta (Alcance, Frequência), LinkedIn (Leads, CPL, Engagement Rate), TikTok (Video Views, VTR)
 
+### � Etapa Operacional — Fase 2b: Métricas Google B2B Expandidas (v3.2.1)
+101. **Migração Google B2B** — 16 novos campos: sessions, first_visits, leads_month, mql_rate, sql_rate, clients_web, revenue_web, avg_ticket, google_ads_cost, cac_month, cost_per_conversion, ltv, cac_ltv_ratio, cac_ltv_benchmark (default 3), roi_accumulated, roi_period_months
+102. **View Expandida** — v_campaign_metrics_summary atualizada com total_sessions, total_first_visits, total_leads_month, total_clients_web, total_revenue_web, total_google_ads_cost, avg_mql_rate, avg_sql_rate, avg_ticket, calc_cac, avg_ltv, avg_cac_ltv_ratio, avg_roi_accumulated, max_roi_period_months
+103. **Tipos Atualizados** — CampaignMetrics, MetricsSummary, MetricsSummaryData expandidos com campos Google funil B2B
+104. **CHANNEL_SPECIFIC_METRICS[google]** — 19 métricas: Sessões, 1ª Visita, Leads/Mês, Taxa MQL, Taxa SQL, Clientes Web, Receita Web, Ticket Médio, Custo Google Ads, CAC/Mês, Custo/Conversão, LTV, CAC:LTV, Benchmark CAC:LTV, ROI Acumulado, Período ROI, Quality Score, Posição Média, Impression Share
+105. **CampaignPerformanceCards Google** — KPIs: Sessões (1ª visita), Leads/Mês (MQL%), Taxa SQL, Clientes Web (Receita), Ticket Médio, Custo Google Ads (CAC), LTV (CAC:LTV), ROI Acumulado (período)
+106. **Admin Arquitetura — Operações** — nova seção "Operacoes" no AdminArchitectureTab com fluxo de campanhas, fluxo de métricas, funil Google B2B, views operacionais, resumo de arquitetura
+107. **Admin Arquitetura — Atualizações** — rota /operations nas rotas protegidas, CampaignMetricsForm + CampaignPerformanceCards nos componentes de dados, tabelas operacionais (campaigns, campaign_metrics, budget_allocations) no banco de dados, relacionamentos operacionais, RLS operacional
+
 ### �📋 Próximos Passos — Etapa Operacional (v3.x)
 1. ~~Gestão de campanhas (criar/editar/monitorar campanhas reais)~~ ✅
 2. ~~Input manual de métricas por campanha (CPC, CTR, CPL, ROAS, conversões)~~ ✅
 3. ~~Cards de performance com KPIs~~ ✅
-4. Comparativo Tático vs Real (gap analysis operacional)
-5. Alertas automáticos de performance
-6. Gestão de budget por canal e projeto com pacing
-7. Calendário de campanhas e timeline visual
-8. Integração com APIs de marketing (Google Ads, Meta Ads, LinkedIn Ads)
-9. Relatórios de performance automatizados
-10. Configurar SMTP custom (Resend) para emails transacionais
+4. ~~Métricas Google B2B expandidas (funil completo: sessões → leads → clientes → CAC → LTV → ROI)~~ ✅
+5. ~~Arquitetura admin atualizada com Operações~~ ✅
+6. Comparativo Tático vs Real (gap analysis operacional)
+7. Alertas automáticos de performance
+8. Gestão de budget por canal e projeto com pacing
+9. Calendário de campanhas e timeline visual
+10. Integração com APIs de marketing (Google Ads, Meta Ads, LinkedIn Ads)
+11. Relatórios de performance automatizados
+12. Configurar SMTP custom (Resend) para emails transacionais
 
 ---
 
-**Status:** 🟢 **v3.2.0 — ETAPA OPERACIONAL: MÉTRICAS E PERFORMANCE (FASE 2)**
+**Status:** 🟢 **v3.2.1 — ETAPA OPERACIONAL: MÉTRICAS GOOGLE B2B + ADMIN ARQUITETURA**

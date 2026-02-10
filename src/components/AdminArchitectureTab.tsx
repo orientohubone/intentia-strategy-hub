@@ -40,6 +40,12 @@ import {
   Target,
   Lightbulb,
   Share2,
+  Megaphone,
+  Receipt,
+  UserCheck,
+  Calculator,
+  DollarSign,
+  TrendingUp,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -55,7 +61,8 @@ type Section =
   | "edge"
   | "database"
   | "frontend"
-  | "security";
+  | "security"
+  | "operations";
 
 interface SectionConfig {
   key: Section;
@@ -78,6 +85,7 @@ const SECTIONS: SectionConfig[] = [
   { key: "edge", label: "Edge Functions", icon: Cloud, color: "text-cyan-400", bg: "bg-cyan-500/10" },
   { key: "database", label: "Banco de Dados", icon: Database, color: "text-emerald-400", bg: "bg-emerald-500/10" },
   { key: "security", label: "Seguranca", icon: ShieldCheck, color: "text-red-400", bg: "bg-red-500/10" },
+  { key: "operations", label: "Operacoes", icon: Megaphone, color: "text-orange-400", bg: "bg-orange-500/10" },
 ];
 
 // =====================================================
@@ -358,6 +366,7 @@ function FrontendSection() {
               { path: "/tactical", page: "TacticalPlan", desc: "Plano tatico" },
               { path: "/alertas", page: "Alerts", desc: "Alertas estrategicos" },
               { path: "/audiences", page: "Audiences", desc: "Publicos-alvo" },
+              { path: "/operations", page: "Operations", desc: "Campanhas + Metricas" },
               { path: "/settings", page: "Settings", desc: "Config + API Keys" },
             ].map((route) => (
               <div key={route.path} className="flex items-center gap-2 bg-slate-800/30 rounded-lg px-3 py-2">
@@ -447,7 +456,7 @@ function FrontendSection() {
             <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-3">
               <p className="text-[10px] font-semibold text-green-400 uppercase tracking-wider mb-2">Componentes de Dados</p>
               <div className="space-y-1.5">
-                {["ProjectCard", "InsightCard", "BenchmarkCard", "ChannelCard", "ScoreRing", "StatsCard"].map((c) => (
+                {["ProjectCard", "InsightCard", "BenchmarkCard", "ChannelCard", "ScoreRing", "StatsCard", "CampaignMetricsForm", "CampaignPerformanceCards"].map((c) => (
                   <div key={c} className="flex items-center gap-1.5">
                     <div className="w-1 h-1 rounded-full bg-green-500/50" />
                     <code className="text-[10px] text-slate-400 font-mono">{c}</code>
@@ -1111,6 +1120,52 @@ function DatabaseSection() {
             </div>
           </div>
 
+          {/* Operational tables */}
+          <div>
+            <p className="text-[10px] text-orange-400 font-semibold uppercase tracking-wider mb-2">Tabelas Operacionais (v3.x)</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[
+                {
+                  name: "campaigns",
+                  desc: "Campanhas de marketing por canal",
+                  cols: ["id (PK)", "user_id (FK)", "project_id (FK)", "name", "channel", "status", "objective", "budget_total", "budget_spent", "start_date", "end_date", "is_deleted"],
+                  color: "text-orange-400",
+                  border: "border-orange-500/20",
+                },
+                {
+                  name: "campaign_metrics",
+                  desc: "Metricas por periodo (funil B2B completo)",
+                  cols: ["id (PK)", "campaign_id (FK)", "user_id (FK)", "period_start", "period_end", "impressions", "clicks", "conversions", "cost", "revenue", "sessions", "leads_month", "mql_rate", "sql_rate", "clients_web", "google_ads_cost", "cac_month", "ltv", "cac_ltv_ratio", "roi_accumulated", "roi_period_months", "source"],
+                  color: "text-amber-400",
+                  border: "border-amber-500/20",
+                },
+                {
+                  name: "budget_allocations",
+                  desc: "Alocacao de budget por canal/mes",
+                  cols: ["id (PK)", "user_id (FK)", "project_id (FK)", "channel", "month", "year", "planned_budget", "actual_spent"],
+                  color: "text-green-400",
+                  border: "border-green-500/20",
+                },
+              ].map((table) => (
+                <div key={table.name} className={`bg-slate-800/30 border ${table.border} rounded-xl p-3`}>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Database className={`h-3.5 w-3.5 ${table.color}`} />
+                    <code className={`text-[11px] font-mono font-semibold ${table.color}`}>{table.name}</code>
+                  </div>
+                  <p className="text-[9px] text-slate-500 mb-2">{table.desc}</p>
+                  <div className="space-y-0.5">
+                    {table.cols.map((col) => (
+                      <div key={col} className="flex items-center gap-1.5">
+                        <div className={`w-1 h-1 rounded-full ${col.includes("PK") ? "bg-amber-400" : col.includes("FK") ? "bg-cyan-400" : "bg-slate-600"}`} />
+                        <code className="text-[9px] text-slate-400 font-mono">{col}</code>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Legend */}
           <div className="flex items-center gap-4 pt-2 border-t border-slate-800/50">
             <div className="flex items-center gap-1.5">
@@ -1145,6 +1200,9 @@ function DatabaseSection() {
             { from: "feature_flags", rel: "1:N", to: "plan_features", desc: "Uma feature tem config por plano" },
             { from: "feature_flags", rel: "1:N", to: "user_feature_overrides", desc: "Uma feature pode ter overrides" },
             { from: "admin_users", rel: "1:N", to: "admin_audit_log", desc: "Um admin gera muitos logs" },
+            { from: "projects", rel: "1:N", to: "campaigns", desc: "Um projeto tem muitas campanhas" },
+            { from: "campaigns", rel: "1:N", to: "campaign_metrics", desc: "Uma campanha tem muitas metricas" },
+            { from: "projects", rel: "1:N", to: "budget_allocations", desc: "Um projeto tem alocacoes de budget" },
           ].map((rel) => (
             <div key={`${rel.from}-${rel.to}`} className="flex items-center gap-2 bg-slate-800/30 rounded-lg px-3 py-2">
               <code className="text-[10px] text-emerald-400 font-mono">{rel.from}</code>
@@ -1200,7 +1258,7 @@ function SecuritySection() {
         <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-3">
           <p className="text-[10px] font-semibold text-slate-300 mb-2">Tabelas com RLS ativo:</p>
           <div className="flex flex-wrap gap-1.5">
-            {["tenant_settings", "projects", "insights", "project_channel_scores", "benchmarks", "audiences", "notifications", "user_api_keys"].map((t) => (
+            {["tenant_settings", "projects", "insights", "project_channel_scores", "benchmarks", "audiences", "notifications", "user_api_keys", "campaigns", "campaign_metrics", "budget_allocations"].map((t) => (
               <code key={t} className="text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 rounded px-2 py-0.5 font-mono">{t}</code>
             ))}
           </div>
@@ -1335,6 +1393,239 @@ function SecuritySection() {
 }
 
 // =====================================================
+// SECTION: OPERATIONS
+// =====================================================
+
+function OperationsSection() {
+  return (
+    <div className="space-y-6">
+      {/* Campaign Management Flow */}
+      <FlowBox title="Fluxo de Gestao de Campanhas" borderColor="border-orange-500/20" bgColor="bg-orange-500/5" badge="v3.2">
+        <div className="flex flex-col items-center gap-0">
+          <FlowNode icon={FolderOpen} label="1. Projeto existente" sublabel="Projeto com URL analisada" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" />
+          <ArrowConnector direction="down" label="Cria campanha" />
+          <FlowNode icon={Megaphone} label="2. Nova Campanha" sublabel="Nome + Canal + Objetivo + Budget" color="text-orange-300" bg="bg-orange-500/10" border="border-orange-500/20" />
+          <ArrowConnector direction="down" label="Seleciona canal" />
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full">
+            {[
+              { label: "Google Ads", color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" },
+              { label: "Meta Ads", color: "text-indigo-400", bg: "bg-indigo-500/10", border: "border-indigo-500/20" },
+              { label: "LinkedIn Ads", color: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/20" },
+              { label: "TikTok Ads", color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20" },
+            ].map((ch) => (
+              <div key={ch.label} className={`${ch.bg} border ${ch.border} rounded-lg px-2.5 py-2 text-center`}>
+                <p className={`text-[10px] font-medium ${ch.color}`}>{ch.label}</p>
+              </div>
+            ))}
+          </div>
+
+          <ArrowConnector direction="down" label="Gerencia status" />
+
+          <div className="grid grid-cols-5 gap-1.5 w-full">
+            {[
+              { label: "Rascunho", color: "text-slate-400", bg: "bg-slate-800/60", border: "border-slate-700/50" },
+              { label: "Ativa", color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/20" },
+              { label: "Pausada", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
+              { label: "Concluida", color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" },
+              { label: "Arquivada", color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20" },
+            ].map((s) => (
+              <div key={s.label} className={`${s.bg} border ${s.border} rounded-lg px-2 py-1.5 text-center`}>
+                <p className={`text-[9px] font-medium ${s.color}`}>{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-1 mt-2">
+            {["Draft", "Active", "Paused", "Completed", "Archived"].map((s, i) => (
+              <div key={s} className="flex items-center gap-1">
+                <code className="text-[8px] text-slate-500 font-mono">{s}</code>
+                {i < 4 && <ArrowRight className="h-2.5 w-2.5 text-slate-600" />}
+              </div>
+            ))}
+          </div>
+        </div>
+      </FlowBox>
+
+      {/* Metrics Input Flow */}
+      <FlowBox title="Fluxo de Metricas — Input Manual" borderColor="border-amber-500/20" bgColor="bg-amber-500/5" badge="CampaignMetricsForm">
+        <div className="flex flex-col items-center gap-0">
+          <FlowNode icon={Megaphone} label="1. Campanha ativa" sublabel="Clica no icone BarChart3" color="text-orange-300" bg="bg-orange-500/10" border="border-orange-500/20" />
+          <ArrowConnector direction="down" label="Expande secao de metricas" />
+          <FlowNode icon={BarChart3} label="2. CampaignPerformanceCards" sublabel="KPIs agregados (se houver dados)" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" />
+          <ArrowConnector direction="down" label="Clica 'Registrar Metricas'" />
+          <FlowNode icon={FileText} label="3. CampaignMetricsForm" sublabel="Periodo + Metricas gerais + Canal-especificas" color="text-purple-300" bg="bg-purple-500/10" border="border-purple-500/20" />
+          <ArrowConnector direction="down" label="Salva" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+            <FlowNode icon={Database} label="campaign_metrics" sublabel="INSERT com source = 'manual'" color="text-emerald-300" bg="bg-emerald-500/10" border="border-emerald-500/20" size="small" />
+            <FlowNode icon={Eye} label="v_campaign_metrics_summary" sublabel="View recalcula KPIs automaticamente" color="text-cyan-300" bg="bg-cyan-500/10" border="border-cyan-500/20" size="small" />
+          </div>
+        </div>
+      </FlowBox>
+
+      {/* Google B2B Funnel */}
+      <FlowBox title="Funil Google Ads — Metricas B2B" borderColor="border-blue-500/20" bgColor="bg-blue-500/5" badge="19 metricas">
+        <div className="space-y-4">
+          {/* Common metrics */}
+          <div>
+            <p className="text-[10px] text-slate-300 font-semibold uppercase tracking-wider mb-2">Metricas Gerais (todos os canais)</p>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+              {["Impressoes", "Cliques", "CTR %", "CPC R$", "CPM R$", "Conversoes", "CPA R$", "Custo Total", "Receita", "ROAS x"].map((m) => (
+                <div key={m} className="bg-slate-800/40 border border-slate-700/30 rounded-lg px-2 py-1.5 text-center">
+                  <p className="text-[9px] text-slate-400">{m}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Google funnel */}
+          <div>
+            <p className="text-[10px] text-blue-400 font-semibold uppercase tracking-wider mb-2">Funil Google Ads (B2B)</p>
+            <div className="flex flex-col items-center gap-0">
+              <div className="grid grid-cols-2 gap-2 w-full">
+                <FlowNode icon={Activity} label="Sessoes" sublabel="Trafego do site" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" size="small" />
+                <FlowNode icon={Eye} label="Primeira Visita" sublabel="Novos visitantes" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" size="small" />
+              </div>
+              <ArrowConnector direction="down" label="Taxa MQL %" />
+              <div className="grid grid-cols-2 gap-2 w-full">
+                <FlowNode icon={Users} label="Leads do Mes" sublabel="Formularios + contatos" color="text-sky-300" bg="bg-sky-500/10" border="border-sky-500/20" size="small" />
+                <FlowNode icon={Target} label="Taxa MQL → SQL" sublabel="Lead qualificado → cliente" color="text-violet-300" bg="bg-violet-500/10" border="border-violet-500/20" size="small" />
+              </div>
+              <ArrowConnector direction="down" label="Taxa SQL %" />
+              <div className="grid grid-cols-2 gap-2 w-full">
+                <FlowNode icon={UserCheck} label="Clientes Web" sublabel="Conversoes finais" color="text-green-300" bg="bg-green-500/10" border="border-green-500/20" size="small" />
+                <FlowNode icon={Receipt} label="Receita Web + Ticket Medio" sublabel="Valor gerado" color="text-amber-300" bg="bg-amber-500/10" border="border-amber-500/20" size="small" />
+              </div>
+              <ArrowConnector direction="down" label="Analise de custo" />
+              <div className="grid grid-cols-3 gap-2 w-full">
+                <FlowNode icon={DollarSign} label="Custo Google Ads" sublabel="Investimento total" color="text-red-300" bg="bg-red-500/10" border="border-red-500/20" size="small" />
+                <FlowNode icon={Calculator} label="CAC/Mes" sublabel="Custo por aquisicao" color="text-orange-300" bg="bg-orange-500/10" border="border-orange-500/20" size="small" />
+                <FlowNode icon={Target} label="Custo/Conversao" sublabel="Custo unitario" color="text-pink-300" bg="bg-pink-500/10" border="border-pink-500/20" size="small" />
+              </div>
+              <ArrowConnector direction="down" label="Retorno" />
+              <div className="grid grid-cols-3 gap-2 w-full">
+                <FlowNode icon={Calculator} label="LTV" sublabel="Lifetime Value" color="text-teal-300" bg="bg-teal-500/10" border="border-teal-500/20" size="small" />
+                <FlowNode icon={BarChart3} label="CAC:LTV" sublabel="Benchmark 1:3" color="text-emerald-300" bg="bg-emerald-500/10" border="border-emerald-500/20" size="small" />
+                <FlowNode icon={TrendingUp} label="ROI Acumulado" sublabel="% + periodo (meses)" color="text-green-300" bg="bg-green-500/10" border="border-green-500/20" size="small" />
+              </div>
+            </div>
+          </div>
+
+          {/* Channel-specific metrics */}
+          <div>
+            <p className="text-[10px] text-slate-300 font-semibold uppercase tracking-wider mb-2">Metricas Especificas por Canal</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-3">
+                <p className="text-[10px] font-semibold text-blue-400 mb-1.5">Google</p>
+                <div className="space-y-1">
+                  {["Quality Score", "Posicao Media", "Impression Share", "+ 16 metricas funil"].map((m) => (
+                    <p key={m} className="text-[9px] text-slate-500">{m}</p>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-3">
+                <p className="text-[10px] font-semibold text-indigo-400 mb-1.5">Meta</p>
+                <div className="space-y-1">
+                  {["Alcance", "Frequencia"].map((m) => (
+                    <p key={m} className="text-[9px] text-slate-500">{m}</p>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-sky-500/5 border border-sky-500/20 rounded-xl p-3">
+                <p className="text-[10px] font-semibold text-sky-400 mb-1.5">LinkedIn</p>
+                <div className="space-y-1">
+                  {["Leads", "CPL", "Engagement Rate"].map((m) => (
+                    <p key={m} className="text-[9px] text-slate-500">{m}</p>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-pink-500/5 border border-pink-500/20 rounded-xl p-3">
+                <p className="text-[10px] font-semibold text-pink-400 mb-1.5">TikTok</p>
+                <div className="space-y-1">
+                  {["Video Views", "VTR"].map((m) => (
+                    <p key={m} className="text-[9px] text-slate-500">{m}</p>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </FlowBox>
+
+      {/* Views */}
+      <FlowBox title="Views Operacionais" badge="SQL Views">
+        <div className="space-y-3">
+          {[
+            {
+              name: "v_campaign_summary",
+              desc: "Join campanhas + projetos + metricas agregadas + budget pacing",
+              cols: "campaign_name, project_name, channel, status, budget_pacing, total_impressions, total_clicks, total_conversions, total_cost",
+              color: "text-orange-400",
+              bg: "bg-orange-500/10",
+              border: "border-orange-500/20",
+            },
+            {
+              name: "v_operational_stats",
+              desc: "Contadores por status + budget total/gasto por usuario",
+              cols: "total_campaigns, active, paused, completed, draft, total_budget, total_spent",
+              color: "text-amber-400",
+              bg: "bg-amber-500/10",
+              border: "border-amber-500/20",
+            },
+            {
+              name: "v_campaign_metrics_summary",
+              desc: "Agregacao de KPIs por campanha — totais, medias, ROAS, CAC, LTV, ROI",
+              cols: "total_impressions, total_clicks, total_sessions, total_leads_month, total_clients_web, avg_mql_rate, avg_sql_rate, calc_cac, avg_ltv, avg_cac_ltv_ratio, avg_roi_accumulated",
+              color: "text-blue-400",
+              bg: "bg-blue-500/10",
+              border: "border-blue-500/20",
+            },
+          ].map((view) => (
+            <div key={view.name} className={`${view.bg} border ${view.border} rounded-xl p-4`}>
+              <div className="flex items-center gap-2 mb-1.5">
+                <Eye className={`h-4 w-4 ${view.color}`} />
+                <code className={`text-xs font-mono font-semibold ${view.color}`}>{view.name}</code>
+              </div>
+              <p className="text-[11px] text-slate-400 mb-2">{view.desc}</p>
+              <div className="flex flex-wrap gap-1">
+                {view.cols.split(", ").map((col) => (
+                  <code key={col} className="text-[8px] bg-slate-800/40 text-slate-500 rounded px-1.5 py-0.5 font-mono">{col}</code>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </FlowBox>
+
+      {/* Architecture Summary */}
+      <FlowBox title="Arquitetura Operacional — Resumo">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { n: "3", label: "Tabelas SQL", icon: Database, color: "text-emerald-400" },
+            { n: "3", label: "Views SQL", icon: Eye, color: "text-blue-400" },
+            { n: "35+", label: "Campos Metricas", icon: BarChart3, color: "text-orange-400" },
+            { n: "4", label: "Canais", icon: Megaphone, color: "text-pink-400" },
+            { n: "5", label: "Status Campanha", icon: Activity, color: "text-green-400" },
+            { n: "19", label: "Metricas Google", icon: Target, color: "text-blue-400" },
+            { n: "2", label: "Componentes", icon: Layers, color: "text-purple-400" },
+            { n: "1:3", label: "Benchmark CAC:LTV", icon: Calculator, color: "text-amber-400" },
+          ].map((stat) => (
+            <div key={stat.label} className="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex items-center gap-3">
+              <stat.icon className={`h-5 w-5 ${stat.color} flex-shrink-0`} />
+              <div>
+                <p className="text-lg font-bold text-white">{stat.n}</p>
+                <p className="text-[10px] text-slate-500">{stat.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </FlowBox>
+    </div>
+  );
+}
+
+// =====================================================
 // MAIN COMPONENT
 // =====================================================
 
@@ -1374,6 +1665,7 @@ export default function AdminArchitectureTab() {
       {activeSection === "edge" && <EdgeFunctionsSection />}
       {activeSection === "database" && <DatabaseSection />}
       {activeSection === "security" && <SecuritySection />}
+      {activeSection === "operations" && <OperationsSection />}
     </div>
   );
 }
