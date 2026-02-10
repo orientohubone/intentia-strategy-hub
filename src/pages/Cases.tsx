@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/Header";
+import { SEO, buildBreadcrumb } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
@@ -169,6 +170,7 @@ export default function Cases() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Cases de Uso" path="/cases" description="Veja como a Intentia ajuda empresas B2B: diagnóstico de URL, benchmark competitivo, análise por IA, scores por canal, alertas estratégicos e insights acionáveis." keywords="cases intentia, marketing B2B cases, análise estratégica exemplos" jsonLd={buildBreadcrumb([{ name: "Cases", path: "/cases" }])} />
       <Header />
 
       {/* Hero Section */}

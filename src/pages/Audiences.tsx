@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTenantData } from "@/hooks/useTenantData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Users, Target, TrendingUp, Globe, FileSpreadsheet } from "lucide-react";
+import { Users, Target, TrendingUp, Globe, FileSpreadsheet, FolderOpen, ChevronDown, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { exportAudiencesCsv } from "@/lib/exportCsv";
 
 type Audience = {
@@ -40,6 +41,17 @@ export default function Audiences() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroup = (groupKey: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupKey)) next.delete(groupKey);
+      else next.add(groupKey);
+      return next;
+    });
+  };
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -162,8 +174,25 @@ export default function Audiences() {
     audience.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const groupedByProject = useMemo(() => {
+    const groups: Record<string, { groupKey: string; projectName: string; audiences: Audience[] }> = {};
+    for (const a of filteredAudiences) {
+      const key = a.project_id || "__no_project__";
+      if (!groups[key]) {
+        groups[key] = {
+          groupKey: key,
+          projectName: a.project_name || "Sem projeto",
+          audiences: [],
+        };
+      }
+      groups[key].audiences.push(a);
+    }
+    return Object.values(groups);
+  }, [filteredAudiences]);
+
   return (
     <DashboardLayout>
+      <SEO title="Públicos-Alvo" noindex />
           <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
@@ -172,10 +201,19 @@ export default function Audiences() {
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {audiences.length > 0 && (
+                  <>
+                  <Button size="sm" variant="outline" className="gap-1" title="Expandir todos" onClick={() => setExpandedGroups(new Set(groupedByProject.map(g => g.groupKey)))}>
+                    <ChevronsUpDown className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button size="sm" variant="outline" className="gap-1" title="Recolher todos" onClick={() => setExpandedGroups(new Set())}>
+                    <ChevronsDownUp className="h-3.5 w-3.5" />
+                  </Button>
+                  <div className="w-px h-5 bg-border mx-0.5" />
                   <Button size="sm" variant="outline" className="gap-1" onClick={() => exportAudiencesCsv(audiences.map(a => ({ name: a.name, description: a.description, industry: a.industry, company_size: a.company_size, location: a.location, keywords: a.keywords, project_name: a.project_name, created_at: a.created_at })))}>
                     <FileSpreadsheet className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">CSV</span>
                   </Button>
+                  </>
                 )}
                 <Button size="sm" onClick={() => setShowCreateForm(true)}>
                   <Users className="h-4 w-4 sm:mr-2" />
@@ -291,71 +329,100 @@ export default function Audiences() {
               <p className="text-sm text-muted-foreground">Nenhum público-alvo encontrado.</p>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {filteredAudiences.map((audience) => (
-                <div key={audience.id} className="border border-border rounded-lg bg-card p-4 sm:p-6 space-y-3 sm:space-y-4">
-                  <div className="flex items-start gap-2 sm:gap-3 mb-2">
-                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                          <Target className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            {/* Grouped by project */}
+            {!loading && groupedByProject.map((group) => {
+              const isGroupExpanded = expandedGroups.has(group.groupKey);
+              return (
+                <div key={group.groupKey} className="space-y-3">
+                  {/* Project header — clickable to expand/collapse */}
+                  <div className="flex items-center gap-2.5 sm:gap-3">
+                    <button
+                      onClick={() => toggleGroup(group.groupKey)}
+                      className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0 text-left group"
+                    >
+                      <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <FolderOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${!isGroupExpanded ? "-rotate-90" : ""}`} />
+                          <h2 className="text-sm sm:text-base font-semibold text-foreground truncate group-hover:text-primary transition-colors">{group.projectName}</h2>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-foreground text-sm sm:text-base truncate">{audience.name}</h3>
-                          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{audience.description}</p>
+                        <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 flex-wrap ml-[22px]">
+                          <span className="text-[10px] sm:text-xs text-muted-foreground">{group.audiences.length} público{group.audiences.length !== 1 ? "s" : ""}</span>
                         </div>
                       </div>
-                  {audience.project_name && (
-                    <Badge variant="secondary" className="text-xs">{audience.project_name}</Badge>
-                  )}
-
-                  <div className="space-y-1.5 sm:space-y-2">
-                    {audience.industry && (
-                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                        <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
-                        <span className="text-xs sm:text-sm text-muted-foreground">Indústria:</span>
-                        <Badge variant="secondary" className="text-xs">{audience.industry}</Badge>
-                      </div>
-                    )}
-                    
-                    {audience.company_size && (
-                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                        <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
-                        <span className="text-xs sm:text-sm text-muted-foreground">Porte:</span>
-                        <Badge variant="secondary" className={`text-xs ${sizeConfig[audience.company_size as keyof typeof sizeConfig]?.color}`}>
-                          {sizeConfig[audience.company_size as keyof typeof sizeConfig]?.label}
-                        </Badge>
-                      </div>
-                    )}
-                    
-                    {audience.location && (
-                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                        <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
-                        <span className="text-xs sm:text-sm text-muted-foreground">Local:</span>
-                        <Badge variant="secondary" className="text-xs">{audience.location}</Badge>
-                      </div>
-                    )}
+                    </button>
                   </div>
 
-                  {audience.keywords.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-foreground">Palavras-chave:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {audience.keywords.map((keyword, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {keyword}
-                          </Badge>
-                        ))}
-                      </div>
+                  {/* Audience cards grid — only visible when expanded */}
+                  {isGroupExpanded && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                      {group.audiences.map((audience) => (
+                        <div key={audience.id} className="border border-border rounded-lg bg-card p-4 sm:p-6 space-y-3 sm:space-y-4">
+                          <div className="flex items-start gap-2 sm:gap-3 mb-2">
+                            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                              <Target className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-foreground text-sm sm:text-base truncate">{audience.name}</h3>
+                              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{audience.description}</p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5 sm:space-y-2">
+                            {audience.industry && (
+                              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                                <span className="text-xs sm:text-sm text-muted-foreground">Indústria:</span>
+                                <Badge variant="secondary" className="text-xs">{audience.industry}</Badge>
+                              </div>
+                            )}
+                            
+                            {audience.company_size && (
+                              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                                <span className="text-xs sm:text-sm text-muted-foreground">Porte:</span>
+                                <Badge variant="secondary" className={`text-xs ${sizeConfig[audience.company_size as keyof typeof sizeConfig]?.color}`}>
+                                  {sizeConfig[audience.company_size as keyof typeof sizeConfig]?.label}
+                                </Badge>
+                              </div>
+                            )}
+                            
+                            {audience.location && (
+                              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                                <span className="text-xs sm:text-sm text-muted-foreground">Local:</span>
+                                <Badge variant="secondary" className="text-xs">{audience.location}</Badge>
+                              </div>
+                            )}
+                          </div>
+
+                          {audience.keywords.length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium text-foreground">Palavras-chave:</p>
+                              <div className="flex flex-wrap gap-1">
+                                {audience.keywords.map((keyword, index) => (
+                                  <Badge key={index} variant="outline" className="text-xs">
+                                    {keyword}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex justify-end pt-2 border-t border-border">
+                            <Button size="sm" variant="outline" onClick={() => startEdit(audience)}>
+                              Editar
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
-
-                  <div className="flex justify-end pt-2 border-t border-border">
-                    <Button size="sm" variant="outline" onClick={() => startEdit(audience)}>
-                      Editar
-                    </Button>
-                  </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
     </DashboardLayout>
   );

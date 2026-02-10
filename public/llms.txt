@@ -1,0 +1,50 @@
+# Intentia — Inteligência Estratégica para Marketing B2B
+
+> Plataforma SaaS que ajuda empresas B2B a avaliar sua prontidão estratégica antes de investir em mídia paga. Do diagnóstico à execução.
+
+## O que é a Intentia?
+
+A Intentia é uma plataforma de inteligência estratégica para marketing B2B. Ela analisa a prontidão digital de um negócio, enriquece insights com inteligência artificial, compara o posicionamento com concorrentes e estrutura planos táticos por canal de mídia paga.
+
+## Funcionalidades Principais
+
+- **Diagnóstico Heurístico de URL**: Análise automática de proposta de valor, clareza, jornada do usuário, SEO, conversão e conteúdo.
+- **Análise por IA**: Enriquecimento com Google Gemini ou Anthropic Claude — resumo executivo, SWOT, prontidão para investimento e recomendações por canal.
+- **Benchmark Competitivo**: Comparação automática com concorrentes via análise SWOT, gap analysis e scores detalhados.
+- **Scores por Canal**: Avaliação de prontidão para Google Ads, Meta Ads, LinkedIn Ads e TikTok Ads.
+- **Insights Estratégicos**: Alertas, oportunidades e melhorias gerados automaticamente, enriquecidos por IA com causa raiz, impacto e plano de ação.
+- **Alertas Estratégicos**: Avisos sobre investimentos prematuros, canais não recomendados e riscos identificados.
+- **Plano Tático por Canal**: Estruturação de campanhas com templates validados por nicho B2B — copy, segmentação, testes A/B e métricas.
+- **Playbook de Execução**: Diretivas gamificadas com prioridades e KPIs para cada canal.
+- **Públicos-Alvo**: Definição de audiências com indústria, porte, localização e keywords.
+- **Exportação**: Relatórios PDF consolidados, CSV e exportação de análises IA em JSON, Markdown, HTML e PDF.
+- **Dados Estruturados**: Extração e geração de JSON-LD, Open Graph e Twitter Card.
+
+## Canais de Mídia Analisados
+
+- Google Ads (Search, Display, YouTube)
+- Meta Ads (Facebook, Instagram)
+- LinkedIn Ads
+- TikTok Ads
+
+## Planos
+
+- **Starter (Grátis)**: 3 projetos, diagnóstico heurístico, scores por canal, insights e alertas.
+- **Professional (R$97/mês)**: Projetos ilimitados, IA, benchmark SWOT, plano tático, exportação completa.
+- **Enterprise (Personalizado)**: Tudo do Pro + API access, multi-usuários, SLA 24/7, consultoria.
+
+## Stack Tecnológico
+
+- Frontend: React + TypeScript + Vite + Tailwind CSS + shadcn/ui
+- Backend: Supabase (PostgreSQL + Auth + Edge Functions + Storage)
+- IA: Google Gemini (2.0 Flash, 3 Flash Preview, 3 Pro Preview) e Anthropic Claude (Sonnet 4, Sonnet 3.7, Haiku 3.5, Haiku 3, Opus 3)
+
+## Links
+
+- Site: https://intentia.com.br
+- Preços: https://intentia.com.br/precos
+- Cases: https://intentia.com.br/cases
+- Blog: https://intentia.com.br/blog
+- Sobre: https://intentia.com.br/sobre
+- Contato: https://intentia.com.br/contato
+- Segurança: https://intentia.com.br/seguranca

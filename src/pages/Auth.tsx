@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,7 +56,7 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data: signUpData, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
@@ -67,6 +68,20 @@ export default function Auth() {
       });
 
       if (error) throw error;
+
+      // Create tenant_settings for the new user (starter plan)
+      const userId = signUpData.user?.id;
+      if (userId) {
+        await (supabase.from("tenant_settings") as any).upsert({
+          user_id: userId,
+          company_name: formData.companyName || formData.fullName || formData.email.split("@")[0],
+          plan: "starter",
+          monthly_analyses_limit: 5,
+          analyses_used: 0,
+          full_name: formData.fullName,
+          email: formData.email,
+        }, { onConflict: "user_id" });
+      }
 
       toast.success("Cadastro realizado! Verifique seu email para confirmar.");
       setFormData({ email: "", password: "", fullName: "", companyName: "" });
@@ -103,7 +118,7 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Back to Home */}
+      <SEO title="Entrar" path="/auth" description="Acesse sua conta na Intentia. Plataforma de inteligência estratégica para marketing B2B." noindex />
       <BackToHomeButton />
 
       {/* Left: Form */}

@@ -1,5 +1,6 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { SEO } from "@/components/SEO";
 import { BenchmarkCard } from "@/components/BenchmarkCard";
 import { BenchmarkDetailDialog, BenchmarkDetail } from "@/components/BenchmarkDetailDialog";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Filter, TrendingUp, Target, BarChart3, Users, FileText, FileSpreadsheet } from "lucide-react";
+import { Search, Filter, TrendingUp, Target, BarChart3, Users, FileText, FileSpreadsheet, FolderOpen, ChevronDown, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { exportBenchmarksPdf } from "@/lib/reportGenerator";
 import { exportBenchmarksCsv } from "@/lib/exportCsv";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,6 +55,16 @@ export default function Benchmark() {
   const [stats, setStats] = useState<any>(null);
   const [selectedBenchmark, setSelectedBenchmark] = useState<BenchmarkDetail | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroup = (projectId: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(projectId)) next.delete(projectId);
+      else next.add(projectId);
+      return next;
+    });
+  };
 
   // AI enrichment state
   const [hasAiKeys, setHasAiKeys] = useState(false);
@@ -149,6 +160,25 @@ export default function Benchmark() {
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       }
     });
+
+  const groupedByProject = useMemo(() => {
+    const groups: Record<string, { projectId: string; projectName: string; benchmarks: BenchmarkSummary[]; avgScore: number }> = {};
+    for (const b of filteredAndSortedBenchmarks) {
+      if (!groups[b.project_id]) {
+        groups[b.project_id] = {
+          projectId: b.project_id,
+          projectName: b.project_name,
+          benchmarks: [],
+          avgScore: 0,
+        };
+      }
+      groups[b.project_id].benchmarks.push(b);
+    }
+    for (const g of Object.values(groups)) {
+      g.avgScore = Math.round(g.benchmarks.reduce((s, b) => s + b.overall_score, 0) / g.benchmarks.length);
+    }
+    return Object.values(groups);
+  }, [filteredAndSortedBenchmarks]);
 
   const handleViewBenchmark = async (id: string) => {
     try {
@@ -265,6 +295,7 @@ export default function Benchmark() {
   if (loading) {
     return (
       <DashboardLayout>
+        <SEO title="Benchmark" noindex />
             <div className="max-w-6xl mx-auto">
               <div className="animate-pulse space-y-4">
                 <div className="h-8 bg-muted rounded w-1/3"></div>
@@ -287,6 +318,7 @@ export default function Benchmark() {
 
   return (
     <DashboardLayout>
+      <SEO title="Benchmark" noindex />
           <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -298,6 +330,25 @@ export default function Benchmark() {
               </div>
               {benchmarks.length > 0 && (
                 <div className="flex items-center gap-1.5 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                    title="Expandir todos"
+                    onClick={() => setExpandedGroups(new Set(groupedByProject.map(g => g.projectId)))}
+                  >
+                    <ChevronsUpDown className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                    title="Recolher todos"
+                    onClick={() => setExpandedGroups(new Set())}
+                  >
+                    <ChevronsDownUp className="h-3.5 w-3.5" />
+                  </Button>
+                  <div className="w-px h-5 bg-border mx-0.5" />
                   <Button
                     size="sm"
                     variant="outline"
@@ -461,26 +512,62 @@ export default function Benchmark() {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {filteredAndSortedBenchmarks.map((benchmark) => (
-                  <BenchmarkCard
-                    key={benchmark.id}
-                    id={benchmark.id}
-                    competitorName={benchmark.competitor_name}
-                    competitorUrl={benchmark.competitor_url}
-                    competitorNiche={benchmark.competitor_niche}
-                    overallScore={benchmark.overall_score}
-                    valuePropositionScore={benchmark.value_proposition_score}
-                    offerClarityScore={benchmark.offer_clarity_score}
-                    userJourneyScore={benchmark.user_journey_score}
-                    scoreGap={benchmark.score_gap}
-                    strengths={benchmark.strengths}
-                    weaknesses={benchmark.weaknesses}
-                    analysisDate={benchmark.analysis_date}
-                    onView={() => handleViewBenchmark(benchmark.id)}
-                    onDelete={() => handleDeleteBenchmark(benchmark.id)}
-                  />
-                ))}
+              <div className="space-y-4">
+                {groupedByProject.map((group) => {
+                  const isGroupExpanded = expandedGroups.has(group.projectId);
+                  return (
+                    <div key={group.projectId} className="space-y-3">
+                      {/* Project header — clickable to expand/collapse */}
+                      <div className="flex items-center gap-2.5 sm:gap-3">
+                        <button
+                          onClick={() => toggleGroup(group.projectId)}
+                          className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0 text-left group"
+                        >
+                          <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <FolderOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${!isGroupExpanded ? "-rotate-90" : ""}`} />
+                              <h2 className="text-sm sm:text-base font-semibold text-foreground truncate group-hover:text-primary transition-colors">{group.projectName}</h2>
+                            </div>
+                            <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 flex-wrap ml-[22px]">
+                              <span className="text-[10px] sm:text-xs text-muted-foreground">{group.benchmarks.length} concorrentes</span>
+                              <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 bg-primary/10 text-primary border-primary/30">
+                                Score médio: {group.avgScore}
+                              </Badge>
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+
+                      {/* Benchmark cards grid — only visible when expanded */}
+                      {isGroupExpanded && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          {group.benchmarks.map((benchmark) => (
+                            <BenchmarkCard
+                              key={benchmark.id}
+                              id={benchmark.id}
+                              competitorName={benchmark.competitor_name}
+                              competitorUrl={benchmark.competitor_url}
+                              competitorNiche={benchmark.competitor_niche}
+                              overallScore={benchmark.overall_score}
+                              valuePropositionScore={benchmark.value_proposition_score}
+                              offerClarityScore={benchmark.offer_clarity_score}
+                              userJourneyScore={benchmark.user_journey_score}
+                              scoreGap={benchmark.score_gap}
+                              strengths={benchmark.strengths}
+                              weaknesses={benchmark.weaknesses}
+                              analysisDate={benchmark.analysis_date}
+                              onView={() => handleViewBenchmark(benchmark.id)}
+                              onDelete={() => handleDeleteBenchmark(benchmark.id)}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

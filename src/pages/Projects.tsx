@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,7 @@ import type { UrlAnalysis } from "@/lib/urlAnalyzer";
 import { AnalysisProgressTracker } from "@/components/AnalysisProgressTracker";
 import { StructuredDataViewer } from "@/components/StructuredDataViewer";
 import type { CompetitorStructuredData } from "@/components/StructuredDataViewer";
+import { StructuredDataGenerator } from "@/components/StructuredDataGenerator";
 import { runAiAnalysis, getUserActiveKeys } from "@/lib/aiAnalyzer";
 import { AI_MODEL_LABELS, getModelsForProvider } from "@/lib/aiModels";
 import type { AiAnalysisResult, UserApiKey } from "@/lib/aiAnalyzer";
@@ -595,6 +597,7 @@ export default function Projects() {
 
   return (
     <DashboardLayout>
+      <SEO title="Projetos" noindex />
           <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
             <div className="flex items-center justify-between">
               <div>
@@ -987,14 +990,25 @@ export default function Projects() {
                                   twitterCard: {},
                                 } : null;
                                 const finalSd = sd || fallbackSd;
+                                const compSd = competitorSdMap[project.id] || [];
                                 return (
-                                  <StructuredDataViewer
-                                    structuredData={finalSd}
-                                    htmlSnapshot={hs}
-                                    htmlSnapshotAt={(project as any).html_snapshot_at}
-                                    competitors={competitorSdMap[project.id] || []}
-                                    projectName={project.name}
-                                  />
+                                  <>
+                                    <StructuredDataViewer
+                                      structuredData={finalSd}
+                                      htmlSnapshot={hs}
+                                      htmlSnapshotAt={(project as any).html_snapshot_at}
+                                      competitors={compSd}
+                                      projectName={project.name}
+                                    />
+                                    <StructuredDataGenerator
+                                      projectStructuredData={finalSd}
+                                      projectMeta={ha.meta}
+                                      projectUrl={project.url}
+                                      projectName={project.name}
+                                      projectNiche={project.niche}
+                                      competitors={compSd}
+                                    />
+                                  </>
                                 );
                               })()}
 

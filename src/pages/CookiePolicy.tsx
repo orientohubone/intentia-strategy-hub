@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { ScoreRing } from "@/components/ScoreRing";
 import { Footer } from "@/components/Footer";
@@ -12,7 +13,7 @@ export default function CookiePolicy() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      <SEO title="Política de Cookies" path="/politica-de-cookies" description="Política de cookies da Intentia. Saiba quais cookies utilizamos e como gerenciá-los." />
       <Header />
 
       {/* Hero Section */}

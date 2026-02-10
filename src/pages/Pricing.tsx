@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { SEO, buildBreadcrumb } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { ScoreRing } from "@/components/ScoreRing";
 import { Footer } from "@/components/Footer";
@@ -82,6 +83,61 @@ export default function Pricing() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Preços"
+        path="/precos"
+        description="Planos Starter (grátis), Professional (R$97/mês) e Enterprise para análise estratégica de marketing B2B com IA, benchmark e plano tático."
+        keywords="preços intentia, planos marketing B2B, análise estratégica preço, ferramenta mídia paga"
+        jsonLd={[
+          buildBreadcrumb([{ name: "Preços", path: "/precos" }]),
+          {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: [
+              {
+                "@type": "Question",
+                name: "Posso mudar de plano a qualquer momento?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Sim! Você pode fazer upgrade ou downgrade a qualquer momento. As alterações são refletidas na próxima cobrança.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "O plano grátis tem limite de tempo?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Não. O plano Starter é gratuito para sempre, com até 3 projetos ativos. Ideal para validar a plataforma antes de investir.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Preciso de API key para usar a análise por IA?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Sim. No plano Professional, você configura sua própria API key do Google Gemini ou Anthropic Claude nas configurações. Assim, você tem controle total sobre custos e modelos.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "O que é o Plano Tático?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "É um módulo exclusivo do Professional que permite estruturar campanhas canal por canal — tipo de campanha, etapa do funil, lances, extensões, copy frameworks, segmentação e testes A/B.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Qual forma de pagamento aceitam?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Aceitamos cartão de crédito, boleto bancário e PIX para planos Professional. Enterprise tem condições especiais.",
+                },
+              },
+            ],
+          },
+        ]}
+      />
       <Header />
       {/* Hero Section */}
       <section className="pt-32 pb-16">

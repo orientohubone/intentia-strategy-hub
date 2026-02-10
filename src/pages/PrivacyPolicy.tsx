@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { ScoreRing } from "@/components/ScoreRing";
 import { Footer } from "@/components/Footer";
@@ -12,7 +13,7 @@ export default function PrivacyPolicy() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      <SEO title="Política de Privacidade" path="/politica-de-privacidade" description="Política de privacidade da Intentia. Saiba como coletamos, usamos e protegemos seus dados pessoais." />
       <Header />
 
       {/* Hero Section */}

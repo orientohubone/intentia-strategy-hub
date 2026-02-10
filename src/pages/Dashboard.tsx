@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { SEO } from "@/components/SEO";
 import { ProjectCard } from "@/components/ProjectCard";
 import { ChannelCard } from "@/components/ChannelCard";
 import { StatsCard } from "@/components/StatsCard";
@@ -241,6 +242,7 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
+      <SEO title="Dashboard" noindex />
           <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
             {/* Welcome Section */}
             <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 lg:gap-6">

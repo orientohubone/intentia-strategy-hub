@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { Header } from "@/components/Header";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
@@ -20,6 +21,11 @@ import {
   Crosshair,
   Rocket,
   Database,
+  Globe,
+  Wand2,
+  Code2,
+  AlertTriangle,
+  Copy,
 } from "lucide-react";
 
 function ShowcaseSlider() {
@@ -175,6 +181,62 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        path="/"
+        description="Do diagnóstico à execução: analise a prontidão do seu negócio B2B, enriqueça insights com IA, compare-se com concorrentes e monte planos táticos por canal."
+        keywords="marketing B2B, análise estratégica, mídia paga, benchmark competitivo, Google Ads, Meta Ads, LinkedIn Ads, plano tático, inteligência artificial"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "Intentia",
+            url: "https://intentia.com.br",
+            logo: "https://intentia.com.br/favicon.svg",
+            description: "Plataforma de inteligência estratégica para marketing B2B.",
+            sameAs: [],
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "Intentia",
+            url: "https://intentia.com.br",
+            description: "Do diagnóstico à execução: estratégia completa para mídia B2B.",
+            inLanguage: "pt-BR",
+            potentialAction: {
+              "@type": "SearchAction",
+              target: "https://intentia.com.br/blog?q={search_term_string}",
+              "query-input": "required name=search_term_string",
+            },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            name: "Intentia Strategy Hub",
+            applicationCategory: "BusinessApplication",
+            operatingSystem: "Web",
+            url: "https://intentia.com.br",
+            description: "Plataforma SaaS de inteligência estratégica para marketing B2B. Análise heurística de URLs, enriquecimento com IA (Gemini/Claude), benchmark competitivo com SWOT, scores por canal (Google, Meta, LinkedIn, TikTok), plano tático por canal e playbook de execução.",
+            offers: [
+              {
+                "@type": "Offer",
+                name: "Starter",
+                price: "0",
+                priceCurrency: "BRL",
+                description: "3 projetos, diagnóstico heurístico, scores por canal, insights e alertas estratégicos.",
+              },
+              {
+                "@type": "Offer",
+                name: "Professional",
+                price: "97",
+                priceCurrency: "BRL",
+                billingIncrement: "P1M",
+                description: "Projetos ilimitados, análise por IA, benchmark SWOT, plano tático, exportação e notificações.",
+              },
+            ],
+            featureList: "Diagnóstico heurístico de URL, Análise por IA (Gemini/Claude), Benchmark competitivo SWOT, Scores por canal, Insights estratégicos, Alertas de investimento, Plano tático por canal, Playbook de execução, Exportação PDF/CSV, Públicos-alvo",
+          },
+        ]}
+      />
       <Header />
 
       {/* Hero Section */}
@@ -184,17 +246,16 @@ export default function Landing() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent border border-border mb-6 animate-fade-in">
               <Zap className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-accent-foreground">
-                Plataforma de Estratégia de Mídia para B2B
+                Inteligência Estratégica para Marketing B2B
               </span>
             </div>
             
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 animate-slide-up">
-              Descubra <span className="text-gradient bg-gradient-to-r from-primary to-orange-600 bg-clip-text text-transparent">onde investir</span> em mídia paga antes de gastar
+              Do diagnóstico à execução: <span className="text-gradient bg-gradient-to-r from-primary to-orange-600 bg-clip-text text-transparent">estratégia completa</span> para mídia B2B
             </h1>
             
             <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: "0.1s" }}>
-              Diagnóstico heurístico + inteligência artificial + benchmark competitivo + playbook de execução. 
-              Avalie a prontidão do seu negócio B2B para Google, Meta, LinkedIn e TikTok Ads antes de investir.
+              Analise a prontidão do seu negócio, enriqueça insights com IA, compare-se com concorrentes e monte planos táticos por canal — tudo em uma plataforma.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: "0.2s" }}>
@@ -334,6 +395,98 @@ export default function Landing() {
                     <p className="text-sm font-semibold text-foreground">Suas chaves, seu controle</p>
                     <p className="text-xs text-muted-foreground">API keys armazenadas com segurança por usuário</p>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Structured Data Generator Section */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <span className="inline-block px-4 py-1 rounded-full bg-accent text-accent-foreground text-sm font-medium mb-4">
+                Exclusivo
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
+                Gerador de <span className="text-primary">Dados Estruturados</span>
+              </h2>
+              <p className="text-lg text-muted-foreground mb-6">
+                Não basta saber o que a concorrência tem — você precisa ter também. 
+                O gerador analisa os dados estruturados dos seus concorrentes e cria snippets prontos para copiar e colar no seu site.
+              </p>
+              <div className="space-y-4">
+                {[
+                  { icon: AlertTriangle, title: "Gap Analysis Automático", desc: "Identifica JSON-LD, Open Graph e Twitter Card que seus concorrentes têm e você não. Prioriza por criticidade." },
+                  { icon: Code2, title: "Snippets Prontos para Usar", desc: "Gera código JSON-LD (Organization, WebSite, FAQ, Product) e meta tags OG/Twitter pré-preenchidos com dados do seu projeto." },
+                  { icon: Copy, title: "Copie e Cole no Seu Site", desc: "Cada snippet vem pronto para o <head> do seu HTML. Copie individual ou todos de uma vez com um clique." },
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-3">
+                    <item.icon className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                      <p className="text-sm text-muted-foreground">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-4">
+              {/* Visual card simulating the generator */}
+              <div className="card-elevated p-6 space-y-4 border-primary/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Wand2 className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Gerador de Dados Estruturados</p>
+                    <p className="text-xs text-muted-foreground">3 gaps críticos · 2 moderados · Baseado em 4 concorrentes</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-2.5 rounded-lg border border-amber-500/30 bg-amber-500/5">
+                    <div className="flex items-center gap-2">
+                      <Code2 className="h-4 w-4 text-amber-500" />
+                      <span className="text-xs font-medium text-foreground">Organization</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600">JSON-LD</span>
+                    </div>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 font-medium">Crítico</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-lg border border-amber-500/30 bg-amber-500/5">
+                    <div className="flex items-center gap-2">
+                      <Code2 className="h-4 w-4 text-amber-500" />
+                      <span className="text-xs font-medium text-foreground">FAQPage</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600">JSON-LD</span>
+                    </div>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 font-medium">Crítico</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-lg border border-blue-500/20 bg-blue-500/5">
+                    <div className="flex items-center gap-2">
+                      <Globe className="h-4 w-4 text-blue-500" />
+                      <span className="text-xs font-medium text-foreground">Open Graph (5 tags)</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600">Meta Tag</span>
+                    </div>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 font-medium">Moderado</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full w-3/4 rounded-full bg-gradient-to-r from-primary to-orange-400" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">8 snippets gerados</span>
+                </div>
+              </div>
+              <div className="card-elevated p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <span className="text-xs font-semibold text-foreground">Já presente no seu site</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="text-[10px] px-2 py-1 rounded-full bg-green-500/10 text-green-600 border border-green-500/20">✓ WebSite</span>
+                  <span className="text-[10px] px-2 py-1 rounded-full bg-green-500/10 text-green-600 border border-green-500/20">✓ Open Graph (3 tags)</span>
+                  <span className="text-[10px] px-2 py-1 rounded-full bg-green-500/10 text-green-600 border border-green-500/20">✓ Twitter Card</span>
                 </div>
               </div>
             </div>

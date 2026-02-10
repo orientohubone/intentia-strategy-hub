@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { SEO, buildBreadcrumb } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { ScoreRing } from "@/components/ScoreRing";
 import { Footer } from "@/components/Footer";
@@ -110,7 +111,7 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      <SEO title="Contato" path="/contato" description="Entre em contato com a Intentia. Fale conosco sobre análise estratégica, planos Enterprise, parcerias ou suporte." keywords="contato intentia, suporte marketing B2B, falar com consultor" jsonLd={buildBreadcrumb([{ name: "Contato", path: "/contato" }])} />
       <Header />
 
       {/* Hero Section */}

@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { ScoreRing } from "@/components/ScoreRing";
 import { Footer } from "@/components/Footer";
@@ -12,7 +13,7 @@ export default function TermsOfService() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      <SEO title="Termos de Serviço" path="/termos-de-servico" description="Termos de serviço da Intentia. Condições de uso da plataforma de análise estratégica para marketing B2B." />
       <Header />
 
       {/* Hero Section */}

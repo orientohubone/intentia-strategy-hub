@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +32,7 @@ import {
   BookOpen,
   Database,
   HardDrive,
+  Wand2,
 } from "lucide-react";
 
 export default function Help() {
@@ -307,6 +309,45 @@ export default function Help() {
       ]
     },
     {
+      id: "structured-data-generator",
+      title: "Gerador de Dados Estruturados",
+      description: "Gere snippets prontos baseados na concorrência",
+      icon: <Wand2 className="h-5 w-5" />,
+      color: "text-orange-600",
+      articles: [
+        {
+          title: "O que é o Gerador de Dados Estruturados",
+          content: "O Gerador analisa automaticamente os dados estruturados dos seus concorrentes (JSON-LD, Open Graph, Twitter Card) e compara com os do seu site. Ele identifica gaps — o que a concorrência tem e você não — e gera snippets de código prontos para copiar e colar no <head> do seu HTML.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Gap Analysis automático",
+          content: "O sistema compara JSON-LD types (Organization, WebSite, FAQPage, Product, etc.), tags Open Graph essenciais (og:title, og:image, og:description) e Twitter Card tags entre seu site e cada concorrente. Gaps são classificados como Crítico (2+ concorrentes usam), Moderado ou Baixo, com indicação de quais concorrentes possuem cada item.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Snippets gerados automaticamente",
+          content: "Para cada gap identificado, o gerador cria código pronto: JSON-LD com <script type='application/ld+json'> para Organization, WebSite, WebPage, FAQPage, BreadcrumbList, SoftwareApplication, Product e Article. Meta tags Open Graph e Twitter Card também são geradas. Todos os snippets vêm pré-preenchidos com dados do seu projeto (nome, URL, descrição, imagem).",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Como usar os snippets gerados",
+          content: "Clique em qualquer snippet para expandir e ver o código completo. Use o botão de copiar (📋) para copiar individual, ou 'Copiar Todos' para copiar todos de uma vez. Cole os JSON-LD dentro de tags <script> no <head> do seu HTML. Meta tags OG e Twitter vão diretamente no <head>. Personalize os valores placeholder antes de publicar.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Quando o gerador aparece",
+          content: "O Gerador de Dados Estruturados aparece automaticamente nos resultados da análise de cada projeto, logo abaixo do Visualizador de Dados Estruturados. Ele só é exibido quando há pelo menos um concorrente com dados estruturados e quando existem gaps identificados entre seu site e a concorrência.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Tipos de Schema suportados",
+          content: "O gerador reconhece e gera templates para: Organization (empresa), WebSite (site com busca), WebPage (página), FAQPage (perguntas frequentes), BreadcrumbList (navegação), SoftwareApplication (software/SaaS), Product/Service (produto ou serviço) e Article (artigo/blog). Cada template segue as especificações do schema.org.",
+          difficulty: "Intermediário",
+        },
+      ]
+    },
+    {
       id: "audiences",
       title: "Públicos-Alvo",
       description: "Defina e gerencie suas audiências B2B",
@@ -492,6 +533,14 @@ export default function Help() {
       answer: "Sim! Ao adicionar URLs de concorrentes ao projeto, a Intentia extrai os dados estruturados de cada um. No visualizador unificado, use as abas para alternar entre seu site e cada concorrente, comparando JSON-LD, Open Graph, Twitter Card e Microdata lado a lado."
     },
     {
+      question: "O que é o Gerador de Dados Estruturados?",
+      answer: "É uma ferramenta exclusiva que analisa os dados estruturados dos seus concorrentes e gera snippets de código prontos para você copiar e colar no seu site. Ele identifica gaps (o que a concorrência tem e você não), classifica por criticidade e gera JSON-LD, Open Graph e Twitter Card pré-preenchidos com dados do seu projeto."
+    },
+    {
+      question: "Preciso saber programar para usar o Gerador de Dados Estruturados?",
+      answer: "Não! Os snippets são gerados prontos para uso. Basta copiar o código e colar no <head> do seu HTML (ou pedir ao seu desenvolvedor). JSON-LD vai dentro de tags <script>, e meta tags OG/Twitter vão diretamente no <head>. O gerador pré-preenche os valores com dados do seu projeto — você só precisa personalizar os placeholders."
+    },
+    {
       question: "Posso cancelar meu plano a qualquer momento?",
       answer: "Sim! Todos os planos são flexíveis, sem compromisso de longo prazo. Você pode fazer upgrade, downgrade ou cancelar quando quiser. As alterações são refletidas na próxima cobrança."
     },
@@ -532,6 +581,7 @@ export default function Help() {
 
   return (
     <DashboardLayout>
+      <SEO title="Ajuda" noindex />
           <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
             {/* Header */}
             <div>

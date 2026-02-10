@@ -2,9 +2,9 @@
 
 ## 📊 Visão Geral
 
-**Status do Projeto:** v2.6.0 — Segurança, Backup & Guardrails  
-**Data de Atualização:** 07/02/2026  
-**Versão:** 2.6.0
+**Status do Projeto:** v2.9.0 — Enriquecimento IA de Insights + UX Colapsável  
+**Data de Atualização:** 10/02/2026  
+**Versão:** 2.9.0
 
 ---
 
@@ -69,18 +69,28 @@
 - **[COMPLETO]** Confirmação ao excluir (AlertDialog)
 - **[COMPLETO]** Toast feedback para todas as operações
 
-### 💡 Insights Estratégicos
-- **[COMPLETO]** Agrupados por projeto em cards visuais com ícones por tipo
-- **[COMPLETO]** Dialog de detalhes com toggle fullscreen (Maximize2/Minimize2)
+### 💡 Insights Estratégicos + Enriquecimento por IA
+- **[COMPLETO]** Agrupados por projeto em seções colapsáveis (fechadas por padrão)
+- **[COMPLETO]** Botões Expandir/Recolher todos no header
+- **[COMPLETO]** Enriquecimento por IA — botão por grupo (Select modelo + icon com lab-bubble animation)
+- **[COMPLETO]** Campos IA: deepAnalysis, rootCause, impact, actionPlan, relatedMetrics, benchmarkContext
+- **[COMPLETO]** Novos insights gerados por IA (source: "ai") com prioridade (critical/high/medium/low)
+- **[COMPLETO]** Badges visuais: IA (roxo), Enriquecido (Brain), prioridade colorida
+- **[COMPLETO]** Card expandível com seção "Análise IA" (causa raiz, impacto, plano de ação)
+- **[COMPLETO]** Dialog de detalhes com toggle fullscreen + seção completa de enriquecimento IA
+- **[COMPLETO]** Fallback "Configurar IA" quando sem API keys
 - **[COMPLETO]** Stats cards com contadores por tipo (alertas, oportunidades, melhorias)
 - **[COMPLETO]** Filtros por tipo (alerta/oportunidade/melhoria)
 - **[COMPLETO]** Busca por título/descrição
 - **[COMPLETO]** Badges coloridos para tipo e projeto
 - **[COMPLETO]** Data de criação em cada card
 - **[COMPLETO]** Estado vazio com orientação ao usuário
+- **[COMPLETO]** Migration SQL: `insights_ai_enrichment.sql` (source, ai_enrichment, priority, ai_provider, ai_model, ai_enriched_at)
 
 ### 👥 Público-Alvo
 - **[COMPLETO]** CRUD completo de públicos-alvo
+- **[COMPLETO]** Agrupados por projeto em seções colapsáveis (fechadas por padrão, fallback "Sem projeto")
+- **[COMPLETO]** Botões Expandir/Recolher todos no header
 - **[COMPLETO]** Vinculação com projetos (opcional)
 - **[COMPLETO]** Cards visuais com badges (indústria, porte, local)
 - **[COMPLETO]** Keywords como tags
@@ -88,6 +98,8 @@
 - **[COMPLETO]** Formulário com validações
 
 ### 🎯 Benchmark Competitivo + Enriquecimento por IA
+- **[COMPLETO]** Agrupados por projeto em seções colapsáveis (fechadas por padrão) com score médio
+- **[COMPLETO]** Botões Expandir/Recolher todos no header
 - **[COMPLETO]** Geração automática a partir de competitor_urls do projeto
 - **[COMPLETO]** Análise SWOT (Strengths, Weaknesses, Opportunities, Threats)
 - **[COMPLETO]** Scores detalhados (Proposta, Clareza, Jornada, Geral) e gap analysis
@@ -162,7 +174,8 @@
 
 ### 🛡️ Alertas Estratégicos
 - **[COMPLETO]** Página dedicada `/alertas` consolidando todos os alertas do sistema
-- **[COMPLETO]** 4 categorias: Investimento Prematuro (score < 50), Canal Não Recomendado, Riscos por Canal, Alertas da Análise
+- **[COMPLETO]** 4 categorias colapsáveis (fechadas por padrão) com headers clicáveis e ChevronDown animado
+- **[COMPLETO]** Botões Expandir/Recolher todas as categorias no header
 - **[COMPLETO]** Filtros por projeto e tipo de alerta
 - **[COMPLETO]** Cards expandíveis com detalhes, riscos e links para Projetos/Plano Tático
 - **[COMPLETO]** Box informativo "Como interpretar os alertas"
@@ -492,7 +505,7 @@
 
 ## 🎯 Conclusão
 
-O **Intentia Strategy Hub** está na **versão 2.6.0** com funcionalidades avançadas:
+O **Intentia Strategy Hub** está na **versão 2.8.0** com funcionalidades avançadas:
 
 ### ✅ Entregáveis Concluídos
 1. **Autenticação redesenhada** com split layout, design system e fluxo "Esqueceu sua senha"
@@ -552,6 +565,24 @@ O **Intentia Strategy Hub** está na **versão 2.6.0** com funcionalidades avan�
 54. **Página de Segurança** — `/seguranca` com 4 pilares, guardrails, infraestrutura e fluxo de proteção
 55. **Settings Backup Card** — criar backup, exportar dados, listar/baixar/excluir backups
 56. **Central de Ajuda** — categoria Segurança & Backup com 8 artigos + 2 FAQs adicionais
+57. **Gerador de Dados Estruturados** — gap analysis automático (projeto vs concorrentes), geração de snippets JSON-LD, Open Graph e Twitter Card prontos para copiar
+58. **Landing page** — seção exclusiva do Gerador de Dados Estruturados com visual interativo
+59. **Central de Ajuda** — categoria Gerador de Dados Estruturados com 6 artigos + 2 FAQs
+60. **Posts agrupados** — seção 13 do Brand Guide compactada em card resumo, posts movidos para `/brand/posts`
+61. **Painel Administrativo** — login separado por CNPJ + senha, rota protegida `/admin`
+62. **Feature Flags** — controle global de 25 funcionalidades (ativo/desativado/desenvolvimento/manutenção/descontinuado)
+63. **Controle de Planos** — habilitar/desabilitar features por plano (Starter/Professional/Enterprise) com limites de uso
+64. **Gestão de Clientes** — lista de usuários com alteração de plano, visualização de features disponíveis e dados de uso
+65. **Admin Auth** — autenticação separada do Supabase Auth, sessão local com expiração de 4h, rate limiting (5 tentativas → bloqueio 15min)
+66. **Admin Audit Log** — tabela dedicada para registro de ações administrativas
+67. **User Feature Overrides** — override de features por usuário específico
+68. **useFeatureFlags hook** — hook para verificar disponibilidade de features no frontend por plano e status global
+69. **Enriquecimento de Insights por IA** — deepAnalysis, rootCause, impact, actionPlan, relatedMetrics, benchmarkContext
+70. **Novos insights por IA** — 2-4 insights que a heurística não detectou (source: "ai", prioridade)
+71. **Seções colapsáveis** — Insights (por projeto), Benchmark (por projeto), Públicos-Alvo (por projeto), Alertas (por categoria)
+72. **Expandir/Recolher todos** — botões globais em todas as páginas com seções colapsáveis
+73. **Migration SQL** — `insights_ai_enrichment.sql` com source, ai_enrichment, priority, ai_provider, ai_model, ai_enriched_at
+74. **runInsightsAiEnrichment()** — função em aiAnalyzer.ts para enriquecer insights existentes e gerar novos
 
 ### 📋 Próximos Passos — Etapa Operacional (v3.0)
 1. Gestão de campanhas (criar/editar/monitorar campanhas reais)
@@ -565,4 +596,4 @@ O **Intentia Strategy Hub** está na **versão 2.6.0** com funcionalidades avan�
 
 ---
 
-**Status:** 🟢 **v2.6.0 — SEGURANÇA, BACKUP & GUARDRAILS**
+**Status:** 🟢 **v2.9.0 — ENRIQUECIMENTO IA DE INSIGHTS + UX COLAPSÁVEL**

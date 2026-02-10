@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { SEO, buildBreadcrumb } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { ScoreRing } from "@/components/ScoreRing";
 import { Footer } from "@/components/Footer";
@@ -78,7 +79,7 @@ export default function Blog() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      <SEO title="Blog" path="/blog" description="Artigos sobre marketing B2B, mídia paga, estratégia digital, Google Ads, Meta Ads, LinkedIn Ads e otimização de campanhas." keywords="blog marketing B2B, artigos mídia paga, estratégia digital blog" jsonLd={buildBreadcrumb([{ name: "Blog", path: "/blog" }])} />
       <Header />
       {/* Hero Section */}
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { SEO } from "@/components/SEO";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,8 @@ import {
   ChevronUp,
   ExternalLink,
   Info,
+  ChevronsDownUp,
+  ChevronsUpDown,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -76,6 +79,18 @@ export default function Alerts() {
   const [filterProject, setFilterProject] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<AlertCategory>("all");
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(section)) next.delete(section);
+      else next.add(section);
+      return next;
+    });
+  };
+
+  const allSectionKeys = ["premature", "not_recommended", "risks", "warnings"];
 
   useEffect(() => {
     if (user) loadAlerts();
@@ -177,6 +192,7 @@ export default function Alerts() {
 
   return (
     <DashboardLayout>
+      <SEO title="Alertas" noindex />
       <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -189,6 +205,28 @@ export default function Alerts() {
               Avisos sobre investimentos prematuros, canais não recomendados e riscos identificados em seus projetos.
             </p>
           </div>
+          {totalAlerts > 0 && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1"
+                title="Expandir todas as categorias"
+                onClick={() => setExpandedSections(new Set(allSectionKeys))}
+              >
+                <ChevronsUpDown className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1"
+                title="Recolher todas as categorias"
+                onClick={() => setExpandedSections(new Set())}
+              >
+                <ChevronsDownUp className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Filters */}
@@ -302,14 +340,20 @@ export default function Alerts() {
         {/* Premature Investment Alerts */}
         {!loading && (filterCategory === "all" || filterCategory === "premature") && filteredPremature.length > 0 && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
+            <button
+              onClick={() => toggleSection("premature")}
+              className="flex items-center gap-2 w-full text-left group"
+            >
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${!expandedSections.has("premature") ? "-rotate-90" : ""}`} />
               <TrendingDown className="h-4 w-4 text-red-500" />
-              <h2 className="text-sm sm:text-base font-semibold text-foreground">Investimento Prematuro</h2>
+              <h2 className="text-sm sm:text-base font-semibold text-foreground group-hover:text-primary transition-colors">Investimento Prematuro</h2>
               <Badge variant="outline" className="text-red-500 border-red-500/30 text-[10px]">
                 {filteredPremature.length}
               </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground -mt-1">
+            </button>
+            {expandedSections.has("premature") && (
+            <>
+            <p className="text-xs text-muted-foreground -mt-1 ml-[22px]">
               Canais com score abaixo de 50 indicam que seu site ainda não está preparado para receber tráfego pago nesse canal. Investir agora pode resultar em desperdício de budget.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
@@ -382,20 +426,28 @@ export default function Alerts() {
                 );
               })}
             </div>
+            </>
+            )}
           </div>
         )}
 
         {/* Not Recommended Channels */}
         {!loading && (filterCategory === "all" || filterCategory === "not_recommended") && filteredNotRecommended.length > 0 && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
+            <button
+              onClick={() => toggleSection("not_recommended")}
+              className="flex items-center gap-2 w-full text-left group"
+            >
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${!expandedSections.has("not_recommended") ? "-rotate-90" : ""}`} />
               <Ban className="h-4 w-4 text-amber-500" />
-              <h2 className="text-sm sm:text-base font-semibold text-foreground">Canais Não Recomendados</h2>
+              <h2 className="text-sm sm:text-base font-semibold text-foreground group-hover:text-primary transition-colors">Canais Não Recomendados</h2>
               <Badge variant="outline" className="text-amber-500 border-amber-500/30 text-[10px]">
                 {filteredNotRecommended.length}
               </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground -mt-1">
+            </button>
+            {expandedSections.has("not_recommended") && (
+            <>
+            <p className="text-xs text-muted-foreground -mt-1 ml-[22px]">
               A análise estratégica identificou que estes canais não são adequados para o projeto no momento. Investir neles pode não trazer retorno.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
@@ -467,20 +519,28 @@ export default function Alerts() {
                 );
               })}
             </div>
+            </>
+            )}
           </div>
         )}
 
         {/* Channel Risks */}
         {!loading && (filterCategory === "all" || filterCategory === "risks") && filteredWithRisks.length > 0 && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
+            <button
+              onClick={() => toggleSection("risks")}
+              className="flex items-center gap-2 w-full text-left group"
+            >
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${!expandedSections.has("risks") ? "-rotate-90" : ""}`} />
               <AlertTriangle className="h-4 w-4 text-orange-500" />
-              <h2 className="text-sm sm:text-base font-semibold text-foreground">Riscos por Canal</h2>
+              <h2 className="text-sm sm:text-base font-semibold text-foreground group-hover:text-primary transition-colors">Riscos por Canal</h2>
               <Badge variant="outline" className="text-orange-500 border-orange-500/30 text-[10px]">
                 {filteredWithRisks.length}
               </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground -mt-1">
+            </button>
+            {expandedSections.has("risks") && (
+            <>
+            <p className="text-xs text-muted-foreground -mt-1 ml-[22px]">
               Riscos específicos identificados pela análise para cada canal. Considere mitigá-los antes de investir.
             </p>
             <div className="space-y-2">
@@ -509,20 +569,28 @@ export default function Alerts() {
                 );
               })}
             </div>
+            </>
+            )}
           </div>
         )}
 
         {/* Warning Insights */}
         {!loading && (filterCategory === "all" || filterCategory === "warnings") && filteredInsights.length > 0 && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
+            <button
+              onClick={() => toggleSection("warnings")}
+              className="flex items-center gap-2 w-full text-left group"
+            >
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${!expandedSections.has("warnings") ? "-rotate-90" : ""}`} />
               <Info className="h-4 w-4 text-yellow-500" />
-              <h2 className="text-sm sm:text-base font-semibold text-foreground">Alertas da Análise Heurística</h2>
+              <h2 className="text-sm sm:text-base font-semibold text-foreground group-hover:text-primary transition-colors">Alertas da Análise Heurística</h2>
               <Badge variant="outline" className="text-yellow-500 border-yellow-500/30 text-[10px]">
                 {filteredInsights.length}
               </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground -mt-1">
+            </button>
+            {expandedSections.has("warnings") && (
+            <>
+            <p className="text-xs text-muted-foreground -mt-1 ml-[22px]">
               Problemas identificados automaticamente pela análise da URL do projeto. Resolva-os para melhorar seus scores.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
@@ -562,6 +630,8 @@ export default function Alerts() {
                 );
               })}
             </div>
+            </>
+            )}
           </div>
         )}
 

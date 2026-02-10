@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
+import { SEO } from "@/components/SEO";
 import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
 import { BackToHomeButton } from "@/components/BackToHomeButton";
@@ -137,6 +138,8 @@ export default function Subscribe() {
         company_name: account.companyName || account.fullName,
         plan: "professional",
         monthly_analyses_limit: 999,
+        full_name: account.fullName,
+        email: account.email,
       });
 
       // 4. Create welcome notification
@@ -230,6 +233,7 @@ export default function Subscribe() {
   // Main checkout form
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Assinar Professional" path="/assinar" description="Assine o plano Professional da Intentia: projetos ilimitados, análise por IA, benchmark SWOT, plano tático e exportação completa." noindex />
       <Header />
 
       <section className="pt-28 pb-20">

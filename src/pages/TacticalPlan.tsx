@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScoreRing } from "@/components/ScoreRing";
@@ -642,6 +643,7 @@ export default function TacticalPlan() {
 
   return (
     <DashboardLayout>
+      <SEO title="Plano Tático" noindex />
           <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
 
             {/* Page Header */}

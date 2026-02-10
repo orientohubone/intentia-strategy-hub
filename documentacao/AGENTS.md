@@ -8,9 +8,9 @@
 **UI Framework:** shadcn/ui + Tailwind CSS  
 **Backend:** Supabase (PostgreSQL + Auth + Edge Functions)  
 **Propósito:** Plataforma de análise estratégica para marketing B2B  
-**Versão:** 2.6.0
+**Versão:** 2.9.0
 
-## Status Atual: ✅ v2.6.0 (Segurança, Backup & Guardrails)
+## Status Atual: ✅ v2.9.0 (Enriquecimento IA de Insights + UX Colapsável)
 
 ### Funcionalidades Implementadas
 
@@ -46,24 +46,32 @@
 - **Toast feedback** para todas as operações
 - **Notificação** após conclusão da análise IA (com guard anti-duplicação)
 
-#### 4. Insights Estratégicos ✅
-- **Agrupados por projeto** em cards visuais com ícones por tipo
-- **Dialog de detalhes** com toggle fullscreen (Maximize2/Minimize2)
+#### 4. Insights Estratégicos + Enriquecimento por IA ✅
+- **Agrupados por projeto** em seções colapsáveis (fechadas por padrão)
+- **Enriquecimento por IA** — botão por grupo de projeto (Select modelo + botão icon com lab-bubble animation)
+- **Campos IA:** deepAnalysis, rootCause, impact, actionPlan (step/effort/timeframe), relatedMetrics, benchmarkContext
+- **Novos insights por IA** — 2-4 insights que a heurística não detectou (source: "ai")
+- **Badges visuais:** IA (roxo), Enriquecido (Brain), prioridade (critical/high/medium/low)
+- **Card expandível** com seção "Análise IA" (causa raiz, impacto, plano de ação)
+- **Dialog de detalhes** com toggle fullscreen + seção completa de enriquecimento IA
 - **Filtros por tipo** (alerta/oportunidade/melhoria)
 - **Busca** por título/descrição
 - **Stats cards** com contadores por tipo
-- **Badges** coloridos para tipo e projeto
-- **Data de criação** em cada card
+- **Expandir/Recolher todos** no header
+- **Fallback "Configurar IA"** quando sem API keys
 
 #### 5. Público-Alvo ✅
 - **CRUD completo** de públicos-alvo
+- **Agrupados por projeto** em seções colapsáveis (fechadas por padrão, fallback "Sem projeto")
 - **Vinculação com projetos** (opcional)
 - **Cards visuais** com badges (indústria, porte, local)
 - **Keywords** como tags
 - **Busca** por nome/descrição
+- **Expandir/Recolher todos** no header
 - **Formulário** com validações
 
 #### 6. Benchmark Competitivo + Enriquecimento por IA ✅
+- **Agrupados por projeto** em seções colapsáveis (fechadas por padrão) com score médio
 - **Geração automática** a partir de competitor_urls do projeto
 - **Análise SWOT** (Strengths, Weaknesses, Opportunities, Threats)
 - **Scores detalhados** (proposta, clareza, jornada, geral) e gap analysis
@@ -98,10 +106,12 @@
 
 #### 19. Alertas Estratégicos ✅
 - **Página dedicada** `/alertas` consolidando todos os alertas do sistema
-- **4 categorias:** Investimento Prematuro (score < 50), Canal Não Recomendado, Riscos por Canal, Alertas da Análise Heurística
+- **4 categorias colapsáveis** (fechadas por padrão): Investimento Prematuro, Canal Não Recomendado, Riscos por Canal, Alertas da Análise
+- **Headers clicáveis** com ChevronDown animado, ícone da categoria e badge de contagem
+- **Expandir/Recolher todas** as categorias no header
 - **Filtros** por projeto e tipo de alerta
-- **Cards expandíveis** com detalhes, riscos e links para Projetos/Plano Tático
-- **Box informativo** "Como interpretar os alertas"
+- **Cards expandíveis** com detalhes, riscos e ações
+- **Stats cards** clicáveis para filtrar por categoria
 - **Empty state** quando não há alertas
 - **Sidebar** com ícone ShieldAlert
 
@@ -323,7 +333,7 @@ intentia-strategy-hub/
 │   ├── lib/               # Utilitários
 │   │   ├── utils.ts
 │   │   ├── urlAnalyzer.ts # Análise heurística + salvar resultados
-│   │   ├── aiAnalyzer.ts  # Análise por IA (projetos + benchmarks)
+│   │   ├── aiAnalyzer.ts  # Análise por IA (projetos + benchmarks + enriquecimento insights)
 │   │   ├── exportAnalysis.ts # Exportação JSON/MD/HTML/PDF
 │   │   ├── reportGenerator.ts # Relatórios PDF consolidados e por seção
 │   │   └── exportCsv.ts   # Exportação CSV (projetos, insights, benchmarks, audiences)
@@ -335,6 +345,7 @@ intentia-strategy-hub/
 │   ├── audiences_schema.sql
 │   ├── add_project_to_audiences.sql
 │   ├── benchmark_ai_analysis.sql  # Migration: ai_analysis em benchmarks
+│   ├── insights_ai_enrichment.sql # Migration: campos IA na tabela insights
 │   ├── add_html_snapshot_structured_data.sql  # Migration: html_snapshot + structured_data em projects
 │   ├── add_benchmarks_structured_data.sql     # Migration: structured_data + html_snapshot em benchmarks
 │   ├── security_hardening.sql    # Correções de RLS, views, anti-escalação
@@ -364,7 +375,7 @@ intentia-strategy-hub/
 - `tenant_settings` — Configurações do tenant (empresa, plano, limites)
 - `projects` — Projetos com URL, nicho, competitor_urls, score, status, html_snapshot (text), structured_data (jsonb)
 - `project_channel_scores` — Scores por canal (google/meta/linkedin/tiktok)
-- `insights` — Insights estratégicos (warning/opportunity/improvement)
+- `insights` — Insights estratégicos (warning/opportunity/improvement) + campos IA: source, ai_enrichment (jsonb), priority, ai_provider, ai_model, ai_enriched_at
 - `audiences` — Públicos-alvo com keywords e vinculação a projetos
 - `benchmarks` — Análises competitivas com SWOT, scores, ai_analysis (jsonb), structured_data (jsonb), html_snapshot (text)
 - `notifications` — Sistema de notificações
@@ -522,7 +533,11 @@ intentia-strategy-hub/
    Seletor modelo → runBenchmarkAiAnalysis() → prompt competitivo
    → parse JSON → salva em benchmarks.ai_analysis → notificação
 
-5. Exportação ✅
+5. Enriquecimento de Insights por IA (sob demanda) ✅
+   Seletor modelo → runInsightsAiEnrichment() → prompt por insight
+   → parse JSON → atualiza insights existentes (ai_enrichment) + insere novos (source: "ai")
+
+6. Exportação ✅
    Resultados IA → exportAnalysis.ts → JSON / Markdown / HTML / PDF
 ```
 
@@ -595,6 +610,11 @@ npm run test:watch   # Testes em modo watch
 - [x] Página pública de Segurança (/seguranca)
 - [x] Animação lab-bubble para feedback visual durante IA
 - [x] Guard anti-duplicação de notificações (useRef)
+- [x] Enriquecimento de insights por IA (deepAnalysis, rootCause, impact, actionPlan)
+- [x] Novos insights gerados por IA (source: "ai") com prioridade
+- [x] Seções colapsáveis em Insights, Benchmark, Públicos-Alvo e Alertas
+- [x] Botões Expandir/Recolher todos em todas as páginas com seções
+- [x] Migration SQL para campos IA na tabela insights
 
 ### 📋 Próximos Passos
 - [ ] Integração com APIs de marketing
@@ -619,7 +639,7 @@ O projeto está configurado para deploy via:
 
 ## Resumo
 
-O **Intentia Strategy Hub** está na **versão 2.6.0** — segurança robusta, backup e guardrails:
+O **Intentia Strategy Hub** está na **versão 2.9.0** — enriquecimento IA de insights e UX colapsável:
 
 1. **Autenticação** redesenhada com split layout, redirect após login
 2. **Dashboard** com dados reais, Welcome Section e ScoreRing
@@ -656,5 +676,10 @@ O **Intentia Strategy Hub** está na **versão 2.6.0** — segurança robusta, b
 33. **Página de Segurança** — `/seguranca` com 4 pilares, guardrails, infraestrutura e fluxo de proteção
 34. **Settings Backup Card** — criar backup, exportar dados, listar/baixar/excluir backups
 35. **Central de Ajuda** — categoria Segurança & Backup com 8 artigos + 2 FAQs adicionais
+36. **Enriquecimento de Insights por IA** — deepAnalysis, rootCause, impact, actionPlan, relatedMetrics, benchmarkContext
+37. **Novos insights por IA** — 2-4 insights que a heurística não detectou (source: "ai", prioridade)
+38. **Seções colapsáveis** — Insights (por projeto), Benchmark (por projeto), Públicos-Alvo (por projeto), Alertas (por categoria)
+39. **Expandir/Recolher todos** — botões globais em todas as páginas com seções colapsáveis
+40. **Migration SQL** — `insights_ai_enrichment.sql` com source, ai_enrichment, priority, ai_provider, ai_model, ai_enriched_at
 
 Próximos passos: **Etapa Operacional** (execução de campanhas, integração com APIs de marketing, multi-tenancy avançado).

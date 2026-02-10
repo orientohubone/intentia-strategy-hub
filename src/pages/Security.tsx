@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { SEO, buildBreadcrumb } from "@/components/SEO";
 import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
 import { BackToHomeButton } from "@/components/BackToHomeButton";
@@ -133,6 +134,7 @@ export default function Security() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Segurança" path="/seguranca" description="Como a Intentia protege seus dados: Row Level Security, criptografia, audit log, backup automático, rate limiting e soft delete." keywords="segurança dados, proteção dados marketing, LGPD, RLS supabase" jsonLd={buildBreadcrumb([{ name: "Segurança", path: "/seguranca" }])} />
       <Header />
       <BackToHomeButton />
 

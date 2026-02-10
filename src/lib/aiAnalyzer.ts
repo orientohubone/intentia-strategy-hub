@@ -614,3 +614,277 @@ export async function runBenchmarkAiAnalysis(
 
   return result;
 }
+
+// =====================================================
+// INSIGHTS AI ENRICHMENT: TYPES
+// =====================================================
+
+export interface InsightAiEnrichment {
+  deepAnalysis: string;
+  rootCause: string;
+  impact: string;
+  actionPlan: { step: string; effort: "low" | "medium" | "high"; timeframe: string }[];
+  priority: "critical" | "high" | "medium" | "low";
+  relatedMetrics: string[];
+  benchmarkContext: string;
+}
+
+export interface InsightsEnrichmentResult {
+  enrichedInsights: {
+    insightId: string;
+    enrichment: InsightAiEnrichment;
+  }[];
+  newInsights: {
+    type: "warning" | "opportunity" | "improvement";
+    title: string;
+    description: string;
+    action: string;
+    priority: "critical" | "high" | "medium" | "low";
+    enrichment: InsightAiEnrichment;
+  }[];
+  strategicSummary: string;
+  provider: string;
+  model: string;
+  analyzedAt: string;
+}
+
+// =====================================================
+// INSIGHTS AI ENRICHMENT: BUILD PROMPT
+// =====================================================
+
+interface InsightForPrompt {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  action?: string | null;
+}
+
+function buildInsightsEnrichmentPrompt(
+  projectName: string,
+  projectNiche: string,
+  projectUrl: string,
+  insights: InsightForPrompt[]
+): string {
+  const insightsList = insights
+    .map(
+      (i, idx) =>
+        `${idx + 1}. [ID: ${i.id}] [${i.type.toUpperCase()}] "${i.title}" — ${i.description}${i.action ? ` | Ação: ${i.action}` : ""}`
+    )
+    .join("\n");
+
+  return `Você é um consultor sênior de marketing digital B2B. Analise os insights heurísticos abaixo de um projeto e forneça um enriquecimento estratégico aprofundado para cada um, além de identificar novos insights que a análise heurística pode ter perdido.
+
+## Dados do Projeto
+- **Nome:** ${projectName}
+- **Nicho:** ${projectNiche}
+- **URL:** ${projectUrl}
+
+## Insights Heurísticos Existentes
+${insightsList}
+
+---
+
+## Instruções
+
+Para CADA insight existente, forneça uma análise aprofundada. Além disso, identifique 2-4 NOVOS insights que a análise heurística não detectou.
+
+Responda EXCLUSIVAMENTE em JSON válido, sem markdown, sem comentários. Use o formato exato:
+
+{
+  "enrichedInsights": [
+    {
+      "insightId": "ID do insight original (copie exatamente)",
+      "enrichment": {
+        "deepAnalysis": "Análise aprofundada de 2-3 frases explicando o contexto estratégico deste insight para o nicho ${projectNiche}",
+        "rootCause": "Causa raiz provável do problema ou oportunidade identificada",
+        "impact": "Impacto estimado no negócio se não for tratado (para alertas) ou se for implementado (para oportunidades/melhorias)",
+        "actionPlan": [
+          {
+            "step": "Passo concreto e acionável",
+            "effort": "low|medium|high",
+            "timeframe": "1 semana|2 semanas|1 mês|3 meses"
+          }
+        ],
+        "priority": "critical|high|medium|low",
+        "relatedMetrics": ["Métrica afetada 1", "Métrica afetada 2"],
+        "benchmarkContext": "Como empresas referência no nicho ${projectNiche} lidam com isso"
+      }
+    }
+  ],
+  "newInsights": [
+    {
+      "type": "warning|opportunity|improvement",
+      "title": "Título do novo insight descoberto pela IA",
+      "description": "Descrição detalhada",
+      "action": "Ação recomendada",
+      "priority": "critical|high|medium|low",
+      "enrichment": {
+        "deepAnalysis": "Análise aprofundada",
+        "rootCause": "Causa raiz",
+        "impact": "Impacto estimado",
+        "actionPlan": [
+          {
+            "step": "Passo concreto",
+            "effort": "low|medium|high",
+            "timeframe": "Prazo"
+          }
+        ],
+        "priority": "critical|high|medium|low",
+        "relatedMetrics": ["Métrica 1"],
+        "benchmarkContext": "Contexto de benchmark"
+      }
+    }
+  ],
+  "strategicSummary": "Resumo estratégico de 3-4 frases sobre o estado geral do projeto, priorizando os insights mais críticos e indicando o caminho de ação recomendado"
+}
+
+Forneça 2-4 passos no actionPlan de cada insight. Forneça 2-4 newInsights. Seja específico para o nicho ${projectNiche}.`;
+}
+
+// =====================================================
+// INSIGHTS AI ENRICHMENT: PARSE RESPONSE
+// =====================================================
+
+function parseInsightsEnrichmentResponse(
+  text: string,
+  provider: string,
+  model: string
+): InsightsEnrichmentResult {
+  let cleaned = text.trim();
+  if (cleaned.startsWith("```json")) cleaned = cleaned.slice(7);
+  if (cleaned.startsWith("```")) cleaned = cleaned.slice(3);
+  if (cleaned.endsWith("```")) cleaned = cleaned.slice(0, -3);
+  cleaned = cleaned.trim();
+
+  const parsed = JSON.parse(cleaned);
+
+  return {
+    enrichedInsights: (parsed.enrichedInsights || []).map((ei: any) => ({
+      insightId: ei.insightId || "",
+      enrichment: {
+        deepAnalysis: ei.enrichment?.deepAnalysis || "",
+        rootCause: ei.enrichment?.rootCause || "",
+        impact: ei.enrichment?.impact || "",
+        actionPlan: (ei.enrichment?.actionPlan || []).map((a: any) => ({
+          step: a.step || "",
+          effort: a.effort || "medium",
+          timeframe: a.timeframe || "",
+        })),
+        priority: ei.enrichment?.priority || "medium",
+        relatedMetrics: ei.enrichment?.relatedMetrics || [],
+        benchmarkContext: ei.enrichment?.benchmarkContext || "",
+      },
+    })),
+    newInsights: (parsed.newInsights || []).map((ni: any) => ({
+      type: ni.type || "improvement",
+      title: ni.title || "",
+      description: ni.description || "",
+      action: ni.action || "",
+      priority: ni.priority || "medium",
+      enrichment: {
+        deepAnalysis: ni.enrichment?.deepAnalysis || "",
+        rootCause: ni.enrichment?.rootCause || "",
+        impact: ni.enrichment?.impact || "",
+        actionPlan: (ni.enrichment?.actionPlan || []).map((a: any) => ({
+          step: a.step || "",
+          effort: a.effort || "medium",
+          timeframe: a.timeframe || "",
+        })),
+        priority: ni.enrichment?.priority || ni.priority || "medium",
+        relatedMetrics: ni.enrichment?.relatedMetrics || [],
+        benchmarkContext: ni.enrichment?.benchmarkContext || "",
+      },
+    })),
+    strategicSummary: parsed.strategicSummary || "",
+    provider,
+    model,
+    analyzedAt: new Date().toISOString(),
+  };
+}
+
+// =====================================================
+// MAIN: RUN INSIGHTS AI ENRICHMENT
+// =====================================================
+
+export async function runInsightsAiEnrichment(
+  projectId: string,
+  userId: string,
+  projectName: string,
+  projectNiche: string,
+  projectUrl: string,
+  insights: InsightForPrompt[],
+  overrideProvider?: "google_gemini" | "anthropic_claude",
+  overrideModel?: string
+): Promise<InsightsEnrichmentResult> {
+  // 1. Get user's API key
+  let apiKeyEntry: UserApiKey | null = null;
+
+  if (overrideProvider) {
+    const allKeys = await getUserActiveKeys(userId);
+    apiKeyEntry = allKeys.find((k) => k.provider === overrideProvider) || null;
+  } else {
+    apiKeyEntry = await getUserApiKey(userId);
+  }
+
+  if (!apiKeyEntry) {
+    throw new Error("Nenhuma API key ativa encontrada. Configure em Configurações → Integrações de IA.");
+  }
+
+  const modelToUse = overrideModel || apiKeyEntry.preferred_model;
+
+  // 2. Build prompt
+  const prompt = buildInsightsEnrichmentPrompt(projectName, projectNiche, projectUrl, insights);
+
+  // 3. Call AI API
+  let responseText: string;
+
+  if (apiKeyEntry.provider === "google_gemini") {
+    responseText = await callGeminiApi(apiKeyEntry.api_key_encrypted, modelToUse, prompt);
+  } else if (apiKeyEntry.provider === "anthropic_claude") {
+    responseText = await callClaudeApi(apiKeyEntry.api_key_encrypted, modelToUse, prompt);
+  } else {
+    throw new Error(`Provider não suportado: ${apiKeyEntry.provider}`);
+  }
+
+  // 4. Parse response
+  const result = parseInsightsEnrichmentResponse(responseText, apiKeyEntry.provider, modelToUse);
+
+  // 5. Update existing insights with enrichment
+  for (const ei of result.enrichedInsights) {
+    if (!ei.insightId) continue;
+    await (supabase as any)
+      .from("insights")
+      .update({
+        ai_enrichment: ei.enrichment,
+        priority: ei.enrichment.priority,
+        ai_provider: result.provider,
+        ai_model: result.model,
+        ai_enriched_at: result.analyzedAt,
+      })
+      .eq("id", ei.insightId)
+      .eq("user_id", userId);
+  }
+
+  // 6. Insert new AI-generated insights
+  for (const ni of result.newInsights) {
+    await (supabase as any)
+      .from("insights")
+      .insert({
+        project_id: projectId,
+        user_id: userId,
+        type: ni.type,
+        title: ni.title,
+        description: ni.description,
+        action: ni.action,
+        source: "ai",
+        priority: ni.priority,
+        ai_enrichment: ni.enrichment,
+        ai_provider: result.provider,
+        ai_model: result.model,
+        ai_enriched_at: result.analyzedAt,
+      });
+  }
+
+  return result;
+}

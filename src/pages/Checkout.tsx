@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -155,6 +156,7 @@ export default function Checkout() {
   if (completed) {
     return (
       <DashboardLayout>
+        <SEO title="Checkout" noindex />
         <div className="max-w-lg mx-auto py-8 sm:py-16 text-center space-y-6">
           <div className="h-16 w-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
             <CheckCircle2 className="h-8 w-8 text-green-500" />
@@ -195,6 +197,7 @@ export default function Checkout() {
 
   return (
     <DashboardLayout>
+      <SEO title="Checkout" noindex />
       <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">

@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { SEO, buildBreadcrumb } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { ScoreRing } from "@/components/ScoreRing";
 import { Footer } from "@/components/Footer";
@@ -19,6 +20,7 @@ export default function About() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Sobre" path="/sobre" description="Conheça a Intentia: plataforma de inteligência estratégica para marketing B2B. Nossa missão é eliminar o achismo antes do investimento em mídia paga." keywords="sobre intentia, marketing B2B, estratégia digital, análise estratégica" jsonLd={buildBreadcrumb([{ name: "Sobre", path: "/sobre" }])} />
       <Header />
       {/* Hero Section */}
       <section className="pt-32 pb-16">
