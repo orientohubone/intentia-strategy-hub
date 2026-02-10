@@ -42,10 +42,12 @@ import {
   ShieldAlert,
   Settings,
   Palette,
+  Activity,
 } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import AdminStatusTab from "@/components/AdminStatusTab";
 
 // =====================================================
 // TYPES
@@ -127,7 +129,7 @@ export default function AdminPanel() {
   const { admin, logout } = useAdminAuth();
 
   // State
-  const [activeTab, setActiveTab] = useState<"features" | "plans" | "users">("features");
+  const [activeTab, setActiveTab] = useState<"features" | "plans" | "users" | "status">("features");
   const [features, setFeatures] = useState<FeatureFlag[]>([]);
   const [planFeatures, setPlanFeatures] = useState<PlanFeature[]>([]);
   const [users, setUsers] = useState<TenantUser[]>([]);
@@ -403,6 +405,7 @@ export default function AdminPanel() {
             { key: "features" as const, label: "Feature Flags", icon: ToggleLeft },
             { key: "plans" as const, label: "Controle de Planos", icon: Settings2 },
             { key: "users" as const, label: "Clientes", icon: Users },
+            { key: "status" as const, label: "Status Page", icon: Activity },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -825,6 +828,10 @@ export default function AdminPanel() {
             {/* =====================================================
                 TAB: USERS
                 ===================================================== */}
+            {activeTab === "status" && (
+              <AdminStatusTab />
+            )}
+
             {activeTab === "users" && (
               <div className="space-y-2">
                 {filteredUsers.length === 0 ? (

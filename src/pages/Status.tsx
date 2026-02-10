@@ -26,37 +26,17 @@ import {
   Wifi,
   RefreshCw,
   Info,
+  Loader2,
+  Wrench,
+  Calendar,
+  Rss,
+  Mail,
 } from "lucide-react";
-
-type ServiceStatus = "operational" | "degraded" | "partial_outage" | "major_outage" | "maintenance";
-
-interface Service {
-  name: string;
-  description: string;
-  status: ServiceStatus;
-  icon: React.ElementType;
-  category: string;
-}
-
-interface Incident {
-  id: string;
-  title: string;
-  status: "investigating" | "identified" | "monitoring" | "resolved";
-  severity: "minor" | "major" | "critical";
-  createdAt: string;
-  updatedAt: string;
-  updates: {
-    timestamp: string;
-    status: string;
-    message: string;
-  }[];
-}
-
-interface UptimeDay {
-  date: string;
-  status: ServiceStatus;
-  uptime: number;
-}
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { useStatusData, getOverallStatus } from "@/hooks/useStatusData";
+import type { ServiceStatus, UptimeDay, IncidentWithUpdates, PlatformMaintenance, LatencyDataPoint } from "@/hooks/useStatusData";
 
 const statusConfig: Record<ServiceStatus, { label: string; color: string; bgColor: string; borderColor: string; icon: React.ElementType }> = {
   operational: {
@@ -109,144 +89,31 @@ const severityConfig: Record<string, { label: string; color: string; bgColor: st
   critical: { label: "Crítico", color: "text-red-600", bgColor: "bg-red-500/10" },
 };
 
-// --- Static data (future: fetch from Supabase) ---
+const maintenanceStatusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
+  scheduled: { label: "Agendada", color: "text-blue-600", bgColor: "bg-blue-500/10" },
+  in_progress: { label: "Em Andamento", color: "text-amber-600", bgColor: "bg-amber-500/10" },
+  completed: { label: "Concluída", color: "text-emerald-600", bgColor: "bg-emerald-500/10" },
+  cancelled: { label: "Cancelada", color: "text-gray-500", bgColor: "bg-gray-500/10" },
+};
 
-const services: Service[] = [
-  {
-    name: "Plataforma Web",
-    description: "Interface principal da aplicação, dashboard e navegação",
-    status: "operational",
-    icon: Globe,
-    category: "Core",
-  },
-  {
-    name: "Autenticação",
-    description: "Login, cadastro, recuperação de senha e sessões",
-    status: "operational",
-    icon: Shield,
-    category: "Core",
-  },
-  {
-    name: "Banco de Dados",
-    description: "Armazenamento de projetos, insights, benchmarks e configurações",
-    status: "operational",
-    icon: Database,
-    category: "Core",
-  },
-  {
-    name: "API & Edge Functions",
-    description: "Endpoints de análise, exportação e processamento",
-    status: "operational",
-    icon: Server,
-    category: "Core",
-  },
-  {
-    name: "Análise Heurística de URL",
-    description: "Diagnóstico automático de páginas web com scores e insights",
-    status: "operational",
-    icon: Zap,
-    category: "Análise",
-  },
-  {
-    name: "Análise por IA",
-    description: "Análise aprofundada via Google Gemini e Anthropic Claude",
-    status: "operational",
-    icon: Brain,
-    category: "Análise",
-  },
-  {
-    name: "Benchmark Competitivo",
-    description: "Comparação com concorrentes, SWOT e gap analysis",
-    status: "operational",
-    icon: BarChart3,
-    category: "Análise",
-  },
-  {
-    name: "Notificações",
-    description: "Sistema de notificações em tempo real",
-    status: "operational",
-    icon: Bell,
-    category: "Comunicação",
-  },
-  {
-    name: "CDN & Assets",
-    description: "Entrega de arquivos estáticos, imagens e recursos",
-    status: "operational",
-    icon: Wifi,
-    category: "Infraestrutura",
-  },
-];
+// Icon mapping: database icon string → Lucide component
+const iconMap: Record<string, React.ElementType> = {
+  Globe: Globe,
+  Shield: Shield,
+  Database: Database,
+  Server: Server,
+  Zap: Zap,
+  Brain: Brain,
+  BarChart3: BarChart3,
+  Bell: Bell,
+  Wifi: Wifi,
+  Activity: Activity,
+  Clock: Clock,
+  Wrench: Wrench,
+};
 
-const recentIncidents: Incident[] = [
-  // Example resolved incident for demonstration
-  {
-    id: "inc-001",
-    title: "Lentidão na análise heurística de URLs",
-    status: "resolved",
-    severity: "minor",
-    createdAt: "2026-02-08T14:30:00Z",
-    updatedAt: "2026-02-08T15:45:00Z",
-    updates: [
-      {
-        timestamp: "2026-02-08T15:45:00Z",
-        status: "resolved",
-        message: "O problema foi resolvido. A análise heurística está operando normalmente. O tempo de resposta voltou ao normal.",
-      },
-      {
-        timestamp: "2026-02-08T15:10:00Z",
-        status: "monitoring",
-        message: "A correção foi aplicada. Estamos monitorando os tempos de resposta para confirmar a estabilidade.",
-      },
-      {
-        timestamp: "2026-02-08T14:50:00Z",
-        status: "identified",
-        message: "Identificamos um aumento temporário na latência do serviço de fetch externo. Aplicando otimização de cache.",
-      },
-      {
-        timestamp: "2026-02-08T14:30:00Z",
-        status: "investigating",
-        message: "Recebemos relatos de lentidão na análise de URLs. Estamos investigando a causa.",
-      },
-    ],
-  },
-];
-
-// Generate 90 days of uptime data
-function generateUptimeData(): UptimeDay[] {
-  const days: UptimeDay[] = [];
-  const now = new Date();
-  for (let i = 89; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split("T")[0];
-
-    // Simulate mostly operational with occasional minor issues
-    let status: ServiceStatus = "operational";
-    let uptime = 99.95 + Math.random() * 0.05;
-
-    if (i === 62) {
-      status = "degraded";
-      uptime = 99.7;
-    }
-    if (i === 30) {
-      status = "maintenance";
-      uptime = 99.85;
-    }
-
-    days.push({ date: dateStr, status, uptime });
-  }
-  return days;
-}
-
-const uptimeData = generateUptimeData();
-const overallUptime = (uptimeData.reduce((sum, d) => sum + d.uptime, 0) / uptimeData.length).toFixed(3);
-
-function getOverallStatus(svcs: Service[]): ServiceStatus {
-  if (svcs.some((s) => s.status === "major_outage")) return "major_outage";
-  if (svcs.some((s) => s.status === "partial_outage")) return "partial_outage";
-  if (svcs.some((s) => s.status === "degraded")) return "degraded";
-  if (svcs.some((s) => s.status === "maintenance")) return "maintenance";
-  return "operational";
+function getIconComponent(iconName: string): React.ElementType {
+  return iconMap[iconName] || Server;
 }
 
 function formatDate(dateStr: string): string {
@@ -305,7 +172,7 @@ function UptimeBar({ data }: { data: UptimeDay[] }) {
   );
 }
 
-function IncidentCard({ incident }: { incident: Incident }) {
+function IncidentCard({ incident }: { incident: IncidentWithUpdates }) {
   const [expanded, setExpanded] = useState(false);
   const statusCfg = incidentStatusConfig[incident.status];
   const severityCfg = severityConfig[incident.severity];
@@ -325,7 +192,7 @@ function IncidentCard({ incident }: { incident: Incident }) {
           <h3 className="font-semibold text-foreground text-sm sm:text-base">{incident.title}</h3>
         </div>
         <div className="text-xs text-muted-foreground whitespace-nowrap">
-          {formatDateTime(incident.createdAt)}
+          {formatDateTime(incident.created_at)}
         </div>
       </div>
 
@@ -357,7 +224,7 @@ function IncidentCard({ incident }: { incident: Incident }) {
                         {updateStatusCfg.label}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {formatDateTime(update.timestamp)}
+                        {formatDateTime(update.created_at)}
                       </span>
                     </div>
                     <p className="text-sm text-foreground/80">{update.message}</p>
@@ -372,13 +239,97 @@ function IncidentCard({ incident }: { incident: Incident }) {
   );
 }
 
+function MaintenanceCard({ maintenance }: { maintenance: PlatformMaintenance }) {
+  const statusCfg = maintenanceStatusConfig[maintenance.status] || maintenanceStatusConfig.scheduled;
+
+  return (
+    <div className="rounded-2xl border border-border bg-background p-4 sm:p-6 hover:border-primary/20 transition-colors">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
+        <div className="flex-1">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusCfg.bgColor} ${statusCfg.color}`}>
+              {statusCfg.label}
+            </span>
+          </div>
+          <h3 className="font-semibold text-foreground text-sm sm:text-base">{maintenance.title}</h3>
+          {maintenance.description && (
+            <p className="text-sm text-muted-foreground mt-1">{maintenance.description}</p>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5">
+          <Calendar className="h-3.5 w-3.5" />
+          <span>Início: {formatDateTime(maintenance.scheduled_start)}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Clock className="h-3.5 w-3.5" />
+          <span>Fim: {formatDateTime(maintenance.scheduled_end)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Status() {
   const navigate = useNavigate();
+  const { services, incidents, maintenances, uptimeData, latencyData, loading, error } = useStatusData();
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
+  const rssUrl = supabaseUrl ? `${supabaseUrl}/functions/v1/status-rss` : "";
+
+  const [subscribeEmail, setSubscribeEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
+
+  const handleSubscribe = async () => {
+    if (!subscribeEmail.trim() || !subscribeEmail.includes("@")) {
+      toast.error("Informe um email válido.");
+      return;
+    }
+    setSubscribing(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("platform_status_subscribers")
+        .upsert({ email: subscribeEmail.trim().toLowerCase(), is_active: true }, { onConflict: "email" });
+      if (error) throw error;
+      toast.success("Inscrito com sucesso! Você receberá alertas de status por email.");
+      setSubscribeEmail("");
+    } catch (err: any) {
+      console.error("[subscribe] Error:", err);
+      toast.error("Erro ao se inscrever. Tente novamente.");
+    } finally {
+      setSubscribing(false);
+    }
+  };
+
   const overallStatus = getOverallStatus(services);
   const overallConfig = statusConfig[overallStatus];
   const OverallIcon = overallConfig.icon;
 
   const categories = [...new Set(services.map((s) => s.category))];
+
+  // Calculate metrics from real data
+  const overallUptime = uptimeData.length > 0
+    ? (uptimeData.reduce((sum, d) => sum + d.uptime, 0) / uptimeData.length).toFixed(3)
+    : "100.000";
+
+  const incidentCount30d = incidents.length;
+  const resolvedIncidents = incidents.filter((i) => i.status === "resolved" && i.resolved_at && i.created_at);
+  const avgMttr = resolvedIncidents.length > 0
+    ? resolvedIncidents.reduce((sum, i) => {
+        const created = new Date(i.created_at).getTime();
+        const resolved = new Date(i.resolved_at!).getTime();
+        return sum + (resolved - created);
+      }, 0) / resolvedIncidents.length
+    : 0;
+  const mttrHours = Math.floor(avgMttr / (1000 * 60 * 60));
+  const mttrMinutes = Math.floor((avgMttr % (1000 * 60 * 60)) / (1000 * 60));
+  const mttrLabel = avgMttr > 0 ? `~${mttrHours}h${mttrMinutes.toString().padStart(2, "0")}m` : "—";
+  const incidentDescription = incidentCount30d === 0
+    ? "Nenhum incidente"
+    : resolvedIncidents.length === incidentCount30d
+    ? "Todos resolvidos"
+    : `${resolvedIncidents.length} resolvidos`;
 
   return (
     <div className="min-h-screen bg-background">
@@ -435,9 +386,15 @@ export default function Status() {
           <div className="rounded-2xl border border-border bg-background p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
               <h2 className="text-sm font-semibold text-foreground">Uptime dos últimos 90 dias</h2>
-              <span className="text-sm font-bold text-emerald-600">{overallUptime}% de disponibilidade</span>
+              <span className="text-sm font-bold text-emerald-600">{loading ? "..." : `${overallUptime}%`} de disponibilidade</span>
             </div>
-            <UptimeBar data={uptimeData} />
+            {loading ? (
+              <div className="flex items-center justify-center h-8">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <UptimeBar data={uptimeData} />
+            )}
             <div className="flex justify-between mt-2 text-xs text-muted-foreground">
               <span>90 dias atrás</span>
               <span>Hoje</span>
@@ -458,49 +415,61 @@ export default function Status() {
             </p>
           </div>
 
-          <div className="space-y-8">
-            {categories.map((category) => {
-              const categoryServices = services.filter((s) => s.category === category);
-              return (
-                <div key={category}>
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">
-                    {category}
-                  </h3>
-                  <div className="rounded-2xl border border-border bg-background divide-y divide-border overflow-hidden">
-                    {categoryServices.map((service) => {
-                      const config = statusConfig[service.status];
-                      const Icon = service.icon;
-                      const StatusIcon = config.icon;
-                      return (
-                        <div
-                          key={service.name}
-                          className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5 hover:bg-muted/30 transition-colors"
-                        >
-                          <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                            <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : services.length === 0 ? (
+            <div className="rounded-2xl border border-border bg-background p-8 sm:p-12 text-center">
+              <Server className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="font-semibold text-foreground text-lg mb-2">Nenhum serviço cadastrado</h3>
+              <p className="text-sm text-muted-foreground">Os serviços serão exibidos aqui quando configurados.</p>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              {categories.map((category) => {
+                const categoryServices = services.filter((s) => s.category === category);
+                return (
+                  <div key={category}>
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">
+                      {category}
+                    </h3>
+                    <div className="rounded-2xl border border-border bg-background divide-y divide-border overflow-hidden">
+                      {categoryServices.map((service) => {
+                        const config = statusConfig[service.status];
+                        const Icon = getIconComponent(service.icon);
+                        const StatusIcon = config.icon;
+                        return (
+                          <div
+                            key={service.id}
+                            className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5 hover:bg-muted/30 transition-colors"
+                          >
+                            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                              <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-foreground text-sm sm:text-base truncate">
+                                {service.name}
+                              </h4>
+                              <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                                {service.description}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <StatusIcon className={`h-4 w-4 ${config.color}`} />
+                              <span className={`text-xs sm:text-sm font-medium ${config.color} hidden sm:inline`}>
+                                {config.label}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-foreground text-sm sm:text-base truncate">
-                              {service.name}
-                            </h4>
-                            <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                              {service.description}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <StatusIcon className={`h-4 w-4 ${config.color}`} />
-                            <span className={`text-xs sm:text-sm font-medium ${config.color} hidden sm:inline`}>
-                              {config.label}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
@@ -516,9 +485,13 @@ export default function Status() {
             </p>
           </div>
 
-          {recentIncidents.length > 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : incidents.length > 0 ? (
             <div className="space-y-4">
-              {recentIncidents.map((incident) => (
+              {incidents.map((incident) => (
                 <IncidentCard key={incident.id} incident={incident} />
               ))}
             </div>
@@ -527,7 +500,7 @@ export default function Status() {
               <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
               <h3 className="font-semibold text-foreground text-lg mb-2">Nenhum incidente recente</h3>
               <p className="text-sm text-muted-foreground">
-                Todos os serviços estão operando normalmente. Nenhum incidente registrado nos últimos 7 dias.
+                Todos os serviços estão operando normalmente. Nenhum incidente registrado nos últimos 30 dias.
               </p>
             </div>
           )}
@@ -546,13 +519,25 @@ export default function Status() {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-border bg-background p-8 sm:p-12 text-center">
-            <Clock className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-            <h3 className="font-semibold text-foreground text-lg mb-2">Nenhuma manutenção programada</h3>
-            <p className="text-sm text-muted-foreground">
-              Não há manutenções agendadas no momento. Quando houver, você será notificado com antecedência.
-            </p>
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : maintenances.length > 0 ? (
+            <div className="space-y-4">
+              {maintenances.map((m) => (
+                <MaintenanceCard key={m.id} maintenance={m} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-border bg-background p-8 sm:p-12 text-center">
+              <Clock className="h-12 w-12 text-blue-500 mx-auto mb-4" />
+              <h3 className="font-semibold text-foreground text-lg mb-2">Nenhuma manutenção programada</h3>
+              <p className="text-sm text-muted-foreground">
+                Não há manutenções agendadas no momento. Quando houver, você será notificado com antecedência.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -572,7 +557,7 @@ export default function Status() {
             {[
               {
                 label: "Uptime (90 dias)",
-                value: `${overallUptime}%`,
+                value: loading ? "..." : `${overallUptime}%`,
                 description: "Disponibilidade média",
                 color: "text-emerald-600",
                 bgColor: "bg-emerald-500/10",
@@ -588,15 +573,15 @@ export default function Status() {
               },
               {
                 label: "Incidentes (30 dias)",
-                value: "1",
-                description: "Todos resolvidos",
+                value: loading ? "..." : String(incidentCount30d),
+                description: loading ? "..." : incidentDescription,
                 color: "text-amber-600",
                 bgColor: "bg-amber-500/10",
                 borderColor: "border-amber-500/20",
               },
               {
                 label: "MTTR",
-                value: "~1h15",
+                value: loading ? "..." : mttrLabel,
                 description: "Tempo médio de resolução",
                 color: "text-purple-600",
                 bgColor: "bg-purple-500/10",
@@ -616,13 +601,106 @@ export default function Status() {
         </div>
       </section>
 
+      {/* Latency Chart */}
+      {!loading && latencyData.length > 0 && (
+        <section className="py-12 sm:py-16">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-10 sm:mb-12">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-4">
+                Latência por Serviço
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Tempo de resposta médio dos serviços nos últimos 30 dias.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border bg-background p-4 sm:p-6">
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={latencyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                    tickFormatter={(val: string) => {
+                      const d = new Date(val + "T00:00:00");
+                      return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+                    }}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                    tickFormatter={(val: number) => `${val}ms`}
+                    width={50}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--background))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                    labelFormatter={(val: string) => {
+                      const d = new Date(val + "T00:00:00");
+                      return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+                    }}
+                    formatter={(value: number, name: string) => {
+                      const svc = services.find((s) => s.id === name);
+                      return [`${value}ms`, svc?.name || name];
+                    }}
+                  />
+                  {services.map((svc, idx) => {
+                    const colors = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#f97316", "#6366f1"];
+                    return (
+                      <Line
+                        key={svc.id}
+                        type="monotone"
+                        dataKey={svc.id}
+                        name={svc.id}
+                        stroke={colors[idx % colors.length]}
+                        strokeWidth={2}
+                        dot={false}
+                        connectNulls
+                      />
+                    );
+                  })}
+                </LineChart>
+              </ResponsiveContainer>
+              <div className="flex flex-wrap gap-3 mt-4 justify-center">
+                {services.map((svc, idx) => {
+                  const colors = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#f97316", "#6366f1"];
+                  return (
+                    <div key={svc.id} className="flex items-center gap-1.5">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors[idx % colors.length] }} />
+                      <span className="text-xs text-muted-foreground">{svc.name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Legend */}
       <section className="py-8 sm:py-10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="rounded-2xl border border-border bg-background p-4 sm:p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Info className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold text-foreground">Legenda de Status</h3>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-sm font-semibold text-foreground">Legenda de Status</h3>
+              </div>
+              {rssUrl && (
+                <a
+                  href={rssUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+                  title="RSS Feed de Incidentes"
+                >
+                  <Rss className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">RSS Feed</span>
+                </a>
+              )}
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               {Object.entries(statusConfig).map(([key, config]) => {
@@ -634,6 +712,42 @@ export default function Status() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Subscribe to Alerts */}
+      <section className="py-12 sm:py-16 bg-muted/30">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="rounded-2xl border border-border bg-background p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <Mail className="h-5 w-5 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">Receba alertas por email</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Inscreva-se para receber notificações quando houver incidentes ou manutenções programadas.
+                </p>
+              </div>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <input
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={subscribeEmail}
+                  onChange={(e) => setSubscribeEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSubscribe()}
+                  className="flex-1 sm:w-64 h-10 px-4 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+                <Button
+                  onClick={handleSubscribe}
+                  disabled={subscribing}
+                  className="h-10 px-5"
+                >
+                  {subscribing ? "..." : "Inscrever"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

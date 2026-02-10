@@ -389,15 +389,257 @@ Para ativar o sistema de status no banco de dados:
 
 ---
 
-## 15. Roadmap (Próximos Passos)
+## 15. Roadmap — Status Final
 
-| Item | Prioridade | Status |
-|------|-----------|--------|
-| Conectar página aos dados reais do Supabase (substituir dados estáticos) | P1 | Pendente |
-| Adicionar tab no Admin Panel para gerenciar serviços e incidentes | P1 | Pendente |
-| Implementar webhook/cron para coleta automática de uptime diário | P2 | Pendente |
-| Adicionar notificação por email quando houver incidente crítico | P2 | Pendente |
-| Implementar RSS feed de incidentes (`/status/rss`) | P3 | Pendente |
-| Adicionar gráfico de latência por serviço (últimos 30 dias) | P3 | Pendente |
-| Integrar com monitoramento externo (UptimeRobot, Checkly, etc.) | P3 | Pendente |
-| Adicionar subscription para receber alertas de status por email | P3 | Pendente |
+> **Todos os itens do roadmap foram implementados e deployados.**
+
+| Item | Prioridade | Status | Deploy |
+|------|-----------|--------|--------|
+| Conectar página aos dados reais do Supabase | P1 | ✅ Implementado | Frontend |
+| Adicionar tab "Status" no Admin Panel | P1 | ✅ Implementado | Frontend |
+| Coleta automática de uptime diário | P2 | ✅ Implementado | ✅ Edge Function deployada |
+| Notificação por email em incidentes críticos | P2 | ✅ Implementado | ✅ Edge Function deployada |
+| RSS feed de incidentes | P3 | ✅ Implementado | ✅ Edge Function deployada |
+| Gráfico de latência por serviço (30 dias) | P3 | ✅ Implementado | Frontend |
+| Integração com monitoramento externo | P3 | ✅ Implementado | ✅ Edge Function deployada |
+| Subscription para alertas por email | P3 | ✅ Implementado | Frontend + SQL |
+
+---
+
+## 16. Detalhes da Implementação
+
+### P1: Dados Reais do Supabase
+- **Hook:** `src/hooks/useStatusData.ts` — busca serviços, incidentes, manutenções, uptime e latência do Supabase
+- **Status.tsx** refatorado para usar dados reais em vez de dados estáticos
+- Métricas (uptime, MTTR, incidentes) calculadas dinamicamente
+- Loading states e fallback para quando não há dados
+- Mapeamento de ícones: string do banco → componente Lucide
+
+### P1: Tab Status no Admin Panel
+- **Componente:** `src/components/AdminStatusTab.tsx`
+- 3 sub-abas: Serviços, Incidentes, Manutenções
+- CRUD completo de serviços (criar, editar, excluir, alterar status)
+- CRUD de incidentes com timeline de atualizações
+- CRUD de manutenções programadas com controle de status
+- Seleção de serviços afetados em incidentes e manutenções
+- Stats resumidos no topo (operacionais, ativos, agendadas)
+
+### P2: Coleta Automática de Uptime
+- **Edge Function:** `supabase/functions/collect-uptime/index.ts`
+- Lê status atual de cada serviço e incidentes/manutenções do dia
+- Calcula uptime % baseado na severidade dos incidentes
+- Upsert em `platform_uptime_daily` (UNIQUE por service_id + date)
+- Chamada via cron diário (ver seção 19)
+
+### P2: Notificação por Email
+- **Edge Function:** `supabase/functions/notify-incident/index.ts`
+- Notifica apenas incidentes critical/major
+- Suporta Resend API como provedor de email
+- Fallback: registra no `admin_audit_log` se email não configurado
+- Template HTML responsivo com detalhes do incidente
+
+### P3: RSS Feed
+- **Edge Function:** `supabase/functions/status-rss/index.ts`
+- Gera RSS 2.0 XML com incidentes dos últimos 90 dias
+- Inclui últimas atualizações de cada incidente
+- Cache de 5 minutos (`Cache-Control: max-age=300`)
+- Link RSS exibido automaticamente na seção "Legenda de Status" da página `/status`
+
+### P3: Gráfico de Latência
+- Seção "Latência por Serviço" na página de Status (entre Métricas e Legenda)
+- Usa Recharts (LineChart) com dados de `platform_uptime_daily.response_time_ms`
+- Uma linha por serviço com cores distintas
+- Tooltip com nome do serviço e valor em ms
+- Legenda visual com cores correspondentes
+- Só aparece quando há dados de latência disponíveis (preenchidos via `status-webhook`)
+
+### P3: Integração com Monitoramento Externo
+- **Edge Function:** `supabase/functions/status-webhook/index.ts`
+- Aceita payloads de UptimeRobot, Checkly e formato genérico
+- Autenticação via header `x-webhook-secret`
+- Atualiza status do serviço e registra `response_time_ms`
+- Match de serviço por nome (case-insensitive, partial match)
+
+### P3: Subscription por Email
+- **Schema:** `supabase/status_subscribers_schema.sql` — tabela `platform_status_subscribers`
+- Formulário de inscrição na página de Status (seção "Receba alertas por email")
+- Upsert por email (evita duplicatas)
+- Campos: email, is_verified, verification_token, unsubscribe_token, is_active
+- RLS: INSERT público, SELECT/UPDATE público (para verificação/cancelamento)
+
+---
+
+## 17. Edge Functions — URLs e Configuração
+
+### URLs das Edge Functions (Produção)
+
+| Função | URL | Acesso |
+|--------|-----|--------|
+| `collect-uptime` | `https://ccmubburnrrxmkhydxoz.supabase.co/functions/v1/collect-uptime` | Cron/interno |
+| `notify-incident` | `https://ccmubburnrrxmkhydxoz.supabase.co/functions/v1/notify-incident` | Webhook DB/interno |
+| `status-rss` | `https://ccmubburnrrxmkhydxoz.supabase.co/functions/v1/status-rss` | Público (RSS) |
+| `status-webhook` | `https://ccmubburnrrxmkhydxoz.supabase.co/functions/v1/status-webhook` | Externo (UptimeRobot, Checkly) |
+
+### Secrets Configurados (Settings → Edge Functions → Secrets)
+
+| Secret | Usado por | Descrição |
+|--------|-----------|-----------|
+| `WEBHOOK_SECRET` | `status-webhook` | Token de autenticação para webhooks externos |
+| `SMTP_HOST` | `notify-incident` | `resend` para Resend API, ou hostname SMTP |
+| `SMTP_USER` | `notify-incident` | Usuário SMTP |
+| `SMTP_PASS` | `notify-incident` | Senha SMTP ou API key do Resend |
+| `NOTIFICATION_FROM_EMAIL` | `notify-incident` | Email remetente (ex: `status@intentia.com.br`) |
+| `NOTIFICATION_TO_EMAILS` | `notify-incident` | Emails destinatários separados por vírgula |
+
+> `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` já estão disponíveis automaticamente — não precisam ser configurados.
+
+### Verificação de JWT
+
+Todas as 4 Edge Functions foram deployadas com **JWT verification desabilitada**:
+- `collect-uptime` — chamada via cron externo
+- `notify-incident` — chamada via webhook do banco de dados
+- `status-rss` — acesso público (RSS feed)
+- `status-webhook` — usa autenticação própria via header `x-webhook-secret`
+
+---
+
+## 18. Configuração do Cron (collect-uptime)
+
+A função `collect-uptime` deve ser chamada **uma vez por dia** para registrar o uptime de cada serviço.
+
+### Opção A: Cron externo (cron-job.org, EasyCron, etc.)
+
+Configurar um job diário (ex: 23:55 UTC) com:
+
+```
+URL:    https://ccmubburnrrxmkhydxoz.supabase.co/functions/v1/collect-uptime
+Método: POST
+Header: Authorization: Bearer <SUPABASE_ANON_KEY>
+Body:   {} (vazio)
+```
+
+### Opção B: Supabase pg_cron (se habilitado)
+
+```sql
+SELECT cron.schedule(
+  'collect-uptime-daily',
+  '55 23 * * *',
+  $$
+  SELECT net.http_post(
+    url := 'https://ccmubburnrrxmkhydxoz.supabase.co/functions/v1/collect-uptime',
+    headers := '{"Authorization": "Bearer <SUPABASE_ANON_KEY>"}'::jsonb,
+    body := '{}'::jsonb
+  );
+  $$
+);
+```
+
+---
+
+## 19. Integração com Monitoramento Externo
+
+### RSS Feed (Público)
+
+O link RSS é exibido automaticamente na página `/status`, na seção "Legenda de Status".
+
+**URL pública:**
+```
+https://ccmubburnrrxmkhydxoz.supabase.co/functions/v1/status-rss
+```
+
+Pode ser usado em leitores RSS, agregadores ou divulgado em documentação externa.
+
+### UptimeRobot
+
+1. Acesse **My Settings → Alert Contacts**
+2. Clique **Add Alert Contact**
+3. Tipo: **Webhook**
+4. URL: `https://ccmubburnrrxmkhydxoz.supabase.co/functions/v1/status-webhook`
+5. Em **Custom HTTP Headers**, adicione:
+   ```
+   x-webhook-secret: <valor_definido_no_secret_WEBHOOK_SECRET>
+   ```
+6. Salve e vincule aos monitors desejados
+
+**Payload recebido do UptimeRobot:**
+```json
+{
+  "monitorFriendlyName": "API Principal",
+  "alertType": 1,
+  "responsetime": "145"
+}
+```
+
+### Checkly
+
+1. Acesse **Alerts → Alert Channels**
+2. Clique **Add Channel → Webhook**
+3. URL: `https://ccmubburnrrxmkhydxoz.supabase.co/functions/v1/status-webhook`
+4. Headers:
+   ```
+   x-webhook-secret: <valor_definido_no_secret_WEBHOOK_SECRET>
+   ```
+5. Salve e vincule aos checks desejados
+
+**Payload recebido do Checkly:**
+```json
+{
+  "check_name": "API Principal",
+  "response_time": 145.2,
+  "has_errors": false
+}
+```
+
+### Formato Genérico (qualquer ferramenta)
+
+Qualquer ferramenta de monitoramento pode enviar um POST com:
+
+```bash
+curl -X POST \
+  https://ccmubburnrrxmkhydxoz.supabase.co/functions/v1/status-webhook \
+  -H "Content-Type: application/json" \
+  -H "x-webhook-secret: <seu_token>" \
+  -d '{
+    "service_name": "API Principal",
+    "status": "operational",
+    "response_time_ms": 145
+  }'
+```
+
+**Status aceitos:** `operational`, `degraded`, `partial_outage`, `major_outage`, `maintenance`
+
+> **Nota:** O match de serviço é feito por nome (case-insensitive, partial match). O `service_name` enviado deve conter parte do nome cadastrado em `platform_services`.
+
+---
+
+## 20. Arquivos do Sistema de Status
+
+```
+src/
+├── hooks/
+│   └── useStatusData.ts              # Hook para dados reais do Supabase (serviços, incidentes, uptime, latência)
+├── components/
+│   └── AdminStatusTab.tsx            # Tab "Status Page" no Admin Panel (CRUD completo)
+├── pages/
+│   └── Status.tsx                    # Página pública /status (refatorada para dados reais)
+
+supabase/
+├── status_page_schema.sql            # Schema base (tabelas, triggers, índices, RLS read)
+├── status_rls_fix.sql                # Policies de escrita para admin (INSERT/UPDATE/DELETE)
+├── status_subscribers_schema.sql     # Tabela de subscribers para alertas por email
+├── functions/
+│   ├── collect-uptime/index.ts       # Edge Function: coleta diária de uptime
+│   ├── notify-incident/index.ts      # Edge Function: notificação de incidentes críticos
+│   ├── status-rss/index.ts           # Edge Function: RSS feed público
+│   └── status-webhook/index.ts       # Edge Function: webhook para monitoramento externo
+```
+
+## 21. SQLs Executados (Ordem)
+
+```
+1. status_page_schema.sql             → Tabelas base (platform_services, platform_incidents, etc.)
+2. status_rls_fix.sql                 → Policies de escrita para anon/authenticated
+3. status_subscribers_schema.sql      → Tabela platform_status_subscribers
+```
+
+> Todos os SQLs e Edge Functions já foram executados/deployados no Supabase.
