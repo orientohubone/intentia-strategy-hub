@@ -11,6 +11,7 @@ const menuCategories = [
       { name: "Funcionalidades", href: "/#funcionalidades" },
       { name: "Como Funciona", href: "/#como-funciona" },
       { name: "Plano Tático", href: "/plano-tatico" },
+      { name: "Comparar", href: "/comparar" },
       { name: "Preços", href: "/precos" },
     ]
   },

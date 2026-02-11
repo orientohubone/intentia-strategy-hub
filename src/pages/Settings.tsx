@@ -85,7 +85,7 @@ const PLAN_FEATURES: Record<string, { label: string; price: string; features: st
   },
   professional: {
     label: "Professional",
-    price: "R$ 97/mês",
+    price: "R$ 147/mês",
     color: "border-primary",
     icon: Crown,
     features: [
@@ -1395,7 +1395,7 @@ export default function Settings() {
                             onClick={() => navigate("/checkout?plan=professional")}
                           >
                             <Crown className="h-4 w-4 mr-2" />
-                            Fazer Upgrade — R$ 97/mês
+                            Fazer Upgrade — R$ 147/mês
                             <ArrowRight className="h-4 w-4 ml-2" />
                           </Button>
                         </div>

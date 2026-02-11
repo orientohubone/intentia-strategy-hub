@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
+import { ComparisonTable } from "@/components/ComparisonTable";
 import { BackToHomeButton } from "@/components/BackToHomeButton";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -241,7 +242,7 @@ export default function Landing() {
               {
                 "@type": "Offer",
                 name: "Professional",
-                price: "97",
+                price: "147",
                 priceCurrency: "BRL",
                 billingIncrement: "P1M",
                 "description": "Projetos ilimitados, todas as análises por IA ilimitadas (projetos, performance, insights, benchmark), plano tático, exportação e notificações.",
@@ -711,6 +712,9 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Comparison Table */}
+      <ComparisonTable />
+
       {/* Pricing Preview Section */}
       <section id="precos" className="py-20 bg-muted/30">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -751,7 +755,7 @@ export default function Landing() {
                 </span>
               </div>
               <h3 className="text-xl font-bold mb-2">Professional</h3>
-              <div className="text-3xl font-bold mb-4">R$97<span className="text-lg font-normal">/mês</span></div>
+              <div className="text-3xl font-bold mb-4">R$147<span className="text-lg font-normal">/mês</span></div>
               <p className="text-sm mb-4 opacity-90">Estratégia de mídia completa</p>
               <ul className="space-y-3 text-sm mb-6">
                 <li>✓ Projetos ilimitados</li>

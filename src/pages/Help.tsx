@@ -513,7 +513,7 @@ export default function Help() {
     },
     {
       question: "Quais planos estão disponíveis?",
-      answer: "Starter (gratuito): 5 análises de URL por mês, score básico por canal. Professional (R$ 97/mês): análises ilimitadas, IA, benchmark com IA, relatórios PDF/CSV, insights e alertas. Enterprise (personalizado): tudo do Professional + API access, SLA dedicado, consultoria estratégica e treinamento."
+      answer: "Starter (gratuito): 5 análises de URL por mês, score básico por canal. Professional (R$ 147/mês): análises ilimitadas, IA, benchmark com IA, relatórios PDF/CSV, insights e alertas. Enterprise (personalizado): tudo do Professional + API access, SLA dedicado, consultoria estratégica e treinamento."
     },
     {
       question: "Posso usar a plataforma no modo escuro?",

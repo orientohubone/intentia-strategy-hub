@@ -33,8 +33,8 @@ type Step = "payment" | "processing" | "success";
 
 const PLAN = {
   label: "Professional",
-  price: 97,
-  priceLabel: "R$ 97",
+  price: 147,
+  priceLabel: "R$ 147",
   period: "/mês",
   features: [
     "Projetos ilimitados",

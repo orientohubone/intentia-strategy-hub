@@ -34,7 +34,7 @@ const plans = [
     name: "Professional",
     badge: "Mais Popular",
     icon: <Sparkles className="h-5 w-5" />,
-    price: 97,
+    price: 147,
     priceLabel: null,
     subtitle: null,
     description: "Estratégia de mídia com IA e benchmark",
@@ -167,7 +167,7 @@ export default function Pricing() {
       <SEO
         title="Preços"
         path="/precos"
-        description="Planos Starter (grátis), Professional (R$97/mês) e Enterprise para análise estratégica de marketing B2B com IA, benchmark e plano tático."
+        description="Planos Starter (grátis), Professional (R$147/mês) e Enterprise para análise estratégica de marketing B2B com IA, benchmark e plano tático."
         keywords="preços intentia, planos marketing B2B, análise estratégica preço, ferramenta mídia paga"
         jsonLd={[
           buildBreadcrumb([{ name: "Preços", path: "/precos" }]),

@@ -56,6 +56,11 @@ export function Footer() {
                 </a>
               </li>
               <li>
+                <a href="/comparar" className="text-muted-foreground hover:text-primary transition-colors">
+                  Comparar
+                </a>
+              </li>
+              <li>
                 <a href="/precos" className="text-muted-foreground hover:text-primary transition-colors">
                   Planos e Preços
                 </a>
