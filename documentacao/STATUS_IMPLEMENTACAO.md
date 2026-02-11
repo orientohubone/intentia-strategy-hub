@@ -2,9 +2,9 @@
 
 ## 📊 Visão Geral
 
-**Status do Projeto:** v3.1.0 — Etapa Operacional: Fundação (Fase 1)  
-**Data de Atualização:** 10/02/2026  
-**Versão:** 3.1.0
+**Status do Projeto:** v3.3.0 — Etapa Operacional: Performance IA + Dashboard Campanhas  
+**Data de Atualização:** 11/02/2026  
+**Versão:** 3.3.0
 
 ---
 
@@ -623,20 +623,30 @@ O **Intentia Strategy Hub** está na **versão 2.8.0** com funcionalidades avan�
 106. **Admin Arquitetura — Operações** — nova seção "Operacoes" no AdminArchitectureTab com fluxo de campanhas, fluxo de métricas, funil Google B2B, views operacionais, resumo de arquitetura
 107. **Admin Arquitetura — Atualizações** — rota /operations nas rotas protegidas, CampaignMetricsForm + CampaignPerformanceCards nos componentes de dados, tabelas operacionais (campaigns, campaign_metrics, budget_allocations) no banco de dados, relacionamentos operacionais, RLS operacional
 
+### 📊 Etapa Operacional — Fase 3: Análise de Performance por IA + Dashboard (v3.3)
+108. **Análise de Performance por IA** — botão Sparkles por campanha (com métricas registradas), seletor de modelo IA, análise completa: saúde geral, KPIs vs benchmark, funil, eficiência de budget, forças/fraquezas, riscos, plano de ação, projeções 30d/90d
+109. **CampaignPerformanceAiDialog** — dialog com scroll nativo (overflow-y-auto), header sticky, toggle fullscreen, seções colapsáveis (saúde, KPIs, funil, budget, forças, riscos, ações, projeções)
+110. **Padronização de botões IA** — botões de análise de performance (Operations) padronizados com o padrão de análise heurística (Projects): SelectTrigger com border-primary/30 bg-primary/5, botão size=icon com bg-primary shadow-md, animação lab-bubble, botão Ver Análise com text-primary
+111. **Dashboard — Card de Campanhas Recentes** — card no sidebar direito com até 6 campanhas, badges de canal e status coloridos, barra de pacing de budget, expand/collapse quando >3 campanhas, link "Ver todas" → /operations
+112. **Dashboard — Projetos Recentes com Expand/Collapse** — limita a 2 projetos por padrão, botão "Ver mais X projetos" / "Mostrar menos" com ícone chevron
+
 ### �📋 Próximos Passos — Etapa Operacional (v3.x)
 1. ~~Gestão de campanhas (criar/editar/monitorar campanhas reais)~~ ✅
 2. ~~Input manual de métricas por campanha (CPC, CTR, CPL, ROAS, conversões)~~ ✅
 3. ~~Cards de performance com KPIs~~ ✅
 4. ~~Métricas Google B2B expandidas (funil completo: sessões → leads → clientes → CAC → LTV → ROI)~~ ✅
 5. ~~Arquitetura admin atualizada com Operações~~ ✅
-6. Comparativo Tático vs Real (gap analysis operacional)
-7. Alertas automáticos de performance
-8. Gestão de budget por canal e projeto com pacing
-9. Calendário de campanhas e timeline visual
-10. Integração com APIs de marketing (Google Ads, Meta Ads, LinkedIn Ads)
-11. Relatórios de performance automatizados
-12. Configurar SMTP custom (Resend) para emails transacionais
+6. ~~Análise de Performance por IA (saúde, KPIs, funil, budget, riscos, plano de ação)~~ ✅
+7. ~~Dashboard com card de campanhas recentes~~ ✅
+8. ~~Projetos recentes com expand/collapse~~ ✅
+9. Comparativo Tático vs Real (gap analysis operacional)
+10. Alertas automáticos de performance
+11. Gestão de budget por canal e projeto com pacing
+12. Calendário de campanhas e timeline visual
+13. Integração com APIs de marketing (Google Ads, Meta Ads, LinkedIn Ads)
+14. Relatórios de performance automatizados
+15. Configurar SMTP custom (Resend) para emails transacionais
 
 ---
 
-**Status:** 🟢 **v3.2.1 — ETAPA OPERACIONAL: MÉTRICAS GOOGLE B2B + ADMIN ARQUITETURA**
+**Status:** 🟢 **v3.3.0 — ETAPA OPERACIONAL: ANÁLISE DE PERFORMANCE POR IA + DASHBOARD CAMPANHAS**

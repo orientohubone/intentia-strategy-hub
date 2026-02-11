@@ -87,7 +87,13 @@ export function ComparisonTable() {
                     : "bg-muted/50 text-foreground"
                 }`}
               >
-                <h3 className="text-lg font-bold">{col.name}</h3>
+                {col.highlight ? (
+                  <span className="text-lg font-extrabold tracking-tight text-primary-foreground">
+                    intentia<span className="text-primary-foreground/60">.</span>
+                  </span>
+                ) : (
+                  <h3 className="text-lg font-bold">{col.name}</h3>
+                )}
               </div>
 
               {/* Card body */}

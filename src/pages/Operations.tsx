@@ -45,7 +45,6 @@ import {
   Calendar,
   X,
   Sparkles,
-  Loader2,
 } from "lucide-react";
 import {
   type CampaignChannel,
@@ -1338,41 +1337,48 @@ export default function Operations() {
 
                                   {/* AI Performance Analysis */}
                                   {canAiKeys && canAiPerformance && hasAiKeys && metricsSummaries[campaign.id]?.total_entries > 0 && (
-                                    <div className="flex items-center gap-2 pt-2 border-t">
-                                      <Select value={selectedAiModel} onValueChange={setSelectedAiModel}>
-                                        <SelectTrigger className="w-[200px] h-8 text-xs">
+                                    <div className="flex items-center gap-1.5 pt-2 border-t">
+                                      <Select
+                                        value={selectedAiModel}
+                                        onValueChange={setSelectedAiModel}
+                                        disabled={aiAnalyzing === campaign.id}
+                                      >
+                                        <SelectTrigger className="h-8 w-[160px] text-xs border-primary/30 bg-primary/5">
                                           <SelectValue placeholder="Modelo IA" />
                                         </SelectTrigger>
                                         <SelectContent>
                                           {availableAiModels.map((m) => (
-                                            <SelectItem key={`${m.provider}::${m.model}`} value={`${m.provider}::${m.model}`}>
+                                            <SelectItem key={`${m.provider}::${m.model}`} value={`${m.provider}::${m.model}`} className="text-xs">
                                               {m.label}
                                             </SelectItem>
                                           ))}
                                         </SelectContent>
                                       </Select>
                                       <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="gap-2"
+                                        size="icon"
+                                        className="h-8 w-8 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 flex-shrink-0"
                                         disabled={aiAnalyzing === campaign.id}
+                                        title={aiAnalyzing === campaign.id ? "Analisando performance..." : "Executar análise de performance por IA"}
                                         onClick={() => handleAiPerformanceAnalysis(campaign)}
                                       >
                                         {aiAnalyzing === campaign.id ? (
-                                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                          <div className="relative flex items-center justify-center h-4 w-4">
+                                            <span className="absolute h-1.5 w-1.5 rounded-full bg-primary-foreground animate-lab-bubble"></span>
+                                            <span className="absolute h-1 w-1 rounded-full bg-primary-foreground/80 animate-lab-bubble-delay -translate-x-1"></span>
+                                            <span className="absolute h-1 w-1 rounded-full bg-primary-foreground/60 animate-lab-bubble-delay-2 translate-x-1"></span>
+                                          </div>
                                         ) : (
-                                          <Sparkles className="h-3.5 w-3.5" />
+                                          <Sparkles className="h-4 w-4" />
                                         )}
-                                        {aiAnalyzing === campaign.id ? "Analisando..." : "Análise de Performance"}
                                       </Button>
                                       {aiResults[campaign.id] && (
                                         <Button
-                                          variant="ghost"
                                           size="sm"
-                                          className="gap-2 text-purple-500"
+                                          variant="ghost"
+                                          className="gap-1.5 text-primary hover:text-primary/80"
                                           onClick={() => setAiDialogCampaignId(campaign.id)}
                                         >
-                                          <Sparkles className="h-3.5 w-3.5" />
+                                          <Sparkles className="h-4 w-4" />
                                           Ver Análise
                                         </Button>
                                       )}

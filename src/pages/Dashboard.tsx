@@ -5,13 +5,22 @@ import { ProjectCard } from "@/components/ProjectCard";
 import { ChannelCard } from "@/components/ChannelCard";
 import { StatsCard } from "@/components/StatsCard";
 import { ScoreRing } from "@/components/ScoreRing";
-import { FolderOpen, Target, BarChart3, Zap, FileText, FileSpreadsheet, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, TrendingUp, ArrowRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { FolderOpen, Target, BarChart3, Zap, FileText, FileSpreadsheet, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, TrendingUp, ArrowRight, Megaphone, Play, Pause, CheckCircle2, Archive, FileEdit, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exportDashboardPdf } from "@/lib/reportGenerator";
 import { exportProjectsCsv } from "@/lib/exportCsv";
 import { useTenantData } from "@/hooks/useTenantData";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  type CampaignChannel,
+  type CampaignStatus,
+  CAMPAIGN_STATUS_LABELS,
+  CAMPAIGN_STATUS_COLORS,
+  CHANNEL_LABELS,
+  CHANNEL_COLORS,
+} from "@/lib/operationalTypes";
 
 type Insight = {
   id: string;
@@ -56,6 +65,17 @@ export default function Dashboard() {
   const [insightsExpanded, setInsightsExpanded] = useState(false);
   const [expandedInsightId, setExpandedInsightId] = useState<string | null>(null);
   const [selectedChannelProjectId, setSelectedChannelProjectId] = useState<string | null>(null);
+  const [projectsExpanded, setProjectsExpanded] = useState(false);
+  const [recentCampaigns, setRecentCampaigns] = useState<{
+    id: string;
+    name: string;
+    channel: CampaignChannel;
+    status: CampaignStatus;
+    budget_total: number;
+    budget_spent: number;
+    project_name: string;
+  }[]>([]);
+  const [campaignsExpanded, setCampaignsExpanded] = useState(false);
   const fullName = (user?.user_metadata?.full_name as string | undefined) || user?.email || "Usuário";
 
   useEffect(() => {
@@ -166,12 +186,44 @@ export default function Dashboard() {
       }
     };
 
+    const fetchRecentCampaigns = async () => {
+      if (!user) return;
+      try {
+        const { data, error } = await (supabase as any)
+          .from("campaigns")
+          .select("id, name, channel, status, budget_total, budget_spent, project_id, created_at")
+          .eq("user_id", user.id)
+          .eq("is_deleted", false)
+          .order("created_at", { ascending: false })
+          .limit(6);
+        if (error) {
+          console.error("Error fetching campaigns:", error);
+          setRecentCampaigns([]);
+        } else {
+          const projectMap = new Map(projects.map(p => [p.id, p.name]));
+          setRecentCampaigns((data || []).map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            channel: c.channel,
+            status: c.status,
+            budget_total: c.budget_total || 0,
+            budget_spent: c.budget_spent || 0,
+            project_name: projectMap.get(c.project_id) || "Projeto",
+          })));
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching campaigns:", err);
+        setRecentCampaigns([]);
+      }
+    };
+
     const fetchAllStats = async () => {
       await Promise.all([
         fetchInsights(),
         fetchAudiencesCount(),
         fetchBenchmarksCount(),
-        fetchProjectsThisMonth()
+        fetchProjectsThisMonth(),
+        fetchRecentCampaigns(),
       ]);
     };
 
@@ -362,11 +414,119 @@ export default function Dashboard() {
                   {!loading && projectCards.length === 0 && (
                     <p className="text-sm text-muted-foreground">Nenhum projeto encontrado.</p>
                   )}
-                  {projectCards.map((project, i) => (
+                  {(projectsExpanded ? projectCards : projectCards.slice(0, 2)).map((project, i) => (
                     <ProjectCard key={i} {...project} />
                   ))}
+                  {projectCards.length > 2 && (
+                    <button
+                      onClick={() => setProjectsExpanded(!projectsExpanded)}
+                      className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg border border-border hover:bg-muted/40"
+                    >
+                      {projectsExpanded ? (
+                        <>
+                          <ChevronUp className="h-3.5 w-3.5" />
+                          Mostrar menos
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-3.5 w-3.5" />
+                          Ver mais {projectCards.length - 2} projetos
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
+
+              {/* Right Sidebar: Campaigns + Insights */}
+              <div className="space-y-6">
+
+                {/* Campaigns Card */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <h2 className="text-base sm:text-lg font-semibold text-foreground">Campanhas Recentes</h2>
+                    <a href="/operations" className="text-sm text-primary hover:underline">
+                      Ver todas
+                    </a>
+                  </div>
+                  <div className="rounded-xl border border-border bg-card divide-y divide-border">
+                    {recentCampaigns.length === 0 && (
+                      <p className="text-sm text-muted-foreground p-4">Nenhuma campanha encontrada.</p>
+                    )}
+                    {(campaignsExpanded ? recentCampaigns : recentCampaigns.slice(0, 3)).map((campaign) => {
+                      const statusIcons: Record<CampaignStatus, typeof Play> = {
+                        draft: FileEdit,
+                        active: Play,
+                        paused: Pause,
+                        completed: CheckCircle2,
+                        archived: Archive,
+                      };
+                      const StatusIcon = statusIcons[campaign.status];
+                      const pacing = campaign.budget_total > 0
+                        ? Math.round((campaign.budget_spent / campaign.budget_total) * 100)
+                        : 0;
+                      return (
+                        <div key={campaign.id} className="px-3.5 py-2.5 hover:bg-muted/40 transition-colors">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                              <Megaphone className="h-3.5 w-3.5 text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-foreground truncate">{campaign.name}</p>
+                              <p className="text-[10px] text-muted-foreground truncate">{campaign.project_name}</p>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <Badge className={`text-[10px] px-1.5 py-0 ${CHANNEL_COLORS[campaign.channel]}`}>
+                                {CHANNEL_LABELS[campaign.channel]}
+                              </Badge>
+                              <Badge className={`text-[10px] px-1.5 py-0 ${CAMPAIGN_STATUS_COLORS[campaign.status]}`}>
+                                <StatusIcon className="h-2.5 w-2.5 mr-0.5" />
+                                {CAMPAIGN_STATUS_LABELS[campaign.status]}
+                              </Badge>
+                            </div>
+                          </div>
+                          {campaign.budget_total > 0 && (
+                            <div className="mt-1.5 ml-9">
+                              <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-0.5">
+                                <span className="flex items-center gap-0.5">
+                                  <DollarSign className="h-2.5 w-2.5" />
+                                  R$ {campaign.budget_spent.toLocaleString("pt-BR")} / R$ {campaign.budget_total.toLocaleString("pt-BR")}
+                                </span>
+                                <span>{pacing}%</span>
+                              </div>
+                              <div className="h-1 rounded-full bg-muted overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all ${
+                                    pacing > 90 ? "bg-red-500" : pacing > 70 ? "bg-yellow-500" : "bg-primary"
+                                  }`}
+                                  style={{ width: `${Math.min(pacing, 100)}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {recentCampaigns.length > 3 && (
+                      <button
+                        onClick={() => setCampaignsExpanded(!campaignsExpanded)}
+                        className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/40"
+                      >
+                        {campaignsExpanded ? (
+                          <>
+                            <ChevronUp className="h-3.5 w-3.5" />
+                            Mostrar menos
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="h-3.5 w-3.5" />
+                            Ver mais {recentCampaigns.length - 3}
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
 
               {/* Insights Section */}
               <div className="space-y-4">
@@ -436,6 +596,8 @@ export default function Dashboard() {
                     </button>
                   )}
                 </div>
+              </div>
+
               </div>
             </div>
 

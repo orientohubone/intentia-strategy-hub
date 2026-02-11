@@ -33,6 +33,7 @@ import {
   Database,
   HardDrive,
   Wand2,
+  Megaphone,
 } from "lucide-react";
 
 export default function Help() {
@@ -440,6 +441,45 @@ export default function Help() {
       ]
     },
     {
+      id: "operations",
+      title: "Operações e Campanhas",
+      description: "Gestão de campanhas, métricas de performance e análise por IA",
+      icon: <Megaphone className="h-5 w-5" />,
+      color: "text-orange-600",
+      articles: [
+        {
+          title: "Criando e gerenciando campanhas",
+          content: "Vá em Operações → Nova Campanha. Selecione o projeto, canal (Google, Meta, LinkedIn, TikTok), defina nome, objetivo, budget total e datas. As campanhas são agrupadas por projeto e possuem fluxo de status: Rascunho → Ativa → Pausada → Concluída → Arquivada.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Registrando métricas de performance",
+          content: "Expanda uma campanha e clique em 'Registrar Métricas'. Insira dados por período: impressões, cliques, conversões, custo, receita e métricas específicas por canal (ex: Quality Score para Google, Alcance para Meta). Para Google Ads, o funil B2B completo está disponível: sessões, leads, MQL, SQL, CAC, LTV e ROI.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Cards de KPIs por campanha",
+          content: "Ao expandir uma campanha com métricas registradas, cards de KPIs são exibidos automaticamente: Impressões, Cliques (CTR), Conversões (CPA), Custo (CPC), Receita (ROAS) e métricas específicas do canal. Para Google Ads B2B, cards adicionais mostram Sessões, Leads/Mês, Taxa SQL, CAC, LTV e ROI Acumulado.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Análise de Performance por IA",
+          content: "Quando uma campanha tem métricas registradas, o botão de IA (✨) aparece ao lado do seletor de modelo. A análise retorna: saúde geral (score 0-100 + tendência), KPIs vs benchmark do mercado, análise de funil com gargalos, eficiência de budget, forças e fraquezas, riscos com mitigação, plano de ação priorizado e projeções para 30 e 90 dias.",
+          difficulty: "Avançado",
+        },
+        {
+          title: "Dialog de análise de performance",
+          content: "Clique em 'Ver Análise' para abrir o dialog completo com todas as seções da análise por IA. O dialog possui scroll completo, header fixo com informações do canal e modelo usado, e botão de fullscreen. Cada seção é colapsável para facilitar a navegação.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Campanhas no Dashboard",
+          content: "O Dashboard exibe um card de 'Campanhas Recentes' no painel lateral com as últimas campanhas criadas. Cada item mostra nome, projeto vinculado, badges de canal e status, e barra de pacing de budget (verde < 70%, amarelo 70-90%, vermelho > 90%). Use 'Ver todas' para ir à página de Operações.",
+          difficulty: "Iniciante",
+        },
+      ]
+    },
+    {
       id: "security",
       title: "Segurança & Backup de Dados",
       description: "Proteção de dados, backups, auditoria e guardrails",
@@ -558,6 +598,14 @@ export default function Help() {
     {
       question: "Preciso saber programar para usar o Gerador de Dados Estruturados?",
       answer: "Não! Os snippets são gerados prontos para uso. Basta copiar o código e colar no <head> do seu HTML (ou pedir ao seu desenvolvedor). JSON-LD vai dentro de tags <script>, e meta tags OG/Twitter vão diretamente no <head>. O gerador pré-preenche os valores com dados do seu projeto — você só precisa personalizar os placeholders."
+    },
+    {
+      question: "Como funciona a análise de performance por IA?",
+      answer: "Quando uma campanha tem métricas registradas, o botão de IA aparece. Selecione o modelo (Gemini ou Claude) e clique para executar. A IA analisa todos os KPIs, compara com benchmarks do mercado, identifica gargalos no funil, avalia eficiência de budget, lista forças/fraquezas, riscos com mitigação, gera um plano de ação priorizado e faz projeções para 30 e 90 dias. Os resultados ficam salvos na campanha."
+    },
+    {
+      question: "O que aparece no card de campanhas do Dashboard?",
+      answer: "O Dashboard mostra as campanhas mais recentes com nome, projeto vinculado, badges coloridos de canal (Google/Meta/LinkedIn/TikTok) e status (Rascunho/Ativa/Pausada/Concluída/Arquivada), além de uma barra de pacing de budget. Você pode expandir para ver mais campanhas ou clicar em 'Ver todas' para ir à página de Operações."
     },
     {
       question: "Posso cancelar meu plano a qualquer momento?",

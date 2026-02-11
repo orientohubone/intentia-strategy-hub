@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Activity,
   AlertTriangle,
@@ -162,39 +161,41 @@ export default function CampaignPerformanceAiDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={`${
+        className={`overflow-y-auto p-0 transition-all duration-200 ${
           isFullscreen
             ? "max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] rounded-none"
             : "max-w-3xl max-h-[90vh]"
-        } flex flex-col`}
+        }`}
       >
-        <DialogHeader className="flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <Sparkles className="h-5 w-5 text-primary" />
-              Análise de Performance — {campaignName}
-            </DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setIsFullscreen(!isFullscreen)}
-            >
-              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
-            </Button>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant="outline" className="text-[10px]">
-              {channel}
-            </Badge>
-            <span>·</span>
-            <span>{modelLabel}</span>
-            <span>·</span>
-            <span>{analyzedDate}</span>
-          </div>
-        </DialogHeader>
+        <div className="sticky top-0 z-10 bg-background border-b border-border px-6 py-4">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2 text-base">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Análise de Performance — {campaignName}
+              </DialogTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setIsFullscreen(!isFullscreen)}
+              >
+                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
+              </Button>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Badge variant="outline" className="text-[10px]">
+                {channel}
+              </Badge>
+              <span>·</span>
+              <span>{modelLabel}</span>
+              <span>·</span>
+              <span>{analyzedDate}</span>
+            </div>
+          </DialogHeader>
+        </div>
 
-        <ScrollArea className="flex-1 -mx-6 px-6">
+        <div className="px-6">
           <div className="space-y-4 pb-4">
             {/* Executive Summary */}
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
@@ -519,7 +520,7 @@ export default function CampaignPerformanceAiDialog({
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
