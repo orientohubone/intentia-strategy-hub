@@ -23,6 +23,8 @@ const plans = [
       "Diagnóstico heurístico (6 dimensões)",
       "Score por canal de mídia",
       "Insights automáticos",
+      "Configuração de API keys (Gemini / Claude)",
+      "Análise por IA de projetos (3/mês)",
     ],
     cta: "Começar Grátis",
     popular: false,
@@ -38,8 +40,10 @@ const plans = [
     description: "Estratégia de mídia com IA e benchmark",
     highlights: [
       "Projetos ilimitados",
-      "Análise por IA (Gemini + Claude)",
-      "Benchmark competitivo com SWOT",
+      "Todas as análises por IA ilimitadas",
+      "Análise de performance de campanhas por IA",
+      "Benchmark competitivo com SWOT + IA",
+      "Enriquecimento de insights por IA",
       "Plano Tático por canal",
     ],
     cta: "Assinar Agora",
@@ -86,7 +90,11 @@ const featureComparison: FeatureCategory[] = [
       { name: "Score por canal (Google, Meta, LinkedIn, TikTok)", starter: true, professional: true, enterprise: true },
       { name: "Insights automáticos por projeto", starter: true, professional: true, enterprise: true },
       { name: "Alertas de investimento prematuro", starter: true, professional: true, enterprise: true },
-      { name: "Análise por IA (Gemini / Claude)", starter: false, professional: true, enterprise: true },
+      { name: "Configuração de API keys (Gemini / Claude)", starter: true, professional: true, enterprise: true },
+      { name: "Análise de projetos por IA", starter: "3/mês", professional: "Ilimitado", enterprise: "Ilimitado" },
+      { name: "Análise de performance por IA", starter: false, professional: true, enterprise: true },
+      { name: "Enriquecimento de insights por IA", starter: false, professional: true, enterprise: true },
+      { name: "Enriquecimento de benchmark por IA", starter: false, professional: true, enterprise: true },
       { name: "Riscos e recomendações por canal", starter: false, professional: true, enterprise: true },
     ],
   },
@@ -188,7 +196,7 @@ export default function Pricing() {
                 name: "Preciso de API key para usar a análise por IA?",
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: "Sim. No plano Professional, você configura sua própria API key do Google Gemini ou Anthropic Claude nas configurações. Assim, você tem controle total sobre custos e modelos.",
+                  text: "Sim. Em todos os planos, você configura sua própria API key do Google Gemini ou Anthropic Claude nas configurações. No Starter, a análise de projetos por IA é limitada a 3/mês. No Professional, todas as análises por IA são ilimitadas.",
                 },
               },
               {
@@ -408,7 +416,7 @@ export default function Pricing() {
               },
               {
                 q: "Preciso de API key para usar a análise por IA?",
-                a: "Sim. No plano Professional, você configura sua própria API key do Google Gemini ou Anthropic Claude nas configurações. Controle total sobre custos e modelos.",
+                a: "Sim. Em todos os planos, você configura sua própria API key do Google Gemini ou Anthropic Claude nas configurações. No Starter, a análise de projetos por IA é limitada a 3/mês. No Professional, todas as análises por IA são ilimitadas.",
               },
               {
                 q: "O que é o Plano Tático?",

@@ -108,7 +108,7 @@ type ProjectGroup = {
 export default function Insights() {
   const { user } = useAuth();
   const { isFeatureAvailable } = useFeatureFlags();
-  const canAiEnrichment = isFeatureAvailable("ai_benchmark_enrichment");
+  const canAiEnrichment = isFeatureAvailable("ai_insights_enrichment");
   const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");

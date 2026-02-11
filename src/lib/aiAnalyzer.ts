@@ -202,42 +202,56 @@ async function callGeminiApi(
   prompt: string
 ): Promise<string> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const maxRetries = 2;
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.4,
-        maxOutputTokens: 4096,
-        responseMimeType: "application/json",
-      },
-    }),
-  });
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens: 8192,
+          responseMimeType: "application/json",
+        },
+      }),
+    });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const errMsg = errorData?.error?.message || response.statusText;
-    if (response.status === 404 || errMsg.toLowerCase().includes("not found")) {
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errMsg = errorData?.error?.message || response.statusText;
+
+      // Retry on 503 (overloaded) and 429 (rate limit)
+      if ((response.status === 503 || response.status === 429) && attempt < maxRetries) {
+        const delay = (attempt + 1) * 3000;
+        console.warn(`Gemini ${response.status}, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})...`);
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
+
+      if (response.status === 404 || errMsg.toLowerCase().includes("not found")) {
+        throw new Error(
+          `Modelo "${model}" não encontrado. Sua API key pode não ter acesso a este modelo. Tente outro modelo em Configurações → Integrações de IA.`
+        );
+      }
+      if (response.status === 403 || errMsg.toLowerCase().includes("permission")) {
+        throw new Error(
+          `Sua API key não tem permissão para usar o modelo "${model}". Selecione outro modelo em Configurações → Integrações de IA.`
+        );
+      }
       throw new Error(
-        `Modelo "${model}" não encontrado. Sua API key pode não ter acesso a este modelo. Tente outro modelo em Configurações → Integrações de IA.`
+        `Erro na API Gemini (${response.status}): ${errMsg}`
       );
     }
-    if (response.status === 403 || errMsg.toLowerCase().includes("permission")) {
-      throw new Error(
-        `Sua API key não tem permissão para usar o modelo "${model}". Selecione outro modelo em Configurações → Integrações de IA.`
-      );
-    }
-    throw new Error(
-      `Erro na API Gemini (${response.status}): ${errMsg}`
-    );
+
+    const data = await response.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error("Resposta vazia da API Gemini");
+    return text;
   }
 
-  const data = await response.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error("Resposta vazia da API Gemini");
-  return text;
+  throw new Error("Gemini API: todas as tentativas falharam. Tente novamente em alguns minutos ou selecione outro modelo.");
 }
 
 // =====================================================
@@ -885,6 +899,381 @@ export async function runInsightsAiEnrichment(
         ai_enriched_at: result.analyzedAt,
       });
   }
+
+  return result;
+}
+
+// =====================================================
+// PERFORMANCE AI ANALYSIS: TYPES
+// =====================================================
+
+export interface PerformanceAiResult {
+  executiveSummary: string;
+  overallHealth: {
+    score: number;
+    level: "critical" | "poor" | "average" | "good" | "excellent";
+    trend: "declining" | "stable" | "improving";
+    justification: string;
+  };
+  kpiAnalysis: {
+    metric: string;
+    currentValue: string;
+    benchmark: string;
+    verdict: "below" | "on_track" | "above";
+    insight: string;
+  }[];
+  funnelAnalysis: {
+    stage: string;
+    performance: string;
+    bottleneck: boolean;
+    recommendation: string;
+  }[];
+  budgetEfficiency: {
+    score: number;
+    wasteAreas: string[];
+    optimizationOpportunities: string[];
+    recommendedReallocation: string;
+  };
+  strengths: string[];
+  weaknesses: string[];
+  risks: {
+    risk: string;
+    severity: "high" | "medium" | "low";
+    mitigation: string;
+  }[];
+  actionPlan: {
+    priority: "immediate" | "short_term" | "medium_term";
+    action: string;
+    expectedImpact: string;
+    effort: "low" | "medium" | "high";
+  }[];
+  projections: {
+    metric: string;
+    current: string;
+    projected30d: string;
+    projected90d: string;
+    assumption: string;
+  }[];
+  provider: string;
+  model: string;
+  analyzedAt: string;
+}
+
+export interface PerformanceMetricsForPrompt {
+  campaignName: string;
+  channel: string;
+  objective: string;
+  status: string;
+  budgetTotal: number;
+  budgetSpent: number;
+  startDate: string | null;
+  endDate: string | null;
+  summary: {
+    totalEntries: number;
+    totalImpressions: number;
+    totalClicks: number;
+    totalConversions: number;
+    totalLeads: number;
+    totalCost: number;
+    totalRevenue: number;
+    totalSessions: number;
+    totalFirstVisits: number;
+    totalLeadsMonth: number;
+    totalClientsWeb: number;
+    totalRevenueWeb: number;
+    totalGoogleAdsCost: number;
+    avgCtr: number;
+    avgCpc: number;
+    avgCpa: number;
+    avgCpl: number;
+    calcRoas: number;
+    avgMqlRate: number;
+    avgSqlRate: number;
+    avgTicket: number;
+    calcCac: number;
+    avgLtv: number;
+    avgCacLtvRatio: number;
+    avgRoiAccumulated: number;
+    maxRoiPeriodMonths: number;
+    firstPeriod: string;
+    lastPeriod: string;
+  };
+  recentMetrics: {
+    periodStart: string;
+    periodEnd: string;
+    impressions: number;
+    clicks: number;
+    conversions: number;
+    cost: number;
+    revenue: number;
+    ctr: number;
+    cpc: number;
+    roas: number;
+    sessions: number;
+    leadsMonth: number;
+    clientsWeb: number;
+    googleAdsCost: number;
+    cacMonth: number;
+    ltv: number;
+  }[];
+  projectName: string;
+  projectNiche: string;
+}
+
+// =====================================================
+// PERFORMANCE AI ANALYSIS: BUILD PROMPT
+// =====================================================
+
+function buildPerformanceAnalysisPrompt(data: PerformanceMetricsForPrompt): string {
+  const s = data.summary;
+  const budgetPacing = data.budgetTotal > 0
+    ? ((data.budgetSpent / data.budgetTotal) * 100).toFixed(1)
+    : "0";
+
+  const recentRows = data.recentMetrics
+    .map(
+      (m, i) =>
+        `  ${i + 1}. ${m.periodStart} a ${m.periodEnd}: ${m.impressions} imp, ${m.clicks} cliques, ${m.conversions} conv, R$${m.cost} custo, R$${m.revenue} receita, CTR ${m.ctr}%, CPC R$${m.cpc}, ROAS ${m.roas}x, ${m.sessions} sessões, ${m.leadsMonth} leads, ${m.clientsWeb} clientes, R$${m.googleAdsCost} Google Ads, CAC R$${m.cacMonth}, LTV R$${m.ltv}`
+    )
+    .join("\n");
+
+  return `Você é um analista sênior de performance de campanhas de marketing digital B2B. Analise os dados de performance abaixo e forneça uma análise estratégica completa.
+
+## Dados da Campanha
+- **Nome:** ${data.campaignName}
+- **Canal:** ${data.channel}
+- **Objetivo:** ${data.objective || "Não definido"}
+- **Status:** ${data.status}
+- **Projeto:** ${data.projectName} (Nicho: ${data.projectNiche})
+- **Período:** ${s.firstPeriod || "N/A"} a ${s.lastPeriod || "N/A"}
+- **Budget Total:** R$${data.budgetTotal}
+- **Budget Gasto:** R$${data.budgetSpent} (${budgetPacing}%)
+${data.startDate ? `- **Início:** ${data.startDate}` : ""}
+${data.endDate ? `- **Término:** ${data.endDate}` : ""}
+
+## KPIs Agregados (${s.totalEntries} períodos registrados)
+- Impressões: ${s.totalImpressions}
+- Cliques: ${s.totalClicks}
+- CTR Médio: ${s.avgCtr}%
+- CPC Médio: R$${s.avgCpc}
+- Conversões: ${s.totalConversions}
+- CPA Médio: R$${s.avgCpa}
+- Custo Total: R$${s.totalCost}
+- Receita Total: R$${s.totalRevenue}
+- ROAS Calculado: ${s.calcRoas}x
+- Leads Totais: ${s.totalLeads}
+- CPL Médio: R$${s.avgCpl}
+
+### Funil B2B (Google Ads)
+- Sessões: ${s.totalSessions}
+- Primeiras Visitas: ${s.totalFirstVisits}
+- Leads/Mês: ${s.totalLeadsMonth}
+- Taxa MQL: ${s.avgMqlRate}%
+- Taxa SQL: ${s.avgSqlRate}%
+- Clientes Web: ${s.totalClientsWeb}
+- Receita Web: R$${s.totalRevenueWeb}
+- Ticket Médio: R$${s.avgTicket}
+- Custo Google Ads: R$${s.totalGoogleAdsCost}
+- CAC Calculado: R$${s.calcCac}
+- LTV Médio: R$${s.avgLtv}
+- Relação CAC:LTV: ${s.avgCacLtvRatio}x (benchmark ideal: 1:3)
+- ROI Acumulado: ${s.avgRoiAccumulated}%
+- Período ROI: ${s.maxRoiPeriodMonths} meses
+
+## Dados por Período (últimos registros)
+${recentRows || "Nenhum dado por período disponível"}
+
+---
+
+## Instruções de Resposta
+
+Responda EXCLUSIVAMENTE em JSON válido, sem markdown, sem comentários, sem texto antes ou depois. Use o formato exato abaixo:
+
+{
+  "executiveSummary": "Resumo executivo de 3-4 frases sobre a performance geral da campanha, destacando os pontos mais relevantes",
+  "overallHealth": {
+    "score": 0-100,
+    "level": "critical|poor|average|good|excellent",
+    "trend": "declining|stable|improving",
+    "justification": "Justificativa para o score e tendência"
+  },
+  "kpiAnalysis": [
+    {
+      "metric": "Nome da métrica",
+      "currentValue": "Valor atual formatado",
+      "benchmark": "Benchmark do mercado para o nicho ${data.projectNiche}",
+      "verdict": "below|on_track|above",
+      "insight": "Análise de 1-2 frases sobre esta métrica"
+    }
+  ],
+  "funnelAnalysis": [
+    {
+      "stage": "Nome do estágio do funil (ex: Impressões → Cliques, Cliques → Conversões, etc.)",
+      "performance": "Descrição da performance neste estágio",
+      "bottleneck": true/false,
+      "recommendation": "Recomendação específica para este estágio"
+    }
+  ],
+  "budgetEfficiency": {
+    "score": 0-100,
+    "wasteAreas": ["Área de desperdício 1", "..."],
+    "optimizationOpportunities": ["Oportunidade 1", "..."],
+    "recommendedReallocation": "Sugestão de realocação de budget"
+  },
+  "strengths": ["Ponto forte 1", "Ponto forte 2", "..."],
+  "weaknesses": ["Fraqueza 1", "Fraqueza 2", "..."],
+  "risks": [
+    {
+      "risk": "Descrição do risco",
+      "severity": "high|medium|low",
+      "mitigation": "Como mitigar"
+    }
+  ],
+  "actionPlan": [
+    {
+      "priority": "immediate|short_term|medium_term",
+      "action": "Ação concreta e específica",
+      "expectedImpact": "Impacto esperado",
+      "effort": "low|medium|high"
+    }
+  ],
+  "projections": [
+    {
+      "metric": "Nome da métrica",
+      "current": "Valor atual",
+      "projected30d": "Projeção 30 dias",
+      "projected90d": "Projeção 90 dias",
+      "assumption": "Premissa da projeção"
+    }
+  ]
+}
+
+Forneça 5-8 kpiAnalysis (as métricas mais relevantes para o canal ${data.channel}). Forneça 3-5 estágios no funnelAnalysis. Forneça 3-5 strengths e weaknesses. Forneça 2-4 risks. Forneça 4-6 ações no actionPlan ordenadas por prioridade. Forneça 3-4 projections. Seja específico para o nicho ${data.projectNiche} e canal ${data.channel}.`;
+}
+
+// =====================================================
+// PERFORMANCE AI ANALYSIS: PARSE RESPONSE
+// =====================================================
+
+function parsePerformanceAiResponse(
+  text: string,
+  provider: string,
+  model: string
+): PerformanceAiResult {
+  let cleaned = text.trim();
+  if (cleaned.startsWith("```json")) cleaned = cleaned.slice(7);
+  if (cleaned.startsWith("```")) cleaned = cleaned.slice(3);
+  if (cleaned.endsWith("```")) cleaned = cleaned.slice(0, -3);
+  cleaned = cleaned.trim();
+
+  const parsed = JSON.parse(cleaned);
+
+  return {
+    executiveSummary: parsed.executiveSummary || "",
+    overallHealth: {
+      score: parsed.overallHealth?.score || 0,
+      level: parsed.overallHealth?.level || "average",
+      trend: parsed.overallHealth?.trend || "stable",
+      justification: parsed.overallHealth?.justification || "",
+    },
+    kpiAnalysis: (parsed.kpiAnalysis || []).map((k: any) => ({
+      metric: k.metric || "",
+      currentValue: k.currentValue || "",
+      benchmark: k.benchmark || "",
+      verdict: k.verdict || "on_track",
+      insight: k.insight || "",
+    })),
+    funnelAnalysis: (parsed.funnelAnalysis || []).map((f: any) => ({
+      stage: f.stage || "",
+      performance: f.performance || "",
+      bottleneck: !!f.bottleneck,
+      recommendation: f.recommendation || "",
+    })),
+    budgetEfficiency: {
+      score: parsed.budgetEfficiency?.score || 0,
+      wasteAreas: parsed.budgetEfficiency?.wasteAreas || [],
+      optimizationOpportunities: parsed.budgetEfficiency?.optimizationOpportunities || [],
+      recommendedReallocation: parsed.budgetEfficiency?.recommendedReallocation || "",
+    },
+    strengths: parsed.strengths || [],
+    weaknesses: parsed.weaknesses || [],
+    risks: (parsed.risks || []).map((r: any) => ({
+      risk: r.risk || "",
+      severity: r.severity || "medium",
+      mitigation: r.mitigation || "",
+    })),
+    actionPlan: (parsed.actionPlan || []).map((a: any) => ({
+      priority: a.priority || "short_term",
+      action: a.action || "",
+      expectedImpact: a.expectedImpact || "",
+      effort: a.effort || "medium",
+    })),
+    projections: (parsed.projections || []).map((p: any) => ({
+      metric: p.metric || "",
+      current: p.current || "",
+      projected30d: p.projected30d || "",
+      projected90d: p.projected90d || "",
+      assumption: p.assumption || "",
+    })),
+    provider,
+    model,
+    analyzedAt: new Date().toISOString(),
+  };
+}
+
+// =====================================================
+// MAIN: RUN PERFORMANCE AI ANALYSIS
+// =====================================================
+
+export async function runPerformanceAiAnalysis(
+  campaignId: string,
+  userId: string,
+  metricsData: PerformanceMetricsForPrompt,
+  overrideProvider?: "google_gemini" | "anthropic_claude",
+  overrideModel?: string
+): Promise<PerformanceAiResult> {
+  // 1. Get user's API key
+  let apiKeyEntry: UserApiKey | null = null;
+
+  if (overrideProvider) {
+    const allKeys = await getUserActiveKeys(userId);
+    apiKeyEntry = allKeys.find((k) => k.provider === overrideProvider) || null;
+  } else {
+    apiKeyEntry = await getUserApiKey(userId);
+  }
+
+  if (!apiKeyEntry) {
+    throw new Error("Nenhuma API key ativa encontrada. Configure em Configurações → Integrações de IA.");
+  }
+
+  const modelToUse = overrideModel || apiKeyEntry.preferred_model;
+
+  // 2. Build prompt
+  const prompt = buildPerformanceAnalysisPrompt(metricsData);
+
+  // 3. Call AI API
+  let responseText: string;
+
+  if (apiKeyEntry.provider === "google_gemini") {
+    responseText = await callGeminiApi(apiKeyEntry.api_key_encrypted, modelToUse, prompt);
+  } else if (apiKeyEntry.provider === "anthropic_claude") {
+    responseText = await callClaudeApi(apiKeyEntry.api_key_encrypted, modelToUse, prompt);
+  } else {
+    throw new Error(`Provider não suportado: ${apiKeyEntry.provider}`);
+  }
+
+  // 4. Parse response
+  const result = parsePerformanceAiResponse(responseText, apiKeyEntry.provider, modelToUse);
+
+  // 5. Save to campaign
+  await (supabase as any)
+    .from("campaigns")
+    .update({
+      performance_ai_analysis: result,
+      performance_ai_analyzed_at: result.analyzedAt,
+    })
+    .eq("id", campaignId)
+    .eq("user_id", userId);
 
   return result;
 }

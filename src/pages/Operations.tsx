@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { FeatureGate } from "@/components/FeatureGate";
 import { SEO } from "@/components/SEO";
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenantData } from "@/hooks/useTenantData";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -43,6 +44,8 @@ import {
   Target,
   Calendar,
   X,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import {
   type CampaignChannel,
@@ -55,6 +58,12 @@ import {
 } from "@/lib/operationalTypes";
 import { CampaignMetricsForm, type MetricsFormData } from "@/components/CampaignMetricsForm";
 import { CampaignPerformanceCards } from "@/components/CampaignPerformanceCards";
+import { CampaignMetricsList } from "@/components/CampaignMetricsList";
+import type { CampaignMetrics as CampaignMetricsType } from "@/lib/operationalTypes";
+import { getUserActiveKeys, runPerformanceAiAnalysis, type PerformanceAiResult, type PerformanceMetricsForPrompt } from "@/lib/aiAnalyzer";
+import { getModelsForProvider } from "@/lib/aiModels";
+import CampaignPerformanceAiDialog from "@/components/CampaignPerformanceAiDialog";
+import { CHANNEL_LABELS as CH_LABELS_FULL } from "@/lib/operationalTypes";
 
 interface MetricsSummaryData {
   campaign_id: string;
@@ -133,6 +142,9 @@ const defaultFormData = {
 export default function Operations() {
   const { user } = useAuth();
   const { projects } = useTenantData();
+  const { isFeatureAvailable } = useFeatureFlags();
+  const canAiKeys = isFeatureAvailable("ai_api_keys");
+  const canAiPerformance = isFeatureAvailable("ai_performance_analysis");
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [stats, setStats] = useState<OperationalStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -146,13 +158,32 @@ export default function Operations() {
   const [formData, setFormData] = useState(defaultFormData);
   const [metricsSummaries, setMetricsSummaries] = useState<Record<string, MetricsSummaryData>>({});
   const [metricsFormCampaignId, setMetricsFormCampaignId] = useState<string | null>(null);
+  const [metricsFormDrafts, setMetricsFormDrafts] = useState<Record<string, Partial<MetricsFormData>>>({});
   const [expandedCampaigns, setExpandedCampaigns] = useState<Set<string>>(new Set());
+  const [campaignMetricsEntries, setCampaignMetricsEntries] = useState<Record<string, CampaignMetricsType[]>>({});
+  const [metricsEntriesLoading, setMetricsEntriesLoading] = useState<Record<string, boolean>>({});
+  const [editingMetricId, setEditingMetricId] = useState<string | null>(null);
+
+  // AI Performance Analysis state
+  const [hasAiKeys, setHasAiKeys] = useState(false);
+  const [availableAiModels, setAvailableAiModels] = useState<{ provider: string; model: string; label: string }[]>([]);
+  const [selectedAiModel, setSelectedAiModel] = useState<string>("");
+  const [aiAnalyzing, setAiAnalyzing] = useState<string | null>(null);
+  const [aiResults, setAiResults] = useState<Record<string, PerformanceAiResult>>({});
+  const [aiDialogCampaignId, setAiDialogCampaignId] = useState<string | null>(null);
+  const aiNotificationSentRef = useRef<string | null>(null);
 
   const toggleCampaignExpand = (campaignId: string) => {
     setExpandedCampaigns((prev) => {
       const next = new Set(prev);
-      if (next.has(campaignId)) next.delete(campaignId);
-      else next.add(campaignId);
+      if (next.has(campaignId)) {
+        next.delete(campaignId);
+      } else {
+        next.add(campaignId);
+        if (!campaignMetricsEntries[campaignId]) {
+          loadCampaignMetrics(campaignId);
+        }
+      }
       return next;
     });
   };
@@ -182,6 +213,162 @@ export default function Operations() {
       loadMetricsSummaries();
     }
   }, [user]);
+
+  // Check AI keys
+  useEffect(() => {
+    const checkAiKeys = async () => {
+      if (!user) return;
+      const keys = await getUserActiveKeys(user.id);
+      setHasAiKeys(keys.length > 0);
+      const models: { provider: string; model: string; label: string }[] = [];
+      for (const key of keys) {
+        const allProviderModels = getModelsForProvider(key.provider);
+        for (const m of allProviderModels) {
+          models.push({ provider: key.provider, model: m.value, label: m.label });
+        }
+      }
+      setAvailableAiModels(models);
+      if (models.length > 0 && !selectedAiModel) {
+        const preferred = keys[0];
+        const preferredKey = `${preferred.provider}::${preferred.preferred_model}`;
+        const hasPreferred = models.some((m) => `${m.provider}::${m.model}` === preferredKey);
+        setSelectedAiModel(hasPreferred ? preferredKey : `${models[0].provider}::${models[0].model}`);
+      }
+    };
+    checkAiKeys();
+  }, [user]);
+
+  // Load saved AI analyses from campaigns
+  useEffect(() => {
+    if (campaigns.length > 0) {
+      const loadSavedAnalyses = async () => {
+        if (!user) return;
+        const { data } = await (supabase as any)
+          .from("campaigns")
+          .select("id, performance_ai_analysis")
+          .eq("user_id", user.id)
+          .not("performance_ai_analysis", "is", null);
+        if (data) {
+          const map: Record<string, PerformanceAiResult> = {};
+          data.forEach((c: any) => {
+            if (c.performance_ai_analysis) map[c.id] = c.performance_ai_analysis;
+          });
+          setAiResults((prev) => ({ ...prev, ...map }));
+        }
+      };
+      loadSavedAnalyses();
+    }
+  }, [campaigns, user]);
+
+  const handleAiPerformanceAnalysis = async (campaign: Campaign) => {
+    if (!user) return;
+    const summary = metricsSummaries[campaign.id];
+    if (!summary || summary.total_entries === 0) {
+      toast.error("Registre métricas antes de solicitar a análise por IA.");
+      return;
+    }
+    const [provider, model] = selectedAiModel.split("::");
+    if (!provider || !model) {
+      toast.error("Selecione um modelo de IA antes de analisar.");
+      return;
+    }
+
+    const project = projects.find((p) => p.id === campaign.project_id);
+    const recentMetrics = (campaignMetricsEntries[campaign.id] || []).slice(0, 6).map((m: any) => ({
+      periodStart: m.period_start,
+      periodEnd: m.period_end,
+      impressions: m.impressions || 0,
+      clicks: m.clicks || 0,
+      conversions: m.conversions || 0,
+      cost: m.cost || 0,
+      revenue: m.revenue || 0,
+      ctr: m.ctr || 0,
+      cpc: m.cpc || 0,
+      roas: m.roas || 0,
+      sessions: m.sessions || 0,
+      leadsMonth: m.leads_month || 0,
+      clientsWeb: m.clients_web || 0,
+      googleAdsCost: m.google_ads_cost || 0,
+      cacMonth: m.cac_month || 0,
+      ltv: m.ltv || 0,
+    }));
+
+    const metricsData: PerformanceMetricsForPrompt = {
+      campaignName: campaign.name,
+      channel: CH_LABELS_FULL[campaign.channel] || campaign.channel,
+      objective: campaign.objective || "",
+      status: CAMPAIGN_STATUS_LABELS[campaign.status] || campaign.status,
+      budgetTotal: campaign.budget_total || 0,
+      budgetSpent: campaign.budget_spent || 0,
+      startDate: campaign.start_date,
+      endDate: campaign.end_date,
+      summary: {
+        totalEntries: summary.total_entries,
+        totalImpressions: summary.total_impressions,
+        totalClicks: summary.total_clicks,
+        totalConversions: summary.total_conversions,
+        totalLeads: summary.total_leads,
+        totalCost: summary.total_cost,
+        totalRevenue: summary.total_revenue,
+        totalSessions: summary.total_sessions,
+        totalFirstVisits: summary.total_first_visits,
+        totalLeadsMonth: summary.total_leads_month,
+        totalClientsWeb: summary.total_clients_web,
+        totalRevenueWeb: summary.total_revenue_web,
+        totalGoogleAdsCost: summary.total_google_ads_cost,
+        avgCtr: summary.avg_ctr,
+        avgCpc: summary.avg_cpc,
+        avgCpa: summary.avg_cpa,
+        avgCpl: summary.avg_cpl,
+        calcRoas: summary.calc_roas,
+        avgMqlRate: summary.avg_mql_rate,
+        avgSqlRate: summary.avg_sql_rate,
+        avgTicket: summary.avg_ticket,
+        calcCac: summary.calc_cac,
+        avgLtv: summary.avg_ltv,
+        avgCacLtvRatio: summary.avg_cac_ltv_ratio,
+        avgRoiAccumulated: summary.avg_roi_accumulated,
+        maxRoiPeriodMonths: summary.max_roi_period_months,
+        firstPeriod: summary.first_period,
+        lastPeriod: summary.last_period,
+      },
+      recentMetrics,
+      projectName: project?.name || campaign.project_name || "Projeto",
+      projectNiche: (project as any)?.niche || "Marketing B2B",
+    };
+
+    setAiAnalyzing(campaign.id);
+    try {
+      const result = await runPerformanceAiAnalysis(
+        campaign.id,
+        user.id,
+        metricsData,
+        provider as "google_gemini" | "anthropic_claude",
+        model
+      );
+      setAiResults((prev) => ({ ...prev, [campaign.id]: result }));
+      toast.success("Análise de performance por IA concluída!");
+
+      if (aiNotificationSentRef.current !== campaign.id) {
+        aiNotificationSentRef.current = campaign.id;
+        await (supabase as any).from("notifications").insert({
+          user_id: user.id,
+          title: "Análise de Performance Concluída",
+          message: `Análise por IA da campanha "${campaign.name}" concluída. Saúde: ${result.overallHealth.score}/100.`,
+          type: "success",
+          read: false,
+          action_url: "/operations",
+          action_text: "Ver Análise",
+        });
+      }
+    } catch (error: any) {
+      console.error("Erro na análise de performance:", error);
+      toast.error(`Análise falhou: ${error.message}`);
+    } finally {
+      setAiAnalyzing(null);
+      aiNotificationSentRef.current = null;
+    }
+  };
 
   const loadCampaigns = async () => {
     if (!user) return;
@@ -253,56 +440,78 @@ export default function Operations() {
     }
   };
 
+  const numOrZero = (v: string) => (v ? parseFloat(v) : 0);
+  const intOrZero = (v: string) => (v ? parseInt(v, 10) : 0);
+
+  const buildMetricsPayload = (campaignId: string, data: MetricsFormData) => ({
+    campaign_id: campaignId,
+    user_id: user!.id,
+    period_start: data.period_start,
+    period_end: data.period_end,
+    impressions: intOrZero(data.impressions),
+    clicks: intOrZero(data.clicks),
+    ctr: numOrZero(data.ctr),
+    cpc: numOrZero(data.cpc),
+    cpm: numOrZero(data.cpm),
+    conversions: intOrZero(data.conversions),
+    cpa: numOrZero(data.cpa),
+    roas: numOrZero(data.roas),
+    cost: numOrZero(data.cost),
+    revenue: numOrZero(data.revenue),
+    reach: intOrZero(data.reach),
+    frequency: numOrZero(data.frequency),
+    video_views: intOrZero(data.video_views),
+    vtr: numOrZero(data.vtr),
+    leads: intOrZero(data.leads),
+    cpl: numOrZero(data.cpl),
+    quality_score: numOrZero(data.quality_score),
+    avg_position: numOrZero(data.avg_position),
+    search_impression_share: numOrZero(data.search_impression_share),
+    engagement_rate: numOrZero(data.engagement_rate),
+    sessions: intOrZero(data.sessions),
+    first_visits: intOrZero(data.first_visits),
+    leads_month: intOrZero(data.leads_month),
+    mql_rate: numOrZero(data.mql_rate),
+    sql_rate: numOrZero(data.sql_rate),
+    clients_web: intOrZero(data.clients_web),
+    revenue_web: numOrZero(data.revenue_web),
+    avg_ticket: numOrZero(data.avg_ticket),
+    google_ads_cost: numOrZero(data.google_ads_cost),
+    cac_month: numOrZero(data.cac_month),
+    cost_per_conversion: numOrZero(data.cost_per_conversion),
+    ltv: numOrZero(data.ltv),
+    cac_ltv_ratio: numOrZero(data.cac_ltv_ratio),
+    cac_ltv_benchmark: numOrZero(data.cac_ltv_benchmark),
+    roi_accumulated: numOrZero(data.roi_accumulated),
+    roi_period_months: intOrZero(data.roi_period_months),
+    notes: data.notes || "",
+    source: "manual",
+  });
+
+  const loadCampaignMetrics = async (campaignId: string) => {
+    if (!user) return;
+    setMetricsEntriesLoading((prev) => ({ ...prev, [campaignId]: true }));
+    try {
+      const { data, error } = await (supabase as any)
+        .from("campaign_metrics")
+        .select("*")
+        .eq("campaign_id", campaignId)
+        .eq("user_id", user.id)
+        .order("period_start", { ascending: false });
+
+      if (error) throw error;
+      setCampaignMetricsEntries((prev) => ({ ...prev, [campaignId]: data || [] }));
+    } catch (error: any) {
+      console.error("Error loading campaign metrics:", error);
+    } finally {
+      setMetricsEntriesLoading((prev) => ({ ...prev, [campaignId]: false }));
+    }
+  };
+
   const handleMetricsSubmit = async (campaignId: string, data: MetricsFormData) => {
     if (!user) return;
     try {
-      const numOrZero = (v: string) => (v ? parseFloat(v) : 0);
-      const intOrZero = (v: string) => (v ? parseInt(v, 10) : 0);
-
-      const payload: any = {
-        campaign_id: campaignId,
-        user_id: user.id,
-        period_start: data.period_start,
-        period_end: data.period_end,
-        impressions: intOrZero(data.impressions),
-        clicks: intOrZero(data.clicks),
-        ctr: numOrZero(data.ctr),
-        cpc: numOrZero(data.cpc),
-        cpm: numOrZero(data.cpm),
-        conversions: intOrZero(data.conversions),
-        cpa: numOrZero(data.cpa),
-        roas: numOrZero(data.roas),
-        cost: numOrZero(data.cost),
-        revenue: numOrZero(data.revenue),
-        reach: intOrZero(data.reach),
-        frequency: numOrZero(data.frequency),
-        video_views: intOrZero(data.video_views),
-        vtr: numOrZero(data.vtr),
-        leads: intOrZero(data.leads),
-        cpl: numOrZero(data.cpl),
-        quality_score: numOrZero(data.quality_score),
-        avg_position: numOrZero(data.avg_position),
-        search_impression_share: numOrZero(data.search_impression_share),
-        engagement_rate: numOrZero(data.engagement_rate),
-        sessions: intOrZero(data.sessions),
-        first_visits: intOrZero(data.first_visits),
-        leads_month: intOrZero(data.leads_month),
-        mql_rate: numOrZero(data.mql_rate),
-        sql_rate: numOrZero(data.sql_rate),
-        clients_web: intOrZero(data.clients_web),
-        revenue_web: numOrZero(data.revenue_web),
-        avg_ticket: numOrZero(data.avg_ticket),
-        google_ads_cost: numOrZero(data.google_ads_cost),
-        cac_month: numOrZero(data.cac_month),
-        cost_per_conversion: numOrZero(data.cost_per_conversion),
-        ltv: numOrZero(data.ltv),
-        cac_ltv_ratio: numOrZero(data.cac_ltv_ratio),
-        cac_ltv_benchmark: numOrZero(data.cac_ltv_benchmark),
-        roi_accumulated: numOrZero(data.roi_accumulated),
-        roi_period_months: intOrZero(data.roi_period_months),
-        notes: data.notes || "",
-        source: "manual",
-      };
+      const payload = buildMetricsPayload(campaignId, data);
 
       const { error } = await (supabase as any)
         .from("campaign_metrics")
@@ -311,11 +520,123 @@ export default function Operations() {
       if (error) throw error;
 
       toast.success("Métricas registradas com sucesso");
+      setMetricsFormDrafts((prev) => {
+        const next = { ...prev };
+        delete next[campaignId];
+        return next;
+      });
       setMetricsFormCampaignId(null);
       loadMetricsSummaries();
+      loadCampaignMetrics(campaignId);
+      loadCampaigns();
+      loadStats();
     } catch (error: any) {
       console.error("Error saving metrics:", error);
       toast.error("Erro ao salvar métricas: " + error.message);
+    }
+  };
+
+  const handleMetricsUpdate = async (campaignId: string, metricId: string, data: MetricsFormData) => {
+    if (!user) return;
+    try {
+      const payload = buildMetricsPayload(campaignId, data);
+      delete (payload as any).campaign_id;
+      delete (payload as any).user_id;
+      delete (payload as any).source;
+
+      const { error } = await (supabase as any)
+        .from("campaign_metrics")
+        .update(payload)
+        .eq("id", metricId)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      toast.success("Métricas atualizadas com sucesso");
+      setMetricsFormDrafts((prev) => {
+        const next = { ...prev };
+        delete next[campaignId];
+        return next;
+      });
+      setMetricsFormCampaignId(null);
+      setEditingMetricId(null);
+      loadMetricsSummaries();
+      loadCampaignMetrics(campaignId);
+      loadCampaigns();
+      loadStats();
+    } catch (error: any) {
+      console.error("Error updating metrics:", error);
+      toast.error("Erro ao atualizar métricas: " + error.message);
+    }
+  };
+
+  const handleMetricsEdit = (campaignId: string, metric: CampaignMetricsType) => {
+    const toStr = (v: number | null | undefined) => (v ? String(v) : "");
+    const draft: Partial<MetricsFormData> = {
+      period_start: metric.period_start || "",
+      period_end: metric.period_end || "",
+      impressions: toStr(metric.impressions),
+      clicks: toStr(metric.clicks),
+      ctr: toStr(metric.ctr),
+      cpc: toStr(metric.cpc),
+      cpm: toStr(metric.cpm),
+      conversions: toStr(metric.conversions),
+      cpa: toStr(metric.cpa),
+      roas: toStr(metric.roas),
+      cost: toStr(metric.cost),
+      revenue: toStr(metric.revenue),
+      reach: toStr(metric.reach),
+      frequency: toStr(metric.frequency),
+      video_views: toStr(metric.video_views),
+      vtr: toStr(metric.vtr),
+      leads: toStr(metric.leads),
+      cpl: toStr(metric.cpl),
+      quality_score: toStr(metric.quality_score),
+      avg_position: toStr(metric.avg_position),
+      search_impression_share: toStr(metric.search_impression_share),
+      engagement_rate: toStr(metric.engagement_rate),
+      sessions: toStr(metric.sessions),
+      first_visits: toStr(metric.first_visits),
+      leads_month: toStr(metric.leads_month),
+      mql_rate: toStr(metric.mql_rate),
+      sql_rate: toStr(metric.sql_rate),
+      clients_web: toStr(metric.clients_web),
+      revenue_web: toStr(metric.revenue_web),
+      avg_ticket: toStr(metric.avg_ticket),
+      google_ads_cost: toStr(metric.google_ads_cost),
+      cac_month: toStr(metric.cac_month),
+      cost_per_conversion: toStr(metric.cost_per_conversion),
+      ltv: toStr(metric.ltv),
+      cac_ltv_ratio: toStr(metric.cac_ltv_ratio),
+      cac_ltv_benchmark: toStr(metric.cac_ltv_benchmark),
+      roi_accumulated: toStr(metric.roi_accumulated),
+      roi_period_months: toStr(metric.roi_period_months),
+      notes: metric.notes || "",
+    };
+    setMetricsFormDrafts((prev) => ({ ...prev, [campaignId]: draft }));
+    setEditingMetricId(metric.id);
+    setMetricsFormCampaignId(campaignId);
+  };
+
+  const handleMetricsDelete = async (campaignId: string, metricId: string) => {
+    if (!user) return;
+    try {
+      const { error } = await (supabase as any)
+        .from("campaign_metrics")
+        .delete()
+        .eq("id", metricId)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      toast.success("Registro de métricas excluído");
+      loadMetricsSummaries();
+      loadCampaignMetrics(campaignId);
+      loadCampaigns();
+      loadStats();
+    } catch (error: any) {
+      console.error("Error deleting metric:", error);
+      toast.error("Erro ao excluir métricas: " + error.message);
     }
   };
 
@@ -874,6 +1195,17 @@ export default function Operations() {
                                   >
                                     <BarChart3 className="h-4 w-4" />
                                   </Button>
+                                  {aiResults[campaign.id] && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-purple-500"
+                                      title="Ver Análise de Performance"
+                                      onClick={() => setAiDialogCampaignId(campaign.id)}
+                                    >
+                                      <Sparkles className="h-4 w-4" />
+                                    </Button>
+                                  )}
                                   <Button
                                     variant="ghost"
                                     size="icon"
@@ -954,24 +1286,97 @@ export default function Operations() {
                                     campaignName={campaign.name}
                                   />
 
+                                  <CampaignMetricsList
+                                    metrics={campaignMetricsEntries[campaign.id] || []}
+                                    loading={metricsEntriesLoading[campaign.id] || false}
+                                    onEdit={(metric) => handleMetricsEdit(campaign.id, metric)}
+                                    onDelete={(metricId) => handleMetricsDelete(campaign.id, metricId)}
+                                  />
+
                                   {metricsFormCampaignId === campaign.id ? (
                                     <CampaignMetricsForm
                                       campaignId={campaign.id}
                                       campaignName={campaign.name}
                                       channel={campaign.channel}
-                                      onSubmit={(data) => handleMetricsSubmit(campaign.id, data)}
-                                      onCancel={() => setMetricsFormCampaignId(null)}
+                                      initialData={metricsFormDrafts[campaign.id]}
+                                      isEditing={!!editingMetricId}
+                                      onSubmit={(data) =>
+                                        editingMetricId
+                                          ? handleMetricsUpdate(campaign.id, editingMetricId, data)
+                                          : handleMetricsSubmit(campaign.id, data)
+                                      }
+                                      onCancel={() => {
+                                        setMetricsFormCampaignId(null);
+                                        setEditingMetricId(null);
+                                        setMetricsFormDrafts((prev) => {
+                                          const next = { ...prev };
+                                          delete next[campaign.id];
+                                          return next;
+                                        });
+                                      }}
+                                      onChange={(data) => setMetricsFormDrafts((prev) => ({ ...prev, [campaign.id]: data }))}
                                     />
                                   ) : (
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       className="gap-2"
-                                      onClick={() => setMetricsFormCampaignId(campaign.id)}
+                                      onClick={() => {
+                                        setEditingMetricId(null);
+                                        setMetricsFormDrafts((prev) => {
+                                          const next = { ...prev };
+                                          delete next[campaign.id];
+                                          return next;
+                                        });
+                                        setMetricsFormCampaignId(campaign.id);
+                                      }}
                                     >
                                       <Plus className="h-3.5 w-3.5" />
                                       Registrar Métricas
                                     </Button>
+                                  )}
+
+                                  {/* AI Performance Analysis */}
+                                  {canAiKeys && canAiPerformance && hasAiKeys && metricsSummaries[campaign.id]?.total_entries > 0 && (
+                                    <div className="flex items-center gap-2 pt-2 border-t">
+                                      <Select value={selectedAiModel} onValueChange={setSelectedAiModel}>
+                                        <SelectTrigger className="w-[200px] h-8 text-xs">
+                                          <SelectValue placeholder="Modelo IA" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {availableAiModels.map((m) => (
+                                            <SelectItem key={`${m.provider}::${m.model}`} value={`${m.provider}::${m.model}`}>
+                                              {m.label}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-2"
+                                        disabled={aiAnalyzing === campaign.id}
+                                        onClick={() => handleAiPerformanceAnalysis(campaign)}
+                                      >
+                                        {aiAnalyzing === campaign.id ? (
+                                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        ) : (
+                                          <Sparkles className="h-3.5 w-3.5" />
+                                        )}
+                                        {aiAnalyzing === campaign.id ? "Analisando..." : "Análise de Performance"}
+                                      </Button>
+                                      {aiResults[campaign.id] && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="gap-2 text-purple-500"
+                                          onClick={() => setAiDialogCampaignId(campaign.id)}
+                                        >
+                                          <Sparkles className="h-3.5 w-3.5" />
+                                          Ver Análise
+                                        </Button>
+                                      )}
+                                    </div>
                                   )}
                                 </div>
                               )}
@@ -986,6 +1391,17 @@ export default function Operations() {
             </div>
           )}
           </div>
+
+      {/* AI Performance Analysis Dialog */}
+      {aiDialogCampaignId && aiResults[aiDialogCampaignId] && (
+        <CampaignPerformanceAiDialog
+          open={!!aiDialogCampaignId}
+          onOpenChange={(open) => { if (!open) setAiDialogCampaignId(null); }}
+          analysis={aiResults[aiDialogCampaignId]}
+          campaignName={campaigns.find((c) => c.id === aiDialogCampaignId)?.name || ""}
+          channel={CH_LABELS_FULL[campaigns.find((c) => c.id === aiDialogCampaignId)?.channel || "google"] || ""}
+        />
+      )}
     </DashboardLayout>
     </FeatureGate>
   );

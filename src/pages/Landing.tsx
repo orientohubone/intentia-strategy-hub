@@ -234,9 +234,9 @@ export default function Landing() {
               {
                 "@type": "Offer",
                 name: "Starter",
-                price: "0",
-                priceCurrency: "BRL",
-                description: "5 projetos, diagnóstico heurístico, scores por canal, insights, alertas estratégicos e benchmark SWOT (5/mês).",
+                "price": "0",
+                "priceCurrency": "BRL",
+                "description": "5 projetos, diagnóstico heurístico, scores por canal, insights, alertas estratégicos, API keys (Gemini/Claude), análise por IA de projetos (3/mês) e benchmark SWOT (5/mês).",
               },
               {
                 "@type": "Offer",
@@ -244,7 +244,7 @@ export default function Landing() {
                 price: "97",
                 priceCurrency: "BRL",
                 billingIncrement: "P1M",
-                description: "Projetos ilimitados, análise por IA, benchmark SWOT, plano tático, exportação e notificações.",
+                "description": "Projetos ilimitados, todas as análises por IA ilimitadas (projetos, performance, insights, benchmark), plano tático, exportação e notificações.",
               },
             ],
             featureList: "Diagnóstico heurístico de URL, Análise por IA (Gemini/Claude), Benchmark competitivo SWOT, Scores por canal, Insights estratégicos, Alertas de investimento, Plano tático por canal, Playbook de execução, Exportação PDF/CSV, Públicos-alvo",
@@ -734,8 +734,9 @@ export default function Landing() {
                 <li>✓ Diagnóstico heurístico de URL</li>
                 <li>✓ Score por canal (4 canais)</li>
                 <li>✓ Insights e alertas automáticos</li>
+                <li>✓ API keys (Gemini / Claude)</li>
+                <li>✓ Análise por IA de projetos (3/mês)</li>
                 <li>✓ Benchmark SWOT (5/mês)</li>
-                <li>✓ 5 públicos-alvo</li>
               </ul>
               <Button variant="outline" className="w-full" onClick={() => navigate('/auth')}>
                 Começar Grátis
@@ -754,11 +755,12 @@ export default function Landing() {
               <p className="text-sm mb-4 opacity-90">Estratégia de mídia completa</p>
               <ul className="space-y-3 text-sm mb-6">
                 <li>✓ Projetos ilimitados</li>
-                <li>✓ Análise por IA (Gemini & Claude)</li>
-                <li>✓ Benchmark ilimitado + Gap Analysis</li>
+                <li>✓ Todas as análises por IA ilimitadas</li>
+                <li>✓ Análise de performance por IA</li>
+                <li>✓ Enriquecimento de insights por IA</li>
+                <li>✓ Benchmark ilimitado + IA</li>
                 <li>✓ Plano Tático por canal</li>
                 <li>✓ Exportação PDF e CSV</li>
-                <li>✓ Públicos-alvo ilimitados</li>
               </ul>
               <Button variant="secondary" className="w-full" onClick={() => navigate('/precos')}>
                 Ver Detalhes

@@ -294,7 +294,7 @@ function OverviewSection() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { n: "30", label: "Paginas", icon: FileText, color: "text-blue-400" },
-          { n: "35+", label: "Componentes", icon: Layers, color: "text-purple-400" },
+          { n: "36+", label: "Componentes", icon: Layers, color: "text-purple-400" },
           { n: "8", label: "Hooks", icon: GitBranch, color: "text-green-400" },
           { n: "7", label: "Edge Functions", icon: Cloud, color: "text-cyan-400" },
           { n: "15+", label: "Tabelas SQL", icon: Database, color: "text-emerald-400" },
@@ -456,7 +456,7 @@ function FrontendSection() {
             <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-3">
               <p className="text-[10px] font-semibold text-green-400 uppercase tracking-wider mb-2">Componentes de Dados</p>
               <div className="space-y-1.5">
-                {["ProjectCard", "InsightCard", "BenchmarkCard", "ChannelCard", "ScoreRing", "StatsCard", "CampaignMetricsForm", "CampaignPerformanceCards"].map((c) => (
+                {["ProjectCard", "InsightCard", "BenchmarkCard", "ChannelCard", "ScoreRing", "StatsCard", "CampaignMetricsForm", "CampaignMetricsList", "CampaignPerformanceCards"].map((c) => (
                   <div key={c} className="flex items-center gap-1.5">
                     <div className="w-1 h-1 rounded-full bg-green-500/50" />
                     <code className="text-[10px] text-slate-400 font-mono">{c}</code>
@@ -1447,18 +1447,37 @@ function OperationsSection() {
         </div>
       </FlowBox>
 
-      {/* Metrics Input Flow */}
-      <FlowBox title="Fluxo de Metricas — Input Manual" borderColor="border-amber-500/20" bgColor="bg-amber-500/5" badge="CampaignMetricsForm">
+      {/* Metrics CRUD Flow */}
+      <FlowBox title="Fluxo de Metricas — CRUD Completo" borderColor="border-amber-500/20" bgColor="bg-amber-500/5" badge="v3.3">
         <div className="flex flex-col items-center gap-0">
           <FlowNode icon={Megaphone} label="1. Campanha ativa" sublabel="Clica no icone BarChart3" color="text-orange-300" bg="bg-orange-500/10" border="border-orange-500/20" />
           <ArrowConnector direction="down" label="Expande secao de metricas" />
           <FlowNode icon={BarChart3} label="2. CampaignPerformanceCards" sublabel="KPIs agregados (se houver dados)" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" />
-          <ArrowConnector direction="down" label="Clica 'Registrar Metricas'" />
-          <FlowNode icon={FileText} label="3. CampaignMetricsForm" sublabel="Periodo + Metricas gerais + Canal-especificas" color="text-purple-300" bg="bg-purple-500/10" border="border-purple-500/20" />
+          <ArrowConnector direction="down" label="Carrega registros individuais" />
+          <FlowNode icon={Eye} label="3. CampaignMetricsList" sublabel="Lista registros por periodo — expandir, editar, excluir" color="text-cyan-300" bg="bg-cyan-500/10" border="border-cyan-500/20" />
+          <ArrowConnector direction="down" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+            <div className="bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2 text-center">
+              <p className="text-[10px] text-green-400 font-medium">+ Registrar</p>
+              <p className="text-[9px] text-slate-500">INSERT novo periodo</p>
+            </div>
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-2 text-center">
+              <p className="text-[10px] text-blue-400 font-medium">Editar</p>
+              <p className="text-[9px] text-slate-500">UPDATE registro existente</p>
+            </div>
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-center">
+              <p className="text-[10px] text-red-400 font-medium">Excluir</p>
+              <p className="text-[9px] text-slate-500">DELETE com confirmacao</p>
+            </div>
+          </div>
+
+          <ArrowConnector direction="down" label="CampaignMetricsForm" />
+          <FlowNode icon={FileText} label="4. Formulario de Metricas" sublabel="Periodo + Metricas gerais + Canal-especificas (modo criar ou editar)" color="text-purple-300" bg="bg-purple-500/10" border="border-purple-500/20" />
           <ArrowConnector direction="down" label="Salva" />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
-            <FlowNode icon={Database} label="campaign_metrics" sublabel="INSERT com source = 'manual'" color="text-emerald-300" bg="bg-emerald-500/10" border="border-emerald-500/20" size="small" />
+            <FlowNode icon={Database} label="campaign_metrics" sublabel="INSERT ou UPDATE conforme modo" color="text-emerald-300" bg="bg-emerald-500/10" border="border-emerald-500/20" size="small" />
             <FlowNode icon={Eye} label="v_campaign_metrics_summary" sublabel="View recalcula KPIs automaticamente" color="text-cyan-300" bg="bg-cyan-500/10" border="border-cyan-500/20" size="small" />
           </div>
         </div>
@@ -1608,7 +1627,7 @@ function OperationsSection() {
             { n: "4", label: "Canais", icon: Megaphone, color: "text-pink-400" },
             { n: "5", label: "Status Campanha", icon: Activity, color: "text-green-400" },
             { n: "19", label: "Metricas Google", icon: Target, color: "text-blue-400" },
-            { n: "2", label: "Componentes", icon: Layers, color: "text-purple-400" },
+            { n: "3", label: "Componentes", icon: Layers, color: "text-purple-400" },
             { n: "1:3", label: "Benchmark CAC:LTV", icon: Calculator, color: "text-amber-400" },
           ].map((stat) => (
             <div key={stat.label} className="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex items-center gap-3">

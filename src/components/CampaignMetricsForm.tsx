@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,7 @@ interface CampaignMetricsFormProps {
   onCancel: () => void;
   initialData?: Partial<MetricsFormData>;
   isEditing?: boolean;
+  onChange?: (data: MetricsFormData) => void;
 }
 
 export interface MetricsFormData {
@@ -115,18 +116,25 @@ export function CampaignMetricsForm({
   onCancel,
   initialData,
   isEditing = false,
+  onChange,
 }: CampaignMetricsFormProps) {
   const [formData, setFormData] = useState<MetricsFormData>({
     ...defaultFormData,
     ...initialData,
   });
   const [saving, setSaving] = useState(false);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   const channelMetrics = CHANNEL_SPECIFIC_METRICS[channel] || [];
   const allMetrics = [...COMMON_METRICS, ...channelMetrics];
 
   const handleChange = (key: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [key]: value };
+      onChangeRef.current?.(next);
+      return next;
+    });
   };
 
   const handleSubmit = async () => {
