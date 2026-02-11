@@ -384,7 +384,7 @@ BEGIN
   -- Update plan (SECURITY DEFINER bypasses the prevent_plan_escalation trigger check)
   UPDATE tenant_settings 
   SET plan = p_new_plan,
-      analyses_limit = CASE 
+      monthly_analyses_limit = CASE 
         WHEN p_new_plan = 'starter' THEN 5
         WHEN p_new_plan = 'professional' THEN -1
         WHEN p_new_plan = 'enterprise' THEN -1

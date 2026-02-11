@@ -22,7 +22,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const siteUrl = "https://intentia.com.br";
+    const siteUrl = Deno.env.get("SITE_URL") || "https://intentia.com.br";
 
     // Load recent incidents (last 90 days)
     const ninetyDaysAgo = new Date();
@@ -98,7 +98,7 @@ serve(async (req) => {
     <description>Incidentes e atualizações de status da plataforma Intentia.</description>
     <language>pt-BR</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-    <atom:link href="${supabaseUrl}/functions/v1/status-rss" rel="self" type="application/rss+xml"/>
+    <atom:link href="${siteUrl}/api/status-rss" rel="self" type="application/rss+xml"/>
     <image>
       <url>${siteUrl}/favicon.ico</url>
       <title>Intentia Status</title>

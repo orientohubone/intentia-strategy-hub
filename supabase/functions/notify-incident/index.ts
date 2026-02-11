@@ -37,6 +37,18 @@ serve(async (req) => {
   }
 
   try {
+    // Auth check: require valid JWT or internal webhook
+    const authHeader = req.headers.get("Authorization");
+    const internalSecret = Deno.env.get("INTERNAL_CRON_SECRET");
+    const providedSecret = req.headers.get("x-cron-secret");
+
+    if (!authHeader && !(internalSecret && providedSecret === internalSecret)) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Authentication required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);

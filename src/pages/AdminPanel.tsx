@@ -45,8 +45,21 @@ import {
   Activity,
 } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  adminListFeatures,
+  adminUpdateFeatureStatus,
+  adminUpdateFeatureMessage,
+  adminListPlanFeatures,
+  adminTogglePlanFeature,
+  adminUpdatePlanLimit,
+  adminListUsers,
+  adminUpdateUserPlan,
+  adminUpdateUserLimits,
+  adminListOverrides,
+  adminUpsertOverride,
+  adminDeleteOverride,
+} from "@/lib/adminApi";
 import AdminStatusTab from "@/components/AdminStatusTab";
 import AdminArchitectureTab from "@/components/AdminArchitectureTab";
 
@@ -172,37 +185,23 @@ export default function AdminPanel() {
   // =====================================================
 
   const loadFeatures = useCallback(async () => {
-    const { data, error } = await (supabase as any)
-      .from("feature_flags")
-      .select("*")
-      .order("sort_order", { ascending: true });
-
-    if (!error && data) setFeatures(data);
+    const result = await adminListFeatures();
+    if (result.data) setFeatures(result.data);
   }, []);
 
   const loadPlanFeatures = useCallback(async () => {
-    const { data, error } = await (supabase as any)
-      .from("plan_features")
-      .select("*");
-
-    if (!error && data) setPlanFeatures(data);
+    const result = await adminListPlanFeatures();
+    if (result.data) setPlanFeatures(result.data);
   }, []);
 
   const loadUsers = useCallback(async () => {
-    const { data, error } = await (supabase as any)
-      .from("tenant_settings")
-      .select("user_id, company_name, plan, full_name, email, created_at, analyses_used, monthly_analyses_limit, max_audiences")
-      .order("created_at", { ascending: false });
-
-    if (!error && data) setUsers(data);
+    const result = await adminListUsers();
+    if (result.data) setUsers(result.data);
   }, []);
 
   const loadOverrides = useCallback(async () => {
-    const { data, error } = await (supabase as any)
-      .from("user_feature_overrides")
-      .select("*");
-
-    if (!error && data) setUserOverrides(data);
+    const result = await adminListOverrides();
+    if (result.data) setUserOverrides(result.data);
   }, []);
 
   const loadAll = useCallback(async () => {
@@ -221,13 +220,9 @@ export default function AdminPanel() {
 
   const updateFeatureStatus = async (featureKey: string, newStatus: string) => {
     setSaving(featureKey);
-    const { error } = await (supabase as any)
-      .from("feature_flags")
-      .update({ status: newStatus })
-      .eq("feature_key", featureKey);
-
-    if (error) {
-      toast.error("Erro ao atualizar status da feature.");
+    const result = await adminUpdateFeatureStatus(featureKey, newStatus);
+    if (result.error) {
+      toast.error(result.error);
     } else {
       toast.success(`Feature "${featureKey}" atualizada para ${STATUS_CONFIG[newStatus]?.label || newStatus}.`);
       await loadFeatures();
@@ -236,26 +231,17 @@ export default function AdminPanel() {
   };
 
   const updateFeatureStatusMessage = async (featureKey: string, message: string) => {
-    const { error } = await (supabase as any)
-      .from("feature_flags")
-      .update({ status_message: message || null })
-      .eq("feature_key", featureKey);
-
-    if (!error) {
+    const result = await adminUpdateFeatureMessage(featureKey, message || null);
+    if (!result.error) {
       await loadFeatures();
     }
   };
 
   const togglePlanFeature = async (featureKey: string, plan: string, currentEnabled: boolean) => {
     setSaving(`${featureKey}-${plan}`);
-    const { error } = await (supabase as any)
-      .from("plan_features")
-      .update({ is_enabled: !currentEnabled })
-      .eq("feature_key", featureKey)
-      .eq("plan", plan);
-
-    if (error) {
-      toast.error("Erro ao atualizar permissão do plano.");
+    const result = await adminTogglePlanFeature(featureKey, plan, !currentEnabled);
+    if (result.error) {
+      toast.error(result.error);
     } else {
       toast.success(`${featureKey} ${!currentEnabled ? "habilitado" : "desabilitado"} no plano ${plan}.`);
       await loadPlanFeatures();
@@ -264,13 +250,8 @@ export default function AdminPanel() {
   };
 
   const updatePlanLimit = async (featureKey: string, plan: string, limit: number | null, period: string | null) => {
-    const { error } = await (supabase as any)
-      .from("plan_features")
-      .update({ usage_limit: limit, limit_period: period })
-      .eq("feature_key", featureKey)
-      .eq("plan", plan);
-
-    if (!error) {
+    const result = await adminUpdatePlanLimit(featureKey, plan, limit, period);
+    if (!result.error) {
       await loadPlanFeatures();
       toast.success("Limite atualizado.");
     }
@@ -279,17 +260,10 @@ export default function AdminPanel() {
   const updateUserPlan = async (userId: string, newPlan: string) => {
     if (!admin) return;
     setSaving(userId);
-    
-    // Use RPC function that runs as SECURITY DEFINER to bypass prevent_plan_escalation trigger
-    const { error } = await (supabase as any).rpc("admin_change_user_plan", {
-      p_admin_cnpj: admin.cnpj,
-      p_target_user_id: userId,
-      p_new_plan: newPlan,
-    });
-
-    if (error) {
-      toast.error("Erro ao atualizar plano do usuário.");
-      console.error("[admin] Plan change error:", error);
+    const result = await adminUpdateUserPlan(userId, newPlan, admin.cnpj);
+    if (result.error) {
+      toast.error(result.error);
+      console.error("[admin] Plan change error:", result.error);
     } else {
       toast.success(`Plano atualizado para ${PLAN_CONFIG[newPlan]?.label || newPlan}.`);
       await loadUsers();
@@ -300,43 +274,13 @@ export default function AdminPanel() {
   const toggleUserFeatureOverride = async (userId: string, featureKey: string, enable: boolean) => {
     const savingKey = `override-${userId}-${featureKey}`;
     setSaving(savingKey);
-
-    // Check if override already exists
-    const existing = userOverrides.find((o) => o.user_id === userId && o.feature_key === featureKey);
-
-    if (existing) {
-      // Update existing override
-      const { error } = await (supabase as any)
-        .from("user_feature_overrides")
-        .update({ is_enabled: enable, reason: enable ? "Liberado pelo admin" : "Bloqueado pelo admin" })
-        .eq("id", existing.id);
-
-      if (error) {
-        toast.error("Erro ao atualizar override.");
-        console.error("[admin] Override update error:", error);
-      } else {
-        toast.success(`Override ${enable ? "habilitado" : "desabilitado"} para ${featureKey}.`);
-        await loadOverrides();
-      }
+    const reason = enable ? "Liberado pelo admin" : "Bloqueado pelo admin";
+    const result = await adminUpsertOverride(userId, featureKey, enable, reason);
+    if (result.error) {
+      toast.error(result.error);
     } else {
-      // Create new override
-      const { error } = await (supabase as any)
-        .from("user_feature_overrides")
-        .insert({
-          user_id: userId,
-          feature_key: featureKey,
-          is_enabled: enable,
-          reason: enable ? "Liberado pelo admin" : "Bloqueado pelo admin",
-          admin_id: admin?.id || null,
-        });
-
-      if (error) {
-        toast.error("Erro ao criar override.");
-        console.error("[admin] Override insert error:", error);
-      } else {
-        toast.success(`Override criado: ${featureKey} ${enable ? "habilitado" : "desabilitado"}.`);
-        await loadOverrides();
-      }
+      toast.success(`Override ${enable ? "habilitado" : "desabilitado"} para ${featureKey}.`);
+      await loadOverrides();
     }
     setSaving(null);
   };
@@ -344,16 +288,9 @@ export default function AdminPanel() {
   const removeUserFeatureOverride = async (userId: string, featureKey: string) => {
     const savingKey = `override-${userId}-${featureKey}`;
     setSaving(savingKey);
-
-    const { error } = await (supabase as any)
-      .from("user_feature_overrides")
-      .delete()
-      .eq("user_id", userId)
-      .eq("feature_key", featureKey);
-
-    if (error) {
-      toast.error("Erro ao remover override.");
-      console.error("[admin] Override delete error:", error);
+    const result = await adminDeleteOverride(userId, featureKey);
+    if (result.error) {
+      toast.error(result.error);
     } else {
       toast.success("Override removido. Voltou ao padrão do plano.");
       await loadOverrides();
@@ -364,15 +301,9 @@ export default function AdminPanel() {
   const updateUserLimits = async (userId: string, field: string, value: number) => {
     const savingKey = `limit-${userId}-${field}`;
     setSaving(savingKey);
-
-    const { error } = await (supabase as any)
-      .from("tenant_settings")
-      .update({ [field]: value })
-      .eq("user_id", userId);
-
-    if (error) {
-      toast.error(`Erro ao atualizar ${field}.`);
-      console.error("[admin] Limit update error:", error);
+    const result = await adminUpdateUserLimits(userId, field, value);
+    if (result.error) {
+      toast.error(result.error);
     } else {
       toast.success("Limite atualizado com sucesso.");
       await loadUsers();

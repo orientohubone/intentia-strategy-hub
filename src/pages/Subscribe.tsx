@@ -25,7 +25,6 @@ import {
   ShieldCheck,
   User,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 type PaymentMethod = "card" | "pix" | "boleto";
@@ -106,62 +105,8 @@ export default function Subscribe() {
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) return;
-
-    setProcessing(true);
-    setStep("processing");
-
-    try {
-      // 1. Simulate payment processing
-      await new Promise((resolve) => setTimeout(resolve, 2500));
-
-      // 2. Create account after payment is "confirmed"
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: account.email,
-        password: account.password,
-        options: {
-          data: {
-            full_name: account.fullName,
-            company_name: account.companyName,
-          },
-        },
-      });
-
-      if (signUpError) throw signUpError;
-
-      const userId = signUpData.user?.id;
-      if (!userId) throw new Error("Erro ao criar conta");
-
-      // 3. Create tenant_settings with professional plan
-      await (supabase.from("tenant_settings") as any).insert({
-        user_id: userId,
-        company_name: account.companyName || account.fullName,
-        plan: "professional",
-        monthly_analyses_limit: 999,
-        full_name: account.fullName,
-        email: account.email,
-      });
-
-      // 4. Create welcome notification
-      await (supabase.from("notifications") as any).insert({
-        user_id: userId,
-        type: "system",
-        title: "Bem-vindo ao plano Professional!",
-        message: "Sua conta foi criada e o plano Professional já está ativo. Explore todos os recursos disponíveis.",
-      });
-
-      setStep("success");
-      toast.success("Pagamento confirmado e conta criada com sucesso!");
-    } catch (error: any) {
-      setStep("payment");
-      if (error.message?.includes("already registered")) {
-        toast.error("Este email já possui uma conta. Faça login e use o upgrade nas configurações.");
-      } else {
-        toast.error("Erro ao processar: " + error.message);
-      }
-    } finally {
-      setProcessing(false);
-    }
+    // Payment gateway (Stripe) not yet integrated — block fake subscriptions
+    toast.info("Integração de pagamento em desenvolvimento. Crie uma conta gratuita (Starter) e faça upgrade quando o pagamento estiver disponível.");
   };
 
   // Processing screen

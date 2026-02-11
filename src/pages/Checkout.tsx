@@ -20,7 +20,6 @@ import {
   Receipt,
   ShieldCheck,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 type PaymentMethod = "card" | "pix" | "boleto";
@@ -107,49 +106,8 @@ export default function Checkout() {
   };
 
   const handleSubmit = async () => {
-    if (paymentMethod === "card") {
-      const num = cardData.number.replace(/\s/g, "");
-      if (num.length < 16) { toast.error("Número do cartão inválido"); return; }
-      if (!cardData.name.trim()) { toast.error("Nome no cartão é obrigatório"); return; }
-      if (cardData.expiry.length < 5) { toast.error("Validade inválida"); return; }
-      if (cardData.cvv.length < 3) { toast.error("CVV inválido"); return; }
-    }
-
-    setProcessing(true);
-
-    // Simulate payment processing
-    await new Promise((resolve) => setTimeout(resolve, 2500));
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
-
-      // Update tenant plan
-      const { error } = await (supabase
-        .from("tenant_settings") as any)
-        .update({
-          plan: planKey,
-          monthly_analyses_limit: 999,
-        })
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-
-      // Create notification
-      await (supabase.from("notifications") as any).insert({
-        user_id: user.id,
-        type: "system",
-        title: "Upgrade realizado com sucesso!",
-        message: `Seu plano foi atualizado para ${plan.label}. Todos os recursos premium já estão disponíveis.`,
-      });
-
-      setCompleted(true);
-      toast.success("Pagamento confirmado! Seu plano foi atualizado.");
-    } catch (error: any) {
-      toast.error("Erro ao processar upgrade: " + error.message);
-    } finally {
-      setProcessing(false);
-    }
+    // Payment gateway (Stripe) not yet integrated — block fake upgrades
+    toast.info("Integração de pagamento em desenvolvimento. Em breve você poderá fazer upgrade! Entre em contato pelo suporte para upgrade manual.");
   };
 
   // Success screen

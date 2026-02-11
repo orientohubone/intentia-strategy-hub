@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { adminApiLogin } from "./adminApi";
 
 // =====================================================
 // ADMIN AUTH — CNPJ + Password authentication
@@ -121,58 +121,31 @@ export async function adminLogin(cnpj: string, password: string): Promise<AdminL
   }
 
   try {
-    // Check login attempts via RPC
-    const { data: canLogin } = await (supabase as any).rpc("check_admin_login_attempts", {
-      p_cnpj: cleanedCnpj,
-    });
-
-    if (canLogin === false) {
-      return {
-        success: false,
-        error: "Conta bloqueada temporariamente. Tente novamente em 15 minutos.",
-      };
-    }
-
-    // Fetch admin user (service role would be ideal, but we use anon + RPC for security)
-    const { data: admin, error } = await (supabase as any)
-      .from("admin_users")
-      .select("id, cnpj, name, role, is_active, last_login_at, password_hash")
-      .eq("cnpj", cleanedCnpj)
-      .single();
-
-    if (error || !admin) {
-      // Increment attempts even if user not found (prevent enumeration)
-      await (supabase as any).rpc("increment_admin_login_attempts", { p_cnpj: cleanedCnpj });
-      return { success: false, error: "CNPJ ou senha incorretos." };
-    }
-
-    if (!admin.is_active) {
-      return { success: false, error: "Conta administrativa desativada." };
-    }
-
-    // Verify password — simple comparison with SHA-256 hash
-    // In production, use bcrypt via Edge Function
+    // Hash password client-side before sending to Edge Function
     const encoder = new TextEncoder();
     const data = encoder.encode(password);
     const hashBuffer = await crypto.subtle.digest("SHA-256", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    const passwordHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 
-    if (hashHex !== admin.password_hash) {
-      await (supabase as any).rpc("increment_admin_login_attempts", { p_cnpj: cleanedCnpj });
-      return { success: false, error: "CNPJ ou senha incorretos." };
+    // Call Edge Function (uses service_role — bypasses RLS)
+    const result = await adminApiLogin(cleanedCnpj, passwordHash);
+
+    if (result.error) {
+      return { success: false, error: result.error };
     }
 
-    // Success — reset attempts and create session
-    await (supabase as any).rpc("reset_admin_login_attempts", { p_cnpj: cleanedCnpj });
+    if (!result.success || !result.admin) {
+      return { success: false, error: "Erro inesperado no login." };
+    }
 
     const adminUser: AdminUser = {
-      id: admin.id,
-      cnpj: admin.cnpj,
-      name: admin.name,
-      role: admin.role,
-      is_active: admin.is_active,
-      last_login_at: admin.last_login_at,
+      id: result.admin.id,
+      cnpj: result.admin.cnpj,
+      name: result.admin.name,
+      role: result.admin.role,
+      is_active: result.admin.is_active,
+      last_login_at: result.admin.last_login_at,
     };
 
     const session = setAdminSession(adminUser);

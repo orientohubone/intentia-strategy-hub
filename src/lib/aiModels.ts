@@ -9,12 +9,17 @@ export const GEMINI_MODELS = [
 ];
 
 export const CLAUDE_MODELS = [
-  { value: "claude-sonnet-4-20250514", label: "Claude Sonnet 4" },
-  { value: "claude-3-7-sonnet-20250219", label: "Claude Sonnet 3.7" },
-  { value: "claude-3-5-haiku-20241022", label: "Claude Haiku 3.5" },
-  { value: "claude-3-haiku-20240307", label: "Claude Haiku 3" },
-  { value: "claude-3-opus-20240229", label: "Claude Opus 3" },
+  { value: "claude-sonnet-4-20250514", label: "Claude Sonnet 4", maxTokens: 8192 },
+  { value: "claude-3-7-sonnet-20250219", label: "Claude Sonnet 3.7", maxTokens: 8192 },
+  { value: "claude-3-5-haiku-20241022", label: "Claude Haiku 3.5", maxTokens: 8192 },
+  { value: "claude-3-haiku-20240307", label: "Claude Haiku 3", maxTokens: 4096 },
+  { value: "claude-3-opus-20240229", label: "Claude Opus 3", maxTokens: 4096 },
 ];
+
+export function getClaudeMaxTokens(model: string): number {
+  const found = CLAUDE_MODELS.find((m) => m.value === model);
+  return found?.maxTokens ?? 4096;
+}
 
 export const ALL_MODELS = [...GEMINI_MODELS, ...CLAUDE_MODELS];
 

@@ -370,7 +370,7 @@ function OverviewSection() {
       </FlowBox>
 
       {/* Tech Stack */}
-      <FlowBox title="Stack Tecnologico" badge="v3.3.0">
+      <FlowBox title="Stack Tecnologico" badge="v3.4.0">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: "React 18.3", sub: "UI Framework", color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20", tip: "Biblioteca para construcao de interfaces reativas com componentes reutilizaveis e Virtual DOM" },
@@ -402,7 +402,7 @@ function OverviewSection() {
           { n: "15+", label: "Tabelas SQL", icon: Database, color: "text-emerald-400" },
           { n: "25", label: "Feature Flags", icon: ToggleLeft, color: "text-amber-400" },
           { n: "3", label: "Planos", icon: Crown, color: "text-primary" },
-          { n: "30+", label: "Arquivos SQL", icon: FileText, color: "text-red-400" },
+          { n: "35+", label: "Arquivos SQL", icon: FileText, color: "text-red-400" },
         ].map((stat) => (
           <div key={stat.label} className="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex items-center gap-3">
             <stat.icon className={`h-5 w-5 ${stat.color} flex-shrink-0`} />
@@ -924,16 +924,18 @@ function EdgeFunctionsSection() {
               trigger: "Invocado pelo frontend",
               input: "URL do projeto",
               output: "Scores + Insights + Channel Scores",
+              auth: "JWT Bearer token",
               color: "text-primary",
               bg: "bg-primary/10",
               border: "border-primary/20",
             },
             {
               name: "ai-analyze",
-              desc: "Analise aprofundada por IA — envia dados para Gemini/Claude",
+              desc: "Proxy para APIs de IA (Gemini/Claude) — contorna CORS",
               trigger: "Sob demanda (apos heuristica)",
-              input: "HTML + Dados heuristicos + API Key",
-              output: "Insights enriquecidos por IA",
+              input: "Provider + API Key + Model + Prompt",
+              output: "Texto gerado pela IA",
+              auth: "JWT Bearer token",
               color: "text-purple-400",
               bg: "bg-purple-500/10",
               border: "border-purple-500/20",
@@ -941,9 +943,10 @@ function EdgeFunctionsSection() {
             {
               name: "collect-uptime",
               desc: "Coleta metricas de uptime dos servicos da plataforma",
-              trigger: "Cron / Scheduled",
+              trigger: "pg_cron / Scheduled",
               input: "Lista de servicos",
               output: "Status + latencia + uptime %",
+              auth: "JWT ou INTERNAL_CRON_SECRET",
               color: "text-green-400",
               bg: "bg-green-500/10",
               border: "border-green-500/20",
@@ -952,8 +955,9 @@ function EdgeFunctionsSection() {
               name: "export-user-data",
               desc: "Exporta todos os dados do usuario (LGPD compliance)",
               trigger: "Solicitacao do usuario",
-              input: "user_id",
+              input: "user_id (do JWT)",
               output: "JSON com todos os dados",
+              auth: "JWT Bearer token",
               color: "text-emerald-400",
               bg: "bg-emerald-500/10",
               border: "border-emerald-500/20",
@@ -964,26 +968,29 @@ function EdgeFunctionsSection() {
               trigger: "Novo incidente / update",
               input: "Incident data + subscribers",
               output: "Email / webhook notifications",
+              auth: "JWT ou INTERNAL_CRON_SECRET",
               color: "text-amber-400",
               bg: "bg-amber-500/10",
               border: "border-amber-500/20",
             },
             {
               name: "status-rss",
-              desc: "Gera feed RSS do status da plataforma",
-              trigger: "GET request",
+              desc: "Gera feed RSS do status — proxied via /api/status-rss",
+              trigger: "GET request (publico)",
               input: "—",
               output: "RSS XML feed",
+              auth: "Publico (somente leitura)",
               color: "text-cyan-400",
               bg: "bg-cyan-500/10",
               border: "border-cyan-500/20",
             },
             {
               name: "status-webhook",
-              desc: "Recebe webhooks de servicos externos de monitoramento",
+              desc: "Recebe webhooks de monitoramento — proxied via /api/status-webhook",
               trigger: "Webhook POST",
               input: "Payload do servico",
               output: "Atualiza status do servico",
+              auth: "WEBHOOK_SECRET obrigatorio",
               color: "text-blue-400",
               bg: "bg-blue-500/10",
               border: "border-blue-500/20",
@@ -993,9 +1000,12 @@ function EdgeFunctionsSection() {
               <div className="flex items-center gap-2 mb-2">
                 <Cloud className={`h-4 w-4 ${fn.color}`} />
                 <code className={`text-xs font-mono font-semibold ${fn.color}`}>{fn.name}</code>
+                <Badge className="text-[8px] bg-green-500/10 text-green-400 border-green-500/20 ml-auto">
+                  <Lock className="h-2.5 w-2.5 mr-0.5" />{fn.auth.includes("Publico") ? "Publico" : "Auth"}
+                </Badge>
               </div>
               <p className="text-[11px] text-slate-400 mb-3">{fn.desc}</p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 <div className="bg-slate-800/40 rounded-lg px-2.5 py-1.5">
                   <p className="text-[9px] text-slate-600 uppercase">Trigger</p>
                   <p className="text-[10px] text-slate-400">{fn.trigger}</p>
@@ -1008,7 +1018,67 @@ function EdgeFunctionsSection() {
                   <p className="text-[9px] text-slate-600 uppercase">Output</p>
                   <p className="text-[10px] text-slate-400">{fn.output}</p>
                 </div>
+                <div className="bg-slate-800/40 rounded-lg px-2.5 py-1.5">
+                  <p className="text-[9px] text-slate-600 uppercase">Auth</p>
+                  <p className="text-[10px] text-slate-400">{fn.auth}</p>
+                </div>
               </div>
+            </div>
+          ))}
+        </div>
+      </FlowBox>
+
+      {/* Claude Proxy Architecture */}
+      <FlowBox title="Arquitetura Claude Proxy" badge="CORS Bypass">
+        <div className="space-y-4">
+          <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[11px] font-medium text-amber-400">Por que um proxy?</p>
+                <p className="text-[10px] text-slate-500">A API da Anthropic (Claude) bloqueia chamadas diretas do browser via CORS. Gemini permite chamadas diretas. Claude precisa de proxy server-side.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-3">
+              <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider mb-2">Dev Local (npm run dev)</p>
+              <div className="flex flex-col items-center gap-0">
+                <FlowNode icon={Monitor} label="Browser" sublabel="POST /api/claude-proxy" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" size="small" />
+                <ArrowConnector direction="down" />
+                <FlowNode icon={Server} label="Vite Plugin Middleware" sublabel="claudeProxyPlugin() — Node.js" color="text-cyan-300" bg="bg-cyan-500/10" border="border-cyan-500/20" size="small" />
+                <ArrowConnector direction="down" />
+                <FlowNode icon={Sparkles} label="api.anthropic.com" sublabel="Server-side fetch (sem CORS)" color="text-amber-300" bg="bg-amber-500/10" border="border-amber-500/20" size="small" />
+              </div>
+            </div>
+            <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-3">
+              <p className="text-[10px] font-semibold text-green-400 uppercase tracking-wider mb-2">Producao (Vercel)</p>
+              <div className="flex flex-col items-center gap-0">
+                <FlowNode icon={Monitor} label="Browser" sublabel="POST /api/claude-proxy" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" size="small" />
+                <ArrowConnector direction="down" />
+                <FlowNode icon={Cloud} label="Vercel Serverless Function" sublabel="api/claude-proxy.ts" color="text-green-300" bg="bg-green-500/10" border="border-green-500/20" size="small" />
+                <ArrowConnector direction="down" />
+                <FlowNode icon={Sparkles} label="api.anthropic.com" sublabel="Server-side fetch (sem CORS)" color="text-amber-300" bg="bg-amber-500/10" border="border-amber-500/20" size="small" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </FlowBox>
+
+      {/* Vercel Proxy Rewrites */}
+      <FlowBox title="Vercel Proxy Rewrites" badge="vercel.json">
+        <div className="space-y-2">
+          {[
+            { source: "/api/status-rss", dest: "Edge Function: status-rss", desc: "RSS feed publico — esconde URL do Supabase" },
+            { source: "/api/status-webhook", dest: "Edge Function: status-webhook", desc: "Webhook de monitoramento externo" },
+            { source: "/api/claude-proxy", dest: "Vercel Serverless Function", desc: "Proxy para API Anthropic (Claude)" },
+          ].map((r) => (
+            <div key={r.source} className="flex items-center gap-2 bg-slate-800/30 rounded-lg px-3 py-2">
+              <code className="text-[10px] text-cyan-400 font-mono bg-cyan-500/10 px-1.5 py-0.5 rounded">{r.source}</code>
+              <ArrowRight className="h-3 w-3 text-slate-600 flex-shrink-0" />
+              <span className="text-[11px] text-slate-300">{r.dest}</span>
+              <span className="text-[9px] text-slate-600 ml-auto hidden sm:inline">{r.desc}</span>
             </div>
           ))}
         </div>
@@ -1017,13 +1087,15 @@ function EdgeFunctionsSection() {
       {/* Edge Function Flow */}
       <FlowBox title="Fluxo de Execucao">
         <div className="flex flex-col items-center gap-0">
-          <FlowNode icon={Monitor} label="Frontend (React)" sublabel="supabase.functions.invoke()" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" />
-          <ArrowConnector direction="down" label="HTTPS POST" />
+          <FlowNode icon={Monitor} label="Frontend (React)" sublabel="supabase.functions.invoke() + Authorization header" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" />
+          <ArrowConnector direction="down" label="HTTPS POST + JWT" />
+          <FlowNode icon={ShieldCheck} label="Auth Check" sublabel="Valida Bearer token ou secret" color="text-red-300" bg="bg-red-500/10" border="border-red-500/20" />
+          <ArrowConnector direction="down" label="Autorizado" />
           <FlowNode icon={Cloud} label="Supabase Edge" sublabel="Deno runtime — isolate por request" color="text-cyan-300" bg="bg-cyan-500/10" border="border-cyan-500/20" />
           <ArrowConnector direction="down" label="Processa" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
             <FlowNode icon={Globe} label="Fetch externo" sublabel="URLs, APIs" color="text-purple-300" bg="bg-purple-500/10" border="border-purple-500/20" size="small" />
-            <FlowNode icon={Database} label="Query DB" sublabel="Supabase client" color="text-emerald-300" bg="bg-emerald-500/10" border="border-emerald-500/20" size="small" />
+            <FlowNode icon={Database} label="Query DB" sublabel="service_role client" color="text-emerald-300" bg="bg-emerald-500/10" border="border-emerald-500/20" size="small" />
             <FlowNode icon={Sparkles} label="AI APIs" sublabel="Gemini / Claude" color="text-amber-300" bg="bg-amber-500/10" border="border-amber-500/20" size="small" />
           </div>
           <ArrowConnector direction="down" label="Response JSON" />
@@ -1377,6 +1449,57 @@ function SecuritySection() {
         </div>
       </FlowBox>
 
+      {/* Security Audit */}
+      <FlowBox title="Auditoria de Seguranca" borderColor="border-amber-500/20" bgColor="bg-amber-500/5" badge="Aplicada">
+        <div className="space-y-3">
+          <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-3">
+            <div className="flex items-start gap-2">
+              <ShieldCheck className="h-4 w-4 text-green-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[11px] font-medium text-green-400">Auditoria completa realizada e correcoes aplicadas</p>
+                <p className="text-[10px] text-slate-500">30+ policies vulneraveis removidas. Edge Functions protegidas com auth checks. URL do Supabase ocultada via proxy.</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[10px] text-red-400 font-semibold uppercase tracking-wider mb-2">Vulnerabilidades Criticas Corrigidas</p>
+            <div className="space-y-2">
+              {[
+                { vuln: "Status Page aberta", desc: "INSERT/UPDATE/DELETE para anon em platform_services, incidents, maintenances, uptime", fix: "Removidas policies de escrita. Apenas service_role pode modificar." },
+                { vuln: "admin_users exposta", desc: "SELECT para anon — password_hash (SHA-256) publicamente legivel", fix: "SELECT bloqueado. Login admin via Edge Function com service_role." },
+                { vuln: "user_feature_overrides aberta", desc: "CRUD completo para anon — qualquer pessoa podia habilitar features premium", fix: "Removidas policies anon/authenticated. Apenas service_role." },
+              ].map((v) => (
+                <div key={v.vuln} className="bg-red-500/5 border border-red-500/20 rounded-xl p-3">
+                  <p className="text-[11px] font-medium text-red-400">{v.vuln}</p>
+                  <p className="text-[9px] text-slate-500 mt-0.5">{v.desc}</p>
+                  <p className="text-[9px] text-green-400 mt-1">Correcao: {v.fix}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[10px] text-amber-400 font-semibold uppercase tracking-wider mb-2">Vulnerabilidades Medias Corrigidas</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {[
+                { vuln: "feature_flags UPDATE aberto", fix: "Apenas service_role pode modificar" },
+                { vuln: "plan_features UPDATE aberto", fix: "Apenas service_role pode modificar" },
+                { vuln: "tenant_settings SELECT ALL", fix: "Restrito a auth.uid() = user_id" },
+                { vuln: "status_subscribers emails expostos", fix: "SELECT restrito por email do JWT" },
+                { vuln: "admin_audit_log INSERT aberto", fix: "Apenas service_role pode inserir" },
+                { vuln: "status-webhook sem secret obrigatorio", fix: "WEBHOOK_SECRET agora obrigatorio" },
+              ].map((v) => (
+                <div key={v.vuln} className="bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2">
+                  <p className="text-[10px] text-amber-400 font-medium">{v.vuln}</p>
+                  <p className="text-[9px] text-green-400">{v.fix}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </FlowBox>
+
       {/* Security Layers */}
       <FlowBox title="Camadas de Seguranca">
         <div className="space-y-3">
@@ -1388,6 +1511,7 @@ function SecuritySection() {
                 "SHA-256 + localStorage para admin",
                 "Rate limiting: 5 tentativas → bloqueio 15min",
                 "Sessao admin expira em 4 horas",
+                "Edge Functions: JWT ou INTERNAL_CRON_SECRET",
               ],
               color: "text-green-400",
               border: "border-green-500/20",
@@ -1398,7 +1522,8 @@ function SecuritySection() {
                 "RLS por user_id em todas as tabelas de dados",
                 "Feature Flags com 3 niveis de verificacao",
                 "Plan-based access control",
-                "User-specific overrides pelo admin",
+                "Overrides apenas via service_role (admin)",
+                "Status Page: somente leitura para publico",
               ],
               color: "text-blue-400",
               border: "border-blue-500/20",
@@ -1420,7 +1545,8 @@ function SecuritySection() {
                 "API keys encriptadas por usuario",
                 "SECURITY DEFINER em RPCs criticas",
                 "Trigger prevent_plan_escalation",
-                "Audit log de todas as acoes admin",
+                "Audit log apenas via service_role",
+                "Soft delete com deleted_at em tabelas core",
               ],
               color: "text-red-400",
               border: "border-red-500/20",
@@ -1430,8 +1556,10 @@ function SecuritySection() {
               items: [
                 "HTTPS em todas as comunicacoes",
                 "Supabase managed — backups automaticos",
-                "Edge Functions isoladas por request",
+                "Edge Functions isoladas por request + auth",
                 "Storage com policies por bucket",
+                "Vercel proxy: URL do Supabase ocultada",
+                "WEBHOOK_SECRET obrigatorio para webhooks",
               ],
               color: "text-purple-400",
               border: "border-purple-500/20",

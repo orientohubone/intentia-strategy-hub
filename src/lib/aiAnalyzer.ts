@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getClaudeMaxTokens } from "./aiModels";
 import type { UrlAnalysis } from "./urlAnalyzer";
 
 // =====================================================
@@ -255,6 +256,24 @@ async function callGeminiApi(
 }
 
 // =====================================================
+// CLAUDE ERROR HELPER
+// =====================================================
+
+function throwClaudeError(model: string, errMsg: string, status: number): never {
+  if (status === 404 || errMsg.includes("not_found") || errMsg.toLowerCase().includes("not found")) {
+    throw new Error(
+      `Modelo "${model}" não encontrado. Sua API key pode não ter acesso a este modelo. Tente outro modelo em Configurações → Integrações de IA.`
+    );
+  }
+  if (status === 403 || errMsg.includes("permission") || errMsg.includes("authentication")) {
+    throw new Error(
+      `Sua API key não tem permissão para usar o modelo "${model}". Selecione outro modelo em Configurações → Integrações de IA.`
+    );
+  }
+  throw new Error(`Erro na API Claude: ${errMsg}`);
+}
+
+// =====================================================
 // CALL CLAUDE API
 // =====================================================
 
@@ -263,31 +282,24 @@ async function callClaudeApi(
   model: string,
   prompt: string
 ): Promise<string> {
-  // Claude API requires CORS proxy or backend call
-  // We'll use the Supabase Edge Function as proxy
-  const { data, error } = await (supabase as any).functions.invoke("ai-analyze", {
-    body: {
-      provider: "anthropic",
-      apiKey,
-      model,
-      prompt,
-    },
+  // Claude API requires server-side proxy due to CORS restrictions.
+  // Dev: Vite plugin middleware at /api/claude-proxy
+  // Production: Vercel Serverless Function at /api/claude-proxy
+  const maxTokens = getClaudeMaxTokens(model);
+  const response = await fetch("/api/claude-proxy", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ apiKey, model, prompt, maxTokens }),
   });
 
-  if (error) {
-    const errMsg = error.message || "";
-    if (errMsg.includes("not_found") || errMsg.includes("404") || errMsg.toLowerCase().includes("not found")) {
-      throw new Error(
-        `Modelo "${model}" não encontrado. Sua API key pode não ter acesso a este modelo. Tente outro modelo em Configurações → Integrações de IA.`
-      );
-    }
-    if (errMsg.includes("permission") || errMsg.includes("403") || errMsg.includes("authentication")) {
-      throw new Error(
-        `Sua API key não tem permissão para usar o modelo "${model}". Selecione outro modelo em Configurações → Integrações de IA.`
-      );
-    }
-    throw new Error(`Erro na API Claude: ${errMsg}`);
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const errMsg = data?.error || response.statusText || "";
+    console.error("[callClaudeApi] Error:", { status: response.status, errMsg });
+    throwClaudeError(model, errMsg, response.status);
   }
+
   if (!data?.text) throw new Error("Resposta vazia da API Claude");
   return data.text;
 }

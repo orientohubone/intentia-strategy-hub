@@ -36,6 +36,7 @@ import Status from "./pages/Status";
 import Comparar from "./pages/Comparar";
 import AdminLogin from "./pages/AdminLogin";
 import AdminPanel from "./pages/AdminPanel";
+import StatusRssFallback from "./pages/StatusRssFallback";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
 import { ForceLightMode } from "@/components/ForceLightMode";
@@ -166,6 +167,7 @@ const App = () => (
               </AdminProtectedRoute>
             } 
           />
+          <Route path="/api/status-rss" element={<StatusRssFallback />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<ForceLightMode><NotFound /></ForceLightMode>} />
         </Routes>

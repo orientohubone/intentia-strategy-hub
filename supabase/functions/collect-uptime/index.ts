@@ -25,6 +25,20 @@ serve(async (req) => {
   }
 
   try {
+    // Auth check: require internal secret or valid service call
+    // This function should only be called by pg_cron or authorized systems
+    const authHeader = req.headers.get("Authorization");
+    const internalSecret = Deno.env.get("INTERNAL_CRON_SECRET");
+    const providedSecret = req.headers.get("x-cron-secret");
+
+    // Allow if: has valid JWT (Supabase invocation) OR has valid cron secret
+    if (!authHeader && !(internalSecret && providedSecret === internalSecret)) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Authentication required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);

@@ -34,8 +34,23 @@ import {
   ExternalLink,
   Info,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  adminListServices,
+  adminCreateService,
+  adminUpdateService,
+  adminDeleteService,
+  adminListIncidents,
+  adminCreateIncident,
+  adminUpdateIncident,
+  adminDeleteIncident,
+  adminListIncidentUpdates,
+  adminAddIncidentUpdate,
+  adminListMaintenances,
+  adminCreateMaintenance,
+  adminUpdateMaintenance,
+  adminDeleteMaintenance,
+} from "@/lib/adminApi";
 
 // =====================================================
 // TYPES
@@ -175,38 +190,23 @@ export default function AdminStatusTab() {
   // =====================================================
 
   const loadServices = useCallback(async () => {
-    const { data } = await (supabase as any)
-      .from("platform_services")
-      .select("*")
-      .order("sort_order", { ascending: true });
-    if (data) setServices(data);
+    const result = await adminListServices();
+    if (result.data) setServices(result.data);
   }, []);
 
   const loadIncidents = useCallback(async () => {
-    const { data } = await (supabase as any)
-      .from("platform_incidents")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(20);
-    if (data) setIncidents(data);
+    const result = await adminListIncidents();
+    if (result.data) setIncidents(result.data);
   }, []);
 
   const loadIncidentUpdates = useCallback(async (incidentId: string) => {
-    const { data } = await (supabase as any)
-      .from("platform_incident_updates")
-      .select("*")
-      .eq("incident_id", incidentId)
-      .order("created_at", { ascending: false });
-    if (data) setIncidentUpdates(data);
+    const result = await adminListIncidentUpdates(incidentId);
+    if (result.data) setIncidentUpdates(result.data);
   }, []);
 
   const loadMaintenances = useCallback(async () => {
-    const { data } = await (supabase as any)
-      .from("platform_maintenances")
-      .select("*")
-      .order("scheduled_start", { ascending: false })
-      .limit(20);
-    if (data) setMaintenances(data);
+    const result = await adminListMaintenances();
+    if (result.data) setMaintenances(result.data);
   }, []);
 
   const loadAll = useCallback(async () => {
@@ -223,22 +223,16 @@ export default function AdminStatusTab() {
 
   const updateServiceStatus = async (id: string, newStatus: string) => {
     setSaving(id);
-    const { error } = await (supabase as any)
-      .from("platform_services")
-      .update({ status: newStatus })
-      .eq("id", id);
-    if (error) { toast.error("Erro ao atualizar status."); }
+    const result = await adminUpdateService(id, { status: newStatus });
+    if (result.error) { toast.error(result.error); }
     else { toast.success("Status do serviço atualizado."); await loadServices(); }
     setSaving(null);
   };
 
   const saveServiceEdit = async (id: string) => {
     setSaving(id);
-    const { error } = await (supabase as any)
-      .from("platform_services")
-      .update(editServiceData)
-      .eq("id", id);
-    if (error) { toast.error("Erro ao salvar serviço."); }
+    const result = await adminUpdateService(id, editServiceData);
+    if (result.error) { toast.error(result.error); }
     else { toast.success("Serviço atualizado."); setEditingService(null); await loadServices(); }
     setSaving(null);
   };
@@ -246,10 +240,8 @@ export default function AdminStatusTab() {
   const createService = async () => {
     if (!newService.name.trim()) { toast.error("Nome é obrigatório."); return; }
     setSaving("new-service");
-    const { error } = await (supabase as any)
-      .from("platform_services")
-      .insert([newService]);
-    if (error) { toast.error("Erro ao criar serviço."); }
+    const result = await adminCreateService(newService);
+    if (result.error) { toast.error(result.error); }
     else {
       toast.success("Serviço criado.");
       setShowNewService(false);
@@ -261,11 +253,8 @@ export default function AdminStatusTab() {
 
   const deleteService = async (id: string) => {
     setSaving(id);
-    const { error } = await (supabase as any)
-      .from("platform_services")
-      .delete()
-      .eq("id", id);
-    if (error) { toast.error("Erro ao excluir serviço."); }
+    const result = await adminDeleteService(id);
+    if (result.error) { toast.error(result.error); }
     else { toast.success("Serviço excluído."); await loadServices(); }
     setSaving(null);
   };
@@ -277,17 +266,9 @@ export default function AdminStatusTab() {
   const createIncident = async () => {
     if (!newIncident.title.trim()) { toast.error("Título é obrigatório."); return; }
     setSaving("new-incident");
-    const { data, error } = await (supabase as any)
-      .from("platform_incidents")
-      .insert([newIncident])
-      .select()
-      .single();
-    if (error) { toast.error("Erro ao criar incidente."); }
+    const result = await adminCreateIncident(newIncident);
+    if (result.error) { toast.error(result.error); }
     else {
-      // Create initial update
-      await (supabase as any)
-        .from("platform_incident_updates")
-        .insert([{ incident_id: data.id, status: newIncident.status, message: `Incidente criado: ${newIncident.title}` }]);
       toast.success("Incidente criado.");
       setShowNewIncident(false);
       setNewIncident({ title: "", status: "investigating", severity: "minor", affected_services: [] });
@@ -298,11 +279,8 @@ export default function AdminStatusTab() {
 
   const updateIncidentStatus = async (id: string, newStatus: string) => {
     setSaving(id);
-    const { error } = await (supabase as any)
-      .from("platform_incidents")
-      .update({ status: newStatus })
-      .eq("id", id);
-    if (error) { toast.error("Erro ao atualizar incidente."); }
+    const result = await adminUpdateIncident(id, { status: newStatus });
+    if (result.error) { toast.error(result.error); }
     else { toast.success("Incidente atualizado."); await loadIncidents(); }
     setSaving(null);
   };
@@ -310,17 +288,8 @@ export default function AdminStatusTab() {
   const addIncidentUpdate = async (incidentId: string) => {
     if (!newUpdateMessage.trim()) { toast.error("Mensagem é obrigatória."); return; }
     setSaving(`update-${incidentId}`);
-    const { error } = await (supabase as any)
-      .from("platform_incident_updates")
-      .insert([{ incident_id: incidentId, status: newUpdateStatus, message: newUpdateMessage }]);
-
-    // Also update the incident status
-    await (supabase as any)
-      .from("platform_incidents")
-      .update({ status: newUpdateStatus })
-      .eq("id", incidentId);
-
-    if (error) { toast.error("Erro ao adicionar atualização."); }
+    const result = await adminAddIncidentUpdate(incidentId, newUpdateStatus, newUpdateMessage);
+    if (result.error) { toast.error(result.error); }
     else {
       toast.success("Atualização adicionada.");
       setNewUpdateMessage("");
@@ -332,11 +301,8 @@ export default function AdminStatusTab() {
 
   const deleteIncident = async (id: string) => {
     setSaving(id);
-    const { error } = await (supabase as any)
-      .from("platform_incidents")
-      .delete()
-      .eq("id", id);
-    if (error) { toast.error("Erro ao excluir incidente."); }
+    const result = await adminDeleteIncident(id);
+    if (result.error) { toast.error(result.error); }
     else { toast.success("Incidente excluído."); await loadIncidents(); }
     setSaving(null);
   };
@@ -350,10 +316,8 @@ export default function AdminStatusTab() {
       toast.error("Título, início e fim são obrigatórios."); return;
     }
     setSaving("new-maintenance");
-    const { error } = await (supabase as any)
-      .from("platform_maintenances")
-      .insert([newMaintenance]);
-    if (error) { toast.error("Erro ao criar manutenção."); }
+    const result = await adminCreateMaintenance(newMaintenance);
+    if (result.error) { toast.error(result.error); }
     else {
       toast.success("Manutenção criada.");
       setShowNewMaintenance(false);
@@ -368,23 +332,16 @@ export default function AdminStatusTab() {
     const updateData: any = { status: newStatus };
     if (newStatus === "in_progress") updateData.actual_start = new Date().toISOString();
     if (newStatus === "completed") updateData.actual_end = new Date().toISOString();
-
-    const { error } = await (supabase as any)
-      .from("platform_maintenances")
-      .update(updateData)
-      .eq("id", id);
-    if (error) { toast.error("Erro ao atualizar manutenção."); }
+    const result = await adminUpdateMaintenance(id, updateData);
+    if (result.error) { toast.error(result.error); }
     else { toast.success("Manutenção atualizada."); await loadMaintenances(); }
     setSaving(null);
   };
 
   const deleteMaintenance = async (id: string) => {
     setSaving(id);
-    const { error } = await (supabase as any)
-      .from("platform_maintenances")
-      .delete()
-      .eq("id", id);
-    if (error) { toast.error("Erro ao excluir manutenção."); }
+    const result = await adminDeleteMaintenance(id);
+    if (result.error) { toast.error(result.error); }
     else { toast.success("Manutenção excluída."); await loadMaintenances(); }
     setSaving(null);
   };

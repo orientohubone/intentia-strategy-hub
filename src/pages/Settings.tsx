@@ -13,6 +13,16 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
@@ -174,6 +184,7 @@ export default function Settings() {
   const [loadingBackups, setLoadingBackups] = useState(false);
   const [creatingBackup, setCreatingBackup] = useState(false);
   const [exportingData, setExportingData] = useState(false);
+  const [deletingBackupId, setDeletingBackupId] = useState<string | null>(null);
 
   // Sync formData when user object becomes available or changes
   useEffect(() => {
@@ -514,7 +525,6 @@ export default function Settings() {
   };
 
   const handleDeleteBackup = async (backupId: string) => {
-    if (!confirm("Tem certeza que deseja excluir este backup?")) return;
     try {
       const { error } = await supabase
         .from("user_data_backups")
@@ -525,6 +535,8 @@ export default function Settings() {
       loadBackups();
     } catch (error: any) {
       toast.error("Erro ao excluir backup: " + error.message);
+    } finally {
+      setDeletingBackupId(null);
     }
   };
 
@@ -1228,7 +1240,7 @@ export default function Settings() {
                                 variant="ghost"
                                 size="sm"
                                 className="h-7 px-2 text-xs text-destructive hover:text-destructive"
-                                onClick={() => handleDeleteBackup(backup.id)}
+                                onClick={() => setDeletingBackupId(backup.id)}
                               >
                                 <Trash2 className="h-3 w-3" />
                               </Button>
@@ -1426,6 +1438,27 @@ export default function Settings() {
               );
             })()}
           </div>
+
+      {/* Delete Backup Confirmation Dialog */}
+      <AlertDialog open={!!deletingBackupId} onOpenChange={(open) => !open && setDeletingBackupId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir backup?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O backup será permanentemente removido do servidor.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deletingBackupId && handleDeleteBackup(deletingBackupId)}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
