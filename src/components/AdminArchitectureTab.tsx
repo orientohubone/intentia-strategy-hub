@@ -46,8 +46,28 @@ import {
   Calculator,
   DollarSign,
   TrendingUp,
+  Expand,
+  Minimize2,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+
+function InfoTip({ children, tip }: { children: React.ReactNode; tip?: string }) {
+  if (!tip) return <>{children}</>;
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[260px] text-[11px] leading-relaxed">
+          {tip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 // =====================================================
 // TYPES
@@ -101,6 +121,7 @@ function FlowNode({
   border = "border-slate-700/50",
   size = "normal",
   pulse = false,
+  tooltip,
 }: {
   icon: typeof Globe;
   label: string;
@@ -110,6 +131,7 @@ function FlowNode({
   border?: string;
   size?: "small" | "normal" | "large";
   pulse?: boolean;
+  tooltip?: string;
 }) {
   const sizeClasses = {
     small: "px-3 py-2",
@@ -122,11 +144,11 @@ function FlowNode({
     large: "h-5 w-5",
   };
 
-  return (
+  const node = (
     <div
       className={`${bg} border ${border} rounded-xl ${sizeClasses[size]} flex items-center gap-3 relative ${
         pulse ? "animate-pulse" : ""
-      }`}
+      } ${tooltip ? "cursor-help" : ""}`}
     >
       <Icon className={`${iconSize[size]} ${color} flex-shrink-0`} />
       <div className="min-w-0">
@@ -135,6 +157,8 @@ function FlowNode({
       </div>
     </div>
   );
+
+  return <InfoTip tip={tooltip}>{node}</InfoTip>;
 }
 
 // =====================================================
@@ -178,6 +202,7 @@ function FlowBox({
   bgColor = "bg-slate-900/40",
   children,
   badge,
+  defaultOpen = false,
 }: {
   title: string;
   titleColor?: string;
@@ -185,17 +210,92 @@ function FlowBox({
   bgColor?: string;
   children: React.ReactNode;
   badge?: string;
+  defaultOpen?: boolean;
 }) {
-  return (
-    <div className={`${bgColor} border ${borderColor} rounded-2xl p-4 space-y-3`}>
-      <div className="flex items-center justify-between">
-        <p className={`text-[11px] font-semibold uppercase tracking-wider ${titleColor}`}>{title}</p>
-        {badge && (
-          <Badge className="text-[9px] bg-slate-800 text-slate-400 border-slate-700">{badge}</Badge>
-        )}
-      </div>
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [zoom, setZoom] = useState(100);
+
+  const content = (
+    <div className="space-y-3" style={{ transform: `scale(${zoom / 100})`, transformOrigin: "top left", width: `${10000 / zoom}%` }}>
       {children}
     </div>
+  );
+
+  return (
+    <>
+      <div className={`${bgColor} border ${borderColor} rounded-2xl overflow-hidden`}>
+        <div className="flex items-center justify-between p-4">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="flex items-center gap-2 text-left hover:opacity-80 transition-opacity flex-1 min-w-0"
+          >
+            <ChevronDown className={`h-3.5 w-3.5 text-slate-500 transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`} />
+            <p className={`text-[11px] font-semibold uppercase tracking-wider ${titleColor} truncate`}>{title}</p>
+            {badge && (
+              <Badge className="text-[9px] bg-slate-800 text-slate-400 border-slate-700 flex-shrink-0">{badge}</Badge>
+            )}
+          </button>
+          {isOpen && (
+            <button
+              onClick={() => { setIsFullscreen(true); setZoom(100); }}
+              className="p-1.5 rounded-lg hover:bg-white/5 text-slate-500 hover:text-slate-300 transition-colors flex-shrink-0"
+              title="Expandir em tela cheia"
+            >
+              <Expand className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        {isOpen && (
+          <div className="px-4 pb-4 space-y-3">
+            {children}
+          </div>
+        )}
+      </div>
+
+      <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
+        <DialogContent className="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] rounded-none p-0 overflow-hidden border-0 bg-slate-950">
+          <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-3 bg-slate-950 border-b border-slate-800">
+            <div className="flex items-center gap-2">
+              <p className={`text-sm font-semibold uppercase tracking-wider ${titleColor}`}>{title}</p>
+              {badge && (
+                <Badge className="text-[10px] bg-slate-800 text-slate-400 border-slate-700">{badge}</Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setZoom(Math.max(50, zoom - 10))}
+                disabled={zoom <= 50}
+                className="p-1.5 rounded-lg hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Diminuir zoom"
+              >
+                <ZoomOut className="h-4 w-4" />
+              </button>
+              <span className="text-[10px] text-slate-500 font-mono w-10 text-center">{zoom}%</span>
+              <button
+                onClick={() => setZoom(Math.min(200, zoom + 10))}
+                disabled={zoom >= 200}
+                className="p-1.5 rounded-lg hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Aumentar zoom"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </button>
+              <div className="w-px h-4 bg-slate-800 mx-1" />
+              <button
+                onClick={() => setIsFullscreen(false)}
+                className="p-1.5 rounded-lg hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors"
+                title="Fechar tela cheia"
+              >
+                <Minimize2 className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <div className="overflow-auto flex-1 p-6" style={{ height: "calc(100vh - 52px)" }}>
+            {content}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -207,7 +307,7 @@ function OverviewSection() {
   return (
     <div className="space-y-6">
       {/* High-level architecture */}
-      <FlowBox title="Arquitetura de Alto Nivel" borderColor="border-primary/20" bgColor="bg-primary/5">
+      <FlowBox title="Arquitetura de Alto Nivel" borderColor="border-primary/20" bgColor="bg-primary/5" defaultOpen>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Client Layer */}
           <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-4 space-y-3">
@@ -216,9 +316,9 @@ function OverviewSection() {
               <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Camada Cliente</span>
             </div>
             <div className="space-y-2">
-              <FlowNode icon={Globe} label="React SPA" sublabel="Vite + TypeScript" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" size="small" />
-              <FlowNode icon={Palette} label="shadcn/ui + Tailwind" sublabel="Design System" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" size="small" />
-              <FlowNode icon={Smartphone} label="Responsive" sublabel="Mobile-first" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" size="small" />
+              <FlowNode icon={Globe} label="React SPA" sublabel="Vite + TypeScript" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" size="small" tooltip="Single Page Application: toda a interface roda no navegador sem recarregar a pagina" />
+              <FlowNode icon={Palette} label="shadcn/ui + Tailwind" sublabel="Design System" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" size="small" tooltip="Sistema de design com componentes pre-construidos e estilizacao utilitaria" />
+              <FlowNode icon={Smartphone} label="Responsive" sublabel="Mobile-first" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" size="small" tooltip="Layout adaptavel: projetado primeiro para mobile, depois expandido para desktop" />
             </div>
           </div>
 
@@ -229,9 +329,9 @@ function OverviewSection() {
               <span className="text-xs font-semibold text-purple-400 uppercase tracking-wider">Camada API</span>
             </div>
             <div className="space-y-2">
-              <FlowNode icon={Server} label="Supabase Client" sublabel="REST + Realtime" color="text-purple-300" bg="bg-purple-500/10" border="border-purple-500/20" size="small" />
-              <FlowNode icon={Cloud} label="Edge Functions" sublabel="7 funcoes Deno" color="text-purple-300" bg="bg-purple-500/10" border="border-purple-500/20" size="small" />
-              <FlowNode icon={Sparkles} label="AI APIs" sublabel="Gemini + Claude" color="text-purple-300" bg="bg-purple-500/10" border="border-purple-500/20" size="small" />
+              <FlowNode icon={Server} label="Supabase Client" sublabel="REST + Realtime" color="text-purple-300" bg="bg-purple-500/10" border="border-purple-500/20" size="small" tooltip="Cliente JavaScript que conecta o frontend ao banco de dados via API REST e WebSocket" />
+              <FlowNode icon={Cloud} label="Edge Functions" sublabel="7 funcoes Deno" color="text-purple-300" bg="bg-purple-500/10" border="border-purple-500/20" size="small" tooltip="Funcoes serverless executadas na borda (CDN), proximas ao usuario, com baixa latencia" />
+              <FlowNode icon={Sparkles} label="AI APIs" sublabel="Gemini + Claude" color="text-purple-300" bg="bg-purple-500/10" border="border-purple-500/20" size="small" tooltip="APIs de inteligencia artificial do Google (Gemini) e Anthropic (Claude) para analises avancadas" />
             </div>
           </div>
 
@@ -242,9 +342,9 @@ function OverviewSection() {
               <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Camada Dados</span>
             </div>
             <div className="space-y-2">
-              <FlowNode icon={Database} label="PostgreSQL" sublabel="Supabase DB" color="text-emerald-300" bg="bg-emerald-500/10" border="border-emerald-500/20" size="small" />
-              <FlowNode icon={Lock} label="Row Level Security" sublabel="Isolamento por user_id" color="text-emerald-300" bg="bg-emerald-500/10" border="border-emerald-500/20" size="small" />
-              <FlowNode icon={Archive} label="Storage" sublabel="Avatars bucket" color="text-emerald-300" bg="bg-emerald-500/10" border="border-emerald-500/20" size="small" />
+              <FlowNode icon={Database} label="PostgreSQL" sublabel="Supabase DB" color="text-emerald-300" bg="bg-emerald-500/10" border="border-emerald-500/20" size="small" tooltip="Banco de dados relacional robusto, open source, com suporte a JSON, triggers e views" />
+              <FlowNode icon={Lock} label="Row Level Security" sublabel="Isolamento por user_id" color="text-emerald-300" bg="bg-emerald-500/10" border="border-emerald-500/20" size="small" tooltip="Politica de seguranca que filtra automaticamente os dados por usuario em cada query" />
+              <FlowNode icon={Archive} label="Storage" sublabel="Avatars bucket" color="text-emerald-300" bg="bg-emerald-500/10" border="border-emerald-500/20" size="small" tooltip="Armazenamento de arquivos (fotos de perfil) com politicas de acesso por bucket" />
             </div>
           </div>
         </div>
@@ -273,19 +373,21 @@ function OverviewSection() {
       <FlowBox title="Stack Tecnologico" badge="v3.3.0">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "React 18.3", sub: "UI Framework", color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20" },
-            { label: "TypeScript", sub: "Type Safety", color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" },
-            { label: "Vite 5.4", sub: "Build Tool", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
-            { label: "Tailwind 3.4", sub: "Styling", color: "text-teal-400", bg: "bg-teal-500/10", border: "border-teal-500/20" },
-            { label: "Supabase", sub: "BaaS", color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
-            { label: "TanStack Query", sub: "Data Fetching", color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20" },
-            { label: "React Router v6", sub: "Routing", color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20" },
-            { label: "shadcn/ui", sub: "Components", color: "text-slate-300", bg: "bg-slate-800/60", border: "border-slate-700/50" },
+            { label: "React 18.3", sub: "UI Framework", color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20", tip: "Biblioteca para construcao de interfaces reativas com componentes reutilizaveis e Virtual DOM" },
+            { label: "TypeScript", sub: "Type Safety", color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", tip: "Superset do JavaScript que adiciona tipagem estatica, prevenindo erros em tempo de compilacao" },
+            { label: "Vite 5.4", sub: "Build Tool", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20", tip: "Bundler ultrarapido com Hot Module Replacement (HMR) instantaneo e builds otimizados para producao" },
+            { label: "Tailwind 3.4", sub: "Styling", color: "text-teal-400", bg: "bg-teal-500/10", border: "border-teal-500/20", tip: "Framework CSS utility-first que permite estilizar diretamente no HTML com classes atomicas" },
+            { label: "Supabase", sub: "BaaS", color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", tip: "Backend-as-a-Service open source: PostgreSQL, Auth, Storage, Edge Functions e Real-time" },
+            { label: "TanStack Query", sub: "Data Fetching", color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20", tip: "Gerenciamento de estado assincrono com cache automatico, revalidacao e deduplicacao de requests" },
+            { label: "React Router v6", sub: "Routing", color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20", tip: "Navegacao SPA com rotas declarativas, nested routes, loaders e protecao de rotas" },
+            { label: "shadcn/ui", sub: "Components", color: "text-slate-300", bg: "bg-slate-800/60", border: "border-slate-700/50", tip: "Componentes acessiveis baseados em Radix UI, copiaveis e customizaveis com Tailwind" },
           ].map((tech) => (
-            <div key={tech.label} className={`${tech.bg} border ${tech.border} rounded-xl px-3 py-2.5 text-center`}>
-              <p className={`text-xs font-semibold ${tech.color}`}>{tech.label}</p>
-              <p className="text-[10px] text-slate-500">{tech.sub}</p>
-            </div>
+            <InfoTip key={tech.label} tip={tech.tip}>
+              <div className={`${tech.bg} border ${tech.border} rounded-xl p-3 text-center cursor-help`}>
+                <p className={`text-xs font-bold ${tech.color}`}>{tech.label}</p>
+                <p className="text-[10px] text-slate-500">{tech.sub}</p>
+              </div>
+            </InfoTip>
           ))}
         </div>
       </FlowBox>
@@ -323,7 +425,7 @@ function FrontendSection() {
   return (
     <div className="space-y-6">
       {/* Route Map */}
-      <FlowBox title="Mapa de Rotas" borderColor="border-blue-500/20" bgColor="bg-blue-500/5" badge="React Router v6">
+      <FlowBox title="Mapa de Rotas" borderColor="border-blue-500/20" bgColor="bg-blue-500/5" badge="React Router v6" defaultOpen>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Public Routes */}
           <div className="space-y-2">
@@ -501,7 +603,7 @@ function AuthSection() {
   return (
     <div className="space-y-6">
       {/* User Auth Flow */}
-      <FlowBox title="Fluxo de Autenticacao — Usuario" borderColor="border-green-500/20" bgColor="bg-green-500/5">
+      <FlowBox title="Fluxo de Autenticacao — Usuario" borderColor="border-green-500/20" bgColor="bg-green-500/5" defaultOpen>
         <div className="space-y-3">
           {/* Visual flow */}
           <div className="flex flex-col items-center gap-0">
@@ -601,7 +703,7 @@ function DataFlowSection() {
   return (
     <div className="space-y-6">
       {/* URL Analysis Flow */}
-      <FlowBox title="Fluxo de Analise de URL" borderColor="border-primary/20" bgColor="bg-primary/5" badge="Core Feature">
+      <FlowBox title="Fluxo de Analise de URL" borderColor="border-primary/20" bgColor="bg-primary/5" badge="Core Feature" defaultOpen>
         <div className="space-y-0 flex flex-col items-center">
           <FlowNode icon={Globe} label="1. Usuario cria projeto" sublabel="Nome + Nicho + URL + Concorrentes" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" />
           <ArrowConnector direction="down" label="Clica 'Analisar'" />
@@ -693,7 +795,7 @@ function FeatureFlagsSection() {
   return (
     <div className="space-y-6">
       {/* Decision Tree */}
-      <FlowBox title="Arvore de Decisao — Acesso a Feature" borderColor="border-amber-500/20" bgColor="bg-amber-500/5" badge="useFeatureFlags">
+      <FlowBox title="Arvore de Decisao — Acesso a Feature" borderColor="border-amber-500/20" bgColor="bg-amber-500/5" badge="useFeatureFlags" defaultOpen>
         <div className="flex flex-col items-center gap-0">
           <FlowNode icon={Users} label="Usuario acessa pagina protegida" sublabel="Ex: /projects, /benchmark, /tactical" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" />
           <ArrowConnector direction="down" label="FeatureGate verifica" />
@@ -783,20 +885,22 @@ function FeatureFlagsSection() {
       <FlowBox title="Categorias de Features" badge="25 features">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
-            { label: "Projetos", icon: FolderOpen, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20", count: 5 },
-            { label: "Inteligencia Artificial", icon: Sparkles, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20", count: 3 },
-            { label: "Benchmark", icon: BarChart3, color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/20", count: 2 },
-            { label: "Plano Tatico", icon: Crosshair, color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20", count: 3 },
-            { label: "Exportacao", icon: Download, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", count: 3 },
-            { label: "Marca & Social", icon: Share2, color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20", count: 2 },
-            { label: "Insights & Alertas", icon: Lightbulb, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", count: 7 },
-            { label: "Configuracoes", icon: Settings, color: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/20", count: 0 },
+            { label: "Projetos", icon: FolderOpen, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20", count: 5, tip: "Criacao de projetos, analise de URL, scores por canal, insights e competitor URLs" },
+            { label: "Inteligencia Artificial", icon: Sparkles, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20", count: 3, tip: "Analise por IA (Gemini/Claude), enriquecimento de insights e analise de performance" },
+            { label: "Benchmark", icon: BarChart3, color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/20", count: 2, tip: "Comparacao SWOT com concorrentes, gap analysis e scores comparados" },
+            { label: "Plano Tatico", icon: Crosshair, color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20", count: 3, tip: "Templates de campanhas, sugestoes de budget e cronograma por canal" },
+            { label: "Exportacao", icon: Download, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", count: 3, tip: "Exportar relatorios em PDF, dados em JSON e backup completo da conta" },
+            { label: "Marca & Social", icon: Share2, color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20", count: 2, tip: "Brand Guide com identidade visual, tom de voz e posts para redes sociais" },
+            { label: "Insights & Alertas", icon: Lightbulb, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", count: 7, tip: "Insights estrategicos, alertas de investimento prematuro e recomendacoes por canal" },
+            { label: "Configuracoes", icon: Settings, color: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/20", count: 0, tip: "Configuracoes da conta, API keys de IA e preferencias do usuario" },
           ].map((cat) => (
-            <div key={cat.label} className={`${cat.bg} border ${cat.border} rounded-xl p-3 text-center`}>
-              <cat.icon className={`h-5 w-5 ${cat.color} mx-auto mb-1.5`} />
-              <p className={`text-[10px] font-medium ${cat.color}`}>{cat.label}</p>
-              <p className="text-[9px] text-slate-500">{cat.count} features</p>
-            </div>
+            <InfoTip key={cat.label} tip={cat.tip}>
+              <div className={`${cat.bg} border ${cat.border} rounded-xl p-3 text-center cursor-help`}>
+                <cat.icon className={`h-5 w-5 ${cat.color} mx-auto mb-1.5`} />
+                <p className={`text-[10px] font-medium ${cat.color}`}>{cat.label}</p>
+                <p className="text-[9px] text-slate-500">{cat.count} features</p>
+              </div>
+            </InfoTip>
           ))}
         </div>
       </FlowBox>
@@ -811,7 +915,7 @@ function FeatureFlagsSection() {
 function EdgeFunctionsSection() {
   return (
     <div className="space-y-6">
-      <FlowBox title="Supabase Edge Functions" borderColor="border-cyan-500/20" bgColor="bg-cyan-500/5" badge="Deno Runtime">
+      <FlowBox title="Supabase Edge Functions" borderColor="border-cyan-500/20" bgColor="bg-cyan-500/5" badge="Deno Runtime" defaultOpen>
         <div className="space-y-3">
           {[
             {
@@ -938,7 +1042,7 @@ function DatabaseSection() {
   return (
     <div className="space-y-6">
       {/* Entity Relationship */}
-      <FlowBox title="Modelo de Entidades" borderColor="border-emerald-500/20" bgColor="bg-emerald-500/5" badge="PostgreSQL">
+      <FlowBox title="Modelo de Entidades" borderColor="border-emerald-500/20" bgColor="bg-emerald-500/5" badge="PostgreSQL" defaultOpen>
         <div className="space-y-4">
           {/* Core tables */}
           <div>
@@ -951,6 +1055,7 @@ function DatabaseSection() {
                   cols: ["user_id (PK)", "company_name", "plan", "full_name", "email", "analyses_used", "monthly_analyses_limit", "max_audiences"],
                   color: "text-blue-400",
                   border: "border-blue-500/20",
+                  tip: "Tabela central do usuario: armazena plano, limites de uso e dados da empresa. Criada automaticamente no signup via trigger.",
                 },
                 {
                   name: "projects",
@@ -958,6 +1063,7 @@ function DatabaseSection() {
                   cols: ["id (PK)", "user_id (FK)", "name", "niche", "url", "competitor_urls", "score", "status"],
                   color: "text-primary",
                   border: "border-primary/20",
+                  tip: "Cada projeto representa uma URL a ser analisada. Contem score geral (0-100), nicho de mercado e URLs de concorrentes.",
                 },
                 {
                   name: "insights",
@@ -965,6 +1071,7 @@ function DatabaseSection() {
                   cols: ["id (PK)", "project_id (FK)", "user_id", "type", "title", "description", "source"],
                   color: "text-amber-400",
                   border: "border-amber-500/20",
+                  tip: "Recomendacoes geradas pela analise heuristica ou IA. Tipos: warning (alerta), opportunity (oportunidade), improvement (melhoria).",
                 },
                 {
                   name: "project_channel_scores",
@@ -972,6 +1079,7 @@ function DatabaseSection() {
                   cols: ["id (PK)", "project_id (FK)", "channel", "score", "objectives", "risks"],
                   color: "text-green-400",
                   border: "border-green-500/20",
+                  tip: "Avaliacao de prontidao por canal (Google, Meta, LinkedIn, TikTok). Inclui objetivos recomendados e riscos identificados.",
                 },
                 {
                   name: "benchmarks",
@@ -979,6 +1087,7 @@ function DatabaseSection() {
                   cols: ["id (PK)", "project_id (FK)", "competitor_url", "swot", "scores", "gap_analysis"],
                   color: "text-purple-400",
                   border: "border-purple-500/20",
+                  tip: "Comparacao entre seu projeto e concorrentes. SWOT (Forcas, Fraquezas, Oportunidades, Ameacas) + gap analysis automatico.",
                 },
                 {
                   name: "audiences",
@@ -986,9 +1095,11 @@ function DatabaseSection() {
                   cols: ["id (PK)", "user_id (FK)", "project_id (FK?)", "name", "industry", "size", "keywords"],
                   color: "text-pink-400",
                   border: "border-pink-500/20",
+                  tip: "Segmentos de publico-alvo com industria, porte e keywords. Podem ser vinculados a projetos especificos ou ficar independentes.",
                 },
               ].map((table) => (
-                <div key={table.name} className={`bg-slate-800/30 border ${table.border} rounded-xl p-3`}>
+                <InfoTip key={table.name} tip={table.tip}>
+                <div className={`bg-slate-800/30 border ${table.border} rounded-xl p-3 cursor-help`}>
                   <div className="flex items-center gap-2 mb-1.5">
                     <Database className={`h-3.5 w-3.5 ${table.color}`} />
                     <code className={`text-[11px] font-mono font-semibold ${table.color}`}>{table.name}</code>
@@ -1003,6 +1114,7 @@ function DatabaseSection() {
                     ))}
                   </div>
                 </div>
+                </InfoTip>
               ))}
             </div>
           </div>
@@ -1246,7 +1358,7 @@ function SecuritySection() {
   return (
     <div className="space-y-6">
       {/* RLS */}
-      <FlowBox title="Row Level Security (RLS)" borderColor="border-red-500/20" bgColor="bg-red-500/5" badge="Isolamento por user_id">
+      <FlowBox title="Row Level Security (RLS)" borderColor="border-red-500/20" bgColor="bg-red-500/5" badge="Isolamento por user_id" defaultOpen>
         <div className="flex flex-col items-center gap-0 mb-4">
           <FlowNode icon={Users} label="Usuario autenticado" sublabel="JWT com user_id" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" />
           <ArrowConnector direction="down" label="SELECT/INSERT/UPDATE" />
@@ -1400,7 +1512,7 @@ function OperationsSection() {
   return (
     <div className="space-y-6">
       {/* Campaign Management Flow */}
-      <FlowBox title="Fluxo de Gestao de Campanhas" borderColor="border-orange-500/20" bgColor="bg-orange-500/5" badge="v3.1">
+      <FlowBox title="Fluxo de Gestao de Campanhas" borderColor="border-orange-500/20" bgColor="bg-orange-500/5" badge="v3.1" defaultOpen>
         <div className="flex flex-col items-center gap-0">
           <FlowNode icon={FolderOpen} label="1. Projeto existente" sublabel="Projeto com URL analisada" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" />
           <ArrowConnector direction="down" label="Cria campanha" />

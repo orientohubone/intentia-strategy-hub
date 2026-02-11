@@ -1211,15 +1211,15 @@ export default function AdminStatusTab() {
               </div>
               <div className="flex items-center justify-between bg-slate-800/50 rounded-lg px-3 py-2">
                 <span className="text-slate-400">RSS Feed</span>
-                <span className="text-slate-500 font-mono text-[10px]">/functions/v1/status-rss</span>
+                <span className="text-slate-500 font-mono text-[10px]">/api/status-rss</span>
               </div>
               <div className="flex items-center justify-between bg-slate-800/50 rounded-lg px-3 py-2">
                 <span className="text-slate-400">Webhook (monitoramento externo)</span>
-                <span className="text-slate-500 font-mono text-[10px]">/functions/v1/status-webhook</span>
+                <span className="text-slate-500 font-mono text-[10px]">/api/status-webhook</span>
               </div>
               <div className="flex items-center justify-between bg-slate-800/50 rounded-lg px-3 py-2">
                 <span className="text-slate-400">Coleta de Uptime (cron)</span>
-                <span className="text-slate-500 font-mono text-[10px]">/functions/v1/collect-uptime</span>
+                <span className="text-slate-500 font-mono text-[10px]">/api/collect-uptime (interno)</span>
               </div>
             </div>
           </div>

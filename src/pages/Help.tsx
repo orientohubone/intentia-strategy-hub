@@ -12,6 +12,7 @@ import {
   Phone,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
   HelpCircle,
   FileText,
   Users,
@@ -39,7 +40,9 @@ import {
 export default function Help() {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [expandedArticle, setExpandedArticle] = useState<number | null>(null);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+  const [faqShowAll, setFaqShowAll] = useState(false);
 
   const helpCategories = [
     {
@@ -696,57 +699,80 @@ export default function Help() {
             {/* Help Categories */}
             <div>
               <h2 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4">Guia por Funcionalidade</h2>
-              <div className="space-y-2 sm:space-y-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
                 {filteredCategories.map((category) => (
-                  <Card key={category.id}>
-                    <CardHeader 
-                      className="cursor-pointer hover:bg-muted/50 transition-colors py-3 sm:py-4 px-3 sm:px-6"
-                      onClick={() => setExpandedCategory(expandedCategory === category.id ? null : category.id)}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                          <div className={`shrink-0 ${category.color}`}>
-                            {category.icon}
-                          </div>
-                          <div className="min-w-0">
-                            <CardTitle className="text-sm sm:text-base truncate">{category.title}</CardTitle>
-                            <CardDescription className="text-[10px] sm:text-xs line-clamp-1">{category.description}</CardDescription>
-                          </div>
+                  <button
+                    key={category.id}
+                    onClick={() => { setExpandedArticle(null); setExpandedCategory(expandedCategory === category.id ? null : category.id); }}
+                    className={`text-left p-3 sm:p-4 rounded-xl border transition-all ${
+                      expandedCategory === category.id
+                        ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20 shadow-sm"
+                        : "border-border bg-card hover:bg-muted/40 hover:border-muted-foreground/20"
+                    }`}
+                  >
+                    <div className={`mb-2 ${category.color}`}>
+                      {category.icon}
+                    </div>
+                    <h3 className="font-semibold text-xs sm:text-sm text-foreground leading-snug mb-0.5">{category.title}</h3>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2 mb-2">{category.description}</p>
+                    <Badge variant="secondary" className="text-[9px] sm:text-[10px]">
+                      {category.articles.length} artigos
+                    </Badge>
+                  </button>
+                ))}
+              </div>
+
+              {/* Expanded category articles */}
+              {expandedCategory && (() => {
+                const category = filteredCategories.find(c => c.id === expandedCategory);
+                if (!category) return null;
+                return (
+                  <Card className="mt-3 sm:mt-4">
+                    <CardHeader className="py-3 sm:py-4 px-3 sm:px-6">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className={`shrink-0 ${category.color}`}>
+                          {category.icon}
                         </div>
-                        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                          <Badge variant="secondary" className="text-[10px] sm:text-xs hidden sm:inline-flex">
-                            {category.articles.length} artigos
-                          </Badge>
-                          <Badge variant="secondary" className="text-[10px] sm:hidden">
-                            {category.articles.length}
-                          </Badge>
-                          <ChevronRight 
-                            className={`h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground transition-transform ${
-                              expandedCategory === category.id ? "rotate-90" : ""
-                            }`} 
-                          />
+                        <div>
+                          <CardTitle className="text-sm sm:text-base">{category.title}</CardTitle>
+                          <CardDescription className="text-[10px] sm:text-xs">{category.articles.length} artigos</CardDescription>
                         </div>
                       </div>
                     </CardHeader>
-                    
-                    {expandedCategory === category.id && (
-                      <CardContent className="space-y-2 sm:space-y-3 pt-0 px-3 sm:px-6">
+                    <CardContent className="pt-0 px-3 sm:px-6 space-y-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {category.articles.map((article, index) => (
-                          <div key={index} className="p-2.5 sm:p-3 rounded-lg border bg-muted/20">
-                            <div className="flex items-start sm:items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 flex-wrap">
-                              <h4 className="font-medium text-xs sm:text-sm text-foreground">{article.title}</h4>
-                              <Badge variant="secondary" className={`text-[10px] sm:text-xs ${getDifficultyColor(article.difficulty)}`}>
-                                {article.difficulty}
-                              </Badge>
-                            </div>
-                            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{article.content}</p>
-                          </div>
+                          <button
+                            key={index}
+                            onClick={() => setExpandedArticle(expandedArticle === index ? null : index)}
+                            className={`text-left p-2.5 sm:p-3 rounded-xl border transition-all ${
+                              expandedArticle === index
+                                ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20"
+                                : "border-border bg-card hover:bg-muted/40 hover:border-muted-foreground/20"
+                            }`}
+                          >
+                            <h4 className="font-medium text-[11px] sm:text-xs text-foreground leading-snug mb-1.5">{article.title}</h4>
+                            <Badge variant="secondary" className={`text-[9px] sm:text-[10px] ${getDifficultyColor(article.difficulty)}`}>
+                              {article.difficulty}
+                            </Badge>
+                          </button>
                         ))}
-                      </CardContent>
-                    )}
+                      </div>
+                      {expandedArticle !== null && category.articles[expandedArticle] && (
+                        <div className="p-3 sm:p-4 rounded-xl border border-primary/20 bg-primary/5">
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <h4 className="font-semibold text-xs sm:text-sm text-foreground">{category.articles[expandedArticle].title}</h4>
+                            <Badge variant="secondary" className={`text-[9px] sm:text-[10px] shrink-0 ${getDifficultyColor(category.articles[expandedArticle].difficulty)}`}>
+                              {category.articles[expandedArticle].difficulty}
+                            </Badge>
+                          </div>
+                          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{category.articles[expandedArticle].content}</p>
+                        </div>
+                      )}
+                    </CardContent>
                   </Card>
-                ))}
-              </div>
+                );
+              })()}
             </div>
 
             {/* FAQ */}
@@ -754,8 +780,8 @@ export default function Help() {
               <h2 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4">Perguntas Frequentes</h2>
               <Card>
                 <CardContent className="p-0">
-                  {filteredFaq.map((item, index) => (
-                    <div key={index} className={index < filteredFaq.length - 1 ? "border-b" : ""}>
+                  {(faqShowAll ? filteredFaq : filteredFaq.slice(0, 5)).map((item, index) => (
+                    <div key={index} className="border-b last:border-b-0">
                       <button
                         className="w-full flex items-center justify-between p-3 sm:p-4 text-left hover:bg-muted/50 transition-colors gap-3"
                         onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
@@ -774,6 +800,24 @@ export default function Help() {
                       )}
                     </div>
                   ))}
+                  {filteredFaq.length > 5 && (
+                    <button
+                      onClick={() => { setFaqShowAll(!faqShowAll); if (faqShowAll) setExpandedFaq(null); }}
+                      className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/40 border-t"
+                    >
+                      {faqShowAll ? (
+                        <>
+                          <ChevronUp className="h-3.5 w-3.5" />
+                          Mostrar menos
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-3.5 w-3.5" />
+                          Ver mais {filteredFaq.length - 5} perguntas
+                        </>
+                      )}
+                    </button>
+                  )}
                 </CardContent>
               </Card>
             </div>

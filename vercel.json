@@ -5,6 +5,14 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/api/status-rss",
+      "destination": "https://ccmubburnrrxmkhydxoz.supabase.co/functions/v1/status-rss"
+    },
+    {
+      "source": "/api/status-webhook",
+      "destination": "https://ccmubburnrrxmkhydxoz.supabase.co/functions/v1/status-webhook"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

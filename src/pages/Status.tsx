@@ -275,8 +275,7 @@ export default function Status() {
   const navigate = useNavigate();
   const { services, incidents, maintenances, uptimeData, latencyData, loading, error } = useStatusData();
 
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
-  const rssUrl = supabaseUrl ? `${supabaseUrl}/functions/v1/status-rss` : "";
+  const rssUrl = "/api/status-rss";
 
   const [subscribeEmail, setSubscribeEmail] = useState("");
   const [subscribing, setSubscribing] = useState(false);
