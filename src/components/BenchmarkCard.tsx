@@ -1,8 +1,44 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ScoreRing } from "./ScoreRing";
 import { Badge } from "./ui/badge";
 import { TrendingUp, TrendingDown, Target, Calendar, Globe, Eye, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
+
+function getDomain(url: string): string {
+  try {
+    return new URL(url.startsWith("http") ? url : `https://${url}`).hostname;
+  } catch {
+    return url.replace(/^https?:\/\//, "").split("/")[0];
+  }
+}
+
+function CompetitorLogo({ domain, name }: { domain: string; name: string }) {
+  const [failed, setFailed] = useState(false);
+  const initials = name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() || "")
+    .join("");
+
+  if (failed) {
+    return (
+      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+        <span className="text-xs font-bold text-muted-foreground">{initials || "?"}</span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`}
+      alt={name}
+      className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-muted object-contain shrink-0 p-1 border border-border"
+      onError={() => setFailed(true)}
+      loading="lazy"
+    />
+  );
+}
 
 interface BenchmarkCardProps {
   id: string;
@@ -55,14 +91,17 @@ export function BenchmarkCard({
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-            <h3 className="font-semibold text-foreground text-sm sm:text-base">{competitorName}</h3>
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0">{competitorNiche}</Badge>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-            <Globe className="h-3 w-3 flex-shrink-0" />
-            <span className="truncate">{competitorUrl.replace(/^https?:\/\//, "")}</span>
+        <div className="flex items-start gap-3 min-w-0 flex-1">
+          <CompetitorLogo domain={getDomain(competitorUrl)} name={competitorName} />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+              <h3 className="font-semibold text-foreground text-sm sm:text-base">{competitorName}</h3>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0">{competitorNiche}</Badge>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+              <Globe className="h-3 w-3 flex-shrink-0" />
+              <span className="truncate">{competitorUrl.replace(/^https?:\/\//, "")}</span>
+            </div>
           </div>
         </div>
         <ScoreRing score={overallScore} size="sm" label="Score" />

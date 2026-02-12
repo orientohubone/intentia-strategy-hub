@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
-import CampaignCalendar from "@/components/CampaignCalendar";
-import CampaignTimeline from "@/components/CampaignTimeline";
+import CampaignCalendar from "./CampaignCalendar";
+import CampaignTimeline from "./CampaignTimeline";
 import { supabase } from "@/integrations/supabase/client";
 import {
   type CalendarCampaign,
