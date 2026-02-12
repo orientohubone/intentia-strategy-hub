@@ -12,6 +12,7 @@ import {
   ShieldAlert,
   Megaphone,
   Plug,
+  Globe,
   LogOut, 
   Settings, 
   HelpCircle,
@@ -44,6 +45,7 @@ const navSections: NavSection[] = [
       { icon: Target, label: "Públicos-Alvo", href: "/audiences" },
       { icon: BarChart3, label: "Benchmark", href: "/benchmark" },
       { icon: Lightbulb, label: "Insights", href: "/insights" },
+      { icon: Globe, label: "SEO & Performance", href: "/seo-geo" },
     ],
   },
   {

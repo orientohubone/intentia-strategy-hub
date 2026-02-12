@@ -26,6 +26,7 @@ import TacticalPlan from "./pages/TacticalPlan";
 import Alerts from "./pages/Alerts";
 import Operations from "./pages/Operations";
 import Integrations from "./pages/Integrations";
+import SeoGeo from "./pages/SeoGeo";
 import OAuthCallback from "./pages/OAuthCallback";
 import Checkout from "./pages/Checkout";
 import Subscribe from "./pages/Subscribe";
@@ -184,6 +185,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Integrations />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/seo-geo" 
+            element={
+              <ProtectedRoute>
+                <SeoGeo />
               </ProtectedRoute>
             } 
           />

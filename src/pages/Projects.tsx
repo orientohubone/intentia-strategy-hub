@@ -927,6 +927,16 @@ export default function Projects() {
                                   </Badge>
                                 </button>
                                 <div className="flex items-center gap-1.5">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="gap-1.5 text-xs h-8 border-primary/30 text-primary hover:bg-primary/5"
+                                    onClick={() => window.location.href = `/seo-geo?project=${project.id}`}
+                                    title="Análise completa de SEO, Core Web Vitals e Performance"
+                                  >
+                                    <Globe className="h-3.5 w-3.5" />
+                                    SEO & Performance
+                                  </Button>
                                   {hasAiKeys && canAiAnalysis ? (
                                     <>
                                       <Select

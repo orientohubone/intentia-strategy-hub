@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { ScoreRing } from "./ScoreRing";
 import { Badge } from "./ui/badge";
-import { ExternalLink, Calendar } from "lucide-react";
+import { ExternalLink, Calendar, Globe } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 interface ProjectCardProps {
@@ -56,14 +56,19 @@ export function ProjectCard({
     <div className={cn("card-elevated p-4 sm:p-5", className)}>
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-            <h3 className="font-semibold text-foreground text-sm sm:text-base">{name}</h3>
-            <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", statusInfo.className)}>
-              {statusInfo.label}
-            </Badge>
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0 border border-border">
+            <Globe className="h-4 w-4 text-muted-foreground/50" />
           </div>
-          <p className="text-xs text-muted-foreground">{niche}</p>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+              <h3 className="font-semibold text-foreground text-sm sm:text-base">{name}</h3>
+              <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", statusInfo.className)}>
+                {statusInfo.label}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">{niche}</p>
+          </div>
         </div>
         <ScoreRing score={score} size="sm" label="Score" />
       </div>

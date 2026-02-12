@@ -14,14 +14,20 @@ function getDomain(url: string): string {
 }
 
 function CompetitorLogo({ domain, name }: { domain: string; name: string }) {
-  const [failed, setFailed] = useState(false);
+  const [srcIndex, setSrcIndex] = useState(0);
   const initials = name
     .split(/\s+/)
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() || "")
     .join("");
 
-  if (failed) {
+  const sources = [
+    `https://www.google.com/s2/favicons?domain=${domain}&sz=64`,
+    `https://icons.duckduckgo.com/ip3/${domain}.ico`,
+    `https://${domain}/favicon.ico`,
+  ];
+
+  if (srcIndex >= sources.length) {
     return (
       <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
         <span className="text-xs font-bold text-muted-foreground">{initials || "?"}</span>
@@ -31,10 +37,10 @@ function CompetitorLogo({ domain, name }: { domain: string; name: string }) {
 
   return (
     <img
-      src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`}
+      src={sources[srcIndex]}
       alt={name}
       className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-muted object-contain shrink-0 p-1 border border-border"
-      onError={() => setFailed(true)}
+      onError={() => setSrcIndex(prev => prev + 1)}
       loading="lazy"
     />
   );
