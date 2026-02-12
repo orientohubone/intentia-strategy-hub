@@ -2,7 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
 import { BackToHomeButton } from "@/components/BackToHomeButton";
-import { Image, ArrowRight } from "lucide-react";
+import { Image, ArrowRight, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const primaryHSL = "hsl(16, 100%, 55%)";
@@ -1037,6 +1037,40 @@ export default function BrandGuide() {
                   <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">9 Landing</span>
                   <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">Lançamento</span>
                   <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">5 Valores</span>
+                </div>
+              </div>
+              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0 hidden sm:block" />
+            </div>
+          </Link>
+        </section>
+
+        {/* ─── 14. DOCUMENTAÇÃO TÉCNICA ─── */}
+        <section className="space-y-10">
+          <div className="space-y-3">
+            <h2 className="text-2xl font-bold text-foreground tracking-tight">14. Documentação Técnica</h2>
+            <div className="w-12 h-0.5 bg-primary rounded-full" />
+          </div>
+
+          <Link
+            to="/brand/google-ads-doc"
+            className="group block rounded-2xl border border-border bg-card hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 overflow-hidden"
+          >
+            <div className="p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+              <div className="flex-shrink-0 h-16 w-16 rounded-xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                <FileText className="h-8 w-8 text-blue-600" />
+              </div>
+              <div className="flex-1 space-y-2">
+                <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                  Google Ads API — Design Documentation
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Documento formatado para aprovação do Developer Token do Google Ads API. Inclui business model, tool design, API services, mockups e informações de segurança. Pronto para salvar como PDF.
+                </p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 font-medium">OAuth 2.0</span>
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 font-medium">READ-ONLY</span>
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 font-medium">PDF-ready</span>
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 font-medium">Mockups</span>
                 </div>
               </div>
               <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0 hidden sm:block" />

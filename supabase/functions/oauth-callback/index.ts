@@ -20,9 +20,7 @@ const TOKEN_CONFIGS: Record<string, {
     tokenUrl: "https://oauth2.googleapis.com/token",
     clientIdEnv: "GOOGLE_ADS_CLIENT_ID",
     clientSecretEnv: "GOOGLE_ADS_CLIENT_SECRET",
-    accountInfoUrl: "https://www.googleapis.com/oauth2/v2/userinfo",
-    accountInfoHeaders: (token) => ({ Authorization: `Bearer ${token}` }),
-    parseAccountInfo: (data) => ({ id: data.id, name: data.email || data.name || "Google Account" }),
+    // Account info is fetched via custom logic below (listAccessibleCustomers)
   },
   meta_ads: {
     tokenUrl: "https://graph.facebook.com/v19.0/oauth/access_token",
@@ -180,7 +178,51 @@ serve(async (req) => {
     let accountName = provider.replace("_ads", "").replace("_", " ") + " Account";
     let accountCurrency = "BRL";
 
-    if (config.accountInfoUrl && config.accountInfoHeaders) {
+    if (provider === "google_ads") {
+      // Google Ads: use listAccessibleCustomers to get real Customer ID
+      try {
+        const devToken = Deno.env.get("GOOGLE_ADS_DEVELOPER_TOKEN") || "";
+        const customersResponse = await fetch(
+          "https://googleads.googleapis.com/v16/customers:listAccessibleCustomers",
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "developer-token": devToken,
+            },
+          }
+        );
+        if (customersResponse.ok) {
+          const customersData = await customersResponse.json();
+          // resourceNames format: "customers/1234567890"
+          const resourceNames = customersData.resourceNames || [];
+          if (resourceNames.length > 0) {
+            accountId = resourceNames[0].replace("customers/", "");
+            accountName = `Google Ads (${accountId})`;
+            // Try to fetch customer descriptive name
+            try {
+              const detailResponse = await fetch(
+                `https://googleads.googleapis.com/v16/customers/${accountId}`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "developer-token": devToken,
+                  },
+                }
+              );
+              if (detailResponse.ok) {
+                const detailData = await detailResponse.json();
+                accountName = detailData.descriptiveName || detailData.id || accountName;
+              }
+            } catch { /* use default name */ }
+          }
+        } else {
+          console.warn("listAccessibleCustomers failed:", await customersResponse.text());
+        }
+      } catch (e) {
+        console.warn("Could not fetch Google Ads account info:", e);
+      }
+    } else if (config.accountInfoUrl && config.accountInfoHeaders) {
+      // Other providers: use generic account info endpoint
       try {
         const infoResponse = await fetch(config.accountInfoUrl, {
           headers: config.accountInfoHeaders(accessToken),

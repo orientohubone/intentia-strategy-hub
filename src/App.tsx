@@ -32,6 +32,7 @@ import Subscribe from "./pages/Subscribe";
 import NotFound from "./pages/NotFound";
 import BrandGuide from "./pages/BrandGuide";
 import BrandPosts from "./pages/BrandPosts";
+import GoogleAdsDesignDoc from "./pages/GoogleAdsDesignDoc";
 import Security from "./pages/Security";
 import TacticalPlanPage from "./pages/TacticalPlanPage";
 import Status from "./pages/Status";
@@ -76,6 +77,7 @@ const App = () => (
           <Route path="/politica-de-cookies" element={<ForceLightMode><CookiePolicy /></ForceLightMode>} />
           <Route path="/brand" element={<ForceLightMode><BrandGuide /></ForceLightMode>} />
           <Route path="/brand/posts" element={<ForceLightMode><BrandPosts /></ForceLightMode>} />
+          <Route path="/brand/google-ads-doc" element={<ForceLightMode><GoogleAdsDesignDoc /></ForceLightMode>} />
           <Route path="/seguranca" element={<ForceLightMode><Security /></ForceLightMode>} />
           <Route path="/status" element={<ForceLightMode><Status /></ForceLightMode>} />
           <Route path="/plano-tatico" element={<ForceLightMode><TacticalPlanPage /></ForceLightMode>} />
