@@ -34,6 +34,15 @@ import Security from "./pages/Security";
 import TacticalPlanPage from "./pages/TacticalPlanPage";
 import Status from "./pages/Status";
 import Comparar from "./pages/Comparar";
+import FeatureDiagnostico from "./pages/FeatureDiagnostico";
+import FeatureAnaliseIA from "./pages/FeatureAnaliseIA";
+import FeatureBenchmark from "./pages/FeatureBenchmark";
+import FeatureScoreCanal from "./pages/FeatureScoreCanal";
+import FeatureInsights from "./pages/FeatureInsights";
+import FeatureDadosEstruturados from "./pages/FeatureDadosEstruturados";
+import FeatureGestaoCampanhas from "./pages/FeatureGestaCampanhas";
+import FeatureGestaoBudget from "./pages/FeatureGestaoBudget";
+import FeatureRelatorios from "./pages/FeatureRelatorios";
 import AdminLogin from "./pages/AdminLogin";
 import AdminPanel from "./pages/AdminPanel";
 import StatusRssFallback from "./pages/StatusRssFallback";
@@ -69,6 +78,15 @@ const App = () => (
           <Route path="/status" element={<ForceLightMode><Status /></ForceLightMode>} />
           <Route path="/plano-tatico" element={<ForceLightMode><TacticalPlanPage /></ForceLightMode>} />
           <Route path="/comparar" element={<ForceLightMode><Comparar /></ForceLightMode>} />
+          <Route path="/diagnostico-url" element={<ForceLightMode><FeatureDiagnostico /></ForceLightMode>} />
+          <Route path="/analise-ia" element={<ForceLightMode><FeatureAnaliseIA /></ForceLightMode>} />
+          <Route path="/benchmark-competitivo" element={<ForceLightMode><FeatureBenchmark /></ForceLightMode>} />
+          <Route path="/score-canal" element={<ForceLightMode><FeatureScoreCanal /></ForceLightMode>} />
+          <Route path="/alertas-insights" element={<ForceLightMode><FeatureInsights /></ForceLightMode>} />
+          <Route path="/dados-estruturados" element={<ForceLightMode><FeatureDadosEstruturados /></ForceLightMode>} />
+          <Route path="/gestao-campanhas" element={<ForceLightMode><FeatureGestaoCampanhas /></ForceLightMode>} />
+          <Route path="/gestao-budget" element={<ForceLightMode><FeatureGestaoBudget /></ForceLightMode>} />
+          <Route path="/relatorios" element={<ForceLightMode><FeatureRelatorios /></ForceLightMode>} />
           <Route 
             path="/dashboard" 
             element={

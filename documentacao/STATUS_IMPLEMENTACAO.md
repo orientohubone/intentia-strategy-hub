@@ -2,9 +2,9 @@
 
 ## 📊 Visão Geral
 
-**Status do Projeto:** v3.3.0 — Etapa Operacional: Performance IA + Dashboard Campanhas  
-**Data de Atualização:** 11/02/2026  
-**Versão:** 3.3.0
+**Status do Projeto:** v3.6.0 — Etapa Operacional: Gestão de Budget  
+**Data de Atualização:** 12/02/2026  
+**Versão:** 3.6.0
 
 ---
 
@@ -630,6 +630,37 @@ O **Intentia Strategy Hub** está na **versão 2.8.0** com funcionalidades avan�
 111. **Dashboard — Card de Campanhas Recentes** — card no sidebar direito com até 6 campanhas, badges de canal e status coloridos, barra de pacing de budget, expand/collapse quando >3 campanhas, link "Ver todas" → /operations
 112. **Dashboard — Projetos Recentes com Expand/Collapse** — limita a 2 projetos por padrão, botão "Ver mais X projetos" / "Mostrar menos" com ícone chevron
 
+### 🔄 Etapa Operacional — Fase 4: Comparativo Tático vs Real (v3.4)
+113. **TacticalVsRealComparison** — componente que cruza plano tático (tactical_channel_plans) com métricas reais das campanhas (campaign_metrics) para gap analysis operacional por projeto
+114. **Gap Analysis por Canal** — para cada canal com plano tático e/ou campanhas: aderência estrutural (tipo campanha, funil, lances), gap de métricas (planejado vs real com desvio %), score de aderência (30% estrutura + 70% métricas)
+115. **Tipos e Helpers** — GapStatus (on_track/above/below/critical/no_data), MetricGap, ChannelGapAnalysis, ProjectGapAnalysis, buildMetricGaps(), computeAdherenceScore(), parseMetricTarget(), matchMetricToSummary(), computeGapStatus() em operationalTypes.ts
+116. **METRIC_KEY_MAP** — mapeamento de 25+ labels de métricas táticas para campos reais do summary (CTR, CPC, CPA, ROAS, Leads, Sessões, CAC, LTV, etc.)
+117. **Visualização** — AdherenceRing (score circular), StructureMatchItem (check/warning), MetricGapRow (tabela com status colorido), ChannelGapCard (colapsável com scores táticos, aderência estrutural, gap de métricas)
+118. **Integração Operations.tsx** — componente renderizado dentro de cada grupo de projeto expandido, após a lista de campanhas
+
+### � Etapa Operacional — Fase 5: Alertas Automáticos de Performance (v3.5)
+119. **Performance Alerts Engine** — engine de regras em operationalTypes.ts que avalia métricas reais das campanhas contra thresholds por canal e gera alertas automáticos com severidade (critical/warning/info) e categoria (budget/efficiency/conversion/trend/quality/pacing)
+120. **11 Regras de Alerta** — budget estourado (≥100%), budget quase esgotado (≥90%), budget subutilizado (pacing <50% do esperado), CTR baixo (por canal), CPC elevado (por canal), sem conversões (cliques sem resultado), CPA elevado (por canal), ROAS negativo (<1x) e baixo (<2x), CAC:LTV desfavorável (<1x), ROI negativo, sem métricas registradas (ativa >7 dias), alto investimento sem resultados (>R$500)
+121. **Thresholds por Canal** — CTR mínimo (Google 1.5%, Meta 0.8%, LinkedIn 0.4%, TikTok 0.5%), CPC máximo (Google R$8, Meta R$5, LinkedIn R$15, TikTok R$4), CPA máximo (Google R$150, Meta R$100, LinkedIn R$250, TikTok R$80)
+122. **Tipos e Helpers** — AlertSeverity, AlertCategory, PerformanceAlert, AlertCampaignData, AlertSummaryData, ALERT_SEVERITY_CONFIG, ALERT_CATEGORY_CONFIG, makeAlert(), evaluatePerformanceAlerts()
+123. **Componente PerformanceAlerts.tsx** — cards de alerta com ícones por severidade e categoria, badges de canal, valores atual vs limite, filtros por severidade e categoria, collapse/expand, contadores por severidade no header
+124. **Integração Operations.tsx** — componente renderizado dentro de cada grupo de projeto expandido, antes do comparativo tático vs real
+
+### � Etapa Operacional — Fase 6: Gestão de Budget (v3.6)
+125. **Schema de Budget** — `budget_management.sql` com views `v_budget_summary` (resumo por canal/mês com pacing) e `v_budget_project_pacing` (consolidado por projeto com projeção de gasto)
+126. **Funções SQL** — `sync_budget_actual_spent()` sincroniza actual_spent com métricas reais das campanhas por projeto/canal/mês; `sync_all_budgets()` sincroniza todos os budgets do mês atual
+127. **Tipos e Helpers** — `BudgetAllocationRow`, `BudgetProjectSummary`, `BudgetPacingStatus`, `BUDGET_PACING_CONFIG` (healthy/caution/danger/overspent), `getBudgetPacingStatus()`, `computeBudgetProjection()`, `getExpectedPacing()`, `MONTH_LABELS`, `buildBudgetProjectSummary()` em operationalTypes.ts
+128. **Componente BudgetManagement.tsx** — gestão completa de budget por projeto com:
+  - Formulário de alocação (canal, mês, ano, valor) com upsert
+  - Card do mês atual com barra de pacing geral, marcador de pacing esperado, projeção de gasto e alerta de estouro
+  - Breakdown por canal com barras de pacing individuais e cores por status
+  - Cards de meses anteriores colapsáveis com exclusão individual
+  - Botão "Sincronizar" para atualizar gastos com métricas reais (RPC sync_all_budgets)
+  - Empty state orientativo
+  - Mobile-first (grid responsivo, badges compactos)
+129. **Integração Operations.tsx** — componente renderizado dentro de cada grupo de projeto expandido, entre alertas de performance e comparativo tático vs real
+130. **Supabase Types** — `v_budget_summary` e `v_budget_project_pacing` adicionados ao types.ts
+
 ### �📋 Próximos Passos — Etapa Operacional (v3.x)
 1. ~~Gestão de campanhas (criar/editar/monitorar campanhas reais)~~ ✅
 2. ~~Input manual de métricas por campanha (CPC, CTR, CPL, ROAS, conversões)~~ ✅
@@ -639,9 +670,9 @@ O **Intentia Strategy Hub** está na **versão 2.8.0** com funcionalidades avan�
 6. ~~Análise de Performance por IA (saúde, KPIs, funil, budget, riscos, plano de ação)~~ ✅
 7. ~~Dashboard com card de campanhas recentes~~ ✅
 8. ~~Projetos recentes com expand/collapse~~ ✅
-9. Comparativo Tático vs Real (gap analysis operacional)
-10. Alertas automáticos de performance
-11. Gestão de budget por canal e projeto com pacing
+9. ~~Comparativo Tático vs Real (gap analysis operacional)~~ ✅
+10. ~~Alertas automáticos de performance~~ ✅
+11. ~~Gestão de budget por canal e projeto com pacing~~ ✅
 12. Calendário de campanhas e timeline visual
 13. Integração com APIs de marketing (Google Ads, Meta Ads, LinkedIn Ads)
 14. Relatórios de performance automatizados
@@ -649,4 +680,4 @@ O **Intentia Strategy Hub** está na **versão 2.8.0** com funcionalidades avan�
 
 ---
 
-**Status:** 🟢 **v3.3.0 — ETAPA OPERACIONAL: ANÁLISE DE PERFORMANCE POR IA + DASHBOARD CAMPANHAS**
+**Status:** 🟢 **v3.6.0 — ETAPA OPERACIONAL: GESTÃO DE BUDGET**

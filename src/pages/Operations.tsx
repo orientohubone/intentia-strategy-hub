@@ -62,6 +62,9 @@ import type { CampaignMetrics as CampaignMetricsType } from "@/lib/operationalTy
 import { getUserActiveKeys, runPerformanceAiAnalysis, type PerformanceAiResult, type PerformanceMetricsForPrompt } from "@/lib/aiAnalyzer";
 import { getModelsForProvider } from "@/lib/aiModels";
 import CampaignPerformanceAiDialog from "@/components/CampaignPerformanceAiDialog";
+import TacticalVsRealComparison from "@/components/TacticalVsRealComparison";
+import PerformanceAlerts from "@/components/PerformanceAlerts";
+import BudgetManagement from "@/components/BudgetManagement";
 import { CHANNEL_LABELS as CH_LABELS_FULL } from "@/lib/operationalTypes";
 
 interface MetricsSummaryData {
@@ -1389,6 +1392,55 @@ export default function Operations() {
                             </div>
                           );
                         })}
+                      </div>
+                    )}
+
+                    {/* Budget Management */}
+                    {isExpanded && user && (
+                      <div className="border-t p-3 sm:p-4">
+                        <BudgetManagement
+                          userId={user.id}
+                          projectId={group.projectId}
+                          projectName={group.projectName}
+                          onSync={() => { loadStats(); loadCampaigns(); }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Performance Alerts */}
+                    {isExpanded && group.campaigns.length > 0 && (
+                      <div className="border-t p-3 sm:p-4">
+                        <PerformanceAlerts
+                          campaigns={group.campaigns.map((c) => ({
+                            id: c.id,
+                            name: c.name,
+                            channel: c.channel,
+                            status: c.status,
+                            budget_total: c.budget_total,
+                            budget_spent: c.budget_spent,
+                            start_date: c.start_date,
+                            end_date: c.end_date,
+                          }))}
+                          metricsSummaries={metricsSummaries as unknown as Record<string, Record<string, number | null>>}
+                        />
+                      </div>
+                    )}
+
+                    {/* Tactical vs Real Comparison */}
+                    {isExpanded && group.campaigns.length > 0 && (
+                      <div className="border-t p-3 sm:p-4">
+                        <TacticalVsRealComparison
+                          projectId={group.projectId}
+                          projectName={group.projectName}
+                          campaigns={group.campaigns.map((c) => ({
+                            id: c.id,
+                            name: c.name,
+                            channel: c.channel,
+                            status: c.status,
+                            objective: c.objective,
+                          }))}
+                          metricsSummaries={metricsSummaries as unknown as Record<string, Record<string, number | null>>}
+                        />
                       </div>
                     )}
                   </div>

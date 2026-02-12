@@ -480,6 +480,31 @@ export default function Help() {
           content: "O Dashboard exibe um card de 'Campanhas Recentes' no painel lateral com as últimas campanhas criadas. Cada item mostra nome, projeto vinculado, badges de canal e status, e barra de pacing de budget (verde < 70%, amarelo 70-90%, vermelho > 90%). Use 'Ver todas' para ir à página de Operações.",
           difficulty: "Iniciante",
         },
+        {
+          title: "Comparativo Tático vs Real",
+          content: "Ao expandir um grupo de projeto em Operações, o sistema cruza automaticamente o plano tático (tactical_channel_plans) com as métricas reais das campanhas. Para cada canal, é calculada a aderência estrutural (tipo de campanha, estágio de funil, estratégia de lances) e o gap de métricas (planejado vs real com desvio %). O score de aderência combina 30% estrutura + 70% métricas, com status visual: no alvo, acima, abaixo ou crítico.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Alertas automáticos de performance",
+          content: "O sistema avalia automaticamente 11 regras de performance para cada campanha ativa ou pausada: budget estourado (≥100%) ou quase esgotado (≥90%), CTR abaixo do mínimo por canal, CPC e CPA acima dos benchmarks, ROAS negativo ou baixo, sem conversões apesar de cliques, CAC:LTV desfavorável, ROI negativo, budget subutilizado e campanhas sem métricas registradas. Os alertas são classificados por severidade (crítico, atenção, info) e categoria (budget, eficiência, conversão, qualidade, pacing, tendência). Filtros permitem focar nos alertas mais relevantes.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Gestão de Budget por canal",
+          content: "Dentro de cada grupo de projeto expandido, o componente de Gestão de Budget permite alocar budget mensal por canal (Google, Meta, LinkedIn, TikTok). Defina o canal, mês, ano e valor planejado. O sistema calcula automaticamente o pacing (% gasto vs planejado), exibe barras de progresso coloridas por status (saudável, atenção, perigo, estourado) e projeta o gasto até o final do mês com base no ritmo diário atual.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Sincronização de gastos reais",
+          content: "O botão 'Sincronizar' no componente de Budget atualiza automaticamente os gastos reais com base nas métricas registradas nas campanhas. Para Google Ads, o sistema usa o maior valor entre 'Custo Total' e 'Custo Google Ads' para evitar duplicidade. A sincronização também atualiza os cards de Budget Total e Investido no topo da página de Operações, garantindo que todos os dados reflitam os gastos reais.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Pacing e projeções de budget",
+          content: "O pacing compara o gasto atual com o esperado para o dia do mês. Um marcador visual indica onde o gasto deveria estar. Se a projeção de gasto ultrapassa o budget planejado, um alerta é exibido com o valor projetado. Meses anteriores ficam em cards colapsáveis com opção de exclusão individual. Cada canal mostra sua própria barra de pacing com cores: verde (saudável, <80%), amarelo (atenção, 80-95%), vermelho (perigo, 95-100%) e vermelho escuro (estourado, >100%).",
+          difficulty: "Intermediário",
+        },
       ]
     },
     {
@@ -609,6 +634,14 @@ export default function Help() {
     {
       question: "O que aparece no card de campanhas do Dashboard?",
       answer: "O Dashboard mostra as campanhas mais recentes com nome, projeto vinculado, badges coloridos de canal (Google/Meta/LinkedIn/TikTok) e status (Rascunho/Ativa/Pausada/Concluída/Arquivada), além de uma barra de pacing de budget. Você pode expandir para ver mais campanhas ou clicar em 'Ver todas' para ir à página de Operações."
+    },
+    {
+      question: "O que é o Comparativo Tático vs Real?",
+      answer: "É um gap analysis automático que cruza o plano tático de cada canal com as métricas reais das campanhas. O sistema verifica aderência estrutural (tipo de campanha, estágio de funil, estratégia de lances) e gap de métricas (planejado vs real com desvio percentual). O score de aderência combina 30% estrutura + 70% métricas, com status visual por canal."
+    },
+    {
+      question: "Como funcionam os alertas automáticos de performance?",
+      answer: "O sistema avalia 11 regras automaticamente para cada campanha ativa ou pausada. Exemplos: budget estourado ou quase esgotado, CTR abaixo do mínimo por canal, CPC/CPA acima dos benchmarks, ROAS negativo, sem conversões, CAC:LTV desfavorável e ROI negativo. Os alertas aparecem dentro de cada grupo de projeto em Operações, com filtros por severidade (crítico, atenção, info) e categoria (budget, eficiência, conversão, qualidade, pacing, tendência)."
     },
     {
       question: "Posso cancelar meu plano a qualquer momento?",

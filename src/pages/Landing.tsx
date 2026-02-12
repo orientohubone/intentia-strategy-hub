@@ -39,6 +39,8 @@ import {
   CircleDot,
   Layers,
   Lock,
+  DollarSign,
+  Megaphone,
 } from "lucide-react";
 
 function ShowcaseSlider() {
@@ -125,26 +127,31 @@ const features: { icon: React.ElementType; title: string; description: string; l
     icon: Target,
     title: "Diagnóstico Heurístico de URL",
     description: "Análise automática de proposta de valor, clareza da oferta, jornada do usuário, SEO, conversão e qualidade de conteúdo — tudo em segundos.",
+    link: "/diagnostico-url",
   },
   {
     icon: Sparkles,
     title: "Análise por IA (Gemini & Claude)",
     description: "Enriqueça seus diagnósticos com inteligência artificial. Use sua própria API key do Google Gemini ou Anthropic Claude para insights aprofundados.",
+    link: "/analise-ia",
   },
   {
     icon: BarChart3,
     title: "Benchmark Competitivo com IA",
     description: "Compare seu posicionamento com concorrentes via análise SWOT, gap analysis e enriquecimento por IA com vantagens, ameaças e plano de ação.",
+    link: "/benchmark-competitivo",
   },
   {
     icon: Lightbulb,
     title: "Score por Canal de Mídia",
     description: "Scores individuais para Google, Meta, LinkedIn e TikTok Ads com objetivos recomendados, riscos identificados e nível de recomendação.",
+    link: "/score-canal",
   },
   {
     icon: Shield,
     title: "Alertas e Insights Estratégicos",
     description: "Insights automáticos agrupados por projeto: alertas de risco, oportunidades de mercado e melhorias sugeridas com ações práticas.",
+    link: "/alertas-insights",
   },
   {
     icon: Crosshair,
@@ -162,11 +169,25 @@ const features: { icon: React.ElementType; title: string; description: string; l
     icon: Database,
     title: "Dados Estruturados & Comparação",
     description: "Extração automática de JSON-LD, Open Graph, Twitter Card e Microdata. Compare dados estruturados do seu site com concorrentes em abas unificadas.",
+    link: "/dados-estruturados",
+  },
+  {
+    icon: Megaphone,
+    title: "Gestão de Campanhas e Métricas",
+    description: "Crie e monitore campanhas reais por canal com métricas de performance, KPIs automáticos, análise por IA e comparativo tático vs real.",
+    link: "/gestao-campanhas",
+  },
+  {
+    icon: DollarSign,
+    title: "Gestão de Budget com Pacing",
+    description: "Aloque budget mensal por canal e projeto. Acompanhe pacing em tempo real, projeções de gasto e alertas automáticos de estouro de budget.",
+    link: "/gestao-budget",
   },
   {
     icon: FileText,
     title: "Relatórios PDF e Exportação CSV",
     description: "Relatórios consolidados por projeto em PDF, exportação por seção e dados em CSV para análise externa. Tudo pronto para apresentar ao cliente.",
+    link: "/relatorios",
   },
 ];
 
@@ -193,6 +214,7 @@ const benefits = [
 
 export default function Landing() {
   const navigate = useNavigate();
+  const [showAllFeatures, setShowAllFeatures] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -305,7 +327,7 @@ export default function Landing() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, i) => {
+            {(showAllFeatures ? features : features.slice(0, 6)).map((feature, i) => {
               const content = (
                 <>
                   <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center mb-4 group-hover:bg-primary transition-colors">
@@ -335,6 +357,29 @@ export default function Landing() {
               );
             })}
           </div>
+
+          {!showAllFeatures && features.length > 6 && (
+            <div className="flex justify-center mt-10">
+              <button
+                onClick={() => setShowAllFeatures(true)}
+                className="group inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 transition-all duration-300"
+              >
+                <span className="text-sm font-semibold text-primary">Ver todo o potencial da Intentia</span>
+                <ArrowRight className="h-4 w-4 text-primary group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+          )}
+
+          {showAllFeatures && features.length > 6 && (
+            <div className="flex justify-center mt-10">
+              <button
+                onClick={() => setShowAllFeatures(false)}
+                className="group inline-flex items-center gap-2 px-6 py-3 rounded-full bg-muted/50 hover:bg-muted border border-border hover:border-muted-foreground/20 transition-all duration-300"
+              >
+                <span className="text-sm font-medium text-muted-foreground">Recolher</span>
+              </button>
+            </div>
+          )}
         </div>
       </section>
 

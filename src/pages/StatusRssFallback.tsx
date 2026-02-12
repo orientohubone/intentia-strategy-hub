@@ -18,7 +18,7 @@ export default function StatusRssFallback() {
           <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
         </div>
 
-        <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4">
+        <div className="relative z-10 flex flex-col items-center sm:justify-center min-h-screen px-4 py-24 sm:py-16">
           {/* Icon */}
           <div className="h-20 w-20 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-8">
             <Rss className="h-10 w-10 text-primary" />
@@ -72,16 +72,6 @@ export default function StatusRssFallback() {
             ))}
           </div>
 
-          {/* URL display */}
-          <div className="rounded-xl border border-border bg-muted/50 px-5 py-3 mb-8 max-w-lg w-full">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">
-              URL do Feed RSS
-            </p>
-            <code className="text-sm font-mono text-primary break-all">
-              {window.location.origin}/api/status-rss
-            </code>
-          </div>
-
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
@@ -105,7 +95,7 @@ export default function StatusRssFallback() {
           </div>
 
           {/* Footer brand */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+          <div className="mt-16 sm:mt-12 sm:absolute sm:bottom-8 sm:left-1/2 sm:-translate-x-1/2">
             <span className="text-sm font-semibold text-muted-foreground/40">
               intentia<span className="text-primary/40">.</span>
             </span>

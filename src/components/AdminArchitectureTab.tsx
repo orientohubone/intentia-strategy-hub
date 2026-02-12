@@ -370,7 +370,7 @@ function OverviewSection() {
       </FlowBox>
 
       {/* Tech Stack */}
-      <FlowBox title="Stack Tecnologico" badge="v3.4.0">
+      <FlowBox title="Stack Tecnologico" badge="v3.5.0">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: "React 18.3", sub: "UI Framework", color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20", tip: "Biblioteca para construcao de interfaces reativas com componentes reutilizaveis e Virtual DOM" },
@@ -396,7 +396,7 @@ function OverviewSection() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { n: "30", label: "Paginas", icon: FileText, color: "text-blue-400" },
-          { n: "38+", label: "Componentes", icon: Layers, color: "text-purple-400" },
+          { n: "40+", label: "Componentes", icon: Layers, color: "text-purple-400" },
           { n: "8", label: "Hooks", icon: GitBranch, color: "text-green-400" },
           { n: "7", label: "Edge Functions", icon: Cloud, color: "text-cyan-400" },
           { n: "15+", label: "Tabelas SQL", icon: Database, color: "text-emerald-400" },
@@ -558,7 +558,21 @@ function FrontendSection() {
             <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-3">
               <p className="text-[10px] font-semibold text-green-400 uppercase tracking-wider mb-2">Componentes de Dados</p>
               <div className="space-y-1.5">
-                {["ProjectCard", "InsightCard", "BenchmarkCard", "ChannelCard", "ScoreRing", "StatsCard", "CampaignMetricsForm", "CampaignMetricsList", "CampaignPerformanceCards", "CampaignPerformanceAiDialog"].map((c) => (
+                {[
+                  "ProjectCard",
+                  "InsightCard",
+                  "BenchmarkCard",
+                  "ChannelCard",
+                  "ScoreRing",
+                  "StatsCard",
+                  "CampaignMetricsForm",
+                  "CampaignMetricsList",
+                  "CampaignPerformanceCards",
+                  "CampaignPerformanceAiDialog",
+                  "TacticalVsRealComparison",
+                  "PerformanceAlerts",
+                  "BudgetManagement",
+                ].map((c) => (
                   <div key={c} className="flex items-center gap-1.5">
                     <div className="w-1 h-1 rounded-full bg-green-500/50" />
                     <code className="text-[10px] text-slate-400 font-mono">{c}</code>
@@ -1840,6 +1854,22 @@ function OperationsSection() {
               bg: "bg-blue-500/10",
               border: "border-blue-500/20",
             },
+            {
+              name: "v_budget_summary",
+              desc: "Resumo de budget por projeto/canal/mes com pacing e remaining",
+              cols: "project_name, channel, month, year, planned_budget, actual_spent, pacing_percent, remaining",
+              color: "text-green-400",
+              bg: "bg-green-500/10",
+              border: "border-green-500/20",
+            },
+            {
+              name: "v_budget_project_pacing",
+              desc: "Pacing consolidado por projeto com projecao de gasto baseada no ritmo diario",
+              cols: "project_name, channels_allocated, total_planned, total_spent, total_remaining, overall_pacing, projected_spend, projected_pacing",
+              color: "text-teal-400",
+              bg: "bg-teal-500/10",
+              border: "border-teal-500/20",
+            },
           ].map((view) => (
             <div key={view.name} className={`${view.bg} border ${view.border} rounded-xl p-4`}>
               <div className="flex items-center gap-2 mb-1.5">
@@ -1888,6 +1918,115 @@ function OperationsSection() {
         </div>
       </FlowBox>
 
+      {/* Tactical vs Real Comparison */}
+      <FlowBox title="Comparativo Tatico vs Real — Gap Analysis" borderColor="border-teal-500/20" bgColor="bg-teal-500/5" badge="v3.4">
+        <div className="flex flex-col items-center gap-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+            <FlowNode icon={Target} label="1. Plano Tatico" sublabel="tactical_channel_plans (tipo, funil, lances, metricas-alvo)" color="text-teal-300" bg="bg-teal-500/10" border="border-teal-500/20" />
+            <FlowNode icon={BarChart3} label="2. Metricas Reais" sublabel="v_campaign_metrics_summary (CTR, CPC, CPA, ROAS...)" color="text-orange-300" bg="bg-orange-500/10" border="border-orange-500/20" />
+          </div>
+          <ArrowConnector direction="down" label="Cruzamento por canal" />
+          <FlowNode icon={Calculator} label="3. Gap Analysis por Canal" sublabel="Aderencia estrutural (30%) + Gap de metricas (70%)" color="text-purple-300" bg="bg-purple-500/10" border="border-purple-500/20" />
+          <ArrowConnector direction="down" label="Calcula scores" />
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full">
+            {[
+              { label: "Tipo Campanha", sub: "Match tatico vs real" },
+              { label: "Estagio Funil", sub: "Alinhamento estrategico" },
+              { label: "Estrategia Lances", sub: "Bidding match" },
+              { label: "Gap Metricas", sub: "Planejado vs Real (%)" },
+              { label: "Score Aderencia", sub: "0-100 por canal" },
+              { label: "Status", sub: "on_track / below / critical" },
+            ].map((item) => (
+              <div key={item.label} className="bg-teal-500/10 border border-teal-500/20 rounded-lg px-2.5 py-2 text-center">
+                <p className="text-[10px] text-teal-400 font-medium">{item.label}</p>
+                <p className="text-[9px] text-slate-500">{item.sub}</p>
+              </div>
+            ))}
+          </div>
+
+          <ArrowConnector direction="down" />
+          <FlowNode icon={Eye} label="4. TacticalVsRealComparison" sublabel="AdherenceRing + StructureMatch + MetricGapRow + ChannelGapCard" color="text-cyan-300" bg="bg-cyan-500/10" border="border-cyan-500/20" />
+        </div>
+      </FlowBox>
+
+      {/* Budget Management */}
+      <FlowBox title="Gestao de Budget por Canal" borderColor="border-green-500/20" bgColor="bg-green-500/5" badge="v3.6">
+        <div className="flex flex-col items-center gap-0">
+          <FlowNode icon={DollarSign} label="1. Alocacao de Budget" sublabel="budget_allocations: canal, mes, ano, valor planejado" color="text-green-300" bg="bg-green-500/10" border="border-green-500/20" />
+          <ArrowConnector direction="down" label="Registra por canal/mes" />
+          <FlowNode icon={TrendingUp} label="2. Pacing & Projecoes" sublabel="getBudgetPacingStatus() + computeBudgetProjection()" color="text-amber-300" bg="bg-amber-500/10" border="border-amber-500/20" />
+          <ArrowConnector direction="down" label="Calcula status" />
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full mb-3">
+            <div className="bg-green-500/10 border border-green-500/20 rounded-lg px-2.5 py-2 text-center">
+              <p className="text-[10px] text-green-400 font-medium">Saudavel</p>
+              <p className="text-[9px] text-slate-500">&lt;80% gasto</p>
+            </div>
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-2 text-center">
+              <p className="text-[10px] text-amber-400 font-medium">Atencao</p>
+              <p className="text-[9px] text-slate-500">80-95% gasto</p>
+            </div>
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-2.5 py-2 text-center">
+              <p className="text-[10px] text-red-400 font-medium">Perigo</p>
+              <p className="text-[9px] text-slate-500">95-100% gasto</p>
+            </div>
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-2.5 py-2 text-center">
+              <p className="text-[10px] text-red-400 font-medium">Estourado</p>
+              <p className="text-[9px] text-slate-500">&gt;100% gasto</p>
+            </div>
+          </div>
+
+          <FlowNode icon={Receipt} label="3. Sincronizacao" sublabel="sync_all_budgets() — GREATEST(cost, google_ads_cost) → budget_allocations + campaigns" color="text-cyan-300" bg="bg-cyan-500/10" border="border-cyan-500/20" />
+          <ArrowConnector direction="down" />
+          <FlowNode icon={Eye} label="4. BudgetManagement.tsx" sublabel="Formulario upsert, pacing bars por canal, projecao, historico colapsavel" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" />
+        </div>
+      </FlowBox>
+
+      {/* Performance Alerts */}
+      <FlowBox title="Alertas Automaticos de Performance" borderColor="border-red-500/20" bgColor="bg-red-500/5" badge="v3.5">
+        <div className="flex flex-col items-center gap-0">
+          <FlowNode icon={Megaphone} label="1. Campanhas ativas/pausadas" sublabel="Exclui arquivadas e concluidas" color="text-orange-300" bg="bg-orange-500/10" border="border-orange-500/20" />
+          <ArrowConnector direction="down" label="Avalia 11 regras" />
+          <FlowNode icon={AlertTriangle} label="2. Performance Alerts Engine" sublabel="evaluatePerformanceAlerts() — regras com thresholds por canal" color="text-red-300" bg="bg-red-500/10" border="border-red-500/20" />
+          <ArrowConnector direction="down" label="Gera alertas" />
+
+          <div className="grid grid-cols-3 gap-2 w-full mb-3">
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-2.5 py-2 text-center">
+              <p className="text-[10px] text-red-400 font-medium">Critico</p>
+              <p className="text-[9px] text-slate-500">Budget 100%, ROAS &lt;1x, ROI neg.</p>
+            </div>
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-2 text-center">
+              <p className="text-[10px] text-amber-400 font-medium">Atencao</p>
+              <p className="text-[9px] text-slate-500">CTR baixo, CPC/CPA alto</p>
+            </div>
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg px-2.5 py-2 text-center">
+              <p className="text-[10px] text-blue-400 font-medium">Info</p>
+              <p className="text-[9px] text-slate-500">Pacing lento, sem metricas</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full">
+            {[
+              { label: "Budget", sub: "Estourado, quase esgotado" },
+              { label: "Eficiencia", sub: "CTR baixo, CPC alto" },
+              { label: "Conversao", sub: "Sem conv., CPA alto, ROAS" },
+              { label: "Qualidade", sub: "CAC:LTV, ROI negativo" },
+              { label: "Pacing", sub: "Budget subutilizado" },
+              { label: "Tendencia", sub: "Sem metricas, alto gasto" },
+            ].map((item) => (
+              <div key={item.label} className="bg-slate-800/40 border border-slate-700/30 rounded-lg px-2.5 py-2 text-center">
+                <p className="text-[10px] text-slate-300 font-medium">{item.label}</p>
+                <p className="text-[9px] text-slate-500">{item.sub}</p>
+              </div>
+            ))}
+          </div>
+
+          <ArrowConnector direction="down" />
+          <FlowNode icon={Bell} label="3. PerformanceAlerts.tsx" sublabel="Cards com filtros por severidade e categoria, collapse/expand" color="text-amber-300" bg="bg-amber-500/10" border="border-amber-500/20" />
+        </div>
+      </FlowBox>
+
       {/* Dashboard Campaigns Card */}
       <FlowBox title="Dashboard — Card de Campanhas Recentes" borderColor="border-blue-500/20" bgColor="bg-blue-500/5" badge="v3.3">
         <div className="flex flex-col items-center gap-0">
@@ -1917,13 +2056,13 @@ function OperationsSection() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { n: "3", label: "Tabelas SQL", icon: Database, color: "text-emerald-400" },
-            { n: "3", label: "Views SQL", icon: Eye, color: "text-blue-400" },
+            { n: "5", label: "Views SQL", icon: Eye, color: "text-blue-400" },
             { n: "35+", label: "Campos Metricas", icon: BarChart3, color: "text-orange-400" },
             { n: "4", label: "Canais", icon: Megaphone, color: "text-pink-400" },
-            { n: "5", label: "Status Campanha", icon: Activity, color: "text-green-400" },
+            { n: "11", label: "Regras de Alerta", icon: AlertTriangle, color: "text-red-400" },
             { n: "19", label: "Metricas Google", icon: Target, color: "text-blue-400" },
-            { n: "5", label: "Componentes", icon: Layers, color: "text-purple-400" },
-            { n: "1:3", label: "Benchmark CAC:LTV", icon: Calculator, color: "text-amber-400" },
+            { n: "8", label: "Componentes Op.", icon: Layers, color: "text-purple-400" },
+            { n: "4", label: "Status Pacing", icon: DollarSign, color: "text-green-400" },
           ].map((stat) => (
             <div key={stat.label} className="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex items-center gap-3">
               <stat.icon className={`h-5 w-5 ${stat.color} flex-shrink-0`} />

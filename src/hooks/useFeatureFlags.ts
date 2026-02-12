@@ -114,7 +114,7 @@ export function useFeatureFlags() {
 
   /**
    * Check if a feature is available for the current user.
-   * Priority: global status → user override → plan access
+   * Priority: disabled (absolute block) → user override → global status → plan access
    * Returns { available, status, message }
    */
   const checkFeature = useCallback(
@@ -124,10 +124,27 @@ export function useFeatureFlags() {
       // Feature doesn't exist in flags — allow by default (backwards compat)
       if (!flag) return { available: true, status: "available" };
 
-      // Check global status first (admin can disable globally regardless of overrides)
+      // "disabled" is an absolute block — no override can bypass it
       if (flag.status === "disabled") {
         return { available: false, status: "disabled", message: "Recurso desativado." };
       }
+
+      // Check per-user override BEFORE global status (allows admin to grant
+      // access to specific users even when feature is in development/maintenance)
+      const override = overrideMap.get(featureKey);
+      if (override) {
+        if (override.is_enabled) {
+          return { available: true, status: "available" };
+        } else {
+          return {
+            available: false,
+            status: "plan_blocked",
+            message: "Este recurso não está disponível no seu plano atual. Faça upgrade para desbloquear.",
+          };
+        }
+      }
+
+      // No override — check global status
       if (flag.status === "development") {
         return {
           available: false,
@@ -150,21 +167,7 @@ export function useFeatureFlags() {
         };
       }
 
-      // Feature is active — check per-user override first
-      const override = overrideMap.get(featureKey);
-      if (override) {
-        if (override.is_enabled) {
-          return { available: true, status: "available" };
-        } else {
-          return {
-            available: false,
-            status: "plan_blocked",
-            message: "Este recurso não está disponível no seu plano atual. Faça upgrade para desbloquear.",
-          };
-        }
-      }
-
-      // No override — check plan access
+      // Feature is active — check plan access
       const pa = planAccessMap.get(featureKey);
       if (pa && !pa.is_enabled) {
         return {

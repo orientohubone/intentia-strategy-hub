@@ -911,6 +911,43 @@ export type Database = {
         Insert: never
         Update: never
       }
+      v_budget_summary: {
+        Row: {
+          id: string
+          user_id: string
+          project_id: string
+          project_name: string
+          channel: "google" | "meta" | "linkedin" | "tiktok"
+          month: number
+          year: number
+          planned_budget: number
+          actual_spent: number
+          pacing_percent: number
+          remaining: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: never
+        Update: never
+      }
+      v_budget_project_pacing: {
+        Row: {
+          user_id: string
+          project_id: string
+          project_name: string
+          month: number
+          year: number
+          channels_allocated: number
+          total_planned: number
+          total_spent: number
+          total_remaining: number
+          overall_pacing: number
+          projected_spend: number
+          projected_pacing: number
+        }
+        Insert: never
+        Update: never
+      }
     }
     Functions: {
       [_ in never]: never
