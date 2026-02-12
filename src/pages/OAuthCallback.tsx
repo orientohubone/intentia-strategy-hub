@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { PROVIDER_CONFIGS, type AdProvider } from "@/lib/integrationTypes";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function OAuthCallback() {
   const [searchParams] = useSearchParams();
@@ -31,10 +32,21 @@ export default function OAuthCallback() {
       setMessage("Processando autenticação...");
     }
 
-    // Redirect back to integrations page after a delay
-    const timer = setTimeout(() => {
+    // Wait for Supabase session to be restored before redirecting
+    const redirectWhenReady = async () => {
+      // Give Supabase client time to restore session from localStorage
+      let retries = 0;
+      while (retries < 10) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) break;
+        await new Promise((r) => setTimeout(r, 500));
+        retries++;
+      }
       navigate("/integracoes", { replace: true });
-    }, status === "error" ? 3000 : 2000);
+    };
+
+    const delay = status === "error" ? 3000 : 2000;
+    const timer = setTimeout(redirectWhenReady, delay);
 
     return () => clearTimeout(timer);
   }, [searchParams, navigate, status]);
