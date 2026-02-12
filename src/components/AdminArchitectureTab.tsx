@@ -338,7 +338,7 @@ function OverviewSection() {
             </div>
             <div className="space-y-2">
               <FlowNode icon={Server} label="Supabase Client" sublabel="REST + Realtime" color="text-purple-300" bg="bg-purple-500/10" border="border-purple-500/20" size="small" tooltip="Cliente JavaScript que conecta o frontend ao banco de dados via API REST e WebSocket" />
-              <FlowNode icon={Cloud} label="Edge Functions" sublabel="10 funcoes Deno" color="text-purple-300" bg="bg-purple-500/10" border="border-purple-500/20" size="small" tooltip="Funcoes serverless executadas na borda (CDN), proximas ao usuario, com baixa latencia" />
+              <FlowNode icon={Cloud} label="Edge Functions" sublabel="12 funcoes Deno" color="text-purple-300" bg="bg-purple-500/10" border="border-purple-500/20" size="small" tooltip="Funcoes serverless executadas na borda (CDN), proximas ao usuario, com baixa latencia" />
               <FlowNode icon={Sparkles} label="AI APIs" sublabel="Gemini + Claude" color="text-purple-300" bg="bg-purple-500/10" border="border-purple-500/20" size="small" tooltip="APIs de inteligencia artificial do Google (Gemini) e Anthropic (Claude) para analises avancadas" />
             </div>
           </div>
@@ -378,7 +378,7 @@ function OverviewSection() {
       </FlowBox>
 
       {/* Tech Stack */}
-      <FlowBox title="Stack Tecnologico" badge="v3.8.0">
+      <FlowBox title="Stack Tecnologico" badge="v3.9.0">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: "React 18.3", sub: "UI Framework", color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20", tip: "Biblioteca para construcao de interfaces reativas com componentes reutilizaveis e Virtual DOM" },
@@ -403,13 +403,13 @@ function OverviewSection() {
       {/* Numbers */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { n: "30", label: "Paginas", icon: FileText, color: "text-blue-400" },
-          { n: "40+", label: "Componentes", icon: Layers, color: "text-purple-400" },
+          { n: "35+", label: "Paginas", icon: FileText, color: "text-blue-400" },
+          { n: "50+", label: "Componentes", icon: Layers, color: "text-purple-400" },
           { n: "8", label: "Hooks", icon: GitBranch, color: "text-green-400" },
-          { n: "10", label: "Edge Functions", icon: Cloud, color: "text-cyan-400" },
-          { n: "15+", label: "Tabelas SQL", icon: Database, color: "text-emerald-400" },
+          { n: "12", label: "Edge Functions", icon: Cloud, color: "text-cyan-400" },
+          { n: "18+", label: "Tabelas SQL", icon: Database, color: "text-emerald-400" },
           { n: "25", label: "Feature Flags", icon: ToggleLeft, color: "text-amber-400" },
-          { n: "3", label: "Planos", icon: Crown, color: "text-primary" },
+          { n: "15", label: "Libs", icon: Crown, color: "text-primary" },
           { n: "35+", label: "Arquivos SQL", icon: FileText, color: "text-red-400" },
         ].map((stat) => (
           <div key={stat.label} className="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex items-center gap-3">
@@ -450,7 +450,16 @@ function FrontendSection() {
               { path: "/sobre", page: "About", desc: "Sobre a Intentia" },
               { path: "/status", page: "Status", desc: "Status da plataforma" },
               { path: "/brand", page: "BrandGuide", desc: "Guia de marca" },
+              { path: "/brand/posts", page: "BrandPosts", desc: "Posts de marca" },
               { path: "/seguranca", page: "Security", desc: "Seguranca" },
+              { path: "/comparar", page: "Comparar", desc: "Comparar planos" },
+              { path: "/plano-tatico", page: "TacticalPlanPage", desc: "Plano tatico (publico)" },
+              { path: "/diagnostico-url", page: "FeatureDiagnostico", desc: "Feature: Diagnostico" },
+              { path: "/analise-ia", page: "FeatureAnaliseIA", desc: "Feature: Analise IA" },
+              { path: "/benchmark-competitivo", page: "FeatureBenchmark", desc: "Feature: Benchmark" },
+              { path: "/gestao-campanhas", page: "FeatureGestaoCampanhas", desc: "Feature: Campanhas" },
+              { path: "/gestao-budget", page: "FeatureGestaoBudget", desc: "Feature: Budget" },
+              { path: "/relatorios", page: "FeatureRelatorios", desc: "Feature: Relatorios" },
               { path: "/oauth/callback", page: "OAuthCallback", desc: "Retorno OAuth" },
             ].map((route) => (
               <div key={route.path} className="flex items-center gap-2 bg-slate-800/30 rounded-lg px-3 py-2">
@@ -480,6 +489,8 @@ function FrontendSection() {
               { path: "/operations", page: "Operations", desc: "Campanhas + Metricas" },
               { path: "/settings", page: "Settings", desc: "Config + API Keys" },
               { path: "/integracoes", page: "Integrations", desc: "OAuth + Sync APIs" },
+              { path: "/checkout", page: "Checkout", desc: "Pagamento" },
+              { path: "/help", page: "Help", desc: "Centro de ajuda" },
             ].map((route) => (
               <div key={route.path} className="flex items-center gap-2 bg-slate-800/30 rounded-lg px-3 py-2">
                 <code className="text-[10px] text-amber-400 font-mono bg-amber-500/10 px-1.5 py-0.5 rounded">{route.path}</code>
@@ -516,7 +527,7 @@ function FrontendSection() {
       </FlowBox>
 
       {/* Component Hierarchy */}
-      <FlowBox title="Hierarquia de Componentes" badge="35+ componentes">
+      <FlowBox title="Hierarquia de Componentes" badge="50+ componentes">
         <div className="space-y-4">
           {/* App wrapper */}
           <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-3">
@@ -585,6 +596,9 @@ function FrontendSection() {
                   "CampaignCalendarManager",
                   "CampaignCalendar",
                   "CampaignTimeline",
+                  "BenchmarkDetailDialog",
+                  "IcpEnrichmentDialog",
+                  "CompetitorLogo",
                 ].map((c) => (
                   <div key={c} className="flex items-center gap-1.5">
                     <div className="w-1 h-1 rounded-full bg-green-500/50" />
@@ -810,6 +824,37 @@ function DataFlowSection() {
           </div>
         </div>
       </FlowBox>
+
+      {/* ICP Enrichment Flow */}
+      <FlowBox title="Fluxo de Enriquecimento de ICP" borderColor="border-pink-500/20" bgColor="bg-pink-500/5" badge="v3.9">
+        <div className="flex flex-col items-center gap-0">
+          <FlowNode icon={Users} label="1. Publico-alvo criado" sublabel="Nome + Industria + Porte + Keywords" color="text-pink-300" bg="bg-pink-500/10" border="border-pink-500/20" />
+          <ArrowConnector direction="down" label="Clica 'Refinar ICP com IA'" />
+          <FlowNode icon={Cloud} label="2. Edge Function: enrich-icp" sublabel="Fetch SEBRAE + IBGE (server-side)" color="text-cyan-300" bg="bg-cyan-500/10" border="border-cyan-500/20" />
+          <ArrowConnector direction="down" label="Texto extraido" />
+          <FlowNode icon={Sparkles} label="3. Prompt IA especializado" sublabel="Dados do publico + fontes publicas → Gemini/Claude" color="text-purple-300" bg="bg-purple-500/10" border="border-purple-500/20" />
+          <ArrowConnector direction="down" label="Resposta estruturada" />
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full">
+            {[
+              { label: "Descricao Refinada", sub: "Perfil ideal detalhado" },
+              { label: "Decisores", sub: "Cargos-chave" },
+              { label: "Dores + Gatilhos", sub: "Pain points + triggers" },
+              { label: "Dados Demograficos", sub: "IBGE + mercado" },
+              { label: "Keywords Sugeridas", sub: "Termos otimizados" },
+              { label: "Recomendacoes", sub: "Acoes estrategicas" },
+            ].map((item) => (
+              <div key={item.label} className="bg-pink-500/10 border border-pink-500/20 rounded-lg px-2.5 py-2 text-center">
+                <p className="text-[10px] text-pink-400 font-medium">{item.label}</p>
+                <p className="text-[9px] text-slate-500">{item.sub}</p>
+              </div>
+            ))}
+          </div>
+
+          <ArrowConnector direction="down" label="Salva em audiences.icp_enrichment" />
+          <FlowNode icon={Eye} label="4. IcpEnrichmentDialog" sublabel="Dialog com fullscreen, perfil, dores, gatilhos, keywords, recomendacoes" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" />
+        </div>
+      </FlowBox>
     </div>
   );
 }
@@ -919,7 +964,7 @@ function FeatureFlagsSection() {
             { label: "Exportacao", icon: Download, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", count: 3, tip: "Exportar relatorios em PDF, dados em JSON e backup completo da conta" },
             { label: "Marca & Social", icon: Share2, color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20", count: 2, tip: "Brand Guide com identidade visual, tom de voz e posts para redes sociais" },
             { label: "Insights & Alertas", icon: Lightbulb, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", count: 7, tip: "Insights estrategicos, alertas de investimento prematuro e recomendacoes por canal" },
-            { label: "Configuracoes", icon: Settings, color: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/20", count: 0, tip: "Configuracoes da conta, API keys de IA e preferencias do usuario" },
+            { label: "Configuracoes", icon: Settings, color: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/20", count: 2, tip: "Configuracoes da conta, API keys de IA, preferencias do usuario e enriquecimento de ICP" },
           ].map((cat) => (
             <InfoTip key={cat.label} tip={cat.tip}>
               <div className={`${cat.bg} border ${cat.border} rounded-xl p-3 text-center cursor-help`}>
@@ -1021,6 +1066,28 @@ function EdgeFunctionsSection() {
               color: "text-blue-400",
               bg: "bg-blue-500/10",
               border: "border-blue-500/20",
+            },
+            {
+              name: "enrich-icp",
+              desc: "Fetch de fontes publicas (SEBRAE, IBGE) para enriquecimento de ICP",
+              trigger: "Invocado pelo frontend (Audiences)",
+              input: "industry, location, companySize, keywords",
+              output: "Texto extraido de fontes publicas",
+              auth: "JWT Bearer token",
+              color: "text-pink-400",
+              bg: "bg-pink-500/10",
+              border: "border-pink-500/20",
+            },
+            {
+              name: "admin-api",
+              desc: "API administrativa — CRUD de features, planos, usuarios, status page",
+              trigger: "Invocado pelo AdminPanel",
+              input: "action + params (JSON)",
+              output: "Dados administrativos",
+              auth: "Admin session token",
+              color: "text-red-400",
+              bg: "bg-red-500/10",
+              border: "border-red-500/20",
             },
           ].map((fn) => (
             <div key={fn.name} className={`${fn.bg} border ${fn.border} rounded-xl p-4`}>
@@ -1190,11 +1257,19 @@ function DatabaseSection() {
                 },
                 {
                   name: "audiences",
-                  desc: "Publicos-alvo",
-                  cols: ["id (PK)", "user_id (FK)", "project_id (FK?)", "name", "industry", "size", "keywords"],
+                  desc: "Publicos-alvo + ICP enriquecido",
+                  cols: ["id (PK)", "user_id (FK)", "project_id (FK?)", "name", "industry", "size", "keywords", "icp_enrichment (JSONB)", "icp_enriched_at"],
                   color: "text-pink-400",
                   border: "border-pink-500/20",
-                  tip: "Segmentos de publico-alvo com industria, porte e keywords. Podem ser vinculados a projetos especificos ou ficar independentes.",
+                  tip: "Segmentos de publico-alvo com industria, porte e keywords. ICP pode ser enriquecido com IA via fontes publicas (SEBRAE/IBGE).",
+                },
+                {
+                  name: "user_api_keys",
+                  desc: "API keys de IA por usuario",
+                  cols: ["id (PK)", "user_id (FK)", "provider (UK)", "api_key", "preferred_model", "is_active", "last_validated_at"],
+                  color: "text-purple-400",
+                  border: "border-purple-500/20",
+                  tip: "Chaves de API de IA (Google Gemini / Anthropic Claude) configuradas por usuario. Constraint unique(user_id, provider).",
                 },
               ].map((table) => (
                 <InfoTip key={table.name} tip={table.tip}>
@@ -1407,7 +1482,8 @@ function DatabaseSection() {
             { from: "projects", rel: "1:N", to: "insights", desc: "Um projeto gera muitos insights" },
             { from: "projects", rel: "1:N", to: "project_channel_scores", desc: "Um projeto tem scores por canal" },
             { from: "projects", rel: "1:N", to: "benchmarks", desc: "Um projeto tem muitos benchmarks" },
-            { from: "tenant_settings", rel: "1:N", to: "audiences", desc: "Um usuario tem muitos publicos" },
+            { from: "tenant_settings", rel: "1:N", to: "audiences", desc: "Um usuario tem muitos publicos (com ICP enriquecido)" },
+            { from: "tenant_settings", rel: "1:N", to: "user_api_keys", desc: "Um usuario tem API keys de IA" },
             { from: "feature_flags", rel: "1:N", to: "plan_features", desc: "Uma feature tem config por plano" },
             { from: "feature_flags", rel: "1:N", to: "user_feature_overrides", desc: "Uma feature pode ter overrides" },
             { from: "admin_users", rel: "1:N", to: "admin_audit_log", desc: "Um admin gera muitos logs" },

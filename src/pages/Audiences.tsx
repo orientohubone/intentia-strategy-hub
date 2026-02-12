@@ -10,8 +10,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTenantData } from "@/hooks/useTenantData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Users, Target, TrendingUp, Globe, FileSpreadsheet, FolderOpen, ChevronDown, ChevronsDownUp, ChevronsUpDown, BarChart3 } from "lucide-react";
+import { Users, Target, TrendingUp, Globe, FileSpreadsheet, FolderOpen, ChevronDown, ChevronsDownUp, ChevronsUpDown, BarChart3, Sparkles, Brain } from "lucide-react";
+import { IcpEnrichmentDialog } from "@/components/IcpEnrichmentDialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { exportAudiencesCsv } from "@/lib/exportCsv";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { getUserActiveKeys } from "@/lib/aiAnalyzer";
+import { getModelsForProvider } from "@/lib/aiModels";
+import { runIcpEnrichment, type IcpEnrichmentResult } from "@/lib/icpEnricher";
 
 type Audience = {
   id: string;
@@ -24,6 +30,8 @@ type Audience = {
   project_id?: string;
   project_name?: string;
   created_at: string;
+  icp_enrichment?: IcpEnrichmentResult;
+  icp_enriched_at?: string;
 };
 
 const sizeConfig = {
@@ -51,6 +59,77 @@ export default function Audiences() {
       else next.add(groupKey);
       return next;
     });
+  };
+
+  // AI ICP Enrichment state
+  const { isFeatureAvailable } = useFeatureFlags();
+  const canAiKeys = isFeatureAvailable("ai_keys");
+  const [hasAiKeys, setHasAiKeys] = useState(false);
+  const [availableAiModels, setAvailableAiModels] = useState<{ provider: string; model: string; label: string }[]>([]);
+  const [selectedAiModel, setSelectedAiModel] = useState<string>("");
+  const [enrichingId, setEnrichingId] = useState<string | null>(null);
+  const [selectedEnrichmentAudience, setSelectedEnrichmentAudience] = useState<Audience | null>(null);
+  const [enrichmentDialogOpen, setEnrichmentDialogOpen] = useState(false);
+
+  // Load AI keys
+  useEffect(() => {
+    if (!user || !canAiKeys) return;
+    (async () => {
+      const keys = await getUserActiveKeys(user.id);
+      setHasAiKeys(keys.length > 0);
+      const models: { provider: string; model: string; label: string }[] = [];
+      for (const k of keys) {
+        const providerModels = getModelsForProvider(k.provider);
+        for (const m of providerModels) {
+          models.push({ provider: k.provider, model: m.value, label: m.label });
+        }
+      }
+      setAvailableAiModels(models);
+      if (models.length > 0 && !selectedAiModel) {
+        const preferred = keys[0];
+        const prefModel = models.find((m) => m.provider === preferred.provider && m.model === preferred.preferred_model);
+        setSelectedAiModel(prefModel ? `${prefModel.provider}::${prefModel.model}` : `${models[0].provider}::${models[0].model}`);
+      }
+    })();
+  }, [user, canAiKeys]);
+
+  const handleEnrichIcp = async (audience: Audience) => {
+    if (!user) return;
+    setEnrichingId(audience.id);
+    try {
+      const [provider, model] = selectedAiModel.split("::");
+      const result = await runIcpEnrichment(
+        user.id,
+        audience.id,
+        {
+          name: audience.name,
+          description: audience.description,
+          industry: audience.industry,
+          companySize: audience.company_size,
+          location: audience.location,
+          keywords: audience.keywords,
+        },
+        provider as "google_gemini" | "anthropic_claude",
+        model
+      );
+      // Update local state
+      setAudiences((prev) =>
+        prev.map((a) =>
+          a.id === audience.id
+            ? { ...a, icp_enrichment: result, icp_enriched_at: result.enrichedAt }
+            : a
+        )
+      );
+      const updatedAudience = { ...audience, icp_enrichment: result, icp_enriched_at: result.enrichedAt };
+      setSelectedEnrichmentAudience(updatedAudience);
+      setEnrichmentDialogOpen(true);
+      toast.success("ICP refinado com sucesso!");
+    } catch (err: any) {
+      console.error("Erro ao refinar ICP:", err);
+      toast.error(err?.message || "Erro ao refinar ICP com IA");
+    } finally {
+      setEnrichingId(null);
+    }
   };
 
   const [formData, setFormData] = useState({
@@ -439,6 +518,54 @@ export default function Audiences() {
                             </div>
                           )}
 
+                          {/* AI Enrichment Button + Results */}
+                          {canAiKeys && hasAiKeys && (
+                            <div className="pt-2 border-t border-border space-y-3">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <Select
+                                  value={selectedAiModel}
+                                  onValueChange={setSelectedAiModel}
+                                  disabled={enrichingId === audience.id}
+                                >
+                                  <SelectTrigger className="h-7 w-[150px] text-[11px] border-primary/30 bg-primary/5">
+                                    <SelectValue placeholder="Modelo IA" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {availableAiModels.map((m) => (
+                                      <SelectItem key={`${m.provider}::${m.model}`} value={`${m.provider}::${m.model}`} className="text-xs">
+                                        {m.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <Button
+                                  size="sm"
+                                  className="h-7 gap-1.5 text-xs bg-primary hover:bg-primary/90"
+                                  disabled={enrichingId === audience.id}
+                                  onClick={(e) => { e.stopPropagation(); handleEnrichIcp(audience); }}
+                                >
+                                  {enrichingId === audience.id ? (
+                                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                                  ) : (
+                                    <Sparkles className="h-3.5 w-3.5" />
+                                  )}
+                                  {enrichingId === audience.id ? "Refinando..." : audience.icp_enrichment ? "Refinar novamente" : "Refinar ICP com IA"}
+                                </Button>
+                                {audience.icp_enrichment && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 gap-1 text-xs text-primary"
+                                    onClick={(e) => { e.stopPropagation(); setSelectedEnrichmentAudience(audience); setEnrichmentDialogOpen(true); }}
+                                  >
+                                    <Brain className="h-3.5 w-3.5" />
+                                    Ver ICP Refinado
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
                           <div className="flex justify-end pt-2 border-t border-border">
                             <Button size="sm" variant="outline" onClick={() => startEdit(audience)}>
                               Editar
@@ -452,6 +579,13 @@ export default function Audiences() {
               );
             })}
           </div>
+
+      <IcpEnrichmentDialog
+        audienceName={selectedEnrichmentAudience?.name || ""}
+        enrichment={selectedEnrichmentAudience?.icp_enrichment || null}
+        open={enrichmentDialogOpen}
+        onOpenChange={setEnrichmentDialogOpen}
+      />
     </DashboardLayout>
     </FeatureGate>
   );
