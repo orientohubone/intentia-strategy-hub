@@ -11,15 +11,6 @@ serve(async (req) => {
   }
 
   try {
-    // Auth check: require valid JWT
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return new Response(
-        JSON.stringify({ error: "Authentication required" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const { url, strategy } = await req.json();
 
     if (!url) {
