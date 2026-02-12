@@ -32,7 +32,8 @@ const channelFeatures = [
     color: "from-blue-500 to-blue-600",
     bgColor: "bg-blue-500/10",
     borderColor: "border-blue-500/20",
-    letter: "G",
+    logo: "/google-ads.svg",
+    logoClass: "",
     features: [
       "Campanhas de Busca, Display, Performance Max e Discovery",
       "Extensões recomendadas (Sitelinks, Frases, Preço, Chamada)",
@@ -45,7 +46,8 @@ const channelFeatures = [
     color: "from-indigo-500 to-indigo-600",
     bgColor: "bg-indigo-500/10",
     borderColor: "border-indigo-500/20",
-    letter: "M",
+    logo: "/meta-ads.svg",
+    logoClass: "",
     features: [
       "Campanhas de Conversão, Leads, Awareness e Tráfego",
       "Segmentação por interesses, lookalike e remarketing",
@@ -58,7 +60,8 @@ const channelFeatures = [
     color: "from-sky-500 to-sky-600",
     bgColor: "bg-sky-500/10",
     borderColor: "border-sky-500/20",
-    letter: "L",
+    logo: "/linkedin-ads.svg",
+    logoClass: "",
     features: [
       "Campanhas de Lead Gen, Awareness e Website Visits",
       "Segmentação por cargo, empresa, indústria e senioridade",
@@ -71,7 +74,8 @@ const channelFeatures = [
     color: "from-pink-500 to-rose-600",
     bgColor: "bg-pink-500/10",
     borderColor: "border-pink-500/20",
-    letter: "T",
+    logo: "/tiktok-ads.svg",
+    logoClass: "dark:brightness-0 dark:invert",
     features: [
       "Campanhas de Awareness, Tráfego e Conversão",
       "Formatos nativos: In-Feed, TopView, Branded Effects",
@@ -287,8 +291,8 @@ export default function TacticalPlanPage() {
                 className={`rounded-2xl border ${ch.borderColor} p-6 sm:p-8 hover:shadow-lg transition-all duration-300`}
               >
                 <div className="flex items-start gap-4 mb-4">
-                  <div className={`h-12 w-12 rounded-xl ${ch.bgColor} flex items-center justify-center shrink-0`}>
-                    <span className="text-lg font-bold text-foreground">{ch.letter}</span>
+                  <div className="h-12 w-12 rounded-xl bg-white dark:bg-gray-900 border border-border/50 flex items-center justify-center shrink-0 p-2">
+                    <img src={ch.logo} alt={ch.channel} className={`w-full h-full object-contain ${ch.logoClass}`} />
                   </div>
                   <div>
                     <h3 className="text-lg sm:text-xl font-bold text-foreground">{ch.channel}</h3>

@@ -67,19 +67,13 @@ const PROVIDER_ORDER: AdProvider[] = ["google_ads", "meta_ads", "linkedin_ads", 
 // --- SVG Icons reais dos providers ---
 function GoogleAdsIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none">
-      <path d="M3.272 7.5l8.5 14.7a3.07 3.07 0 005.3-3.07L8.572 4.43a3.07 3.07 0 00-5.3 3.07z" fill="#FBBC04"/>
-      <path d="M20.728 7.5l-8.5 14.7a3.07 3.07 0 01-5.3-3.07L15.428 4.43a3.07 3.07 0 015.3 3.07z" fill="#4285F4"/>
-      <circle cx="6.002" cy="18.93" r="3.07" fill="#34A853"/>
-    </svg>
+    <img src="/google-ads.svg" alt="Google Ads" className={className} />
   );
 }
 
 function MetaAdsIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none">
-      <path d="M5.8 4C3.7 4 2 6.5 2 9.5c0 2.2 1.8 5.3 4.2 8.5 1.2 1.6 2.2 2.5 3.3 2.5 1.3 0 1.8-1 2.5-2.8l.5-1.2c.4-1 .8-2 1.5-2s1.1 1 1.5 2l.5 1.2c.7 1.8 1.2 2.8 2.5 2.8 1.1 0 2.1-.9 3.3-2.5C24.2 14.8 22 12.7 22 9.5 22 6.5 20.3 4 18.2 4c-1.5 0-2.6 1.2-3.5 3.2L12 13l-2.7-5.8C8.4 5.2 7.3 4 5.8 4z" fill="#0081FB"/>
-    </svg>
+    <img src="/meta-ads.svg" alt="Meta Ads" className={className} />
   );
 }
 
@@ -93,10 +87,7 @@ function LinkedInAdsIcon({ className }: { className?: string }) {
 
 function TikTokAdsIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none">
-      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V9.48a8.18 8.18 0 004.77 1.52V7.56a4.84 4.84 0 01-1-.87z" fill="#FE2C55"/>
-      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V9.48a8.18 8.18 0 004.77 1.52V7.56a4.84 4.84 0 01-1-.87z" fill="#25F4EE" opacity="0.5"/>
-    </svg>
+    <img src="/tiktok-ads.svg" alt="TikTok Ads" className={`${className} dark:brightness-0 dark:invert`} />
   );
 }
 

@@ -709,6 +709,275 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Integrations Section */}
+      <section id="integracoes" className="py-20 sm:py-28 bg-muted/30 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="text-center mb-16 sm:mb-20">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
+              <Megaphone className="h-4 w-4" />
+              Integrações Nativas
+            </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-6">
+              Conecte suas contas de mídia
+              <br />
+              <span className="text-gradient bg-gradient-to-r from-primary to-orange-600 bg-clip-text text-transparent">
+                em um clique
+              </span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              Importe dados reais de campanhas via OAuth 2.0 seguro. Sem planilhas, sem exports manuais — 
+              seus dados de performance sincronizados diretamente na plataforma.
+            </p>
+          </div>
+
+          {/* 4 Provider Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-16">
+            {[
+              {
+                name: "Google Ads",
+                logo: "/google-ads.svg",
+                logoClass: "",
+                border: "border-blue-500/20 hover:border-blue-500/40",
+                bg: "bg-blue-500/5",
+                glow: "group-hover:shadow-blue-500/10",
+                desc: "Search, Display, Performance Max, YouTube e Discovery",
+                metrics: ["Impressões", "Cliques", "Conversões", "Custo", "ROAS"],
+                badge: "Disponível",
+                badgeColor: "bg-green-500/10 text-green-600 border-green-500/20",
+              },
+              {
+                name: "Meta Ads",
+                logo: "/meta-ads.svg",
+                logoClass: "",
+                border: "border-indigo-500/20 hover:border-indigo-500/40",
+                bg: "bg-indigo-500/5",
+                glow: "group-hover:shadow-indigo-500/10",
+                desc: "Facebook e Instagram — Awareness, Leads, Conversão e Remarketing",
+                metrics: ["Alcance", "Engajamento", "Leads", "CPL", "Frequência"],
+                badge: "Em breve",
+                badgeColor: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+              },
+              {
+                name: "LinkedIn Ads",
+                logo: "/linkedin-ads.svg",
+                logoClass: "",
+                border: "border-sky-500/20 hover:border-sky-500/40",
+                bg: "bg-sky-500/5",
+                glow: "group-hover:shadow-sky-500/10",
+                desc: "Sponsored Content, Message Ads, Lead Gen Forms e ABM",
+                metrics: ["Impressões", "Cliques", "Leads", "CPL", "CTR"],
+                badge: "Em breve",
+                badgeColor: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+              },
+              {
+                name: "TikTok Ads",
+                logo: "/tiktok-ads.svg",
+                logoClass: "dark:brightness-0 dark:invert",
+                border: "border-zinc-500/20 hover:border-zinc-500/40",
+                bg: "bg-zinc-500/5",
+                glow: "group-hover:shadow-zinc-500/10",
+                desc: "In-Feed, TopView, Spark Ads e Branded Effects",
+                metrics: ["Views", "Engajamento", "Cliques", "CPV", "CTR"],
+                badge: "Em breve",
+                badgeColor: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+              },
+            ].map((provider) => (
+              <div
+                key={provider.name}
+                className={`group relative rounded-2xl border-2 ${provider.border} ${provider.bg} p-6 transition-all duration-300 hover:shadow-xl ${provider.glow} hover:-translate-y-1`}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-white dark:bg-gray-900 border border-border/50 flex items-center justify-center p-2 shadow-sm group-hover:shadow-md transition-shadow">
+                    <img src={provider.logo} alt={provider.name} className={`w-full h-full object-contain ${provider.logoClass}`} />
+                  </div>
+                  <span className={`text-[10px] px-2.5 py-1 rounded-full border font-semibold ${provider.badgeColor}`}>
+                    {provider.badge}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-foreground mb-1.5">{provider.name}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed mb-4 min-h-[2.5rem]">{provider.desc}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {provider.metrics.map((m) => (
+                    <span key={m} className="text-[10px] px-2 py-0.5 rounded-full bg-background border border-border text-muted-foreground">
+                      {m}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* How it works — 2 column layout */}
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+            {/* Left: Flow diagram */}
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
+                  Como funciona
+                </h3>
+                <p className="text-muted-foreground">
+                  Conexão segura via OAuth 2.0 — você autoriza, nós importamos. Sem senhas, sem riscos.
+                </p>
+              </div>
+
+              <div className="space-y-0">
+                {[
+                  {
+                    step: "1",
+                    title: "Conecte sua conta",
+                    desc: "Clique em \"Conectar\" e autorize o acesso de leitura via Google/Meta/LinkedIn/TikTok",
+                    icon: Globe,
+                    color: "text-blue-600",
+                    bg: "bg-blue-50 dark:bg-blue-950/30",
+                    border: "border-blue-200 dark:border-blue-800",
+                  },
+                  {
+                    step: "2",
+                    title: "Sincronize campanhas",
+                    desc: "Importe métricas de campanhas dos últimos 30 dias com um clique — impressões, cliques, conversões, custo",
+                    icon: BarChart3,
+                    color: "text-purple-600",
+                    bg: "bg-purple-50 dark:bg-purple-950/30",
+                    border: "border-purple-200 dark:border-purple-800",
+                  },
+                  {
+                    step: "3",
+                    title: "Analise performance",
+                    desc: "Dashboards com KPIs, budget pacing, alertas automáticos e comparação planejado vs real",
+                    icon: TrendingUp,
+                    color: "text-green-600",
+                    bg: "bg-green-50 dark:bg-green-950/30",
+                    border: "border-green-200 dark:border-green-800",
+                  },
+                  {
+                    step: "4",
+                    title: "Receba insights por IA",
+                    desc: "Análise de performance com IA identifica oportunidades, riscos e recomendações de otimização",
+                    icon: Sparkles,
+                    color: "text-amber-600",
+                    bg: "bg-amber-50 dark:bg-amber-950/30",
+                    border: "border-amber-200 dark:border-amber-800",
+                  },
+                ].map((item, i) => (
+                  <div key={item.step} className="flex items-start gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className={`w-11 h-11 rounded-xl ${item.bg} border ${item.border} flex items-center justify-center flex-shrink-0`}>
+                        <item.icon className={`h-5 w-5 ${item.color}`} />
+                      </div>
+                      {i < 3 && <div className="w-px h-8 bg-border" />}
+                    </div>
+                    <div className="pb-6">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">Passo {item.step}</span>
+                      </div>
+                      <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: Visual mockup + features */}
+            <div className="space-y-6">
+              {/* Mockup card */}
+              <div className="rounded-2xl border-2 border-border overflow-hidden shadow-lg">
+                <div className="bg-muted/50 px-4 py-2.5 border-b border-border flex items-center gap-2">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-400" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                    <div className="w-3 h-3 rounded-full bg-green-400" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-mono ml-2">intentia.com.br/operations</span>
+                </div>
+                <div className="p-5 bg-card space-y-4">
+                  {/* KPI row */}
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { value: "45.2K", label: "Impressões", color: "text-blue-600" },
+                      { value: "1,847", label: "Cliques", color: "text-green-600" },
+                      { value: "127", label: "Conversões", color: "text-purple-600" },
+                      { value: "4.2x", label: "ROAS", color: "text-primary" },
+                    ].map((kpi) => (
+                      <div key={kpi.label} className="p-2.5 rounded-lg border border-border text-center">
+                        <p className={`text-base sm:text-lg font-bold ${kpi.color}`}>{kpi.value}</p>
+                        <p className="text-[9px] text-muted-foreground">{kpi.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Campaign rows */}
+                  {[
+                    { name: "Brand Search", status: "Ativa", pacing: 64, budget: "R$5.000", channel: "Google" },
+                    { name: "Remarketing", status: "Ativa", pacing: 88, budget: "R$2.000", channel: "Google" },
+                    { name: "Lead Gen B2B", status: "Ativa", pacing: 42, budget: "R$3.500", channel: "LinkedIn" },
+                  ].map((c) => (
+                    <div key={c.name} className="p-3 rounded-lg border border-border flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-xs font-semibold text-foreground truncate">{c.name}</p>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-medium">{c.channel}</span>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-medium">{c.status}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-muted-foreground">{c.budget}</span>
+                          <div className="flex-1 h-1.5 bg-muted rounded-full max-w-[100px]">
+                            <div
+                              className={`h-full rounded-full ${c.pacing > 85 ? "bg-amber-500" : "bg-primary"}`}
+                              style={{ width: `${c.pacing}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-muted-foreground">{c.pacing}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {/* Alert preview */}
+                  <div className="p-2.5 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/20 flex items-center gap-2">
+                    <AlertTriangle className="h-3.5 w-3.5 text-amber-600 flex-shrink-0" />
+                    <p className="text-[10px] text-amber-800 dark:text-amber-300">
+                      <span className="font-semibold">Alerta:</span> "Remarketing" gastou 88% do budget com 12 dias restantes
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Feature highlights */}
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { icon: Shield, title: "OAuth 2.0 Seguro", desc: "Sem senhas — autorização direta com o provedor", color: "text-green-600" },
+                  { icon: Lock, title: "Dados Isolados", desc: "RLS por usuário — ninguém acessa seus dados", color: "text-red-600" },
+                  { icon: Zap, title: "Sync On-Demand", desc: "Sincronize quando quiser — sem automações ocultas", color: "text-amber-600" },
+                  { icon: Sparkles, title: "Análise por IA", desc: "Performance analisada com Gemini ou Claude", color: "text-purple-600" },
+                ].map((feat) => (
+                  <div key={feat.title} className="p-3.5 rounded-xl border border-border bg-card hover:border-primary/20 transition-colors">
+                    <feat.icon className={`h-4 w-4 ${feat.color} mb-2`} />
+                    <p className="text-xs font-semibold text-foreground mb-0.5">{feat.title}</p>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">{feat.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom CTA */}
+          <div className="mt-16 text-center">
+            <div className="inline-flex flex-col sm:flex-row items-center gap-4">
+              <Button variant="hero" size="lg" onClick={() => navigate('/auth')}>
+                Conectar Minhas Contas
+                <ArrowRight className="h-5 w-5 ml-2" />
+              </Button>
+              <Button variant="outline" size="lg" onClick={() => navigate('/precos')}>
+                Ver Planos
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-4">
+              Acesso somente leitura • Seus dados nunca são compartilhados • Desconecte a qualquer momento
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Benefits Section */}
       <section className="py-20 bg-primary text-primary-foreground">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

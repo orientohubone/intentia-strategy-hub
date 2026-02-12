@@ -1339,13 +1339,19 @@ export default function Projects() {
                             {channelList.map((channel) => {
                               const existing = scores.find((item) => item.channel === channel) || { channel, score: 0 } as ChannelScore;
                               const channelNames: Record<string, string> = { google: "Google Ads", meta: "Meta Ads", linkedin: "LinkedIn Ads", tiktok: "TikTok Ads" };
+                              const channelLogos: Record<string, string> = { google: "/google-ads.svg", meta: "/meta-ads.svg", linkedin: "/linkedin-ads.svg", tiktok: "/tiktok-ads.svg" };
                               const channelColors: Record<string, string> = { google: "border-blue-500/30 bg-blue-500/5", meta: "border-indigo-500/30 bg-indigo-500/5", linkedin: "border-cyan-500/30 bg-cyan-500/5", tiktok: "border-zinc-500/30 bg-zinc-500/5" };
                               const scoreColor = existing.score >= 70 ? "text-green-600" : existing.score >= 50 ? "text-yellow-600" : "text-red-500";
 
                               return (
                                 <div key={channel} className={`rounded-xl border p-4 space-y-3 ${channelColors[channel]}`}>
                                   <div className="flex items-center justify-between">
-                                    <h4 className="font-semibold text-foreground">{channelNames[channel]}</h4>
+                                    <div className="flex items-center gap-2.5">
+                                      <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white dark:bg-gray-900 border border-border/50 p-1.5 flex-shrink-0">
+                                        <img src={channelLogos[channel]} alt={channelNames[channel]} className={`w-full h-full object-contain ${channel === "tiktok" ? "dark:brightness-0 dark:invert" : ""}`} />
+                                      </div>
+                                      <h4 className="font-semibold text-foreground">{channelNames[channel]}</h4>
+                                    </div>
                                     <span className={`text-2xl font-bold ${scoreColor}`}>{existing.score}</span>
                                   </div>
                                   {existing.is_recommended !== undefined && (

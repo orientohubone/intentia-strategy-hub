@@ -19,28 +19,32 @@ const channelConfig = {
     color: "bg-channel-google",
     borderColor: "border-blue-500/20",
     bgTint: "bg-blue-500/5",
-    icon: "G",
+    logo: "/google-ads.svg",
+    logoClass: "",
   },
   meta: {
     name: "Meta Ads",
     color: "bg-channel-meta",
     borderColor: "border-indigo-500/20",
     bgTint: "bg-indigo-500/5",
-    icon: "M",
+    logo: "/meta-ads.svg",
+    logoClass: "",
   },
   linkedin: {
     name: "LinkedIn Ads",
     color: "bg-channel-linkedin",
     borderColor: "border-cyan-500/20",
     bgTint: "bg-cyan-500/5",
-    icon: "in",
+    logo: "/linkedin-ads.svg",
+    logoClass: "",
   },
   tiktok: {
     name: "TikTok Ads",
     color: "bg-channel-tiktok",
     borderColor: "border-zinc-500/20",
     bgTint: "bg-zinc-500/5",
-    icon: "T",
+    logo: "/tiktok-ads.svg",
+    logoClass: "dark:brightness-0 dark:invert",
   },
 };
 
@@ -71,11 +75,8 @@ export function ChannelCard({
       {/* Header: icon + name + score */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className={cn(
-            "w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold text-primary-foreground flex-shrink-0",
-            config.color
-          )}>
-            {config.icon}
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white dark:bg-gray-900 border border-border/50 p-1.5 flex-shrink-0">
+            <img src={config.logo} alt={config.name} className={cn("w-full h-full object-contain", config.logoClass)} />
           </div>
           <div className="min-w-0">
             <h3 className="font-semibold text-foreground text-sm leading-tight">{config.name}</h3>

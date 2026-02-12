@@ -23,7 +23,8 @@ import {
 const channels = [
   {
     name: "Google Ads",
-    letter: "G",
+    logo: "/google-ads.svg",
+    logoClass: "",
     color: "from-blue-500 to-blue-600",
     bgColor: "bg-blue-500/10",
     borderColor: "border-blue-500/20",
@@ -32,7 +33,8 @@ const channels = [
   },
   {
     name: "Meta Ads",
-    letter: "M",
+    logo: "/meta-ads.svg",
+    logoClass: "",
     color: "from-indigo-500 to-indigo-600",
     bgColor: "bg-indigo-500/10",
     borderColor: "border-indigo-500/20",
@@ -41,7 +43,8 @@ const channels = [
   },
   {
     name: "LinkedIn Ads",
-    letter: "L",
+    logo: "/linkedin-ads.svg",
+    logoClass: "",
     color: "from-sky-500 to-sky-600",
     bgColor: "bg-sky-500/10",
     borderColor: "border-sky-500/20",
@@ -50,7 +53,8 @@ const channels = [
   },
   {
     name: "TikTok Ads",
-    letter: "T",
+    logo: "/tiktok-ads.svg",
+    logoClass: "dark:brightness-0 dark:invert",
     color: "from-pink-500 to-rose-600",
     bgColor: "bg-pink-500/10",
     borderColor: "border-pink-500/20",
@@ -143,8 +147,8 @@ export default function FeatureScoreCanal() {
             {channels.map((ch, index) => (
               <div key={index} className={`rounded-2xl border ${ch.borderColor} p-6 sm:p-8 hover:shadow-lg transition-all duration-300`}>
                 <div className="flex items-start gap-4 mb-4">
-                  <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${ch.color} flex items-center justify-center shrink-0`}>
-                    <span className="text-lg font-bold text-white">{ch.letter}</span>
+                  <div className="h-12 w-12 rounded-xl bg-white dark:bg-gray-900 border border-border/50 flex items-center justify-center shrink-0 p-2">
+                    <img src={ch.logo} alt={ch.name} className={`w-full h-full object-contain ${ch.logoClass}`} />
                   </div>
                   <div>
                     <h3 className="text-lg sm:text-xl font-bold text-foreground">{ch.name}</h3>
