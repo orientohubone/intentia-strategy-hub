@@ -318,7 +318,8 @@ export default function Pricing() {
             </p>
           </div>
 
-          <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
+          {/* ── Desktop table (md+) ── */}
+          <div className="hidden md:block bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
             {/* Table header */}
             <div className="grid grid-cols-4 gap-0 border-b border-border bg-muted/50">
               <div className="p-4 lg:p-5">
@@ -338,7 +339,6 @@ export default function Pricing() {
             {/* Categories */}
             {featureComparison.map((cat) => (
               <div key={cat.category}>
-                {/* Category header */}
                 <button
                   onClick={() => toggleCategory(cat.category)}
                   className="w-full grid grid-cols-4 gap-0 border-b border-border bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer"
@@ -353,7 +353,6 @@ export default function Pricing() {
                   </div>
                 </button>
 
-                {/* Feature rows */}
                 {expandedCategories[cat.category] &&
                   cat.features.map((feature, idx) => (
                     <div
@@ -392,6 +391,68 @@ export default function Pricing() {
                     {plan.cta}
                   </Button>
                 </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Mobile cards (< md) ── */}
+          <div className="md:hidden space-y-4">
+            {featureComparison.map((cat) => (
+              <div key={cat.category} className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
+                <button
+                  onClick={() => toggleCategory(cat.category)}
+                  className="w-full p-4 flex items-center justify-between bg-muted/20 hover:bg-muted/40 transition-colors"
+                >
+                  <span className="text-sm font-semibold text-foreground">{cat.category}</span>
+                  {expandedCategories[cat.category] ? (
+                    <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </button>
+
+                {expandedCategories[cat.category] && (
+                  <div className="divide-y divide-border/50">
+                    {cat.features.map((feature) => (
+                      <div key={feature.name} className="p-4 space-y-2.5">
+                        <p className="text-sm font-medium text-foreground">{feature.name}</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          {plans.map((plan) => {
+                            const value = feature[plan.key as keyof typeof feature] as FeatureValue;
+                            return (
+                              <div
+                                key={plan.key}
+                                className={`rounded-lg border p-2 text-center ${
+                                  plan.popular ? "border-primary/30 bg-primary/5" : "border-border bg-muted/20"
+                                }`}
+                              >
+                                <p className={`text-[10px] font-medium mb-1 ${plan.popular ? "text-primary" : "text-muted-foreground"}`}>
+                                  {plan.name}
+                                </p>
+                                <FeatureCell value={value} />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Mobile CTAs */}
+            <div className="flex flex-col gap-3 pt-2">
+              {plans.map((plan) => (
+                <Button
+                  key={plan.key}
+                  variant={plan.popular ? "hero" : "outline"}
+                  size="lg"
+                  className="w-full"
+                  onClick={() => handleCta(plan.key)}
+                >
+                  {plan.name} — {plan.cta}
+                </Button>
               ))}
             </div>
           </div>

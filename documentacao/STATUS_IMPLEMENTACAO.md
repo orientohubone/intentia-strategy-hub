@@ -676,7 +676,7 @@ O **Intentia Strategy Hub** está na **versão 2.8.0** com funcionalidades avan�
 12. Calendário de campanhas e timeline visual
 13. Integração com APIs de marketing (Google Ads, Meta Ads, LinkedIn Ads)
 14. Relatórios de performance automatizados
-15. Configurar SMTP custom (Resend) para emails transacionais
+
 
 ---
 

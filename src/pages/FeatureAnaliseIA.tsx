@@ -77,9 +77,9 @@ export default function FeatureAnaliseIA() {
 
       {/* Hero */}
       <section className="pt-32 pb-16 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-600 text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
             <Sparkles className="h-4 w-4" />
             Inteligência Artificial
           </div>
@@ -87,7 +87,7 @@ export default function FeatureAnaliseIA() {
             Insights profundos
             <br />
             com{" "}
-            <span className="text-gradient bg-gradient-to-r from-purple-500 to-pink-600 bg-clip-text text-transparent">
+            <span className="text-gradient bg-gradient-to-r from-primary to-orange-600 bg-clip-text text-transparent">
               Gemini & Claude
             </span>
           </h1>
@@ -115,19 +115,19 @@ export default function FeatureAnaliseIA() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div>
-              <div className="text-2xl sm:text-3xl font-bold text-purple-600">2</div>
+              <div className="text-2xl sm:text-3xl font-bold text-primary">2</div>
               <p className="text-xs sm:text-sm text-muted-foreground">Providers de IA</p>
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-bold text-purple-600">9</div>
+              <div className="text-2xl sm:text-3xl font-bold text-primary">9</div>
               <p className="text-xs sm:text-sm text-muted-foreground">Modelos Disponíveis</p>
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-bold text-purple-600">6</div>
+              <div className="text-2xl sm:text-3xl font-bold text-primary">6</div>
               <p className="text-xs sm:text-sm text-muted-foreground">Seções de Análise</p>
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-bold text-purple-600">4</div>
+              <div className="text-2xl sm:text-3xl font-bold text-primary">4</div>
               <p className="text-xs sm:text-sm text-muted-foreground">Formatos de Export</p>
             </div>
           </div>
@@ -149,9 +149,9 @@ export default function FeatureAnaliseIA() {
             {aiCapabilities.map((cap, index) => {
               const Icon = cap.icon;
               return (
-                <div key={index} className="rounded-2xl border border-border bg-background p-6 hover:border-purple-500/30 hover:shadow-md transition-all duration-300">
-                  <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center mb-4">
-                    <Icon className="h-5 w-5 text-purple-600" />
+                <div key={index} className="rounded-2xl border border-border bg-background p-6 hover:border-primary/30 hover:shadow-md transition-all duration-300">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                    <Icon className="h-5 w-5 text-primary" />
                   </div>
                   <h3 className="font-bold text-foreground mb-2">{cap.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{cap.desc}</p>
@@ -204,7 +204,7 @@ export default function FeatureAnaliseIA() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-600 text-xs font-medium mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-4">
                 <Key className="h-3.5 w-3.5" />
                 Sua API Key, Seu Controle
               </div>
@@ -238,8 +238,8 @@ export default function FeatureAnaliseIA() {
       {/* CTA */}
       <section className="py-16 sm:py-20 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rounded-3xl bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-transparent border border-purple-500/20 p-8 sm:p-12 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-600 text-sm font-medium mb-6">
+          <div className="rounded-3xl bg-gradient-to-br from-primary/10 via-orange-500/5 to-transparent border border-primary/20 p-8 sm:p-12 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
               <Play className="h-4 w-4" />
               Disponível com sua API key
             </div>

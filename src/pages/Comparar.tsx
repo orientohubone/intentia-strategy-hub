@@ -45,20 +45,24 @@ function CardItem({ item, delay, isFinal = false }: { item: { icon: React.Elemen
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.6, delay }}
       className={`relative flex flex-col items-center gap-3 px-8 py-6 rounded-2xl border min-w-[180px] ${
-        isFinal ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border/60"
+        isFinal ? "bg-foreground text-background border-foreground" : "bg-card border-border/60"
       }`}
     >
-      <motion.div
-        initial={{ boxShadow: "0 0 0 0 transparent" }}
-        animate={isFinal ? { boxShadow: "0 0 24px 6px hsl(24 95% 53% / 0.55)" } : { boxShadow: "0 0 14px 3px hsl(24 95% 53% / 0.3)" }}
-        transition={{ duration: 0.5, delay: delay + 0.3 }}
-        className={`w-14 h-14 rounded-xl flex items-center justify-center ${isFinal ? "bg-primary-foreground/20" : "bg-primary/10 text-primary"}`}
-      >
-        <item.icon size={28} className={isFinal ? "text-primary-foreground" : ""} />
-      </motion.div>
+      {isFinal ? (
+        <span className="text-2xl font-extrabold tracking-tight text-background">intentia<span className="text-primary">.</span></span>
+      ) : (
+        <motion.div
+          initial={{ boxShadow: "0 0 0 0 transparent" }}
+          animate={{ boxShadow: "0 0 14px 3px hsl(24 95% 53% / 0.3)" }}
+          transition={{ duration: 0.5, delay: delay + 0.3 }}
+          className="w-14 h-14 rounded-xl flex items-center justify-center bg-primary/10 text-primary"
+        >
+          <item.icon size={28} />
+        </motion.div>
+      )}
       <div className="text-center">
-        <p className={`font-semibold ${isFinal ? "" : "text-foreground"}`}>{item.label}</p>
-        <p className={`text-sm ${isFinal ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{item.sub}</p>
+        <p className={`${isFinal ? "text-xs font-medium text-background" : "font-semibold text-foreground"}`}>{item.label}</p>
+        <p className={`text-sm ${isFinal ? "text-background/70" : "text-muted-foreground"}`}>{item.sub}</p>
       </div>
       <motion.div
         initial={{ opacity: 0 }}
@@ -67,7 +71,7 @@ function CardItem({ item, delay, isFinal = false }: { item: { icon: React.Elemen
         className="absolute inset-0 rounded-2xl pointer-events-none"
         style={{
           boxShadow: isFinal
-            ? "inset 0 0 0 2px hsl(24 95% 53% / 0.7), 0 0 20px 4px hsl(24 95% 53% / 0.35)"
+            ? "inset 0 0 0 2px hsl(0 0% 20% / 0.7), 0 0 20px 4px hsl(0 0% 0% / 0.2)"
             : "inset 0 0 0 1.5px hsl(24 95% 53% / 0.4)",
         }}
       />

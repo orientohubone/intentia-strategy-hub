@@ -62,16 +62,16 @@ export default function FeatureInsights() {
 
       {/* Hero */}
       <section className="pt-32 pb-16 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-amber-500/5 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
             <Shield className="h-4 w-4" />
             Insights Estratégicos
           </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground mb-6">
             Alertas e oportunidades
             <br />
-            <span className="text-gradient bg-gradient-to-r from-amber-500 to-orange-600 bg-clip-text text-transparent">
+            <span className="text-gradient bg-gradient-to-r from-primary to-orange-600 bg-clip-text text-transparent">
               antes de investir
             </span>
           </h1>
@@ -132,9 +132,9 @@ export default function FeatureInsights() {
             {features.map((feat, index) => {
               const Icon = feat.icon;
               return (
-                <div key={index} className="rounded-2xl border border-border bg-background p-6 hover:border-amber-500/30 hover:shadow-md transition-all duration-300">
-                  <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center mb-4">
-                    <Icon className="h-5 w-5 text-amber-600" />
+                <div key={index} className="rounded-2xl border border-border bg-background p-6 hover:border-primary/30 hover:shadow-md transition-all duration-300">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                    <Icon className="h-5 w-5 text-primary" />
                   </div>
                   <h3 className="font-bold text-foreground mb-2">{feat.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{feat.desc}</p>
@@ -159,7 +159,7 @@ export default function FeatureInsights() {
               <ul className="space-y-3">
                 {benefits.map((item, i) => (
                   <li key={i} className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                     <span className="text-sm text-foreground/80">{item}</span>
                   </li>
                 ))}
@@ -175,8 +175,8 @@ export default function FeatureInsights() {
       {/* CTA */}
       <section className="py-16 sm:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rounded-3xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/20 p-8 sm:p-12 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 text-sm font-medium mb-6">
+          <div className="rounded-3xl bg-gradient-to-br from-primary/10 via-orange-500/5 to-transparent border border-primary/20 p-8 sm:p-12 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
               <Play className="h-4 w-4" />
               Comece agora
             </div>
