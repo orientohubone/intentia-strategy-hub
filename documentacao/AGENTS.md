@@ -8,9 +8,9 @@
 **UI Framework:** shadcn/ui + Tailwind CSS  
 **Backend:** Supabase (PostgreSQL + Auth + Edge Functions)  
 **Propósito:** Plataforma de análise estratégica para marketing B2B  
-**Versão:** 2.9.0
+**Versão:** 3.8.0
 
-## Status Atual: ✅ v2.9.0 (Enriquecimento IA de Insights + UX Colapsável)
+## Status Atual: ✅ v3.8.0 (Integrações com APIs de Marketing — OAuth Real)
 
 ### Funcionalidades Implementadas
 

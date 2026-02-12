@@ -252,17 +252,24 @@ export default function Integrations() {
         }),
       });
 
-      const result = await response.json();
+      let result: any;
+      try {
+        result = await response.json();
+      } catch {
+        throw new Error(`Erro do servidor (${response.status})`);
+      }
 
       if (!response.ok) {
-        throw new Error(result.error || "Sync failed");
+        const errMsg = typeof result?.error === "string" ? result.error : "Falha na sincronização";
+        throw new Error(errMsg.length > 150 ? errMsg.substring(0, 150) + "..." : errMsg);
       }
 
       const msg = `Sincronização concluída: ${result.records_fetched || 0} registros importados`;
       toast.success(msg);
       await loadIntegrations();
     } catch (err: any) {
-      toast.error(`Erro na sincronização: ${err.message}`);
+      const cleanMsg = (err.message || "Erro desconhecido").substring(0, 150);
+      toast.error(`Erro na sincronização: ${cleanMsg}`);
     } finally {
       setSyncingProvider(null);
     }

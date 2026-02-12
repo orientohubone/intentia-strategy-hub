@@ -2,9 +2,9 @@
 
 ## 📊 Visão Geral
 
-**Status do Projeto:** v3.6.0 — Etapa Operacional: Gestão de Budget  
+**Status do Projeto:** v3.8.0 — Integrações com APIs de Marketing (OAuth Real)  
 **Data de Atualização:** 12/02/2026  
-**Versão:** 3.6.0
+**Versão:** 3.8.0
 
 ---
 
@@ -692,6 +692,66 @@ O **Intentia Strategy Hub** está na **versão 2.8.0** com funcionalidades avan�
 137. **Supabase Types** — `v_campaign_calendar` e `v_campaign_timeline` adicionados ao types.ts
 138. **Indexes** — `idx_campaigns_start_date`, `idx_campaigns_end_date`, `idx_campaigns_date_range` para performance
 
+### 🔌 Integrações com APIs de Marketing — OAuth Real (v3.8)
+139. **Schema SQL** — `ad_integrations.sql` com tabelas `ad_integrations` (provider, status, OAuth tokens, account info, sync config, project_mappings, scopes, error tracking) e `integration_sync_logs` (sync history com status, duração, records fetched/created/updated/failed, período, erros)
+140. **View** — `v_integration_summary` com join de ad_integrations + sync logs agregados (total_syncs, successful, failed, last_sync_status, duration)
+141. **RLS e Constraints** — RLS por user_id em ambas as tabelas, unique(user_id, provider), trigger updated_at, indexes
+142. **Tipos** — `integrationTypes.ts` com AdProvider, IntegrationStatus, SyncFrequency, SyncStatus, PROVIDER_CONFIGS (nome, cores, gradientes, docsUrl, scopes, features, setupSteps), INTEGRATION_STATUS_CONFIG, SYNC_FREQUENCY_CONFIG, helpers (formatSyncDuration, formatLastSync)
+143. **OAuth Config** — `integrationOAuth.ts` com OAuthProviderConfig por provider (authUrl, tokenUrl, scopes, clientIdEnvKey), generateOAuthState(), getOAuthConnectUrl(), getOAuthCallbackUrl(), getOAuthReturnUrl()
+144. **Edge Function oauth-connect** — Recebe provider via body (POST) + token via Authorization header, valida sessão do usuário, lê client_id do env, gera state (base64 JSON com user_id+provider+timestamp), constrói authorization URL do provider, retorna JSON com URL para o frontend redirecionar. JWT verification desabilitado (necessário para fluxo OAuth).
+145. **Edge Function oauth-callback** — Recebe redirect do provider (GET com code+state), decodifica state, valida idade (max 10min), troca code por tokens (formato especial para TikTok: JSON ao invés de form-encoded), busca account info via API do provider, faz upsert em ad_integrations com tokens e dados da conta, redireciona para /oauth/callback no frontend com status de sucesso ou erro. JWT verification desabilitado (recebe redirect do navegador, sem headers).
+146. **Edge Function integration-sync** — Recebe provider + integration_id via POST com Authorization header, verifica token expirado (auto-refresh via refresh_token se necessário), busca campanhas via API do provider, busca métricas por campanha, insere em campaign_metrics com source:'api', cria sync log com contadores, atualiza last_sync_at. Suporta Google Ads API v16, Meta Graph API v19.0, LinkedIn REST API v202401, TikTok Business API v1.3.
+147. **Página Integrações** — `/integracoes` com grid 2x2 de cards (Google Ads, Meta Ads, LinkedIn Ads, TikTok Ads), ícones SVG reais dos providers, status badge, account info, last sync, frequência de sync. Fluxo de conexão: fetch para oauth-connect → recebe URL → redirect para provider. Sync manual via Edge Function. Disconnect/delete com AlertDialog. Dialog de detalhes com histórico de syncs.
+148. **Página OAuthCallback** — `/oauth/callback` (rota pública, sem ProtectedRoute) recebe redirect do oauth-callback Edge Function, mostra status (success/error/processing) com ícones, espera sessão Supabase restaurar do localStorage antes de redirecionar para /integracoes (retry loop com 10 tentativas × 500ms).
+149. **Sidebar** — Item "Integrações" com ícone Plug após Operações
+150. **Supabase Types** — ad_integrations, integration_sync_logs tables + v_integration_summary view adicionados ao types.ts
+151. **Documentação** — 4 manuais completos em `documentacao/integracoes/`: GOOGLE_ADS.md, META_ADS.md, LINKEDIN_ADS.md, TIKTOK_ADS.md + README.md índice. Cada manual com passo a passo de configuração, fluxo técnico, endpoints, particularidades, refresh de tokens, rate limits, solução de problemas e links úteis.
+
+### Arquitetura OAuth — Fluxo Completo
+```
+1. Usuário clica "Conectar" no card do provider
+2. Frontend faz POST para oauth-connect Edge Function (com Authorization header)
+3. Edge Function valida sessão, gera state (user_id+provider+ts em base64), retorna JSON com URL
+4. Frontend redireciona para OAuth do provider (Google/Meta/LinkedIn/TikTok)
+5. Usuário autoriza acesso à conta de anúncios
+6. Provider redireciona para oauth-callback Edge Function (GET com code+state)
+7. Edge Function decodifica state, troca code por tokens, busca account info
+8. Upsert em ad_integrations com tokens isolados por user_id (RLS)
+9. Redireciona para /oauth/callback no frontend com params de sucesso/erro
+10. OAuthCallback.tsx mostra status, espera sessão restaurar, redireciona para /integracoes
+```
+
+### Sincronização de Dados — Fluxo
+```
+1. Usuário clica "Sincronizar" no card ou dialog
+2. Frontend faz POST para integration-sync Edge Function
+3. Edge Function verifica token expirado → auto-refresh se necessário
+4. Busca campanhas via API do provider
+5. Para cada campanha, busca métricas (últimos 30 dias)
+6. Insere em campaign_metrics com source: 'api'
+7. Cria sync log com contadores (fetched/created/updated/failed)
+8. Atualiza last_sync_at na integração
+```
+
+### Segurança OAuth
+- **Tokens isolados por user_id** — cada tenant tem seus próprios tokens via RLS
+- **State parameter** — contém user_id + provider + timestamp, validado com expiração de 10 minutos
+- **Client credentials compartilhadas** — 1 app OAuth da Intentia por provider (padrão SaaS)
+- **Auto-refresh de tokens** — integration-sync verifica expiração e renova automaticamente
+- **Fallback para expired** — se refresh falhar, marca integração como "expired" para reconexão
+
+### Env Vars (Supabase Secrets)
+- `APP_URL` — URL do frontend para redirect após callback
+- `GOOGLE_ADS_CLIENT_ID`, `GOOGLE_ADS_CLIENT_SECRET`, `GOOGLE_ADS_DEVELOPER_TOKEN`
+- `META_ADS_CLIENT_ID`, `META_ADS_CLIENT_SECRET`
+- `LINKEDIN_ADS_CLIENT_ID`, `LINKEDIN_ADS_CLIENT_SECRET`
+- `TIKTOK_ADS_CLIENT_ID`, `TIKTOK_ADS_CLIENT_SECRET`
+
+### Callback URL (mesma para todos os providers)
+```
+https://vofizgftwxgyosjrwcqy.supabase.co/functions/v1/oauth-callback
+```
+
 ### 📋 Próximos Passos — Etapa Operacional (v3.x)
 1. ~~Gestão de campanhas (criar/editar/monitorar campanhas reais)~~ ✅
 2. ~~Input manual de métricas por campanha (CPC, CTR, CPL, ROAS, conversões)~~ ✅
@@ -705,10 +765,10 @@ O **Intentia Strategy Hub** está na **versão 2.8.0** com funcionalidades avan�
 10. ~~Alertas automáticos de performance~~ ✅
 11. ~~Gestão de budget por canal e projeto com pacing~~ ✅
 12. ~~Calendário de campanhas e timeline visual~~ ✅
-13. Integração com APIs de marketing (Google Ads, Meta Ads, LinkedIn Ads)
+13. ~~Integração com APIs de marketing (Google Ads, Meta Ads, LinkedIn Ads, TikTok Ads)~~ ✅
 14. Relatórios de performance automatizados
 
 
 ---
 
-**Status:** 🟢 **v3.7.0 — ETAPA OPERACIONAL: CALENDÁRIO DE CAMPANHAS**
+**Status:** 🟢 **v3.8.0 — INTEGRAÇÕES COM APIs DE MARKETING (OAUTH REAL)**

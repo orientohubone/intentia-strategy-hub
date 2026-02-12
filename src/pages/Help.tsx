@@ -36,6 +36,7 @@ import {
   Wand2,
   Megaphone,
   CalendarDays,
+  Plug,
 } from "lucide-react";
 
 export default function Help() {
@@ -524,6 +525,65 @@ export default function Help() {
       ]
     },
     {
+      id: "integrations",
+      title: "Integrações com APIs de Marketing",
+      description: "Conecte Google Ads, Meta Ads, LinkedIn Ads e TikTok Ads via OAuth",
+      icon: <Plug className="h-5 w-5" />,
+      color: "text-cyan-600",
+      articles: [
+        {
+          title: "O que são as Integrações",
+          content: "As Integrações permitem conectar suas contas de anúncios (Google Ads, Meta Ads, LinkedIn Ads, TikTok Ads) diretamente ao Intentia Strategy Hub via OAuth 2.0. Após conectar, você pode sincronizar campanhas e métricas automaticamente, alimentando os módulos de Operações, Budget e Insights com dados reais.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Como conectar uma conta",
+          content: "Vá em Integrações e clique no botão 'Conectar' no card do provider desejado. Você será redirecionado para a página de autorização do provider (Google, Meta, LinkedIn ou TikTok). Autorize o acesso à sua conta de anúncios e você será redirecionado de volta ao Intentia com status 'Conectado'. Todo o fluxo usa OAuth 2.0 — nós nunca vemos sua senha.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Segurança do fluxo OAuth",
+          content: "O fluxo OAuth é seguro por design: (1) Cada conexão gera um parâmetro 'state' único com expiração de 10 minutos para prevenir ataques CSRF. (2) Os tokens de acesso são isolados por usuário via Row Level Security — nenhum outro usuário pode acessá-los. (3) A Intentia usa credenciais OAuth próprias (padrão SaaS) — cada cliente autoriza sua própria conta de anúncios.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Sincronizando dados",
+          content: "Após conectar, clique em 'Sincronizar Agora' no card ou no dialog de detalhes do provider. O sistema busca suas campanhas e métricas (impressões, cliques, conversões, custo, receita) dos últimos 30 dias via API oficial do provider. Os dados são inseridos em campaign_metrics com source 'api', alimentando KPIs, alertas de performance e gestão de budget automaticamente.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Frequência de sincronização",
+          content: "Você pode configurar a frequência de sync no dialog de detalhes: a cada hora, 6h, 12h, diária ou semanal. Além disso, pode clicar em 'Sincronizar Agora' a qualquer momento para uma sincronização manual imediata. O histórico de syncs mostra status, duração e quantidade de registros importados.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Tokens e renovação automática",
+          content: "Cada provider tem uma validade diferente para tokens: Google (1 hora, com refresh automático), Meta (60 dias), LinkedIn (60 dias com refresh de 365 dias), TikTok (24 horas com refresh de 365 dias). O sistema verifica a expiração antes de cada sync e renova automaticamente quando possível. Se a renovação falhar, a integração é marcada como 'Expirada' e você precisa reconectar.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Desconectando uma integração",
+          content: "No card do provider ou no dialog de detalhes, clique em 'Desconectar'. Uma confirmação será exibida. Ao desconectar, os tokens são removidos e a sincronização é interrompida. Os dados já importados (campaign_metrics) permanecem no sistema. Você pode reconectar a qualquer momento.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Histórico de sincronizações",
+          content: "No dialog de detalhes de cada provider, a seção 'Histórico de Syncs' mostra as últimas 20 sincronizações com: status (concluído, parcial, falhou), tipo (manual/automático), duração, registros importados/criados/atualizados/falhos e período. Útil para monitorar a saúde da integração.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Providers suportados",
+          content: "4 providers disponíveis: Google Ads (API v16 com developer token), Meta Ads (Graph API v19.0 para Facebook e Instagram), LinkedIn Ads (REST API v202401 para campanhas B2B) e TikTok Ads (Business API v1.3). Cada provider tem configuração específica — consulte os manuais de integração na documentação para detalhes.",
+          difficulty: "Intermediário",
+        },
+        {
+          title: "Dados importados por provider",
+          content: "Google Ads: campanhas, budget (micros), impressões, cliques, conversões, custo, receita. Meta Ads: campanhas, budget diário/vitalício, impressões, cliques, purchases, spend, purchase value. LinkedIn Ads: campanhas, budget total/diário, impressões, cliques, conversões externas, custo em moeda local. TikTok Ads: campanhas, budget, impressões, cliques, conversões, spend.",
+          difficulty: "Avançado",
+        },
+      ]
+    },
+    {
       id: "security",
       title: "Segurança & Backup de Dados",
       description: "Proteção de dados, backups, auditoria e guardrails",
@@ -662,6 +722,22 @@ export default function Help() {
     {
       question: "Como funcionam os alertas automáticos de performance?",
       answer: "O sistema avalia 11 regras automaticamente para cada campanha ativa ou pausada. Exemplos: budget estourado ou quase esgotado, CTR abaixo do mínimo por canal, CPC/CPA acima dos benchmarks, ROAS negativo, sem conversões, CAC:LTV desfavorável e ROI negativo. Os alertas aparecem dentro de cada grupo de projeto em Operações, com filtros por severidade (crítico, atenção, info) e categoria (budget, eficiência, conversão, qualidade, pacing, tendência)."
+    },
+    {
+      question: "Como conecto minha conta do Google Ads, Meta Ads ou LinkedIn Ads?",
+      answer: "Vá em Integrações e clique em 'Conectar' no card do provider desejado. Você será redirecionado para a página de autorização do provider, onde autoriza o acesso à sua conta de anúncios. Após autorizar, você volta automaticamente ao Intentia com status 'Conectado'. O fluxo usa OAuth 2.0 — nós nunca vemos sua senha. Cada usuário conecta sua própria conta."
+    },
+    {
+      question: "Os dados das minhas contas de anúncios ficam seguros?",
+      answer: "Sim. Os tokens de acesso são isolados por usuário via Row Level Security (RLS) — nenhum outro usuário pode acessá-los. O fluxo OAuth usa parâmetro 'state' com expiração de 10 minutos para prevenir ataques. Tokens expirados são renovados automaticamente. Se a renovação falhar, a integração é marcada como 'Expirada' e você precisa reconectar."
+    },
+    {
+      question: "O que acontece quando sincronizo dados de anúncios?",
+      answer: "A sincronização busca suas campanhas e métricas (impressões, cliques, conversões, custo, receita) dos últimos 30 dias via API oficial do provider. Os dados são inseridos automaticamente no módulo de Operações, alimentando KPIs, alertas de performance, gestão de budget e comparativo tático vs real. Você pode sincronizar manualmente ou configurar frequência automática."
+    },
+    {
+      question: "Preciso configurar algo no Google/Meta/LinkedIn/TikTok?",
+      answer: "A configuração dos providers é feita pela equipe Intentia (credenciais OAuth do app). Você como usuário só precisa clicar em 'Conectar' e autorizar sua conta de anúncios. Não é necessário criar apps ou configurar APIs — tudo já está pronto. Basta ter uma conta ativa no provider desejado."
     },
     {
       question: "Posso cancelar meu plano a qualquer momento?",
