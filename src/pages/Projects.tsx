@@ -752,9 +752,32 @@ export default function Projects() {
               isComplete={analysisComplete}
             />
 
-            {loading && <p className="text-sm text-muted-foreground">Carregando projetos...</p>}
+            {loading && (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="border border-border rounded-lg bg-card p-4 space-y-4 animate-pulse">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-2">
+                        <div className="h-5 w-48 bg-muted rounded" />
+                        <div className="h-3 w-32 bg-muted rounded" />
+                      </div>
+                      <div className="h-8 w-20 bg-muted rounded" />
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="h-6 w-24 bg-muted rounded-full" />
+                      <div className="h-6 w-24 bg-muted rounded-full" />
+                      <div className="h-6 w-24 bg-muted rounded-full" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             {!loading && projectList.length === 0 && (
-              <p className="text-sm text-muted-foreground">Nenhum projeto encontrado.</p>
+              <div className="flex flex-col items-center text-center py-12 px-4 rounded-xl border border-dashed border-border bg-muted/30">
+                <FolderOpen className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-1">Crie seu primeiro projeto</h3>
+                <p className="text-sm text-muted-foreground max-w-md">Preencha os campos acima com a URL do seu negócio e receba um diagnóstico estratégico completo com scores, insights e recomendações por canal.</p>
+              </div>
             )}
 
             <div className="space-y-4">

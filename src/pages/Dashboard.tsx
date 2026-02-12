@@ -6,7 +6,7 @@ import { ChannelCard } from "@/components/ChannelCard";
 import { StatsCard } from "@/components/StatsCard";
 import { ScoreRing } from "@/components/ScoreRing";
 import { Badge } from "@/components/ui/badge";
-import { FolderOpen, Target, BarChart3, Zap, FileText, FileSpreadsheet, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, TrendingUp, ArrowRight, Megaphone, Play, Pause, CheckCircle2, Archive, FileEdit, DollarSign } from "lucide-react";
+import { FolderOpen, Target, BarChart3, Zap, FileText, FileSpreadsheet, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, TrendingUp, ArrowRight, Megaphone, Play, Pause, CheckCircle2, Archive, FileEdit, DollarSign, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exportDashboardPdf } from "@/lib/reportGenerator";
 import { exportProjectsCsv } from "@/lib/exportCsv";
@@ -309,7 +309,7 @@ export default function Dashboard() {
                     Olá, {fullName}
                   </h1>
                   <p className="text-sm sm:text-base text-primary-foreground/80 mt-1">
-                    Confira a visão estratégica dos seus projetos de mídia.
+                    Sua central de inteligência estratégica para decisões de marketing mais assertivas.
                   </p>
                 </div>
               </div>
@@ -409,10 +409,32 @@ export default function Dashboard() {
                 </div>
                 <div className="space-y-4">
                   {loading && (
-                    <p className="text-sm text-muted-foreground">Carregando projetos...</p>
+                    <div className="space-y-4">
+                      {[1, 2].map((i) => (
+                        <div key={i} className="rounded-xl border border-border bg-card p-4 space-y-3 animate-pulse">
+                          <div className="flex items-center justify-between">
+                            <div className="h-4 w-40 bg-muted rounded" />
+                            <div className="h-5 w-16 bg-muted rounded-full" />
+                          </div>
+                          <div className="h-3 w-56 bg-muted rounded" />
+                          <div className="flex gap-2">
+                            <div className="h-6 w-20 bg-muted rounded" />
+                            <div className="h-6 w-20 bg-muted rounded" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                   {!loading && projectCards.length === 0 && (
-                    <p className="text-sm text-muted-foreground">Nenhum projeto encontrado.</p>
+                    <div className="flex flex-col items-center text-center py-8 px-4 rounded-xl border border-dashed border-border bg-muted/30">
+                      <FolderOpen className="h-10 w-10 text-muted-foreground/40 mb-3" />
+                      <p className="text-sm font-medium text-foreground mb-1">Comece criando seu primeiro projeto</p>
+                      <p className="text-xs text-muted-foreground mb-4 max-w-xs">Insira a URL do seu negócio e descubra seu score estratégico em segundos.</p>
+                      <Button size="sm" onClick={() => window.location.href = '/projects'} className="gap-2">
+                        <Zap className="h-3.5 w-3.5" />
+                        Criar Projeto
+                      </Button>
+                    </div>
                   )}
                   {(projectsExpanded ? projectCards : projectCards.slice(0, 2)).map((project, i) => (
                     <ProjectCard key={i} {...project} />
@@ -451,7 +473,10 @@ export default function Dashboard() {
                   </div>
                   <div className="rounded-xl border border-border bg-card divide-y divide-border">
                     {recentCampaigns.length === 0 && (
-                      <p className="text-sm text-muted-foreground p-4">Nenhuma campanha encontrada.</p>
+                      <div className="flex flex-col items-center text-center py-6 px-4">
+                        <Megaphone className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                        <p className="text-xs text-muted-foreground">Campanhas aparecerão aqui quando você criar em <a href="/operations" className="text-primary hover:underline font-medium">Operações</a>.</p>
+                      </div>
                     )}
                     {(campaignsExpanded ? recentCampaigns : recentCampaigns.slice(0, 3)).map((campaign) => {
                       const statusIcons: Record<CampaignStatus, typeof Play> = {
@@ -538,7 +563,11 @@ export default function Dashboard() {
                 </div>
                 <div className="rounded-xl border border-border bg-card divide-y divide-border">
                   {insights.length === 0 && (
-                    <p className="text-sm text-muted-foreground p-4">Nenhum insight disponível.</p>
+                    <div className="flex flex-col items-center text-center py-6 px-4">
+                      <Lightbulb className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                      <p className="text-xs font-medium text-foreground mb-1">Insights surgem com a análise</p>
+                      <p className="text-[11px] text-muted-foreground">Analise a URL de um projeto para receber alertas, oportunidades e melhorias.</p>
+                    </div>
                   )}
                   {visibleInsights.map((insight) => {
                     const isOpen = expandedInsightId === insight.id;
@@ -621,7 +650,11 @@ export default function Dashboard() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {activeChannelScores.length === 0 && (
-                  <p className="text-sm text-muted-foreground">Nenhuma análise de canal disponível.</p>
+                  <div className="col-span-full flex flex-col items-center text-center py-8 px-4 rounded-xl border border-dashed border-border bg-muted/30">
+                    <Globe className="h-10 w-10 text-muted-foreground/30 mb-3" />
+                    <p className="text-sm font-medium text-foreground mb-1">Descubra os melhores canais para seu negócio</p>
+                    <p className="text-xs text-muted-foreground max-w-sm">Ao analisar um projeto, o sistema avalia a adequação para Google, Meta, LinkedIn e TikTok com scores e recomendações.</p>
+                  </div>
                 )}
                 {activeChannelScores.map((score) => (
                   <ChannelCard

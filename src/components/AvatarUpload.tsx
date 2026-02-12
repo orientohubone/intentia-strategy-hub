@@ -66,9 +66,12 @@ export function AvatarUpload({
     setUploading(true);
     
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      const filePath = `${user.id}/${fileName}`;
 
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage

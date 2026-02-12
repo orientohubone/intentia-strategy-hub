@@ -11,6 +11,10 @@ import {
   Archive,
   Lock,
   ArrowLeft,
+  Sparkles,
+  Rocket,
+  CheckCircle2,
+  Crown,
 } from "lucide-react";
 
 interface FeatureGateProps {
@@ -68,24 +72,34 @@ const STATUS_DISPLAY: Record<string, {
     badgeLabel: "Descontinuado",
   },
   plan_blocked: {
-    icon: Lock,
-    title: "Recurso Indisponível no Seu Plano",
+    icon: Crown,
+    title: "Desbloqueie Todo o Potencial",
     color: "text-primary",
     bgColor: "bg-primary/5",
     borderColor: "border-primary/20",
     badgeClass: "bg-primary/10 text-primary border-primary/20",
-    badgeLabel: "Upgrade necessário",
+    badgeLabel: "Plano Professional",
   },
 };
+
+const UPGRADE_BENEFITS = [
+  "Plano Tático completo por canal",
+  "Análise por IA (Gemini + Claude)",
+  "Benchmark com IA e SWOT",
+  "Operações e gestão de campanhas",
+  "Relatórios PDF, CSV e exportações",
+  "Integrações com APIs de marketing",
+];
 
 function FeatureBlockedFallback({ check, pageTitle }: { check: FeatureCheck; pageTitle?: string }) {
   const navigate = useNavigate();
   const display = STATUS_DISPLAY[check.status] || STATUS_DISPLAY.disabled;
   const Icon = display.icon;
+  const isPlanBlocked = check.status === "plan_blocked";
 
   return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className={`max-w-md w-full mx-auto text-center p-8 rounded-2xl border ${display.bgColor} ${display.borderColor}`}>
+    <div className="flex items-center justify-center min-h-[80vh]">
+      <div className={`max-w-lg w-full mx-auto text-center p-8 rounded-2xl border ${display.bgColor} ${display.borderColor}`}>
         <div className={`w-16 h-16 rounded-2xl ${display.bgColor} border ${display.borderColor} flex items-center justify-center mx-auto mb-5`}>
           <Icon className={`h-8 w-8 ${display.color}`} />
         </div>
@@ -104,6 +118,23 @@ function FeatureBlockedFallback({ check, pageTitle }: { check: FeatureCheck; pag
           {check.message}
         </p>
 
+        {isPlanBlocked && (
+          <div className="text-left bg-card border border-border rounded-xl p-4 mb-6">
+            <p className="text-xs font-semibold text-foreground mb-3 flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              O que você desbloqueia com o Professional:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {UPGRADE_BENEFITS.map((benefit) => (
+                <div key={benefit} className="flex items-start gap-2">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
+                  <span className="text-xs text-muted-foreground">{benefit}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-center gap-3">
           <Button
             variant="outline"
@@ -115,13 +146,14 @@ function FeatureBlockedFallback({ check, pageTitle }: { check: FeatureCheck; pag
             Voltar ao Dashboard
           </Button>
 
-          {check.status === "plan_blocked" && (
+          {isPlanBlocked && (
             <Button
               size="sm"
               onClick={() => navigate("/settings")}
               className="gap-2"
             >
-              Ver Planos
+              <Rocket className="h-4 w-4" />
+              Fazer Upgrade
             </Button>
           )}
         </div>

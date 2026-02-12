@@ -31,6 +31,7 @@ import {
   Zap,
   Target,
   Eye,
+  FolderOpen,
 } from "lucide-react";
 import { CHANNELS, CHANNEL_LIST, FUNNEL_STAGES, COPY_FRAMEWORK_TYPES, QUALITY_SCORE_FACTORS, getScoreColor, getScoreLabel } from "@/lib/tacticalTypes";
 import type { ChannelKey, TacticalAlert } from "@/lib/tacticalTypes";
@@ -722,16 +723,33 @@ export default function TacticalPlan() {
 
             {/* Loading / Empty States */}
             {(loading || loadingPlan) && (
-              <div className="flex items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+              <div className="space-y-4 py-4">
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="h-9 w-24 bg-muted rounded-lg animate-pulse" />
+                  ))}
+                </div>
+                <div className="border border-border rounded-xl bg-card p-6 space-y-4 animate-pulse">
+                  <div className="h-5 w-56 bg-muted rounded" />
+                  <div className="h-3 w-80 bg-muted rounded" />
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="h-20 bg-muted rounded-lg" />
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 
             {!loading && !loadingPlan && projects.length === 0 && (
-              <div className="text-center py-20 space-y-4">
-                <Crosshair className="h-12 w-12 text-muted-foreground mx-auto" />
-                <h2 className="text-xl font-semibold text-foreground">Nenhum projeto encontrado</h2>
-                <p className="text-muted-foreground">Crie um projeto primeiro na seção de Projetos para iniciar o plano tático.</p>
+              <div className="flex flex-col items-center text-center py-20 space-y-4">
+                <Crosshair className="h-12 w-12 text-muted-foreground/30" />
+                <h2 className="text-xl font-semibold text-foreground">Transforme estratégia em execução</h2>
+                <p className="text-sm text-muted-foreground max-w-md">O plano tático estrutura campanhas por canal com base no seu projeto. Crie um projeto primeiro para começar.</p>
+                <Button variant="outline" size="sm" className="gap-2" onClick={() => window.location.href = '/projects'}>
+                  <FolderOpen className="h-4 w-4" />
+                  Criar Projeto
+                </Button>
               </div>
             )}
 

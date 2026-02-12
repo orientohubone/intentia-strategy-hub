@@ -139,7 +139,7 @@ export function useFeatureFlags() {
           return {
             available: false,
             status: "plan_blocked",
-            message: "Este recurso não está disponível no seu plano atual. Faça upgrade para desbloquear.",
+            message: "Esse recurso faz parte do plano Professional. Faça upgrade e desbloqueie ferramentas avançadas de estratégia e execução.",
           };
         }
       }
@@ -173,7 +173,7 @@ export function useFeatureFlags() {
         return {
           available: false,
           status: "plan_blocked",
-          message: `Disponível no plano Professional. Faça upgrade para desbloquear.`,
+          message: "Esse recurso faz parte do plano Professional. Faça upgrade e desbloqueie ferramentas avançadas de estratégia e execução.",
         };
       }
 

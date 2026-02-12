@@ -166,24 +166,34 @@ export default function Operations() {
 
           {/* Campaign List — Grouped by Project */}
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            <div className="space-y-3">
+              {[1, 2].map((i) => (
+                <div key={i} className="border border-border rounded-lg bg-card p-4 space-y-3 animate-pulse">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 bg-muted rounded-lg" />
+                      <div className="space-y-2">
+                        <div className="h-4 w-40 bg-muted rounded" />
+                        <div className="h-3 w-24 bg-muted rounded" />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="h-6 w-16 bg-muted rounded-full" />
+                      <div className="h-6 w-16 bg-muted rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : groupedCampaigns.length === 0 ? (
             <div className="bg-card border rounded-lg p-8 sm:p-12 text-center">
-              <Megaphone className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Nenhuma campanha encontrada</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <Megaphone className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Gerencie suas campanhas de marketing</h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
                 {campaigns.length === 0
-                  ? "Crie sua primeira campanha para começar a gerenciar suas operações de marketing."
+                  ? "Clique em \u00abNova Campanha\u00bb acima para criar sua primeira campanha e acompanhar m\u00e9tricas de performance por canal."
                   : "Nenhuma campanha corresponde aos filtros selecionados."}
               </p>
-              {campaigns.length === 0 && (
-                <Button onClick={() => { resetForm(); setShowCreateForm(true); }} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Criar Primeira Campanha
-                </Button>
-              )}
             </div>
           ) : (
             <div className="space-y-3">

@@ -195,6 +195,8 @@ export default function Settings() {
         fullName: (user.user_metadata?.full_name as string) || prev.fullName,
         bio: (user.user_metadata?.bio as string) || prev.bio,
         avatarUrl: (user.user_metadata?.avatar_url as string) || prev.avatarUrl,
+        language: (user.user_metadata?.language as string) || prev.language,
+        timezone: (user.user_metadata?.timezone as string) || prev.timezone,
       }));
       loadTenantSettings();
       loadApiKeys();
@@ -235,6 +237,8 @@ export default function Settings() {
           full_name: formData.fullName,
           bio: formData.bio,
           avatar_url: formData.avatarUrl,
+          language: formData.language,
+          timezone: formData.timezone,
         }
       });
 
@@ -747,64 +751,6 @@ export default function Settings() {
                     id="weeklyReports"
                     checked={formData.weeklyReports}
                     onCheckedChange={(checked) => setFormData(prev => ({ ...prev, weeklyReports: checked }))}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Preferences Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Palette className="h-5 w-5" />
-                  Preferências
-                </CardTitle>
-                <CardDescription>
-                  Personalize sua experiência na plataforma
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="language">Idioma</Label>
-                    <Select value={formData.language} onValueChange={(value) => setFormData(prev => ({ ...prev, language: value }))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
-                        <SelectItem value="en-US">English (US)</SelectItem>
-                        <SelectItem value="es-ES">Español</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="timezone">Fuso Horário</Label>
-                    <Select value={formData.timezone} onValueChange={(value) => setFormData(prev => ({ ...prev, timezone: value }))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="America/Sao_Paulo">America/Sao_Paulo</SelectItem>
-                        <SelectItem value="America/New_York">America/New_York</SelectItem>
-                        <SelectItem value="Europe/London">Europe/London</SelectItem>
-                        <SelectItem value="Asia/Tokyo">Asia/Tokyo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="autoSave">Auto Salvamento</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Salve automaticamente seu trabalho
-                    </p>
-                  </div>
-                  <Switch
-                    id="autoSave"
-                    checked={formData.autoSave}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, autoSave: checked }))}
                   />
                 </div>
               </CardContent>

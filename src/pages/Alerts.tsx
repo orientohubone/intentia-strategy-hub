@@ -314,8 +314,19 @@ export default function Alerts() {
 
         {/* Loading */}
         {loading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="border border-border rounded-lg bg-card p-4 space-y-3 animate-pulse">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 bg-muted rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-48 bg-muted rounded" />
+                    <div className="h-3 w-72 bg-muted rounded" />
+                  </div>
+                  <div className="h-5 w-16 bg-muted rounded-full" />
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -324,11 +335,11 @@ export default function Alerts() {
           <Card>
             <CardContent className="py-12 text-center">
               <ShieldAlert className="h-12 w-12 text-green-500 mx-auto mb-4 opacity-60" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum alerta encontrado</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">{projects.length === 0 ? "Alertas protegem seu investimento" : "Tudo certo por aqui!"}</h3>
               <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
                 {projects.length === 0
-                  ? "Crie seu primeiro projeto e execute uma análise para receber alertas estratégicos."
-                  : "Seus projetos não possuem alertas no momento. Isso é um bom sinal!"}
+                  ? "Ao analisar seus projetos, o sistema identifica riscos e investimentos prematuros automaticamente."
+                  : "Seus projetos não possuem alertas no momento. Continue monitorando — novos alertas aparecerão aqui."}
               </p>
               {projects.length === 0 && (
                 <Button variant="hero" size="sm" onClick={() => navigate("/projects")}>

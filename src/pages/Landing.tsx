@@ -284,7 +284,7 @@ export default function Landing() {
                 name: "Starter",
                 "price": "0",
                 "priceCurrency": "BRL",
-                "description": "5 projetos, diagnóstico heurístico, scores por canal, insights, alertas estratégicos, API keys (Gemini/Claude), análise por IA de projetos (3/mês) e benchmark SWOT (5/mês).",
+                "description": "5 projetos, diagnóstico heurístico, scores por canal, insights, alertas estratégicos, API keys (Gemini/Claude), análise por IA de projetos (5/mês) e benchmark SWOT (5/mês).",
               },
               {
                 "@type": "Offer",
@@ -1079,7 +1079,7 @@ export default function Landing() {
                 <li>✓ Insights e alertas automáticos</li>
                 <li>✓ Públicos-alvo com ICP básico</li>
                 <li>✓ API keys (Gemini / Claude)</li>
-                <li>✓ Análise por IA de projetos (3/mês)</li>
+                <li>✓ Análise por IA de projetos (5/mês)</li>
                 <li>✓ Benchmark SWOT (5/mês)</li>
               </ul>
               <Button variant="outline" className="w-full" onClick={() => navigate('/auth')}>

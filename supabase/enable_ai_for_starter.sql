@@ -18,7 +18,7 @@ ON CONFLICT (feature_key) DO NOTHING;
 UPDATE plan_features SET is_enabled = true
 WHERE feature_key = 'ai_api_keys' AND plan = 'starter';
 
-UPDATE plan_features SET is_enabled = true, usage_limit = 3, limit_period = 'monthly'
+UPDATE plan_features SET is_enabled = true, usage_limit = 5, limit_period = 'monthly'
 WHERE feature_key = 'ai_project_analysis' AND plan = 'starter';
 
 -- Novas features de IA — bloqueadas no Starter

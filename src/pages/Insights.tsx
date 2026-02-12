@@ -397,8 +397,19 @@ export default function Insights() {
 
             {/* Loading */}
             {loading && (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="border border-border rounded-lg bg-card p-4 space-y-3 animate-pulse">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 bg-muted rounded-lg" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-52 bg-muted rounded" />
+                        <div className="h-3 w-80 bg-muted rounded" />
+                      </div>
+                      <div className="h-5 w-20 bg-muted rounded-full" />
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -406,10 +417,14 @@ export default function Insights() {
             {!loading && filteredInsights.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <FolderOpen className="h-12 w-12 text-muted-foreground/40 mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-1">Nenhum insight encontrado</h3>
+                <h3 className="text-lg font-medium text-foreground mb-1">Seus insights aparecerão aqui</h3>
                 <p className="text-sm text-muted-foreground max-w-md">
-                  Insights são gerados automaticamente quando você analisa a URL de um projeto. Crie um projeto e execute a análise para ver os insights aqui.
+                  Insights são gerados automaticamente ao analisar a URL de um projeto — alertas, oportunidades e melhorias práticas para sua estratégia.
                 </p>
+                <Button variant="outline" size="sm" className="mt-4 gap-2" onClick={() => window.location.href = '/projects'}>
+                  <FolderOpen className="h-4 w-4" />
+                  Ir para Projetos
+                </Button>
               </div>
             )}
 

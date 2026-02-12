@@ -25,7 +25,7 @@ const plans = [
       "Insights automáticos",
       "Públicos-alvo com ICP básico",
       "Configuração de API keys (Gemini / Claude)",
-      "Análise por IA de projetos (3/mês)",
+      "Análise por IA de projetos (5/mês)",
     ],
     cta: "Começar Grátis",
     popular: false,
@@ -95,7 +95,7 @@ const featureComparison: FeatureCategory[] = [
       { name: "Insights automáticos por projeto", starter: true, professional: true, enterprise: true },
       { name: "Alertas de investimento prematuro", starter: true, professional: true, enterprise: true },
       { name: "Configuração de API keys (Gemini / Claude)", starter: true, professional: true, enterprise: true },
-      { name: "Análise de projetos por IA", starter: "3/mês", professional: "Ilimitado", enterprise: "Ilimitado" },
+      { name: "Análise de projetos por IA", starter: "5/mês", professional: "Ilimitado", enterprise: "Ilimitado" },
       { name: "Análise de performance por IA", starter: false, professional: true, enterprise: true },
       { name: "Enriquecimento de insights por IA", starter: false, professional: true, enterprise: true },
       { name: "Enriquecimento de benchmark por IA", starter: false, professional: true, enterprise: true },
@@ -225,7 +225,7 @@ export default function Pricing() {
                 name: "Preciso de API key para usar a análise por IA?",
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: "Sim. Em todos os planos, você configura sua própria API key do Google Gemini ou Anthropic Claude nas configurações. No Starter, a análise de projetos por IA é limitada a 3/mês. No Professional, todas as análises por IA são ilimitadas.",
+                  text: "Sim. Em todos os planos, você configura sua própria API key do Google Gemini ou Anthropic Claude nas configurações. No Starter, a análise de projetos por IA é limitada a 5/mês. No Professional, todas as análises por IA são ilimitadas.",
                 },
               },
               {
@@ -522,7 +522,7 @@ export default function Pricing() {
               },
               {
                 q: "Preciso de API key para usar a análise por IA?",
-                a: "Sim. Em todos os planos, você configura sua própria API key do Google Gemini ou Anthropic Claude nas configurações. No Starter, a análise de projetos por IA é limitada a 3/mês. No Professional, todas as análises por IA são ilimitadas.",
+                a: "Sim. Em todos os planos, você configura sua própria API key do Google Gemini ou Anthropic Claude nas configurações. No Starter, a análise de projetos por IA é limitada a 5/mês. No Professional, todas as análises por IA são ilimitadas.",
               },
               {
                 q: "O que é o Plano Tático?",

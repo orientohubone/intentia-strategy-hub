@@ -533,11 +533,11 @@ export default function Benchmark() {
                   <div className="w-14 h-14 bg-muted rounded-full flex items-center justify-center mx-auto">
                     <Target className="h-7 w-7 text-muted-foreground" />
                   </div>
-                  <h3 className="text-lg font-semibold">Nenhum benchmark encontrado</h3>
+                  <h3 className="text-lg font-semibold">Compare-se com a concorrência</h3>
                   <p className="text-sm text-muted-foreground max-w-md mx-auto">
                     {searchTerm || filterProject !== "all" 
                       ? "Tente ajustar os filtros ou busca."
-                      : "Adicione URLs de concorrentes nos seus projetos e execute uma análise para gerar benchmarks automaticamente."}
+                      : "Adicione URLs de concorrentes nos seus projetos e execute a análise. Benchmarks com SWOT e gap analysis serão gerados automaticamente."}
                   </p>
                 </div>
               </div>
