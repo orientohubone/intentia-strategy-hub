@@ -1,0 +1,817 @@
+import { useEffect, useState } from "react";
+import { DashboardLayout } from "@/components/DashboardLayout";
+import { SEO } from "@/components/SEO";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import {
+  Plug,
+  RefreshCw,
+  ExternalLink,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Clock,
+  Loader2,
+  Wifi,
+  WifiOff,
+  Settings2,
+  History,
+  Trash2,
+  Info,
+  Zap,
+  ArrowRight,
+} from "lucide-react";
+import {
+  type AdProvider,
+  type AdIntegration,
+  type IntegrationStatus,
+  type SyncFrequency,
+  type IntegrationSyncLog,
+  PROVIDER_CONFIGS,
+  INTEGRATION_STATUS_CONFIG,
+  SYNC_FREQUENCY_CONFIG,
+  SYNC_STATUS_CONFIG,
+  formatSyncDuration,
+  formatLastSync,
+} from "@/lib/integrationTypes";
+import { getOAuthConnectUrl } from "@/lib/integrationOAuth";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://vofizgftwxgyosjrwcqy.supabase.co";
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+const PROVIDER_ORDER: AdProvider[] = ["google_ads", "meta_ads", "linkedin_ads", "tiktok_ads"];
+
+// --- SVG Icons reais dos providers ---
+function GoogleAdsIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <path d="M3.272 7.5l8.5 14.7a3.07 3.07 0 005.3-3.07L8.572 4.43a3.07 3.07 0 00-5.3 3.07z" fill="#FBBC04"/>
+      <path d="M20.728 7.5l-8.5 14.7a3.07 3.07 0 01-5.3-3.07L15.428 4.43a3.07 3.07 0 015.3 3.07z" fill="#4285F4"/>
+      <circle cx="6.002" cy="18.93" r="3.07" fill="#34A853"/>
+    </svg>
+  );
+}
+
+function MetaAdsIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <path d="M5.8 4C3.7 4 2 6.5 2 9.5c0 2.2 1.8 5.3 4.2 8.5 1.2 1.6 2.2 2.5 3.3 2.5 1.3 0 1.8-1 2.5-2.8l.5-1.2c.4-1 .8-2 1.5-2s1.1 1 1.5 2l.5 1.2c.7 1.8 1.2 2.8 2.5 2.8 1.1 0 2.1-.9 3.3-2.5C24.2 14.8 22 12.7 22 9.5 22 6.5 20.3 4 18.2 4c-1.5 0-2.6 1.2-3.5 3.2L12 13l-2.7-5.8C8.4 5.2 7.3 4 5.8 4z" fill="#0081FB"/>
+    </svg>
+  );
+}
+
+function LinkedInAdsIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" fill="#0A66C2"/>
+    </svg>
+  );
+}
+
+function TikTokAdsIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V9.48a8.18 8.18 0 004.77 1.52V7.56a4.84 4.84 0 01-1-.87z" fill="#FE2C55"/>
+      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V9.48a8.18 8.18 0 004.77 1.52V7.56a4.84 4.84 0 01-1-.87z" fill="#25F4EE" opacity="0.5"/>
+    </svg>
+  );
+}
+
+function ProviderSvgIcon({ provider, className }: { provider: AdProvider; className?: string }) {
+  switch (provider) {
+    case "google_ads": return <GoogleAdsIcon className={className} />;
+    case "meta_ads": return <MetaAdsIcon className={className} />;
+    case "linkedin_ads": return <LinkedInAdsIcon className={className} />;
+    case "tiktok_ads": return <TikTokAdsIcon className={className} />;
+  }
+}
+
+function StatusIndicator({ status }: { status: IntegrationStatus }) {
+  const config = INTEGRATION_STATUS_CONFIG[status];
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${config.dotColor}`} />
+      <span className={`text-xs font-medium ${config.color}`}>{config.label}</span>
+    </div>
+  );
+}
+
+export default function Integrations() {
+  const { user } = useAuth();
+  const [integrations, setIntegrations] = useState<AdIntegration[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [connectingProvider, setConnectingProvider] = useState<AdProvider | null>(null);
+  const [syncingProvider, setSyncingProvider] = useState<AdProvider | null>(null);
+  const [detailProvider, setDetailProvider] = useState<AdProvider | null>(null);
+  const [logsDialog, setLogsDialog] = useState<string | null>(null);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [dialogLogs, setDialogLogs] = useState<IntegrationSyncLog[]>([]);
+
+  useEffect(() => {
+    if (user) loadIntegrations();
+  }, [user]);
+
+  const loadIntegrations = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const { data, error } = await (supabase as any)
+        .from("ad_integrations")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      setIntegrations(data || []);
+    } catch (err) {
+      console.error("Error loading integrations:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getIntegration = (provider: AdProvider): AdIntegration | undefined => {
+    return integrations.find((i) => i.provider === provider);
+  };
+
+  const handleConnect = async (provider: AdProvider) => {
+    if (!user) return;
+    setConnectingProvider(provider);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        setConnectingProvider(null);
+        return;
+      }
+
+      // Call oauth-connect Edge Function
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/oauth-connect`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+          "apikey": SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ provider }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || `Erro na Edge Function (${response.status})`);
+      }
+
+      if (!data?.url) {
+        throw new Error(data?.error || "URL de autorização não retornada");
+      }
+
+      // Redirect to provider's OAuth page
+      window.location.href = data.url;
+    } catch (err: any) {
+      console.error("Error connecting:", err);
+      toast.error(`Erro ao conectar ${PROVIDER_CONFIGS[provider].name}: ${err.message}`);
+      setConnectingProvider(null);
+    }
+  };
+
+  const handleDisconnect = async (provider: AdProvider) => {
+    const integration = getIntegration(provider);
+    if (!integration) return;
+
+    try {
+      const { error } = await (supabase as any)
+        .from("ad_integrations")
+        .update({
+          status: "disconnected",
+          access_token: null,
+          refresh_token: null,
+          token_expires_at: null,
+          sync_enabled: false,
+          account_id: null,
+          account_name: null,
+          error_message: null,
+          error_count: 0,
+        })
+        .eq("id", integration.id);
+
+      if (error) throw error;
+      toast.success(`${PROVIDER_CONFIGS[provider].name} desconectado.`);
+      setDetailProvider(null);
+      await loadIntegrations();
+    } catch (err: any) {
+      toast.error(`Erro ao desconectar: ${err.message}`);
+    }
+  };
+
+  const handleSync = async (provider: AdProvider) => {
+    const integration = getIntegration(provider);
+    if (!integration || integration.status !== "connected") return;
+
+    setSyncingProvider(provider);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        return;
+      }
+
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/integration-sync`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+          "apikey": SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({
+          provider,
+          integration_id: integration.id,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Sync failed");
+      }
+
+      const msg = `Sincronização concluída: ${result.records_fetched || 0} registros importados`;
+      toast.success(msg);
+      await loadIntegrations();
+    } catch (err: any) {
+      toast.error(`Erro na sincronização: ${err.message}`);
+    } finally {
+      setSyncingProvider(null);
+    }
+  };
+
+  const handleUpdateFrequency = async (provider: AdProvider, frequency: SyncFrequency) => {
+    const integration = getIntegration(provider);
+    if (!integration) return;
+
+    try {
+      const { error } = await (supabase as any)
+        .from("ad_integrations")
+        .update({ sync_frequency: frequency })
+        .eq("id", integration.id);
+
+      if (error) throw error;
+      toast.success("Frequência de sincronização atualizada.");
+      await loadIntegrations();
+    } catch (err: any) {
+      toast.error(`Erro: ${err.message}`);
+    }
+  };
+
+  const handleDeleteIntegration = async (provider: AdProvider) => {
+    const integration = getIntegration(provider);
+    if (!integration) return;
+
+    try {
+      const { error } = await (supabase as any)
+        .from("ad_integrations")
+        .delete()
+        .eq("id", integration.id);
+
+      if (error) throw error;
+      toast.success(`Integração ${PROVIDER_CONFIGS[provider].name} removida.`);
+      setDetailProvider(null);
+      await loadIntegrations();
+    } catch (err: any) {
+      toast.error(`Erro ao remover: ${err.message}`);
+    }
+  };
+
+  const loadSyncLogs = async (integrationId: string) => {
+    setLogsLoading(true);
+    setLogsDialog(integrationId);
+    try {
+      const { data, error } = await (supabase as any)
+        .from("integration_sync_logs")
+        .select("*")
+        .eq("integration_id", integrationId)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      setDialogLogs(data || []);
+    } catch (err) {
+      console.error("Error loading sync logs:", err);
+      setDialogLogs([]);
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
+  const connectedCount = integrations.filter((i) => i.status === "connected").length;
+  const detailConfig = detailProvider ? PROVIDER_CONFIGS[detailProvider] : null;
+  const detailIntegration = detailProvider ? getIntegration(detailProvider) : null;
+  const detailIsConnected = detailIntegration?.status === "connected";
+
+  return (
+    <DashboardLayout>
+      <SEO title="Integrações" path="/integracoes" noindex />
+
+      <div className="space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Plug className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold">Integrações</h1>
+              <p className="text-sm text-muted-foreground">
+                Conecte suas contas de mídia para importar dados automaticamente
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="gap-1.5">
+              <Wifi className="h-3 w-3" />
+              {connectedCount} conectada{connectedCount !== 1 ? "s" : ""}
+            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={loadIntegrations}
+              disabled={loading}
+              className="gap-1.5"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline">Atualizar</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Info Box */}
+        <div className="flex items-start gap-3 p-3 sm:p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/30">
+          <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-blue-700 dark:text-blue-300">
+            <p className="font-medium mb-1">Como funcionam as integrações</p>
+            <p className="text-blue-600 dark:text-blue-400">
+              Ao conectar uma plataforma de anúncios, a Intentia importa automaticamente suas campanhas, métricas e dados de performance.
+              Os dados são sincronizados conforme a frequência configurada e alimentam o módulo Operacional, Benchmark e Insights.
+            </p>
+          </div>
+        </div>
+
+        {/* Provider Cards — Grid 2x2 */}
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {PROVIDER_ORDER.map((provider) => {
+              const config = PROVIDER_CONFIGS[provider];
+              const integration = getIntegration(provider);
+              const isConnected = integration?.status === "connected";
+              const isError = integration?.status === "error";
+              const isExpired = integration?.status === "expired";
+              const isSyncing = syncingProvider === provider;
+              const isConnecting = connectingProvider === provider;
+
+              return (
+                <div
+                  key={provider}
+                  onClick={() => setDetailProvider(provider)}
+                  className={`group relative rounded-2xl border-2 p-5 sm:p-6 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
+                    isConnected
+                      ? "border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50/50 to-background dark:from-green-950/20 dark:to-background"
+                      : isError
+                      ? "border-red-200 dark:border-red-800 bg-gradient-to-br from-red-50/30 to-background dark:from-red-950/10 dark:to-background"
+                      : isExpired
+                      ? "border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/30 to-background dark:from-amber-950/10 dark:to-background"
+                      : "border-border bg-card hover:border-primary/30"
+                  }`}
+                >
+                  {/* Connected glow */}
+                  {isConnected && (
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-green-500/5 to-transparent pointer-events-none" />
+                  )}
+
+                  {/* Top row: Icon + Status */}
+                  <div className="flex items-start justify-between mb-4 relative">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white dark:bg-gray-900 border border-border/50 shadow-sm flex items-center justify-center p-2.5 sm:p-3 group-hover:shadow-md transition-shadow">
+                      <ProviderSvgIcon provider={provider} className="w-full h-full" />
+                    </div>
+                    <StatusIndicator status={integration?.status || "disconnected"} />
+                  </div>
+
+                  {/* Name + Description */}
+                  <h3 className="font-semibold text-base sm:text-lg mb-1">{config.name}</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-4 min-h-[2.5rem]">
+                    {config.description}
+                  </p>
+
+                  {/* Connected info */}
+                  {isConnected && integration ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5" />
+                          {formatLastSync(integration.last_sync_at)}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <Zap className="h-3.5 w-3.5" />
+                          {SYNC_FREQUENCY_CONFIG[integration.sync_frequency].label}
+                        </span>
+                      </div>
+                      {integration.account_name && (
+                        <div className="text-xs text-muted-foreground truncate px-2 py-1.5 rounded-lg bg-muted/50">
+                          {integration.account_name}
+                        </div>
+                      )}
+                    </div>
+                  ) : isError && integration?.error_message ? (
+                    <div className="flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400 px-2 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/30">
+                      <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="line-clamp-1">{integration.error_message}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-[1px] bg-border" />
+                      <span className="text-xs text-muted-foreground flex items-center gap-1 group-hover:text-primary transition-colors">
+                        Configurar <ArrowRight className="h-3 w-3" />
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Features preview */}
+                  <div className="flex flex-wrap gap-1 mt-3">
+                    {config.features.slice(0, 3).map((f, i) => (
+                      <span key={i} className="text-[10px] px-1.5 py-0.5 rounded-md bg-muted/60 text-muted-foreground">
+                        {f.length > 30 ? f.slice(0, 28) + "..." : f}
+                      </span>
+                    ))}
+                    {config.features.length > 3 && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-muted/60 text-muted-foreground">
+                        +{config.features.length - 3}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* How it works section */}
+        <div className="rounded-2xl border bg-card p-4 sm:p-6">
+          <h2 className="font-semibold text-base sm:text-lg mb-4 flex items-center gap-2">
+            <Settings2 className="h-5 w-5 text-muted-foreground" />
+            Como configurar
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { step: "1", title: "Conectar", desc: "Clique no card da plataforma desejada e autorize o acesso via OAuth." },
+              { step: "2", title: "Configurar", desc: "Defina a frequência de sincronização e mapeie contas aos projetos." },
+              { step: "3", title: "Sincronizar", desc: "Os dados são importados automaticamente conforme a frequência definida." },
+              { step: "4", title: "Analisar", desc: "Métricas alimentam Operações, Budget, Alertas e Benchmark automaticamente." },
+            ].map((item) => (
+              <div key={item.step} className="flex gap-3">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm font-bold text-primary">{item.step}</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">{item.title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Detail / Config Dialog */}
+      <Dialog open={!!detailProvider} onOpenChange={() => setDetailProvider(null)}>
+        {detailProvider && detailConfig && (
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-white dark:bg-gray-900 border border-border/50 shadow-sm flex items-center justify-center p-2">
+                  <ProviderSvgIcon provider={detailProvider} className="w-full h-full" />
+                </div>
+                <div>
+                  <DialogTitle className="text-lg">{detailConfig.name}</DialogTitle>
+                  <DialogDescription className="text-xs mt-0.5">
+                    <StatusIndicator status={detailIntegration?.status || "disconnected"} />
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="space-y-5 mt-2">
+              {/* Description */}
+              <p className="text-sm text-muted-foreground">{detailConfig.description}</p>
+
+              {/* Connected: settings */}
+              {detailIsConnected && detailIntegration ? (
+                <>
+                  {/* Account */}
+                  <div className="rounded-xl border p-4 space-y-3">
+                    <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Conta Conectada</h4>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">{detailIntegration.account_name}</p>
+                        {detailIntegration.account_id && (
+                          <p className="text-xs text-muted-foreground">{detailIntegration.account_id}</p>
+                        )}
+                      </div>
+                      <Badge variant="outline" className="text-xs gap-1 text-green-600 bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-800">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Ativa
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Sync config */}
+                  <div className="rounded-xl border p-4 space-y-3">
+                    <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Sincronização</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-muted-foreground">Frequência</label>
+                        <Select
+                          value={detailIntegration.sync_frequency}
+                          onValueChange={(val) =>
+                            handleUpdateFrequency(detailProvider, val as SyncFrequency)
+                          }
+                        >
+                          <SelectTrigger className="h-9 mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(SYNC_FREQUENCY_CONFIG).map(([key, cfg]) => (
+                              <SelectItem key={key} value={key}>
+                                {cfg.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">Último sync</label>
+                        <div className="h-9 mt-1 flex items-center text-sm">
+                          {formatLastSync(detailIntegration.last_sync_at)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Features */}
+                  <div className="rounded-xl border p-4 space-y-3">
+                    <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Dados Importados</h4>
+                    <div className="space-y-1.5">
+                      {detailConfig.features.map((feature, i) => (
+                        <div key={i} className="flex items-center gap-2 text-sm">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                          <span>{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      className="gap-1.5 flex-1 sm:flex-none"
+                      onClick={(e) => { e.stopPropagation(); handleSync(detailProvider); }}
+                      disabled={syncingProvider === detailProvider}
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${syncingProvider === detailProvider ? "animate-spin" : ""}`} />
+                      Sincronizar Agora
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => loadSyncLogs(detailIntegration.id)}
+                    >
+                      <History className="h-3.5 w-3.5" />
+                      Histórico
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => window.open(detailConfig.docsUrl, "_blank")}
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      Docs
+                    </Button>
+                  </div>
+
+                  {/* Danger zone */}
+                  <div className="rounded-xl border border-red-200 dark:border-red-800 p-4 space-y-3">
+                    <h4 className="text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-wider">Zona de Perigo</h4>
+                    <div className="flex flex-wrap gap-2">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950/40">
+                            <WifiOff className="h-3.5 w-3.5" />
+                            Desconectar
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Desconectar {detailConfig.name}?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              A sincronização automática será interrompida. Os dados já importados serão mantidos.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDisconnect(detailProvider)} className="bg-red-600 hover:bg-red-700">
+                              Desconectar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950/40">
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Remover
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remover integração {detailConfig.name}?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Isso removerá a integração e todo o histórico de sincronização. Os dados já importados nas campanhas serão mantidos.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteIntegration(detailProvider)} className="bg-red-600 hover:bg-red-700">
+                              Remover
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Not connected: setup steps + features */}
+                  <div className="rounded-xl border p-4 space-y-3">
+                    <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Funcionalidades</h4>
+                    <div className="space-y-1.5">
+                      {detailConfig.features.map((feature, i) => (
+                        <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <div className="w-3.5 h-3.5 rounded-full border border-border flex-shrink-0" />
+                          <span>{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border p-4 space-y-3">
+                    <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Passos para Configurar</h4>
+                    <div className="space-y-2">
+                      {detailConfig.setupSteps.map((step, i) => (
+                        <div key={i} className="flex items-start gap-2.5 text-sm">
+                          <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-[10px] font-bold text-primary">{i + 1}</span>
+                          </div>
+                          <span>{step}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Button
+                    className="w-full gap-2"
+                    onClick={() => handleConnect(detailProvider)}
+                    disabled={connectingProvider === detailProvider}
+                  >
+                    {connectingProvider === detailProvider ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plug className="h-4 w-4" />
+                    )}
+                    Conectar {detailConfig.name}
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full gap-1.5 text-muted-foreground"
+                    onClick={() => window.open(detailConfig.docsUrl, "_blank")}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Ver documentação da API
+                  </Button>
+                </>
+              )}
+            </div>
+          </DialogContent>
+        )}
+      </Dialog>
+
+      {/* Sync Logs Dialog */}
+      <Dialog open={!!logsDialog} onOpenChange={() => setLogsDialog(null)}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Histórico de Sincronização
+            </DialogTitle>
+            <DialogDescription>
+              Últimas 20 sincronizações realizadas
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+            {logsLoading ? (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : dialogLogs.length === 0 ? (
+              <div className="text-center py-10 text-sm text-muted-foreground">
+                Nenhum registro de sincronização encontrado.
+              </div>
+            ) : (
+              dialogLogs.map((log) => {
+                const statusCfg = SYNC_STATUS_CONFIG[log.status];
+                return (
+                  <div
+                    key={log.id}
+                    className="flex items-start gap-3 p-3 rounded-lg border bg-card"
+                  >
+                    <div className="mt-0.5">
+                      {log.status === "completed" ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      ) : log.status === "failed" ? (
+                        <XCircle className="h-4 w-4 text-red-500" />
+                      ) : (
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge className={`text-xs ${statusCfg.bgColor} ${statusCfg.color}`}>
+                          {statusCfg.label}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {log.sync_type === "manual" ? "Manual" : log.sync_type === "full" ? "Completo" : "Incremental"}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatSyncDuration(log.duration_ms)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                        <span>{log.records_fetched} registros</span>
+                        {log.records_created > 0 && <span>+{log.records_created} novos</span>}
+                        {log.records_updated > 0 && <span>{log.records_updated} atualizados</span>}
+                      </div>
+                      {log.error_message && (
+                        <p className="text-xs text-red-500 mt-1 line-clamp-2">{log.error_message}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(log.created_at).toLocaleString("pt-BR")}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setLogsDialog(null)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </DashboardLayout>
+  );
+}

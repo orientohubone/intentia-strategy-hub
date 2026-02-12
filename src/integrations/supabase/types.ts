@@ -763,6 +763,142 @@ export type Database = {
           updated_at?: string
         }
       }
+      ad_integrations: {
+        Row: {
+          id: string
+          user_id: string
+          provider: "google_ads" | "meta_ads" | "linkedin_ads" | "tiktok_ads"
+          status: "connected" | "disconnected" | "error" | "expired" | "syncing"
+          access_token: string | null
+          refresh_token: string | null
+          token_expires_at: string | null
+          account_id: string | null
+          account_name: string | null
+          account_currency: string
+          sync_enabled: boolean
+          sync_frequency: "hourly" | "daily" | "weekly" | "manual"
+          last_sync_at: string | null
+          next_sync_at: string | null
+          project_mappings: Json
+          scopes: string[]
+          metadata: Json
+          error_message: string | null
+          error_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          provider: "google_ads" | "meta_ads" | "linkedin_ads" | "tiktok_ads"
+          status?: "connected" | "disconnected" | "error" | "expired" | "syncing"
+          access_token?: string | null
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          account_id?: string | null
+          account_name?: string | null
+          account_currency?: string
+          sync_enabled?: boolean
+          sync_frequency?: "hourly" | "daily" | "weekly" | "manual"
+          last_sync_at?: string | null
+          next_sync_at?: string | null
+          project_mappings?: Json
+          scopes?: string[]
+          metadata?: Json
+          error_message?: string | null
+          error_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          provider?: "google_ads" | "meta_ads" | "linkedin_ads" | "tiktok_ads"
+          status?: "connected" | "disconnected" | "error" | "expired" | "syncing"
+          access_token?: string | null
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          account_id?: string | null
+          account_name?: string | null
+          account_currency?: string
+          sync_enabled?: boolean
+          sync_frequency?: "hourly" | "daily" | "weekly" | "manual"
+          last_sync_at?: string | null
+          next_sync_at?: string | null
+          project_mappings?: Json
+          scopes?: string[]
+          metadata?: Json
+          error_message?: string | null
+          error_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      integration_sync_logs: {
+        Row: {
+          id: string
+          user_id: string
+          integration_id: string
+          provider: "google_ads" | "meta_ads" | "linkedin_ads" | "tiktok_ads"
+          status: "pending" | "running" | "completed" | "failed" | "partial"
+          sync_type: "full" | "incremental" | "manual"
+          started_at: string
+          completed_at: string | null
+          duration_ms: number | null
+          records_fetched: number
+          records_created: number
+          records_updated: number
+          records_failed: number
+          period_start: string | null
+          period_end: string | null
+          error_message: string | null
+          error_details: Json | null
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          integration_id: string
+          provider: "google_ads" | "meta_ads" | "linkedin_ads" | "tiktok_ads"
+          status?: "pending" | "running" | "completed" | "failed" | "partial"
+          sync_type?: "full" | "incremental" | "manual"
+          started_at?: string
+          completed_at?: string | null
+          duration_ms?: number | null
+          records_fetched?: number
+          records_created?: number
+          records_updated?: number
+          records_failed?: number
+          period_start?: string | null
+          period_end?: string | null
+          error_message?: string | null
+          error_details?: Json | null
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          integration_id?: string
+          provider?: "google_ads" | "meta_ads" | "linkedin_ads" | "tiktok_ads"
+          status?: "pending" | "running" | "completed" | "failed" | "partial"
+          sync_type?: "full" | "incremental" | "manual"
+          started_at?: string
+          completed_at?: string | null
+          duration_ms?: number | null
+          records_fetched?: number
+          records_created?: number
+          records_updated?: number
+          records_failed?: number
+          period_start?: string | null
+          period_end?: string | null
+          error_message?: string | null
+          error_details?: Json | null
+          metadata?: Json
+          created_at?: string
+        }
+      }
     }
     Views: {
       v_project_summary: {
@@ -944,6 +1080,90 @@ export type Database = {
           overall_pacing: number
           projected_spend: number
           projected_pacing: number
+        }
+        Insert: never
+        Update: never
+      }
+      v_campaign_calendar: {
+        Row: {
+          id: string
+          user_id: string
+          project_id: string
+          project_name: string
+          campaign_name: string
+          channel: "google" | "meta" | "linkedin" | "tiktok"
+          status: "draft" | "active" | "paused" | "completed" | "archived"
+          objective: string | null
+          budget_total: number
+          budget_spent: number
+          start_date: string | null
+          end_date: string | null
+          duration_days: number | null
+          days_remaining: number | null
+          days_elapsed: number | null
+          budget_pacing: number
+          ending_soon: boolean
+          total_impressions: number
+          total_clicks: number
+          total_conversions: number
+          total_cost: number
+          total_revenue: number
+          metrics_entries: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: never
+        Update: never
+      }
+      v_campaign_timeline: {
+        Row: {
+          campaign_id: string
+          user_id: string
+          project_id: string
+          project_name: string
+          campaign_name: string
+          channel: "google" | "meta" | "linkedin" | "tiktok"
+          status: "draft" | "active" | "paused" | "completed" | "archived"
+          start_date: string | null
+          end_date: string | null
+          budget_total: number
+          budget_spent: number
+          effective_start: string
+          effective_end: string
+          start_day_of_month: number
+          end_day_of_month: number
+          start_month: number
+          start_year: number
+          overlap_count: number
+        }
+        Insert: never
+        Update: never
+      }
+      v_integration_summary: {
+        Row: {
+          id: string
+          user_id: string
+          provider: "google_ads" | "meta_ads" | "linkedin_ads" | "tiktok_ads"
+          status: "connected" | "disconnected" | "error" | "expired" | "syncing"
+          account_id: string | null
+          account_name: string | null
+          account_currency: string
+          sync_enabled: boolean
+          sync_frequency: "hourly" | "daily" | "weekly" | "manual"
+          last_sync_at: string | null
+          next_sync_at: string | null
+          error_message: string | null
+          error_count: number
+          scopes: string[]
+          project_mappings: Json
+          created_at: string
+          updated_at: string
+          total_syncs: number
+          successful_syncs: number
+          failed_syncs: number
+          total_records_fetched: number
+          last_sync_status: string | null
+          last_sync_duration_ms: number | null
         }
         Insert: never
         Update: never

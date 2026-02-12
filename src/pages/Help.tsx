@@ -35,6 +35,7 @@ import {
   HardDrive,
   Wand2,
   Megaphone,
+  CalendarDays,
 } from "lucide-react";
 
 export default function Help() {
@@ -505,6 +506,21 @@ export default function Help() {
           content: "O pacing compara o gasto atual com o esperado para o dia do mês. Um marcador visual indica onde o gasto deveria estar. Se a projeção de gasto ultrapassa o budget planejado, um alerta é exibido com o valor projetado. Meses anteriores ficam em cards colapsáveis com opção de exclusão individual. Cada canal mostra sua própria barra de pacing com cores: verde (saudável, <80%), amarelo (atenção, 80-95%), vermelho (perigo, 95-100%) e vermelho escuro (estourado, >100%).",
           difficulty: "Intermediário",
         },
+        {
+          title: "Calendário de Campanhas",
+          content: "Dentro de cada grupo de projeto expandido, o Calendário de Campanhas exibe uma grade mensal estilo Google Calendar. Campanhas com datas definidas (início e fim) aparecem como barras horizontais coloridas por canal: Google (azul), Meta (índigo), LinkedIn (sky), TikTok (pink). Navegue entre meses, clique em uma campanha para ver detalhes (duração, budget pacing, cliques, conversões). Campanhas que encerram nos próximos 7 dias recebem um indicador de alerta.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Timeline visual (Gantt)",
+          content: "Alterne para a vista Timeline para ver suas campanhas em formato Gantt horizontal. O eixo X mostra 8 semanas visíveis com headers de mês e semana. Cada campanha aparece como uma barra colorida por canal, com opacidade variando por status (rascunho=40%, pausada=60%, ativa=85%). Uma linha vertical marca o dia de hoje. Passe o mouse sobre qualquer barra para ver tooltip com canal, status, datas, budget e métricas. Navegue por período (±2 semanas) ou clique em 'Hoje' para centralizar.",
+          difficulty: "Iniciante",
+        },
+        {
+          title: "Filtros do calendário",
+          content: "O componente de calendário oferece filtros por canal (Google, Meta, LinkedIn, TikTok) e por status (Rascunho, Ativa, Pausada, Concluída). Use os seletores no topo para focar nas campanhas relevantes. Os filtros funcionam tanto na vista Calendário quanto na Timeline. A legenda na parte inferior mostra os canais ativos com contadores.",
+          difficulty: "Iniciante",
+        },
       ]
     },
     {
@@ -638,6 +654,10 @@ export default function Help() {
     {
       question: "O que é o Comparativo Tático vs Real?",
       answer: "É um gap analysis automático que cruza o plano tático de cada canal com as métricas reais das campanhas. O sistema verifica aderência estrutural (tipo de campanha, estágio de funil, estratégia de lances) e gap de métricas (planejado vs real com desvio percentual). O score de aderência combina 30% estrutura + 70% métricas, com status visual por canal."
+    },
+    {
+      question: "Como funciona o Calendário de Campanhas?",
+      answer: "O Calendário de Campanhas oferece duas vistas: Calendário (grade mensal com barras coloridas por canal) e Timeline (Gantt horizontal com 8 semanas visíveis). Ambas mostram campanhas com datas definidas, com cores por canal e opacidade por status. Clique em uma campanha no calendário para ver detalhes como duração, budget pacing e métricas. Na timeline, passe o mouse para tooltips ricos. Campanhas que encerram em 7 dias recebem alerta visual. Filtros por canal e status estão disponíveis em ambas as vistas."
     },
     {
       question: "Como funcionam os alertas automáticos de performance?",

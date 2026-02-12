@@ -65,6 +65,7 @@ import CampaignPerformanceAiDialog from "@/components/CampaignPerformanceAiDialo
 import TacticalVsRealComparison from "@/components/TacticalVsRealComparison";
 import PerformanceAlerts from "@/components/PerformanceAlerts";
 import BudgetManagement from "@/components/BudgetManagement";
+import CampaignCalendarManager from "@/components/CampaignCalendarManager";
 import { CHANNEL_LABELS as CH_LABELS_FULL } from "@/lib/operationalTypes";
 
 interface MetricsSummaryData {
@@ -1403,6 +1404,17 @@ export default function Operations() {
                           projectId={group.projectId}
                           projectName={group.projectName}
                           onSync={() => { loadStats(); loadCampaigns(); }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Campaign Calendar */}
+                    {isExpanded && user && (
+                      <div className="border-t p-3 sm:p-4">
+                        <CampaignCalendarManager
+                          userId={user.id}
+                          projectId={group.projectId}
+                          projectName={group.projectName}
                         />
                       </div>
                     )}

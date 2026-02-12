@@ -661,7 +661,38 @@ O **Intentia Strategy Hub** está na **versão 2.8.0** com funcionalidades avan�
 129. **Integração Operations.tsx** — componente renderizado dentro de cada grupo de projeto expandido, entre alertas de performance e comparativo tático vs real
 130. **Supabase Types** — `v_budget_summary` e `v_budget_project_pacing` adicionados ao types.ts
 
-### �📋 Próximos Passos — Etapa Operacional (v3.x)
+### 📅 Etapa Operacional — Fase 7: Calendário de Campanhas (v3.7)
+131. **Schema SQL** — `campaign_calendar.sql` com views `v_campaign_calendar` (dados por campanha com duração, dias restantes, budget pacing, ending_soon, métricas agregadas) e `v_campaign_timeline` (agrupamento por projeto com datas efetivas e contagem de sobreposições por canal)
+132. **Tipos e Helpers** — `CalendarCampaign`, `TimelineCampaign`, `CHANNEL_BAR_COLORS`, `CHANNEL_SOLID_COLORS`, `STATUS_DOT_COLORS`, `WEEKDAY_LABELS`, `getCalendarGrid()`, `isDateInRange()`, `isRangeStart()`, `isRangeEnd()`, `isSameDay()`, `formatCurrency()` em operationalTypes.ts
+133. **Componente CampaignCalendar.tsx** — grid mensal estilo Google Calendar com:
+  - Barras horizontais coloridas por canal (Google=azul, Meta=indigo, LinkedIn=sky, TikTok=pink)
+  - Navegação mês anterior/próximo e botão "Hoje"
+  - Indicador de "hoje" com ring no dia atual
+  - Tooltip com nome da campanha ao hover
+  - Click para expandir detalhes (duração, budget pacing, cliques, conversões)
+  - Badge de "encerra em breve" (próximos 7 dias)
+  - Legenda de canais com contadores
+  - Empty state orientativo
+134. **Componente CampaignTimeline.tsx** — vista Gantt horizontal com:
+  - Eixo X = semanas (8 semanas visíveis), Eixo Y = campanhas
+  - Barras coloridas por canal com opacidade por status (draft=40%, paused=60%, active=85%)
+  - Headers de mês e semana com destaque na semana atual
+  - Linha vertical "hoje" com marcador circular
+  - Tooltip rico com canal, status, datas, budget, métricas
+  - Navegação por período (±2 semanas) e botão "Hoje"
+  - Barras cortadas nas bordas quando campanha ultrapassa o período visível
+  - Legenda de canais e status
+135. **Componente CampaignCalendarManager.tsx** — wrapper com:
+  - Toggle entre vista Calendário e Timeline
+  - Filtros por canal e status (Select components)
+  - Collapsible com contadores e indicador de campanhas encerrando em breve
+  - Fallback para query direta na tabela campaigns se a view não existir
+  - Loading state com spinner
+136. **Integração Operations.tsx** — componente renderizado dentro de cada grupo de projeto expandido, entre Budget Management e Performance Alerts
+137. **Supabase Types** — `v_campaign_calendar` e `v_campaign_timeline` adicionados ao types.ts
+138. **Indexes** — `idx_campaigns_start_date`, `idx_campaigns_end_date`, `idx_campaigns_date_range` para performance
+
+### 📋 Próximos Passos — Etapa Operacional (v3.x)
 1. ~~Gestão de campanhas (criar/editar/monitorar campanhas reais)~~ ✅
 2. ~~Input manual de métricas por campanha (CPC, CTR, CPL, ROAS, conversões)~~ ✅
 3. ~~Cards de performance com KPIs~~ ✅
@@ -673,11 +704,11 @@ O **Intentia Strategy Hub** está na **versão 2.8.0** com funcionalidades avan�
 9. ~~Comparativo Tático vs Real (gap analysis operacional)~~ ✅
 10. ~~Alertas automáticos de performance~~ ✅
 11. ~~Gestão de budget por canal e projeto com pacing~~ ✅
-12. Calendário de campanhas e timeline visual
+12. ~~Calendário de campanhas e timeline visual~~ ✅
 13. Integração com APIs de marketing (Google Ads, Meta Ads, LinkedIn Ads)
 14. Relatórios de performance automatizados
 
 
 ---
 
-**Status:** 🟢 **v3.6.0 — ETAPA OPERACIONAL: GESTÃO DE BUDGET**
+**Status:** 🟢 **v3.7.0 — ETAPA OPERACIONAL: CALENDÁRIO DE CAMPANHAS**

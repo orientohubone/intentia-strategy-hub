@@ -50,6 +50,8 @@ import {
   Minimize2,
   ZoomIn,
   ZoomOut,
+  CalendarDays,
+  GanttChart,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -370,7 +372,7 @@ function OverviewSection() {
       </FlowBox>
 
       {/* Tech Stack */}
-      <FlowBox title="Stack Tecnologico" badge="v3.5.0">
+      <FlowBox title="Stack Tecnologico" badge="v3.7.0">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: "React 18.3", sub: "UI Framework", color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20", tip: "Biblioteca para construcao de interfaces reativas com componentes reutilizaveis e Virtual DOM" },
@@ -572,6 +574,9 @@ function FrontendSection() {
                   "TacticalVsRealComparison",
                   "PerformanceAlerts",
                   "BudgetManagement",
+                  "CampaignCalendarManager",
+                  "CampaignCalendar",
+                  "CampaignTimeline",
                 ].map((c) => (
                   <div key={c} className="flex items-center gap-1.5">
                     <div className="w-1 h-1 rounded-full bg-green-500/50" />
@@ -1870,6 +1875,22 @@ function OperationsSection() {
               bg: "bg-teal-500/10",
               border: "border-teal-500/20",
             },
+            {
+              name: "v_campaign_calendar",
+              desc: "Dados por campanha com duracao, dias restantes, budget pacing, ending_soon e metricas agregadas",
+              cols: "campaign_name, channel, status, start_date, end_date, duration_days, days_remaining, budget_pacing, ending_soon, total_clicks, total_conversions",
+              color: "text-violet-400",
+              bg: "bg-violet-500/10",
+              border: "border-violet-500/20",
+            },
+            {
+              name: "v_campaign_timeline",
+              desc: "Agrupamento por projeto com datas efetivas e contagem de sobreposicoes por canal",
+              cols: "campaign_name, channel, status, effective_start, effective_end, overlap_count",
+              color: "text-pink-400",
+              bg: "bg-pink-500/10",
+              border: "border-pink-500/20",
+            },
           ].map((view) => (
             <div key={view.name} className={`${view.bg} border ${view.border} rounded-xl p-4`}>
               <div className="flex items-center gap-2 mb-1.5">
@@ -1983,6 +2004,57 @@ function OperationsSection() {
         </div>
       </FlowBox>
 
+      {/* Campaign Calendar & Timeline */}
+      <FlowBox title="Calendario de Campanhas & Timeline" borderColor="border-violet-500/20" bgColor="bg-violet-500/5" badge="v3.7">
+        <div className="flex flex-col items-center gap-0">
+          <FlowNode icon={Database} label="1. Campanhas com datas" sublabel="start_date + end_date definidos" color="text-emerald-300" bg="bg-emerald-500/10" border="border-emerald-500/20" />
+          <ArrowConnector direction="down" label="v_campaign_calendar" />
+          <FlowNode icon={CalendarDays} label="2. Dados enriquecidos" sublabel="duracao, dias restantes, ending_soon, metricas" color="text-violet-300" bg="bg-violet-500/10" border="border-violet-500/20" />
+          <ArrowConnector direction="down" label="Toggle de vista" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full mb-3">
+            <div className="bg-violet-500/10 border border-violet-500/20 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <CalendarDays className="h-4 w-4 text-violet-400" />
+                <p className="text-[11px] font-semibold text-violet-400">Vista Calendario</p>
+              </div>
+              <div className="space-y-1">
+                {["Grid mensal estilo Google Calendar", "Barras coloridas por canal", "Click para detalhes da campanha", "Indicador de hoje + ending soon", "Legenda com contadores"].map((f) => (
+                  <p key={f} className="text-[9px] text-slate-500">{f}</p>
+                ))}
+              </div>
+            </div>
+            <div className="bg-pink-500/10 border border-pink-500/20 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <GanttChart className="h-4 w-4 text-pink-400" />
+                <p className="text-[11px] font-semibold text-pink-400">Vista Timeline (Gantt)</p>
+              </div>
+              <div className="space-y-1">
+                {["Eixo X = 8 semanas visiveis", "Barras por canal com opacidade por status", "Linha vertical hoje", "Tooltips ricos com metricas", "Headers de mes e semana"].map((f) => (
+                  <p key={f} className="text-[9px] text-slate-500">{f}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full mb-3">
+            {[
+              { label: "Google", color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" },
+              { label: "Meta", color: "text-indigo-400", bg: "bg-indigo-500/10", border: "border-indigo-500/20" },
+              { label: "LinkedIn", color: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/20" },
+              { label: "TikTok", color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20" },
+            ].map((ch) => (
+              <div key={ch.label} className={`${ch.bg} border ${ch.border} rounded-lg px-2.5 py-2 text-center`}>
+                <p className={`text-[10px] font-medium ${ch.color}`}>{ch.label}</p>
+                <p className="text-[9px] text-slate-500">Cor dedicada</p>
+              </div>
+            ))}
+          </div>
+
+          <FlowNode icon={Eye} label="3. CampaignCalendarManager.tsx" sublabel="Toggle Calendar/Timeline + filtros canal/status + Collapsible" color="text-cyan-300" bg="bg-cyan-500/10" border="border-cyan-500/20" />
+        </div>
+      </FlowBox>
+
       {/* Performance Alerts */}
       <FlowBox title="Alertas Automaticos de Performance" borderColor="border-red-500/20" bgColor="bg-red-500/5" badge="v3.5">
         <div className="flex flex-col items-center gap-0">
@@ -2056,13 +2128,13 @@ function OperationsSection() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { n: "3", label: "Tabelas SQL", icon: Database, color: "text-emerald-400" },
-            { n: "5", label: "Views SQL", icon: Eye, color: "text-blue-400" },
+            { n: "7", label: "Views SQL", icon: Eye, color: "text-blue-400" },
             { n: "35+", label: "Campos Metricas", icon: BarChart3, color: "text-orange-400" },
             { n: "4", label: "Canais", icon: Megaphone, color: "text-pink-400" },
             { n: "11", label: "Regras de Alerta", icon: AlertTriangle, color: "text-red-400" },
             { n: "19", label: "Metricas Google", icon: Target, color: "text-blue-400" },
-            { n: "8", label: "Componentes Op.", icon: Layers, color: "text-purple-400" },
-            { n: "4", label: "Status Pacing", icon: DollarSign, color: "text-green-400" },
+            { n: "11", label: "Componentes Op.", icon: Layers, color: "text-purple-400" },
+            { n: "2", label: "Vistas Calendario", icon: CalendarDays, color: "text-violet-400" },
           ].map((stat) => (
             <div key={stat.label} className="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex items-center gap-3">
               <stat.icon className={`h-5 w-5 ${stat.color} flex-shrink-0`} />

@@ -751,6 +751,121 @@ export const MONTH_LABELS: Record<number, string> = {
   9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro",
 };
 
+// --- Campaign Calendar & Timeline ---
+
+export interface CalendarCampaign {
+  id: string;
+  user_id: string;
+  project_id: string;
+  project_name: string;
+  campaign_name: string;
+  channel: CampaignChannel;
+  status: CampaignStatus;
+  objective: string | null;
+  budget_total: number;
+  budget_spent: number;
+  start_date: string | null;
+  end_date: string | null;
+  duration_days: number | null;
+  days_remaining: number | null;
+  days_elapsed: number | null;
+  budget_pacing: number;
+  ending_soon: boolean;
+  total_impressions: number;
+  total_clicks: number;
+  total_conversions: number;
+  total_cost: number;
+  total_revenue: number;
+  metrics_entries: number;
+}
+
+export interface TimelineCampaign {
+  campaign_id: string;
+  user_id: string;
+  project_id: string;
+  project_name: string;
+  campaign_name: string;
+  channel: CampaignChannel;
+  status: CampaignStatus;
+  start_date: string | null;
+  end_date: string | null;
+  budget_total: number;
+  budget_spent: number;
+  effective_start: string;
+  effective_end: string;
+  overlap_count: number;
+}
+
+export const CHANNEL_BAR_COLORS: Record<CampaignChannel, { bg: string; border: string; text: string }> = {
+  google: { bg: "bg-blue-500/20 dark:bg-blue-500/30", border: "border-blue-500", text: "text-blue-700 dark:text-blue-300" },
+  meta: { bg: "bg-indigo-500/20 dark:bg-indigo-500/30", border: "border-indigo-500", text: "text-indigo-700 dark:text-indigo-300" },
+  linkedin: { bg: "bg-sky-500/20 dark:bg-sky-500/30", border: "border-sky-500", text: "text-sky-700 dark:text-sky-300" },
+  tiktok: { bg: "bg-pink-500/20 dark:bg-pink-500/30", border: "border-pink-500", text: "text-pink-700 dark:text-pink-300" },
+};
+
+export const CHANNEL_SOLID_COLORS: Record<CampaignChannel, string> = {
+  google: "bg-blue-500",
+  meta: "bg-indigo-500",
+  linkedin: "bg-sky-500",
+  tiktok: "bg-pink-500",
+};
+
+export const STATUS_DOT_COLORS: Record<CampaignStatus, string> = {
+  draft: "bg-gray-400",
+  active: "bg-green-500",
+  paused: "bg-yellow-500",
+  completed: "bg-blue-500",
+  archived: "bg-red-400",
+};
+
+export const WEEKDAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+export function getMonthDays(year: number, month: number): Date[] {
+  const days: Date[] = [];
+  const date = new Date(year, month, 1);
+  while (date.getMonth() === month) {
+    days.push(new Date(date));
+    date.setDate(date.getDate() + 1);
+  }
+  return days;
+}
+
+export function getCalendarGrid(year: number, month: number): (Date | null)[] {
+  const days = getMonthDays(year, month);
+  const firstDayOfWeek = days[0].getDay();
+  const grid: (Date | null)[] = [];
+  for (let i = 0; i < firstDayOfWeek; i++) grid.push(null);
+  for (const d of days) grid.push(d);
+  while (grid.length % 7 !== 0) grid.push(null);
+  return grid;
+}
+
+export function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+export function isDateInRange(date: Date, start: string | null, end: string | null): boolean {
+  if (!start) return false;
+  const s = new Date(start + "T00:00:00");
+  const e = end ? new Date(end + "T00:00:00") : s;
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return d >= s && d <= e;
+}
+
+export function isRangeStart(date: Date, start: string | null): boolean {
+  if (!start) return false;
+  return isSameDay(date, new Date(start + "T00:00:00"));
+}
+
+export function isRangeEnd(date: Date, end: string | null): boolean {
+  if (!end) return false;
+  return isSameDay(date, new Date(end + "T00:00:00"));
+}
+
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+}
+
 export function buildBudgetProjectSummary(allocations: BudgetAllocationRow[]): BudgetProjectSummary[] {
   const grouped = new Map<string, BudgetAllocationRow[]>();
 

@@ -25,6 +25,8 @@ import Help from "./pages/Help";
 import TacticalPlan from "./pages/TacticalPlan";
 import Alerts from "./pages/Alerts";
 import Operations from "./pages/Operations";
+import Integrations from "./pages/Integrations";
+import OAuthCallback from "./pages/OAuthCallback";
 import Checkout from "./pages/Checkout";
 import Subscribe from "./pages/Subscribe";
 import NotFound from "./pages/NotFound";
@@ -175,6 +177,14 @@ const App = () => (
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="/integracoes" 
+            element={
+              <ProtectedRoute>
+                <Integrations />
+              </ProtectedRoute>
+            } 
+          />
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route 
@@ -185,6 +195,7 @@ const App = () => (
               </AdminProtectedRoute>
             } 
           />
+          <Route path="/oauth/callback" element={<OAuthCallback />} />
           <Route path="/api/status-rss" element={<StatusRssFallback />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<ForceLightMode><NotFound /></ForceLightMode>} />
