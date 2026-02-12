@@ -869,6 +869,17 @@ export default function Help() {
                       </div>
                     </CardHeader>
                     <CardContent className="pt-0 px-3 sm:px-6 space-y-3">
+                      {expandedArticle !== null && category.articles[expandedArticle] && (
+                        <div className="p-3 sm:p-4 rounded-xl border border-primary/20 bg-primary/5">
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <h4 className="font-semibold text-xs sm:text-sm text-foreground">{category.articles[expandedArticle].title}</h4>
+                            <Badge variant="secondary" className={`text-[9px] sm:text-[10px] shrink-0 ${getDifficultyColor(category.articles[expandedArticle].difficulty)}`}>
+                              {category.articles[expandedArticle].difficulty}
+                            </Badge>
+                          </div>
+                          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{category.articles[expandedArticle].content}</p>
+                        </div>
+                      )}
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {category.articles.map((article, index) => (
                           <button
@@ -887,17 +898,6 @@ export default function Help() {
                           </button>
                         ))}
                       </div>
-                      {expandedArticle !== null && category.articles[expandedArticle] && (
-                        <div className="p-3 sm:p-4 rounded-xl border border-primary/20 bg-primary/5">
-                          <div className="flex items-center justify-between gap-2 mb-2">
-                            <h4 className="font-semibold text-xs sm:text-sm text-foreground">{category.articles[expandedArticle].title}</h4>
-                            <Badge variant="secondary" className={`text-[9px] sm:text-[10px] shrink-0 ${getDifficultyColor(category.articles[expandedArticle].difficulty)}`}>
-                              {category.articles[expandedArticle].difficulty}
-                            </Badge>
-                          </div>
-                          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{category.articles[expandedArticle].content}</p>
-                        </div>
-                      )}
                     </CardContent>
                   </Card>
                 );

@@ -925,7 +925,11 @@ export default function TacticalPlan() {
                         }`}
                       >
                         {isChannel ? (
-                          <div className={`w-2 h-2 rounded-full ${channelConf?.bgColor?.replace("/10", "")}`} />
+                          <img
+                            src={`/${tab.key}-ads.svg`}
+                            alt={tab.label}
+                            className={`h-4 w-4 object-contain ${tab.key === "tiktok" ? "dark:brightness-0 dark:invert" : ""}`}
+                          />
                         ) : (
                           <tab.icon className="h-4 w-4" />
                         )}

@@ -23,6 +23,7 @@ const plans = [
       "Diagnóstico heurístico (6 dimensões)",
       "Score por canal de mídia",
       "Insights automáticos",
+      "Públicos-alvo com ICP básico",
       "Configuração de API keys (Gemini / Claude)",
       "Análise por IA de projetos (3/mês)",
     ],
@@ -41,10 +42,12 @@ const plans = [
     highlights: [
       "Projetos ilimitados",
       "Todas as análises por IA ilimitadas",
-      "Análise de performance de campanhas por IA",
+      "Gestão de campanhas e budget com pacing",
+      "Calendário + alertas de performance",
+      "Enriquecimento de ICP com IA",
       "Benchmark competitivo com SWOT + IA",
-      "Enriquecimento de insights por IA",
       "Plano Tático por canal",
+      "Integrações OAuth (Google Ads...)",
     ],
     cta: "Assinar Agora",
     popular: true,
@@ -59,9 +62,10 @@ const plans = [
     description: "Para operações de marketing complexas",
     highlights: [
       "Tudo do Professional",
-      "API access + integrações",
+      "API access + integrações customizadas",
       "Múltiplos usuários",
-      "Consultoria estratégica",
+      "SLA dedicado 24/7",
+      "Consultoria estratégica mensal",
     ],
     cta: "Falar com Consultor",
     popular: false,
@@ -115,11 +119,36 @@ const featureComparison: FeatureCategory[] = [
       { name: "Projetos ativos", starter: "5", professional: "Ilimitados", enterprise: "Ilimitados" },
       { name: "Públicos-alvo por projeto", starter: "5", professional: "Ilimitados", enterprise: "Ilimitados" },
       { name: "Keywords por público", starter: true, professional: true, enterprise: true },
+      { name: "Enriquecimento de ICP com IA", starter: false, professional: true, enterprise: true },
       { name: "URLs de concorrentes", starter: true, professional: true, enterprise: true },
     ],
   },
   {
-    category: "Exportação e Integrações",
+    category: "Operações e Campanhas",
+    features: [
+      { name: "Gestão de campanhas por canal", starter: false, professional: true, enterprise: true },
+      { name: "Métricas de performance (35+ KPIs)", starter: false, professional: true, enterprise: true },
+      { name: "Análise de performance por IA", starter: false, professional: true, enterprise: true },
+      { name: "Gestão de budget com pacing", starter: false, professional: true, enterprise: true },
+      { name: "Calendário de campanhas", starter: false, professional: true, enterprise: true },
+      { name: "Timeline Gantt", starter: false, professional: true, enterprise: true },
+      { name: "Alertas automáticos de performance", starter: false, professional: true, enterprise: true },
+      { name: "Comparativo tático vs real", starter: false, professional: true, enterprise: true },
+    ],
+  },
+  {
+    category: "Integrações",
+    features: [
+      { name: "Google Ads (OAuth)", starter: false, professional: true, enterprise: true },
+      { name: "Meta Ads (OAuth)", starter: false, professional: "Em breve", enterprise: "Em breve" },
+      { name: "LinkedIn Ads (OAuth)", starter: false, professional: "Em breve", enterprise: "Em breve" },
+      { name: "TikTok Ads (OAuth)", starter: false, professional: "Em breve", enterprise: "Em breve" },
+      { name: "Sincronização de métricas", starter: false, professional: true, enterprise: true },
+      { name: "Auto-refresh de tokens", starter: false, professional: true, enterprise: true },
+    ],
+  },
+  {
+    category: "Exportação",
     features: [
       { name: "Exportação PDF", starter: false, professional: true, enterprise: true },
       { name: "Exportação CSV", starter: false, professional: true, enterprise: true },
@@ -209,10 +238,26 @@ export default function Pricing() {
               },
               {
                 "@type": "Question",
+                name: "O que inclui a Gestão de Campanhas?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Criação e monitoramento de campanhas por canal com 35+ métricas de performance, budget pacing, calendário mensal, timeline Gantt, alertas automáticos e análise por IA.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "O que é o Enriquecimento de ICP?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Recurso que usa IA combinada com dados de fontes públicas (SEBRAE, IBGE) para refinar públicos-alvo com perfil ideal, decisores, dores, gatilhos e keywords otimizadas.",
+                },
+              },
+              {
+                "@type": "Question",
                 name: "Qual forma de pagamento aceitam?",
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: "Aceitamos cartão de crédito, boleto bancário e PIX para planos Professional. Enterprise tem condições especiais.",
+                  text: "Cartão de crédito, boleto bancário e PIX para planos Professional. Enterprise tem condições especiais.",
                 },
               },
             ],
@@ -482,6 +527,18 @@ export default function Pricing() {
               {
                 q: "O que é o Plano Tático?",
                 a: "Módulo exclusivo do Professional para estruturar campanhas canal por canal — tipo de campanha, etapa do funil, lances, copy frameworks, segmentação e testes A/B.",
+              },
+              {
+                q: "O que inclui a Gestão de Campanhas?",
+                a: "Criação e monitoramento de campanhas por canal (Google, Meta, LinkedIn, TikTok) com 35+ métricas de performance, budget pacing em tempo real, calendário mensal, timeline Gantt, alertas automáticos de performance e análise por IA. Disponível no plano Professional.",
+              },
+              {
+                q: "O que é o Enriquecimento de ICP?",
+                a: "É um recurso que usa IA (Gemini/Claude) combinada com dados de fontes públicas (SEBRAE, IBGE) para refinar seus públicos-alvo. Gera perfil ideal detalhado, decisores-chave, dores, gatilhos de compra e keywords otimizadas.",
+              },
+              {
+                q: "Como funcionam as integrações OAuth?",
+                a: "Você conecta suas contas de mídia (Google Ads, Meta, LinkedIn, TikTok) via OAuth 2.0 seguro — sem compartilhar senhas. A plataforma importa dados de campanhas e métricas automaticamente. Atualmente Google Ads está disponível, demais em breve.",
               },
               {
                 q: "Qual forma de pagamento aceitam?",

@@ -39,10 +39,10 @@ const features = [
 ];
 
 const channels = [
-  { name: "Google Ads", letter: "G", color: "bg-blue-500/10 border-blue-500/20", metrics: "19 métricas (funil B2B completo)" },
-  { name: "Meta Ads", letter: "M", color: "bg-indigo-500/10 border-indigo-500/20", metrics: "Alcance, Frequência + comuns" },
-  { name: "LinkedIn Ads", letter: "L", color: "bg-sky-500/10 border-sky-500/20", metrics: "Leads, CPL, Engagement Rate" },
-  { name: "TikTok Ads", letter: "T", color: "bg-pink-500/10 border-pink-500/20", metrics: "Video Views, VTR + comuns" },
+  { name: "Google Ads", logo: "/google-ads.svg", logoClass: "", color: "bg-blue-500/10 border-blue-500/20", metrics: "19 métricas (funil B2B completo)" },
+  { name: "Meta Ads", logo: "/meta-ads.svg", logoClass: "", color: "bg-indigo-500/10 border-indigo-500/20", metrics: "Alcance, Frequência + comuns" },
+  { name: "LinkedIn Ads", logo: "/linkedin-ads.svg", logoClass: "", color: "bg-sky-500/10 border-sky-500/20", metrics: "Leads, CPL, Engagement Rate" },
+  { name: "TikTok Ads", logo: "/tiktok-ads.svg", logoClass: "dark:brightness-0 dark:invert", color: "bg-pink-500/10 border-pink-500/20", metrics: "Video Views, VTR + comuns" },
 ];
 
 const benefits = [
@@ -163,8 +163,8 @@ export default function FeatureGestaoCampanhas() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
             {channels.map((ch, i) => (
               <div key={i} className={`rounded-2xl border ${ch.color} p-6 flex items-start gap-4`}>
-                <div className={`h-12 w-12 rounded-xl ${ch.color} flex items-center justify-center shrink-0`}>
-                  <span className="text-lg font-bold">{ch.letter}</span>
+                <div className={`h-12 w-12 rounded-xl bg-white dark:bg-gray-900 border border-border/50 flex items-center justify-center shrink-0 p-2 shadow-sm`}>
+                  <img src={ch.logo} alt={ch.name} className={`w-full h-full object-contain ${ch.logoClass}`} />
                 </div>
                 <div>
                   <h3 className="font-bold text-foreground">{ch.name}</h3>

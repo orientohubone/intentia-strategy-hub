@@ -124,9 +124,9 @@ function FlowNode({
   icon: Icon,
   label,
   sublabel,
-  color = "text-slate-300",
-  bg = "bg-slate-800/60",
-  border = "border-slate-700/50",
+  color = "text-foreground/80",
+  bg = "bg-muted/60",
+  border = "border-border/50",
   size = "normal",
   pulse = false,
   tooltip,
@@ -161,7 +161,7 @@ function FlowNode({
       <Icon className={`${iconSize[size]} ${color} flex-shrink-0`} />
       <div className="min-w-0">
         <p className={`text-xs font-medium ${color}`}>{label}</p>
-        {sublabel && <p className="text-[10px] text-slate-500 truncate">{sublabel}</p>}
+        {sublabel && <p className="text-[10px] text-muted-foreground truncate">{sublabel}</p>}
       </div>
     </div>
   );
@@ -177,26 +177,26 @@ function ArrowConnector({ direction = "right", label }: { direction?: "right" | 
   if (direction === "down") {
     return (
       <div className="flex flex-col items-center gap-0.5 py-1">
-        <div className="w-px h-4 bg-gradient-to-b from-slate-600 to-slate-500" />
-        {label && <span className="text-[9px] text-slate-500 px-2">{label}</span>}
-        <ArrowDown className="h-3 w-3 text-slate-500" />
+        <div className="w-px h-4 bg-gradient-to-b from-border to-muted-foreground/50" />
+        {label && <span className="text-[9px] text-muted-foreground px-2">{label}</span>}
+        <ArrowDown className="h-3 w-3 text-muted-foreground" />
       </div>
     );
   }
   return (
     <div className="flex items-center gap-0.5 px-1">
-      <div className="h-px w-4 bg-gradient-to-r from-slate-600 to-slate-500" />
-      {label && <span className="text-[9px] text-slate-500 whitespace-nowrap">{label}</span>}
-      <ArrowRight className="h-3 w-3 text-slate-500" />
+      <div className="h-px w-4 bg-gradient-to-r from-border to-muted-foreground/50" />
+      {label && <span className="text-[9px] text-muted-foreground whitespace-nowrap">{label}</span>}
+      <ArrowRight className="h-3 w-3 text-muted-foreground" />
     </div>
   );
 }
 
 function DottedLine({ direction = "down" }: { direction?: "right" | "down" }) {
   if (direction === "down") {
-    return <div className="w-px h-6 border-l border-dashed border-slate-700 mx-auto" />;
+    return <div className="w-px h-6 border-l border-dashed border-border mx-auto" />;
   }
-  return <div className="h-px w-6 border-t border-dashed border-slate-700 my-auto" />;
+  return <div className="h-px w-6 border-t border-dashed border-border my-auto" />;
 }
 
 // =====================================================
@@ -205,9 +205,9 @@ function DottedLine({ direction = "down" }: { direction?: "right" | "down" }) {
 
 function FlowBox({
   title,
-  titleColor = "text-slate-300",
-  borderColor = "border-slate-700/50",
-  bgColor = "bg-slate-900/40",
+  titleColor = "text-foreground/80",
+  borderColor = "border-border/50",
+  bgColor = "bg-card/40",
   children,
   badge,
   defaultOpen = false,
@@ -238,16 +238,16 @@ function FlowBox({
             onClick={() => setIsOpen(!isOpen)}
             className="flex items-center gap-2 text-left hover:opacity-80 transition-opacity flex-1 min-w-0"
           >
-            <ChevronDown className={`h-3.5 w-3.5 text-slate-500 transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`} />
+            <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`} />
             <p className={`text-[11px] font-semibold uppercase tracking-wider ${titleColor} truncate`}>{title}</p>
             {badge && (
-              <Badge className="text-[9px] bg-slate-800 text-slate-400 border-slate-700 flex-shrink-0">{badge}</Badge>
+              <Badge className="text-[9px] bg-muted text-muted-foreground border-border flex-shrink-0">{badge}</Badge>
             )}
           </button>
           {isOpen && (
             <button
               onClick={() => { setIsFullscreen(true); setZoom(100); }}
-              className="p-1.5 rounded-lg hover:bg-white/5 text-slate-500 hover:text-slate-300 transition-colors flex-shrink-0"
+              className="p-1.5 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
               title="Expandir em tela cheia"
             >
               <Expand className="h-3.5 w-3.5" />
@@ -262,36 +262,36 @@ function FlowBox({
       </div>
 
       <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
-        <DialogContent className="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] rounded-none p-0 overflow-hidden border-0 bg-slate-950">
-          <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-3 bg-slate-950 border-b border-slate-800">
+        <DialogContent className="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] rounded-none p-0 overflow-hidden border-0 bg-background">
+          <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-3 bg-background border-b border-border">
             <div className="flex items-center gap-2">
               <p className={`text-sm font-semibold uppercase tracking-wider ${titleColor}`}>{title}</p>
               {badge && (
-                <Badge className="text-[10px] bg-slate-800 text-slate-400 border-slate-700">{badge}</Badge>
+                <Badge className="text-[10px] bg-muted text-muted-foreground border-border">{badge}</Badge>
               )}
             </div>
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setZoom(Math.max(50, zoom - 10))}
                 disabled={zoom <= 50}
-                className="p-1.5 rounded-lg hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1.5 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 title="Diminuir zoom"
               >
                 <ZoomOut className="h-4 w-4" />
               </button>
-              <span className="text-[10px] text-slate-500 font-mono w-10 text-center">{zoom}%</span>
+              <span className="text-[10px] text-muted-foreground font-mono w-10 text-center">{zoom}%</span>
               <button
                 onClick={() => setZoom(Math.min(200, zoom + 10))}
                 disabled={zoom >= 200}
-                className="p-1.5 rounded-lg hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1.5 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 title="Aumentar zoom"
               >
                 <ZoomIn className="h-4 w-4" />
               </button>
-              <div className="w-px h-4 bg-slate-800 mx-1" />
+              <div className="w-px h-4 bg-border mx-1" />
               <button
                 onClick={() => setIsFullscreen(false)}
-                className="p-1.5 rounded-lg hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
                 title="Fechar tela cheia"
               >
                 <Minimize2 className="h-4 w-4" />
@@ -359,17 +359,17 @@ function OverviewSection() {
 
         {/* Connection arrows between layers */}
         <div className="flex items-center justify-center gap-2 py-2">
-          <div className="flex items-center gap-2 bg-slate-800/40 rounded-full px-4 py-1.5">
+          <div className="flex items-center gap-2 bg-muted/40 rounded-full px-4 py-1.5">
             <Monitor className="h-3 w-3 text-blue-400" />
             <div className="flex items-center gap-1">
               <div className="h-px w-3 bg-blue-400/40" />
-              <ArrowRight className="h-3 w-3 text-slate-500" />
+              <ArrowRight className="h-3 w-3 text-muted-foreground" />
               <div className="h-px w-3 bg-purple-400/40" />
             </div>
             <Cloud className="h-3 w-3 text-purple-400" />
             <div className="flex items-center gap-1">
               <div className="h-px w-3 bg-purple-400/40" />
-              <ArrowRight className="h-3 w-3 text-slate-500" />
+              <ArrowRight className="h-3 w-3 text-muted-foreground" />
               <div className="h-px w-3 bg-emerald-400/40" />
             </div>
             <Database className="h-3 w-3 text-emerald-400" />
@@ -388,12 +388,12 @@ function OverviewSection() {
             { label: "Supabase", sub: "BaaS", color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", tip: "Backend-as-a-Service open source: PostgreSQL, Auth, Storage, Edge Functions e Real-time" },
             { label: "TanStack Query", sub: "Data Fetching", color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20", tip: "Gerenciamento de estado assincrono com cache automatico, revalidacao e deduplicacao de requests" },
             { label: "React Router v6", sub: "Routing", color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20", tip: "Navegacao SPA com rotas declarativas, nested routes, loaders e protecao de rotas" },
-            { label: "shadcn/ui", sub: "Components", color: "text-slate-300", bg: "bg-slate-800/60", border: "border-slate-700/50", tip: "Componentes acessiveis baseados em Radix UI, copiaveis e customizaveis com Tailwind" },
+            { label: "shadcn/ui", sub: "Components", color: "text-foreground/80", bg: "bg-muted/60", border: "border-border/50", tip: "Componentes acessiveis baseados em Radix UI, copiaveis e customizaveis com Tailwind" },
           ].map((tech) => (
             <InfoTip key={tech.label} tip={tech.tip}>
               <div className={`${tech.bg} border ${tech.border} rounded-xl p-3 text-center cursor-help`}>
                 <p className={`text-xs font-bold ${tech.color}`}>{tech.label}</p>
-                <p className="text-[10px] text-slate-500">{tech.sub}</p>
+                <p className="text-[10px] text-muted-foreground">{tech.sub}</p>
               </div>
             </InfoTip>
           ))}
@@ -412,11 +412,11 @@ function OverviewSection() {
           { n: "15", label: "Libs", icon: Crown, color: "text-primary" },
           { n: "35+", label: "Arquivos SQL", icon: FileText, color: "text-red-400" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex items-center gap-3">
+          <div key={stat.label} className="bg-card/60 border border-border rounded-xl p-3 flex items-center gap-3">
             <stat.icon className={`h-5 w-5 ${stat.color} flex-shrink-0`} />
             <div>
-              <p className="text-lg font-bold text-white">{stat.n}</p>
-              <p className="text-[10px] text-slate-500">{stat.label}</p>
+              <p className="text-lg font-bold text-foreground">{stat.n}</p>
+              <p className="text-[10px] text-muted-foreground">{stat.label}</p>
             </div>
           </div>
         ))}
@@ -462,11 +462,11 @@ function FrontendSection() {
               { path: "/relatorios", page: "FeatureRelatorios", desc: "Feature: Relatorios" },
               { path: "/oauth/callback", page: "OAuthCallback", desc: "Retorno OAuth" },
             ].map((route) => (
-              <div key={route.path} className="flex items-center gap-2 bg-slate-800/30 rounded-lg px-3 py-2">
+              <div key={route.path} className="flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
                 <code className="text-[10px] text-green-400 font-mono bg-green-500/10 px-1.5 py-0.5 rounded">{route.path}</code>
-                <ArrowRight className="h-3 w-3 text-slate-600 flex-shrink-0" />
-                <span className="text-[11px] text-slate-300">{route.page}</span>
-                <span className="text-[9px] text-slate-600 ml-auto">{route.desc}</span>
+                <ArrowRight className="h-3 w-3 text-muted-foreground/70 flex-shrink-0" />
+                <span className="text-[11px] text-foreground/80">{route.page}</span>
+                <span className="text-[9px] text-muted-foreground/70 ml-auto">{route.desc}</span>
               </div>
             ))}
           </div>
@@ -492,35 +492,35 @@ function FrontendSection() {
               { path: "/checkout", page: "Checkout", desc: "Pagamento" },
               { path: "/help", page: "Help", desc: "Centro de ajuda" },
             ].map((route) => (
-              <div key={route.path} className="flex items-center gap-2 bg-slate-800/30 rounded-lg px-3 py-2">
+              <div key={route.path} className="flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
                 <code className="text-[10px] text-amber-400 font-mono bg-amber-500/10 px-1.5 py-0.5 rounded">{route.path}</code>
-                <ArrowRight className="h-3 w-3 text-slate-600 flex-shrink-0" />
-                <span className="text-[11px] text-slate-300">{route.page}</span>
-                <span className="text-[9px] text-slate-600 ml-auto">{route.desc}</span>
+                <ArrowRight className="h-3 w-3 text-muted-foreground/70 flex-shrink-0" />
+                <span className="text-[11px] text-foreground/80">{route.page}</span>
+                <span className="text-[9px] text-muted-foreground/70 ml-auto">{route.desc}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Admin Routes */}
-        <div className="mt-4 pt-4 border-t border-slate-800/50">
+        <div className="mt-4 pt-4 border-t border-border/50">
           <div className="flex items-center gap-2 mb-3">
             <Shield className="h-3.5 w-3.5 text-red-400" />
             <span className="text-[11px] font-semibold text-red-400 uppercase tracking-wider">Rotas Admin</span>
             <Badge className="text-[9px] bg-red-500/10 text-red-400 border-red-500/20">AdminProtectedRoute</Badge>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <div className="flex items-center gap-2 bg-slate-800/30 rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
               <code className="text-[10px] text-red-400 font-mono bg-red-500/10 px-1.5 py-0.5 rounded">/admin/login</code>
-              <ArrowRight className="h-3 w-3 text-slate-600 flex-shrink-0" />
-              <span className="text-[11px] text-slate-300">AdminLogin</span>
-              <span className="text-[9px] text-slate-600 ml-auto">CNPJ + Senha</span>
+              <ArrowRight className="h-3 w-3 text-muted-foreground/70 flex-shrink-0" />
+              <span className="text-[11px] text-foreground/80">AdminLogin</span>
+              <span className="text-[9px] text-muted-foreground/70 ml-auto">CNPJ + Senha</span>
             </div>
-            <div className="flex items-center gap-2 bg-slate-800/30 rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
               <code className="text-[10px] text-red-400 font-mono bg-red-500/10 px-1.5 py-0.5 rounded">/admin</code>
-              <ArrowRight className="h-3 w-3 text-slate-600 flex-shrink-0" />
-              <span className="text-[11px] text-slate-300">AdminPanel</span>
-              <span className="text-[9px] text-slate-600 ml-auto">Painel completo</span>
+              <ArrowRight className="h-3 w-3 text-muted-foreground/70 flex-shrink-0" />
+              <span className="text-[11px] text-foreground/80">AdminPanel</span>
+              <span className="text-[9px] text-muted-foreground/70 ml-auto">Painel completo</span>
             </div>
           </div>
         </div>
@@ -530,23 +530,23 @@ function FrontendSection() {
       <FlowBox title="Hierarquia de Componentes" badge="50+ componentes">
         <div className="space-y-4">
           {/* App wrapper */}
-          <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-3">
+          <div className="bg-muted/30 border border-border/30 rounded-xl p-3">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-2 h-2 rounded-full bg-primary" />
-              <span className="text-xs font-semibold text-white">App.tsx</span>
-              <span className="text-[9px] text-slate-500">— Root Component</span>
+              <span className="text-xs font-semibold text-foreground">App.tsx</span>
+              <span className="text-[9px] text-muted-foreground">— Root Component</span>
             </div>
             <div className="ml-4 space-y-2">
               {[
                 { name: "ThemeProvider", desc: "Dark/Light mode", color: "text-purple-400" },
                 { name: "QueryClientProvider", desc: "TanStack Query cache", color: "text-red-400" },
                 { name: "BrowserRouter", desc: "React Router SPA", color: "text-pink-400" },
-                { name: "TooltipProvider", desc: "Radix tooltips", color: "text-slate-400" },
+                { name: "TooltipProvider", desc: "Radix tooltips", color: "text-muted-foreground" },
               ].map((wrapper) => (
                 <div key={wrapper.name} className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-600" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60" />
                   <code className={`text-[10px] font-mono ${wrapper.color}`}>{wrapper.name}</code>
-                  <span className="text-[9px] text-slate-600">{wrapper.desc}</span>
+                  <span className="text-[9px] text-muted-foreground/70">{wrapper.desc}</span>
                 </div>
               ))}
             </div>
@@ -560,7 +560,7 @@ function FrontendSection() {
                 {["Header", "LandingNav", "Footer", "ForceLightMode", "BackToHomeButton"].map((c) => (
                   <div key={c} className="flex items-center gap-1.5">
                     <div className="w-1 h-1 rounded-full bg-blue-500/50" />
-                    <code className="text-[10px] text-slate-400 font-mono">{c}</code>
+                    <code className="text-[10px] text-muted-foreground font-mono">{c}</code>
                   </div>
                 ))}
               </div>
@@ -571,7 +571,7 @@ function FrontendSection() {
                 {["DashboardHeader", "DashboardSidebar", "DashboardLayout", "ThemeToggle", "NotificationsDropdown"].map((c) => (
                   <div key={c} className="flex items-center gap-1.5">
                     <div className="w-1 h-1 rounded-full bg-amber-500/50" />
-                    <code className="text-[10px] text-slate-400 font-mono">{c}</code>
+                    <code className="text-[10px] text-muted-foreground font-mono">{c}</code>
                   </div>
                 ))}
               </div>
@@ -602,7 +602,7 @@ function FrontendSection() {
                 ].map((c) => (
                   <div key={c} className="flex items-center gap-1.5">
                     <div className="w-1 h-1 rounded-full bg-green-500/50" />
-                    <code className="text-[10px] text-slate-400 font-mono">{c}</code>
+                    <code className="text-[10px] text-muted-foreground font-mono">{c}</code>
                   </div>
                 ))}
               </div>
@@ -623,9 +623,9 @@ function FrontendSection() {
                 { name: "useMobile", desc: "Responsividade" },
                 { name: "useToast", desc: "Notificacoes UI" },
               ].map((hook) => (
-                <div key={hook.name} className="bg-slate-800/30 rounded-lg px-2.5 py-2">
+                <div key={hook.name} className="bg-muted/30 rounded-lg px-2.5 py-2">
                   <code className="text-[10px] text-purple-300 font-mono">{hook.name}</code>
-                  <p className="text-[9px] text-slate-600">{hook.desc}</p>
+                  <p className="text-[9px] text-muted-foreground/70">{hook.desc}</p>
                 </div>
               ))}
             </div>
@@ -697,12 +697,12 @@ function AuthSection() {
           </div>
 
           {/* Key difference */}
-          <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-3 mt-4">
+          <div className="bg-muted/30 border border-border/30 rounded-xl p-3 mt-4">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-[11px] font-medium text-amber-400">Autenticacao Separada</p>
-                <p className="text-[10px] text-slate-500">Admin usa localStorage + SHA-256 (tabela admin_users). Nao interfere com Supabase Auth dos clientes. Sessoes sao completamente independentes.</p>
+                <p className="text-[10px] text-muted-foreground">Admin usa localStorage + SHA-256 (tabela admin_users). Nao interfere com Supabase Auth dos clientes. Sessoes sao completamente independentes.</p>
               </div>
             </div>
           </div>
@@ -715,20 +715,20 @@ function AuthSection() {
           <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-3 text-center">
             <Globe className="h-5 w-5 text-green-400 mx-auto mb-2" />
             <p className="text-xs font-medium text-green-400">Publicas</p>
-            <p className="text-[10px] text-slate-500 mt-1">ForceLightMode wrapper</p>
-            <p className="text-[9px] text-slate-600 mt-0.5">Sem autenticacao</p>
+            <p className="text-[10px] text-muted-foreground mt-1">ForceLightMode wrapper</p>
+            <p className="text-[9px] text-muted-foreground/70 mt-0.5">Sem autenticacao</p>
           </div>
           <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 text-center">
             <Lock className="h-5 w-5 text-amber-400 mx-auto mb-2" />
             <p className="text-xs font-medium text-amber-400">Protegidas</p>
-            <p className="text-[10px] text-slate-500 mt-1">ProtectedRoute + FeatureGate</p>
-            <p className="text-[9px] text-slate-600 mt-0.5">Supabase Auth + Feature Flags</p>
+            <p className="text-[10px] text-muted-foreground mt-1">ProtectedRoute + FeatureGate</p>
+            <p className="text-[9px] text-muted-foreground/70 mt-0.5">Supabase Auth + Feature Flags</p>
           </div>
           <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-3 text-center">
             <Shield className="h-5 w-5 text-red-400 mx-auto mb-2" />
             <p className="text-xs font-medium text-red-400">Admin</p>
-            <p className="text-[10px] text-slate-500 mt-1">AdminProtectedRoute</p>
-            <p className="text-[9px] text-slate-600 mt-0.5">CNPJ + localStorage session</p>
+            <p className="text-[10px] text-muted-foreground mt-1">AdminProtectedRoute</p>
+            <p className="text-[9px] text-muted-foreground/70 mt-0.5">CNPJ + localStorage session</p>
           </div>
         </div>
       </FlowBox>
@@ -764,7 +764,7 @@ function DataFlowSection() {
             ].map((s) => (
               <div key={s.label} className="bg-primary/5 border border-primary/20 rounded-lg px-2.5 py-2 text-center">
                 <p className="text-[10px] text-primary font-medium">{s.label}</p>
-                <p className="text-[9px] text-slate-500">{s.score}</p>
+                <p className="text-[9px] text-muted-foreground">{s.score}</p>
               </div>
             ))}
           </div>
@@ -794,12 +794,12 @@ function DataFlowSection() {
             <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-3 text-center">
               <Sparkles className="h-5 w-5 text-blue-400 mx-auto mb-1" />
               <p className="text-xs font-medium text-blue-400">Google Gemini</p>
-              <p className="text-[9px] text-slate-500">Flash 2.0 / 3 Preview / Pro</p>
+              <p className="text-[9px] text-muted-foreground">Flash 2.0 / 3 Preview / Pro</p>
             </div>
             <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 text-center">
               <Sparkles className="h-5 w-5 text-amber-400 mx-auto mb-1" />
               <p className="text-xs font-medium text-amber-400">Anthropic Claude</p>
-              <p className="text-[9px] text-slate-500">Sonnet 4 / 3.7 / Haiku / Opus</p>
+              <p className="text-[9px] text-muted-foreground">Sonnet 4 / 3.7 / Haiku / Opus</p>
             </div>
           </div>
 
@@ -846,7 +846,7 @@ function DataFlowSection() {
             ].map((item) => (
               <div key={item.label} className="bg-pink-500/10 border border-pink-500/20 rounded-lg px-2.5 py-2 text-center">
                 <p className="text-[10px] text-pink-400 font-medium">{item.label}</p>
-                <p className="text-[9px] text-slate-500">{item.sub}</p>
+                <p className="text-[9px] text-muted-foreground">{item.sub}</p>
               </div>
             ))}
           </div>
@@ -881,11 +881,11 @@ function FeatureFlagsSection() {
               { status: "disabled", label: "Desativado", color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20", action: "Bloqueado" },
               { status: "development", label: "Em Dev", color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", action: "Em breve" },
               { status: "maintenance", label: "Manutencao", color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", action: "Aviso" },
-              { status: "deprecated", label: "Descontinuado", color: "text-slate-400", bg: "bg-slate-800/60", border: "border-slate-700/50", action: "Remocao" },
+              { status: "deprecated", label: "Descontinuado", color: "text-muted-foreground", bg: "bg-muted/60", border: "border-border/50", action: "Remocao" },
             ].map((s) => (
               <div key={s.status} className={`${s.bg} border ${s.border} rounded-lg px-2 py-2 text-center`}>
                 <p className={`text-[10px] font-medium ${s.color}`}>{s.label}</p>
-                <p className="text-[9px] text-slate-500">{s.action}</p>
+                <p className="text-[9px] text-muted-foreground">{s.action}</p>
               </div>
             ))}
           </div>
@@ -898,15 +898,15 @@ function FeatureFlagsSection() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
             <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg px-3 py-2 text-center">
               <p className="text-[10px] text-purple-400 font-medium">Override = true</p>
-              <p className="text-[9px] text-slate-500">Acesso liberado (ignora plano)</p>
+              <p className="text-[9px] text-muted-foreground">Acesso liberado (ignora plano)</p>
             </div>
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-center">
               <p className="text-[10px] text-red-400 font-medium">Override = false</p>
-              <p className="text-[9px] text-slate-500">Acesso bloqueado (ignora plano)</p>
+              <p className="text-[9px] text-muted-foreground">Acesso bloqueado (ignora plano)</p>
             </div>
-            <div className="bg-slate-800/60 border border-slate-700/50 rounded-lg px-3 py-2 text-center">
-              <p className="text-[10px] text-slate-300 font-medium">Sem override</p>
-              <p className="text-[9px] text-slate-500">Verifica plano do usuario</p>
+            <div className="bg-muted/60 border border-border/50 rounded-lg px-3 py-2 text-center">
+              <p className="text-[10px] text-foreground/80 font-medium">Sem override</p>
+              <p className="text-[9px] text-muted-foreground">Verifica plano do usuario</p>
             </div>
           </div>
 
@@ -919,12 +919,12 @@ function FeatureFlagsSection() {
             <div className="bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2 text-center">
               <CheckCircle2 className="h-4 w-4 text-green-400 mx-auto mb-1" />
               <p className="text-[10px] text-green-400 font-medium">Habilitado no plano</p>
-              <p className="text-[9px] text-slate-500">Acesso concedido</p>
+              <p className="text-[9px] text-muted-foreground">Acesso concedido</p>
             </div>
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-center">
               <XCircle className="h-4 w-4 text-red-400 mx-auto mb-1" />
               <p className="text-[10px] text-red-400 font-medium">Nao habilitado</p>
-              <p className="text-[9px] text-slate-500">Tela de upgrade exibida</p>
+              <p className="text-[9px] text-muted-foreground">Tela de upgrade exibida</p>
             </div>
           </div>
         </div>
@@ -935,20 +935,20 @@ function FeatureFlagsSection() {
         <div className="flex flex-col sm:flex-row items-center gap-2 justify-center">
           <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 text-center">
             <p className="text-xs font-bold text-amber-400">1o</p>
-            <p className="text-[10px] text-slate-400">Status Global</p>
-            <code className="text-[9px] text-slate-500 font-mono">feature_flags</code>
+            <p className="text-[10px] text-muted-foreground">Status Global</p>
+            <code className="text-[9px] text-muted-foreground font-mono">feature_flags</code>
           </div>
           <ArrowConnector direction="right" />
           <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl px-4 py-3 text-center">
             <p className="text-xs font-bold text-purple-400">2o</p>
-            <p className="text-[10px] text-slate-400">Override Usuario</p>
-            <code className="text-[9px] text-slate-500 font-mono">user_feature_overrides</code>
+            <p className="text-[10px] text-muted-foreground">Override Usuario</p>
+            <code className="text-[9px] text-muted-foreground font-mono">user_feature_overrides</code>
           </div>
           <ArrowConnector direction="right" />
           <div className="bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 text-center">
             <p className="text-xs font-bold text-primary">3o</p>
-            <p className="text-[10px] text-slate-400">Permissao Plano</p>
-            <code className="text-[9px] text-slate-500 font-mono">plan_features</code>
+            <p className="text-[10px] text-muted-foreground">Permissao Plano</p>
+            <code className="text-[9px] text-muted-foreground font-mono">plan_features</code>
           </div>
         </div>
       </FlowBox>
@@ -970,7 +970,7 @@ function FeatureFlagsSection() {
               <div className={`${cat.bg} border ${cat.border} rounded-xl p-3 text-center cursor-help`}>
                 <cat.icon className={`h-5 w-5 ${cat.color} mx-auto mb-1.5`} />
                 <p className={`text-[10px] font-medium ${cat.color}`}>{cat.label}</p>
-                <p className="text-[9px] text-slate-500">{cat.count} features</p>
+                <p className="text-[9px] text-muted-foreground">{cat.count} features</p>
               </div>
             </InfoTip>
           ))}
@@ -1098,23 +1098,23 @@ function EdgeFunctionsSection() {
                   <Lock className="h-2.5 w-2.5 mr-0.5" />{fn.auth.includes("Publico") ? "Publico" : "Auth"}
                 </Badge>
               </div>
-              <p className="text-[11px] text-slate-400 mb-3">{fn.desc}</p>
+              <p className="text-[11px] text-muted-foreground mb-3">{fn.desc}</p>
               <div className="grid grid-cols-4 gap-2">
-                <div className="bg-slate-800/40 rounded-lg px-2.5 py-1.5">
-                  <p className="text-[9px] text-slate-600 uppercase">Trigger</p>
-                  <p className="text-[10px] text-slate-400">{fn.trigger}</p>
+                <div className="bg-muted/40 rounded-lg px-2.5 py-1.5">
+                  <p className="text-[9px] text-muted-foreground/70 uppercase">Trigger</p>
+                  <p className="text-[10px] text-muted-foreground">{fn.trigger}</p>
                 </div>
-                <div className="bg-slate-800/40 rounded-lg px-2.5 py-1.5">
-                  <p className="text-[9px] text-slate-600 uppercase">Input</p>
-                  <p className="text-[10px] text-slate-400">{fn.input}</p>
+                <div className="bg-muted/40 rounded-lg px-2.5 py-1.5">
+                  <p className="text-[9px] text-muted-foreground/70 uppercase">Input</p>
+                  <p className="text-[10px] text-muted-foreground">{fn.input}</p>
                 </div>
-                <div className="bg-slate-800/40 rounded-lg px-2.5 py-1.5">
-                  <p className="text-[9px] text-slate-600 uppercase">Output</p>
-                  <p className="text-[10px] text-slate-400">{fn.output}</p>
+                <div className="bg-muted/40 rounded-lg px-2.5 py-1.5">
+                  <p className="text-[9px] text-muted-foreground/70 uppercase">Output</p>
+                  <p className="text-[10px] text-muted-foreground">{fn.output}</p>
                 </div>
-                <div className="bg-slate-800/40 rounded-lg px-2.5 py-1.5">
-                  <p className="text-[9px] text-slate-600 uppercase">Auth</p>
-                  <p className="text-[10px] text-slate-400">{fn.auth}</p>
+                <div className="bg-muted/40 rounded-lg px-2.5 py-1.5">
+                  <p className="text-[9px] text-muted-foreground/70 uppercase">Auth</p>
+                  <p className="text-[10px] text-muted-foreground">{fn.auth}</p>
                 </div>
               </div>
             </div>
@@ -1125,12 +1125,12 @@ function EdgeFunctionsSection() {
       {/* Claude Proxy Architecture */}
       <FlowBox title="Arquitetura Claude Proxy" badge="CORS Bypass">
         <div className="space-y-4">
-          <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-3">
+          <div className="bg-muted/30 border border-border/30 rounded-xl p-3">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-[11px] font-medium text-amber-400">Por que um proxy?</p>
-                <p className="text-[10px] text-slate-500">A API da Anthropic (Claude) bloqueia chamadas diretas do browser via CORS. Gemini permite chamadas diretas. Claude precisa de proxy server-side.</p>
+                <p className="text-[10px] text-muted-foreground">A API da Anthropic (Claude) bloqueia chamadas diretas do browser via CORS. Gemini permite chamadas diretas. Claude precisa de proxy server-side.</p>
               </div>
             </div>
           </div>
@@ -1168,11 +1168,11 @@ function EdgeFunctionsSection() {
             { source: "/api/status-webhook", dest: "Edge Function: status-webhook", desc: "Webhook de monitoramento externo" },
             { source: "/api/claude-proxy", dest: "Vercel Serverless Function", desc: "Proxy para API Anthropic (Claude)" },
           ].map((r) => (
-            <div key={r.source} className="flex items-center gap-2 bg-slate-800/30 rounded-lg px-3 py-2">
+            <div key={r.source} className="flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
               <code className="text-[10px] text-cyan-400 font-mono bg-cyan-500/10 px-1.5 py-0.5 rounded">{r.source}</code>
-              <ArrowRight className="h-3 w-3 text-slate-600 flex-shrink-0" />
-              <span className="text-[11px] text-slate-300">{r.dest}</span>
-              <span className="text-[9px] text-slate-600 ml-auto hidden sm:inline">{r.desc}</span>
+              <ArrowRight className="h-3 w-3 text-muted-foreground/70 flex-shrink-0" />
+              <span className="text-[11px] text-foreground/80">{r.dest}</span>
+              <span className="text-[9px] text-muted-foreground/70 ml-auto hidden sm:inline">{r.desc}</span>
             </div>
           ))}
         </div>
@@ -1273,17 +1273,17 @@ function DatabaseSection() {
                 },
               ].map((table) => (
                 <InfoTip key={table.name} tip={table.tip}>
-                <div className={`bg-slate-800/30 border ${table.border} rounded-xl p-3 cursor-help`}>
+                <div className={`bg-muted/30 border ${table.border} rounded-xl p-3 cursor-help`}>
                   <div className="flex items-center gap-2 mb-1.5">
                     <Database className={`h-3.5 w-3.5 ${table.color}`} />
                     <code className={`text-[11px] font-mono font-semibold ${table.color}`}>{table.name}</code>
                   </div>
-                  <p className="text-[9px] text-slate-500 mb-2">{table.desc}</p>
+                  <p className="text-[9px] text-muted-foreground mb-2">{table.desc}</p>
                   <div className="space-y-0.5">
                     {table.cols.map((col) => (
                       <div key={col} className="flex items-center gap-1.5">
-                        <div className={`w-1 h-1 rounded-full ${col.includes("PK") ? "bg-amber-400" : col.includes("FK") ? "bg-cyan-400" : "bg-slate-600"}`} />
-                        <code className="text-[9px] text-slate-400 font-mono">{col}</code>
+                        <div className={`w-1 h-1 rounded-full ${col.includes("PK") ? "bg-amber-400" : col.includes("FK") ? "bg-cyan-400" : "bg-muted-foreground/60"}`} />
+                        <code className="text-[9px] text-muted-foreground font-mono">{col}</code>
                       </div>
                     ))}
                   </div>
@@ -1341,17 +1341,17 @@ function DatabaseSection() {
                   border: "border-blue-500/20",
                 },
               ].map((table) => (
-                <div key={table.name} className={`bg-slate-800/30 border ${table.border} rounded-xl p-3`}>
+                <div key={table.name} className={`bg-muted/30 border ${table.border} rounded-xl p-3`}>
                   <div className="flex items-center gap-2 mb-1.5">
                     <Database className={`h-3.5 w-3.5 ${table.color}`} />
                     <code className={`text-[11px] font-mono font-semibold ${table.color}`}>{table.name}</code>
                   </div>
-                  <p className="text-[9px] text-slate-500 mb-2">{table.desc}</p>
+                  <p className="text-[9px] text-muted-foreground mb-2">{table.desc}</p>
                   <div className="space-y-0.5">
                     {table.cols.map((col) => (
                       <div key={col} className="flex items-center gap-1.5">
-                        <div className={`w-1 h-1 rounded-full ${col.includes("PK") ? "bg-amber-400" : col.includes("FK") ? "bg-cyan-400" : col.includes("UK") ? "bg-green-400" : "bg-slate-600"}`} />
-                        <code className="text-[9px] text-slate-400 font-mono">{col}</code>
+                        <div className={`w-1 h-1 rounded-full ${col.includes("PK") ? "bg-amber-400" : col.includes("FK") ? "bg-cyan-400" : col.includes("UK") ? "bg-green-400" : "bg-muted-foreground/60"}`} />
+                        <code className="text-[9px] text-muted-foreground font-mono">{col}</code>
                       </div>
                     ))}
                   </div>
@@ -1387,17 +1387,17 @@ function DatabaseSection() {
                   border: "border-blue-500/20",
                 },
               ].map((table) => (
-                <div key={table.name} className={`bg-slate-800/30 border ${table.border} rounded-xl p-3`}>
+                <div key={table.name} className={`bg-muted/30 border ${table.border} rounded-xl p-3`}>
                   <div className="flex items-center gap-2 mb-1.5">
                     <Database className={`h-3.5 w-3.5 ${table.color}`} />
                     <code className={`text-[11px] font-mono font-semibold ${table.color}`}>{table.name}</code>
                   </div>
-                  <p className="text-[9px] text-slate-500 mb-2">{table.desc}</p>
+                  <p className="text-[9px] text-muted-foreground mb-2">{table.desc}</p>
                   <div className="space-y-0.5">
                     {table.cols.map((col) => (
                       <div key={col} className="flex items-center gap-1.5">
-                        <div className={`w-1 h-1 rounded-full ${col.includes("PK") ? "bg-amber-400" : col.includes("FK") ? "bg-cyan-400" : "bg-slate-600"}`} />
-                        <code className="text-[9px] text-slate-400 font-mono">{col}</code>
+                        <div className={`w-1 h-1 rounded-full ${col.includes("PK") ? "bg-amber-400" : col.includes("FK") ? "bg-cyan-400" : "bg-muted-foreground/60"}`} />
+                        <code className="text-[9px] text-muted-foreground font-mono">{col}</code>
                       </div>
                     ))}
                   </div>
@@ -1433,17 +1433,17 @@ function DatabaseSection() {
                   border: "border-green-500/20",
                 },
               ].map((table) => (
-                <div key={table.name} className={`bg-slate-800/30 border ${table.border} rounded-xl p-3`}>
+                <div key={table.name} className={`bg-muted/30 border ${table.border} rounded-xl p-3`}>
                   <div className="flex items-center gap-2 mb-1.5">
                     <Database className={`h-3.5 w-3.5 ${table.color}`} />
                     <code className={`text-[11px] font-mono font-semibold ${table.color}`}>{table.name}</code>
                   </div>
-                  <p className="text-[9px] text-slate-500 mb-2">{table.desc}</p>
+                  <p className="text-[9px] text-muted-foreground mb-2">{table.desc}</p>
                   <div className="space-y-0.5">
                     {table.cols.map((col) => (
                       <div key={col} className="flex items-center gap-1.5">
-                        <div className={`w-1 h-1 rounded-full ${col.includes("PK") ? "bg-amber-400" : col.includes("FK") ? "bg-cyan-400" : "bg-slate-600"}`} />
-                        <code className="text-[9px] text-slate-400 font-mono">{col}</code>
+                        <div className={`w-1 h-1 rounded-full ${col.includes("PK") ? "bg-amber-400" : col.includes("FK") ? "bg-cyan-400" : "bg-muted-foreground/60"}`} />
+                        <code className="text-[9px] text-muted-foreground font-mono">{col}</code>
                       </div>
                     ))}
                   </div>
@@ -1453,22 +1453,22 @@ function DatabaseSection() {
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-4 pt-2 border-t border-slate-800/50">
+          <div className="flex items-center gap-4 pt-2 border-t border-border/50">
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-amber-400" />
-              <span className="text-[9px] text-slate-500">Primary Key</span>
+              <span className="text-[9px] text-muted-foreground">Primary Key</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-cyan-400" />
-              <span className="text-[9px] text-slate-500">Foreign Key</span>
+              <span className="text-[9px] text-muted-foreground">Foreign Key</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-green-400" />
-              <span className="text-[9px] text-slate-500">Unique Key</span>
+              <span className="text-[9px] text-muted-foreground">Unique Key</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-slate-600" />
-              <span className="text-[9px] text-slate-500">Column</span>
+              <div className="w-2 h-2 rounded-full bg-muted-foreground/60" />
+              <span className="text-[9px] text-muted-foreground">Column</span>
             </div>
           </div>
         </div>
@@ -1491,12 +1491,12 @@ function DatabaseSection() {
             { from: "campaigns", rel: "1:N", to: "campaign_metrics", desc: "Uma campanha tem muitas metricas" },
             { from: "projects", rel: "1:N", to: "budget_allocations", desc: "Um projeto tem alocacoes de budget" },
           ].map((rel) => (
-            <div key={`${rel.from}-${rel.to}`} className="flex items-center gap-2 bg-slate-800/30 rounded-lg px-3 py-2">
+            <div key={`${rel.from}-${rel.to}`} className="flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
               <code className="text-[10px] text-emerald-400 font-mono">{rel.from}</code>
-              <Badge className="text-[9px] bg-slate-800 text-slate-400 border-slate-700 font-mono">{rel.rel}</Badge>
-              <ArrowRight className="h-3 w-3 text-slate-600" />
+              <Badge className="text-[9px] bg-muted text-muted-foreground border-border font-mono">{rel.rel}</Badge>
+              <ArrowRight className="h-3 w-3 text-muted-foreground/70" />
               <code className="text-[10px] text-emerald-400 font-mono">{rel.to}</code>
-              <span className="text-[9px] text-slate-600 ml-auto hidden sm:inline">{rel.desc}</span>
+              <span className="text-[9px] text-muted-foreground/70 ml-auto hidden sm:inline">{rel.desc}</span>
             </div>
           ))}
         </div>
@@ -1513,10 +1513,10 @@ function DatabaseSection() {
             { name: "handle_new_user", desc: "Trigger: cria tenant_settings no signup", params: "— (trigger)" },
             { name: "prevent_plan_escalation", desc: "Trigger: impede upgrade nao autorizado", params: "— (trigger)" },
           ].map((fn) => (
-            <div key={fn.name} className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-3">
+            <div key={fn.name} className="bg-muted/30 border border-border/30 rounded-xl p-3">
               <code className="text-[10px] text-emerald-400 font-mono font-semibold">{fn.name}()</code>
-              <p className="text-[9px] text-slate-500 mt-1">{fn.desc}</p>
-              <p className="text-[9px] text-slate-600 mt-0.5">Params: {fn.params}</p>
+              <p className="text-[9px] text-muted-foreground mt-1">{fn.desc}</p>
+              <p className="text-[9px] text-muted-foreground/70 mt-0.5">Params: {fn.params}</p>
             </div>
           ))}
         </div>
@@ -1542,8 +1542,8 @@ function SecuritySection() {
           <FlowNode icon={Database} label="Apenas dados do usuario" sublabel="Isolamento completo entre tenants" color="text-emerald-300" bg="bg-emerald-500/10" border="border-emerald-500/20" />
         </div>
 
-        <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-3">
-          <p className="text-[10px] font-semibold text-slate-300 mb-2">Tabelas com RLS ativo:</p>
+        <div className="bg-muted/30 border border-border/30 rounded-xl p-3">
+          <p className="text-[10px] font-semibold text-foreground/80 mb-2">Tabelas com RLS ativo:</p>
           <div className="flex flex-wrap gap-1.5">
             {["tenant_settings", "projects", "insights", "project_channel_scores", "benchmarks", "audiences", "notifications", "user_api_keys", "campaigns", "campaign_metrics", "budget_allocations", "ad_integrations", "integration_sync_logs"].map((t) => (
               <code key={t} className="text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 rounded px-2 py-0.5 font-mono">{t}</code>
@@ -1555,12 +1555,12 @@ function SecuritySection() {
       {/* Security Audit */}
       <FlowBox title="Auditoria de Seguranca" borderColor="border-amber-500/20" bgColor="bg-amber-500/5" badge="Aplicada">
         <div className="space-y-3">
-          <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-3">
+          <div className="bg-muted/30 border border-border/30 rounded-xl p-3">
             <div className="flex items-start gap-2">
               <ShieldCheck className="h-4 w-4 text-green-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-[11px] font-medium text-green-400">Auditoria completa realizada e correcoes aplicadas</p>
-                <p className="text-[10px] text-slate-500">30+ policies vulneraveis removidas. Edge Functions protegidas com auth checks. URL do Supabase ocultada via proxy.</p>
+                <p className="text-[10px] text-muted-foreground">30+ policies vulneraveis removidas. Edge Functions protegidas com auth checks. URL do Supabase ocultada via proxy.</p>
               </div>
             </div>
           </div>
@@ -1575,7 +1575,7 @@ function SecuritySection() {
               ].map((v) => (
                 <div key={v.vuln} className="bg-red-500/5 border border-red-500/20 rounded-xl p-3">
                   <p className="text-[11px] font-medium text-red-400">{v.vuln}</p>
-                  <p className="text-[9px] text-slate-500 mt-0.5">{v.desc}</p>
+                  <p className="text-[9px] text-muted-foreground mt-0.5">{v.desc}</p>
                   <p className="text-[9px] text-green-400 mt-1">Correcao: {v.fix}</p>
                 </div>
               ))}
@@ -1668,13 +1668,13 @@ function SecuritySection() {
               border: "border-purple-500/20",
             },
           ].map((layer) => (
-            <div key={layer.layer} className={`bg-slate-800/20 border ${layer.border} rounded-xl p-4`}>
+            <div key={layer.layer} className={`bg-muted/20 border ${layer.border} rounded-xl p-4`}>
               <p className={`text-xs font-semibold ${layer.color} mb-2`}>{layer.layer}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 {layer.items.map((item) => (
                   <div key={item} className="flex items-start gap-2">
                     <CheckCircle2 className={`h-3 w-3 ${layer.color} flex-shrink-0 mt-0.5`} />
-                    <span className="text-[10px] text-slate-400">{item}</span>
+                    <span className="text-[10px] text-muted-foreground">{item}</span>
                   </div>
                 ))}
               </div>
@@ -1718,12 +1718,12 @@ function SecuritySection() {
             <div key={p.plan} className={`${p.bg} border ${p.border} rounded-xl p-4 text-center`}>
               <p.icon className={`h-6 w-6 ${p.color} mx-auto mb-2`} />
               <p className={`text-sm font-bold ${p.color}`}>{p.plan}</p>
-              <p className="text-[10px] text-slate-500 mb-3">{p.price}</p>
+              <p className="text-[10px] text-muted-foreground mb-3">{p.price}</p>
               <div className="space-y-1.5 text-left">
                 {p.limits.map((l) => (
                   <div key={l} className="flex items-center gap-1.5">
                     <CheckCircle2 className={`h-3 w-3 ${p.color} flex-shrink-0`} />
-                    <span className="text-[10px] text-slate-400">{l}</span>
+                    <span className="text-[10px] text-muted-foreground">{l}</span>
                   </div>
                 ))}
               </div>
@@ -1767,7 +1767,7 @@ function OperationsSection() {
 
           <div className="grid grid-cols-5 gap-1.5 w-full">
             {[
-              { label: "Rascunho", color: "text-slate-400", bg: "bg-slate-800/60", border: "border-slate-700/50" },
+              { label: "Rascunho", color: "text-muted-foreground", bg: "bg-muted/60", border: "border-border/50" },
               { label: "Ativa", color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/20" },
               { label: "Pausada", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
               { label: "Concluida", color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" },
@@ -1782,8 +1782,8 @@ function OperationsSection() {
           <div className="flex items-center gap-1 mt-2">
             {["Draft", "Active", "Paused", "Completed", "Archived"].map((s, i) => (
               <div key={s} className="flex items-center gap-1">
-                <code className="text-[8px] text-slate-500 font-mono">{s}</code>
-                {i < 4 && <ArrowRight className="h-2.5 w-2.5 text-slate-600" />}
+                <code className="text-[8px] text-muted-foreground font-mono">{s}</code>
+                {i < 4 && <ArrowRight className="h-2.5 w-2.5 text-muted-foreground/70" />}
               </div>
             ))}
           </div>
@@ -1803,15 +1803,15 @@ function OperationsSection() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
             <div className="bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2 text-center">
               <p className="text-[10px] text-green-400 font-medium">+ Registrar</p>
-              <p className="text-[9px] text-slate-500">INSERT novo periodo</p>
+              <p className="text-[9px] text-muted-foreground">INSERT novo periodo</p>
             </div>
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-2 text-center">
               <p className="text-[10px] text-blue-400 font-medium">Editar</p>
-              <p className="text-[9px] text-slate-500">UPDATE registro existente</p>
+              <p className="text-[9px] text-muted-foreground">UPDATE registro existente</p>
             </div>
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-center">
               <p className="text-[10px] text-red-400 font-medium">Excluir</p>
-              <p className="text-[9px] text-slate-500">DELETE com confirmacao</p>
+              <p className="text-[9px] text-muted-foreground">DELETE com confirmacao</p>
             </div>
           </div>
 
@@ -1831,11 +1831,11 @@ function OperationsSection() {
         <div className="space-y-4">
           {/* Common metrics */}
           <div>
-            <p className="text-[10px] text-slate-300 font-semibold uppercase tracking-wider mb-2">Metricas Gerais (todos os canais)</p>
+            <p className="text-[10px] text-foreground/80 font-semibold uppercase tracking-wider mb-2">Metricas Gerais (todos os canais)</p>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
               {["Impressoes", "Cliques", "CTR %", "CPC R$", "CPM R$", "Conversoes", "CPA R$", "Custo Total", "Receita", "ROAS x"].map((m) => (
-                <div key={m} className="bg-slate-800/40 border border-slate-700/30 rounded-lg px-2 py-1.5 text-center">
-                  <p className="text-[9px] text-slate-400">{m}</p>
+                <div key={m} className="bg-muted/40 border border-border/30 rounded-lg px-2 py-1.5 text-center">
+                  <p className="text-[9px] text-muted-foreground">{m}</p>
                 </div>
               ))}
             </div>
@@ -1876,13 +1876,13 @@ function OperationsSection() {
 
           {/* Channel-specific metrics */}
           <div>
-            <p className="text-[10px] text-slate-300 font-semibold uppercase tracking-wider mb-2">Metricas Especificas por Canal</p>
+            <p className="text-[10px] text-foreground/80 font-semibold uppercase tracking-wider mb-2">Metricas Especificas por Canal</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-3">
                 <p className="text-[10px] font-semibold text-blue-400 mb-1.5">Google</p>
                 <div className="space-y-1">
                   {["Quality Score", "Posicao Media", "Impression Share", "+ 16 metricas funil"].map((m) => (
-                    <p key={m} className="text-[9px] text-slate-500">{m}</p>
+                    <p key={m} className="text-[9px] text-muted-foreground">{m}</p>
                   ))}
                 </div>
               </div>
@@ -1890,7 +1890,7 @@ function OperationsSection() {
                 <p className="text-[10px] font-semibold text-indigo-400 mb-1.5">Meta</p>
                 <div className="space-y-1">
                   {["Alcance", "Frequencia"].map((m) => (
-                    <p key={m} className="text-[9px] text-slate-500">{m}</p>
+                    <p key={m} className="text-[9px] text-muted-foreground">{m}</p>
                   ))}
                 </div>
               </div>
@@ -1898,7 +1898,7 @@ function OperationsSection() {
                 <p className="text-[10px] font-semibold text-sky-400 mb-1.5">LinkedIn</p>
                 <div className="space-y-1">
                   {["Leads", "CPL", "Engagement Rate"].map((m) => (
-                    <p key={m} className="text-[9px] text-slate-500">{m}</p>
+                    <p key={m} className="text-[9px] text-muted-foreground">{m}</p>
                   ))}
                 </div>
               </div>
@@ -1906,7 +1906,7 @@ function OperationsSection() {
                 <p className="text-[10px] font-semibold text-pink-400 mb-1.5">TikTok</p>
                 <div className="space-y-1">
                   {["Video Views", "VTR"].map((m) => (
-                    <p key={m} className="text-[9px] text-slate-500">{m}</p>
+                    <p key={m} className="text-[9px] text-muted-foreground">{m}</p>
                   ))}
                 </div>
               </div>
@@ -1981,10 +1981,10 @@ function OperationsSection() {
                 <Eye className={`h-4 w-4 ${view.color}`} />
                 <code className={`text-xs font-mono font-semibold ${view.color}`}>{view.name}</code>
               </div>
-              <p className="text-[11px] text-slate-400 mb-2">{view.desc}</p>
+              <p className="text-[11px] text-muted-foreground mb-2">{view.desc}</p>
               <div className="flex flex-wrap gap-1">
                 {view.cols.split(", ").map((col) => (
-                  <code key={col} className="text-[8px] bg-slate-800/40 text-slate-500 rounded px-1.5 py-0.5 font-mono">{col}</code>
+                  <code key={col} className="text-[8px] bg-muted/40 text-muted-foreground rounded px-1.5 py-0.5 font-mono">{col}</code>
                 ))}
               </div>
             </div>
@@ -2013,7 +2013,7 @@ function OperationsSection() {
             ].map((item) => (
               <div key={item.label} className="bg-purple-500/10 border border-purple-500/20 rounded-lg px-2.5 py-2 text-center">
                 <p className="text-[10px] text-purple-400 font-medium">{item.label}</p>
-                <p className="text-[9px] text-slate-500">{item.sub}</p>
+                <p className="text-[9px] text-muted-foreground">{item.sub}</p>
               </div>
             ))}
           </div>
@@ -2045,7 +2045,7 @@ function OperationsSection() {
             ].map((item) => (
               <div key={item.label} className="bg-teal-500/10 border border-teal-500/20 rounded-lg px-2.5 py-2 text-center">
                 <p className="text-[10px] text-teal-400 font-medium">{item.label}</p>
-                <p className="text-[9px] text-slate-500">{item.sub}</p>
+                <p className="text-[9px] text-muted-foreground">{item.sub}</p>
               </div>
             ))}
           </div>
@@ -2066,19 +2066,19 @@ function OperationsSection() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full mb-3">
             <div className="bg-green-500/10 border border-green-500/20 rounded-lg px-2.5 py-2 text-center">
               <p className="text-[10px] text-green-400 font-medium">Saudavel</p>
-              <p className="text-[9px] text-slate-500">&lt;80% gasto</p>
+              <p className="text-[9px] text-muted-foreground">&lt;80% gasto</p>
             </div>
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-2 text-center">
               <p className="text-[10px] text-amber-400 font-medium">Atencao</p>
-              <p className="text-[9px] text-slate-500">80-95% gasto</p>
+              <p className="text-[9px] text-muted-foreground">80-95% gasto</p>
             </div>
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-2.5 py-2 text-center">
               <p className="text-[10px] text-red-400 font-medium">Perigo</p>
-              <p className="text-[9px] text-slate-500">95-100% gasto</p>
+              <p className="text-[9px] text-muted-foreground">95-100% gasto</p>
             </div>
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-2.5 py-2 text-center">
               <p className="text-[10px] text-red-400 font-medium">Estourado</p>
-              <p className="text-[9px] text-slate-500">&gt;100% gasto</p>
+              <p className="text-[9px] text-muted-foreground">&gt;100% gasto</p>
             </div>
           </div>
 
@@ -2104,7 +2104,7 @@ function OperationsSection() {
               </div>
               <div className="space-y-1">
                 {["Grid mensal estilo Google Calendar", "Barras coloridas por canal", "Click para detalhes da campanha", "Indicador de hoje + ending soon", "Legenda com contadores"].map((f) => (
-                  <p key={f} className="text-[9px] text-slate-500">{f}</p>
+                  <p key={f} className="text-[9px] text-muted-foreground">{f}</p>
                 ))}
               </div>
             </div>
@@ -2115,7 +2115,7 @@ function OperationsSection() {
               </div>
               <div className="space-y-1">
                 {["Eixo X = 8 semanas visiveis", "Barras por canal com opacidade por status", "Linha vertical hoje", "Tooltips ricos com metricas", "Headers de mes e semana"].map((f) => (
-                  <p key={f} className="text-[9px] text-slate-500">{f}</p>
+                  <p key={f} className="text-[9px] text-muted-foreground">{f}</p>
                 ))}
               </div>
             </div>
@@ -2130,7 +2130,7 @@ function OperationsSection() {
             ].map((ch) => (
               <div key={ch.label} className={`${ch.bg} border ${ch.border} rounded-lg px-2.5 py-2 text-center`}>
                 <p className={`text-[10px] font-medium ${ch.color}`}>{ch.label}</p>
-                <p className="text-[9px] text-slate-500">Cor dedicada</p>
+                <p className="text-[9px] text-muted-foreground">Cor dedicada</p>
               </div>
             ))}
           </div>
@@ -2150,15 +2150,15 @@ function OperationsSection() {
           <div className="grid grid-cols-3 gap-2 w-full mb-3">
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-2.5 py-2 text-center">
               <p className="text-[10px] text-red-400 font-medium">Critico</p>
-              <p className="text-[9px] text-slate-500">Budget 100%, ROAS &lt;1x, ROI neg.</p>
+              <p className="text-[9px] text-muted-foreground">Budget 100%, ROAS &lt;1x, ROI neg.</p>
             </div>
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-2 text-center">
               <p className="text-[10px] text-amber-400 font-medium">Atencao</p>
-              <p className="text-[9px] text-slate-500">CTR baixo, CPC/CPA alto</p>
+              <p className="text-[9px] text-muted-foreground">CTR baixo, CPC/CPA alto</p>
             </div>
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg px-2.5 py-2 text-center">
               <p className="text-[10px] text-blue-400 font-medium">Info</p>
-              <p className="text-[9px] text-slate-500">Pacing lento, sem metricas</p>
+              <p className="text-[9px] text-muted-foreground">Pacing lento, sem metricas</p>
             </div>
           </div>
 
@@ -2171,9 +2171,9 @@ function OperationsSection() {
               { label: "Pacing", sub: "Budget subutilizado" },
               { label: "Tendencia", sub: "Sem metricas, alto gasto" },
             ].map((item) => (
-              <div key={item.label} className="bg-slate-800/40 border border-slate-700/30 rounded-lg px-2.5 py-2 text-center">
-                <p className="text-[10px] text-slate-300 font-medium">{item.label}</p>
-                <p className="text-[9px] text-slate-500">{item.sub}</p>
+              <div key={item.label} className="bg-muted/40 border border-border/30 rounded-lg px-2.5 py-2 text-center">
+                <p className="text-[10px] text-foreground/80 font-medium">{item.label}</p>
+                <p className="text-[9px] text-muted-foreground">{item.sub}</p>
               </div>
             ))}
           </div>
@@ -2220,11 +2220,11 @@ function OperationsSection() {
             { n: "11", label: "Componentes Op.", icon: Layers, color: "text-purple-400" },
             { n: "2", label: "Vistas Calendario", icon: CalendarDays, color: "text-violet-400" },
           ].map((stat) => (
-            <div key={stat.label} className="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex items-center gap-3">
+            <div key={stat.label} className="bg-card/60 border border-border rounded-xl p-3 flex items-center gap-3">
               <stat.icon className={`h-5 w-5 ${stat.color} flex-shrink-0`} />
               <div>
-                <p className="text-lg font-bold text-white">{stat.n}</p>
-                <p className="text-[10px] text-slate-500">{stat.label}</p>
+                <p className="text-lg font-bold text-foreground">{stat.n}</p>
+                <p className="text-[10px] text-muted-foreground">{stat.label}</p>
               </div>
             </div>
           ))}
@@ -2274,21 +2274,21 @@ function IntegrationsSection() {
 
         {/* Key details */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-          <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-3">
+          <div className="bg-muted/30 border border-border/30 rounded-xl p-3">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-[11px] font-medium text-amber-400">JWT Verification Desabilitado</p>
-                <p className="text-[10px] text-slate-500">oauth-connect e oauth-callback tem JWT verification desabilitado no Supabase Dashboard. Necessario porque o browser redireciona sem headers. Auth e feita internamente via token no body/header.</p>
+                <p className="text-[10px] text-muted-foreground">oauth-connect e oauth-callback tem JWT verification desabilitado no Supabase Dashboard. Necessario porque o browser redireciona sem headers. Auth e feita internamente via token no body/header.</p>
               </div>
             </div>
           </div>
-          <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-3">
+          <div className="bg-muted/30 border border-border/30 rounded-xl p-3">
             <div className="flex items-start gap-2">
               <Lock className="h-4 w-4 text-green-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-[11px] font-medium text-green-400">State Parameter</p>
-                <p className="text-[10px] text-slate-500">Base64 JSON com user_id + provider + timestamp. Validado com expiracao de 10 minutos para prevenir CSRF. Decodificado no oauth-callback.</p>
+                <p className="text-[10px] text-muted-foreground">Base64 JSON com user_id + provider + timestamp. Validado com expiracao de 10 minutos para prevenir CSRF. Decodificado no oauth-callback.</p>
               </div>
             </div>
           </div>
@@ -2317,8 +2317,8 @@ function IntegrationsSection() {
         </div>
 
         {/* Token refresh detail */}
-        <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-3 mt-4">
-          <p className="text-[10px] font-semibold text-slate-300 mb-2">Validade de Tokens por Provider:</p>
+        <div className="bg-muted/30 border border-border/30 rounded-xl p-3 mt-4">
+          <p className="text-[10px] font-semibold text-foreground/80 mb-2">Validade de Tokens por Provider:</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
               { provider: "Google", access: "1 hora", refresh: "Permanente", color: "text-blue-400" },
@@ -2326,10 +2326,10 @@ function IntegrationsSection() {
               { provider: "LinkedIn", access: "60 dias", refresh: "365 dias", color: "text-sky-400" },
               { provider: "TikTok", access: "24 horas", refresh: "365 dias", color: "text-pink-400" },
             ].map((t) => (
-              <div key={t.provider} className="bg-slate-800/40 rounded-lg px-2.5 py-2">
+              <div key={t.provider} className="bg-muted/40 rounded-lg px-2.5 py-2">
                 <p className={`text-[10px] font-medium ${t.color}`}>{t.provider}</p>
-                <p className="text-[9px] text-slate-500">Access: {t.access}</p>
-                <p className="text-[9px] text-slate-500">Refresh: {t.refresh}</p>
+                <p className="text-[9px] text-muted-foreground">Access: {t.access}</p>
+                <p className="text-[9px] text-muted-foreground">Refresh: {t.refresh}</p>
               </div>
             ))}
           </div>
@@ -2378,27 +2378,27 @@ function IntegrationsSection() {
               <div className="flex items-center gap-2 mb-2">
                 <Cloud className={`h-4 w-4 ${fn.color}`} />
                 <code className={`text-xs font-mono font-semibold ${fn.color}`}>{fn.name}</code>
-                <Badge className="text-[8px] bg-slate-800 text-slate-400 border-slate-700 ml-auto">
+                <Badge className="text-[8px] bg-muted text-muted-foreground border-border ml-auto">
                   {fn.name === "oauth-callback" ? "JWT OFF" : "JWT"}
                 </Badge>
               </div>
-              <p className="text-[11px] text-slate-400 mb-3">{fn.desc}</p>
+              <p className="text-[11px] text-muted-foreground mb-3">{fn.desc}</p>
               <div className="grid grid-cols-4 gap-2">
-                <div className="bg-slate-800/40 rounded-lg px-2.5 py-1.5">
-                  <p className="text-[9px] text-slate-600 uppercase">Trigger</p>
-                  <p className="text-[10px] text-slate-400">{fn.trigger}</p>
+                <div className="bg-muted/40 rounded-lg px-2.5 py-1.5">
+                  <p className="text-[9px] text-muted-foreground/70 uppercase">Trigger</p>
+                  <p className="text-[10px] text-muted-foreground">{fn.trigger}</p>
                 </div>
-                <div className="bg-slate-800/40 rounded-lg px-2.5 py-1.5">
-                  <p className="text-[9px] text-slate-600 uppercase">Input</p>
-                  <p className="text-[10px] text-slate-400">{fn.input}</p>
+                <div className="bg-muted/40 rounded-lg px-2.5 py-1.5">
+                  <p className="text-[9px] text-muted-foreground/70 uppercase">Input</p>
+                  <p className="text-[10px] text-muted-foreground">{fn.input}</p>
                 </div>
-                <div className="bg-slate-800/40 rounded-lg px-2.5 py-1.5">
-                  <p className="text-[9px] text-slate-600 uppercase">Output</p>
-                  <p className="text-[10px] text-slate-400">{fn.output}</p>
+                <div className="bg-muted/40 rounded-lg px-2.5 py-1.5">
+                  <p className="text-[9px] text-muted-foreground/70 uppercase">Output</p>
+                  <p className="text-[10px] text-muted-foreground">{fn.output}</p>
                 </div>
-                <div className="bg-slate-800/40 rounded-lg px-2.5 py-1.5">
-                  <p className="text-[9px] text-slate-600 uppercase">Auth</p>
-                  <p className="text-[10px] text-slate-400">{fn.auth}</p>
+                <div className="bg-muted/40 rounded-lg px-2.5 py-1.5">
+                  <p className="text-[9px] text-muted-foreground/70 uppercase">Auth</p>
+                  <p className="text-[10px] text-muted-foreground">{fn.auth}</p>
                 </div>
               </div>
             </div>
@@ -2418,12 +2418,12 @@ function IntegrationsSection() {
           <FlowNode icon={Database} label="4. Salva em ad_integrations" sublabel="account_id + descriptiveName" color="text-emerald-300" bg="bg-emerald-500/10" border="border-emerald-500/20" />
         </div>
 
-        <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-3 mt-4">
+        <div className="bg-muted/30 border border-border/30 rounded-xl p-3 mt-4">
           <div className="flex items-start gap-2">
             <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-[11px] font-medium text-amber-400">Developer Token</p>
-              <p className="text-[10px] text-slate-500">Requer GOOGLE_ADS_DEVELOPER_TOKEN aprovado para contas de producao. Token de teste so funciona com contas de teste do Google Ads. Solicitar aprovacao no Google Ads API Center.</p>
+              <p className="text-[10px] text-muted-foreground">Requer GOOGLE_ADS_DEVELOPER_TOKEN aprovado para contas de producao. Token de teste so funciona com contas de teste do Google Ads. Solicitar aprovacao no Google Ads API Center.</p>
             </div>
           </div>
         </div>
@@ -2464,11 +2464,11 @@ function IntegrationsSection() {
               color: "text-red-400",
             },
           ].map((item) => (
-            <div key={item.title} className="flex items-start gap-3 bg-slate-800/30 border border-slate-700/30 rounded-xl p-3">
+            <div key={item.title} className="flex items-start gap-3 bg-muted/30 border border-border/30 rounded-xl p-3">
               <item.icon className={`h-4 w-4 ${item.color} flex-shrink-0 mt-0.5`} />
               <div>
                 <p className={`text-[11px] font-medium ${item.color}`}>{item.title}</p>
-                <p className="text-[10px] text-slate-500">{item.desc}</p>
+                <p className="text-[10px] text-muted-foreground">{item.desc}</p>
               </div>
             </div>
           ))}
@@ -2494,17 +2494,17 @@ function IntegrationsSection() {
               border: "border-green-500/20",
             },
           ].map((table) => (
-            <div key={table.name} className={`bg-slate-800/30 border ${table.border} rounded-xl p-3`}>
+            <div key={table.name} className={`bg-muted/30 border ${table.border} rounded-xl p-3`}>
               <div className="flex items-center gap-2 mb-1.5">
                 <Database className={`h-3.5 w-3.5 ${table.color}`} />
                 <code className={`text-[11px] font-mono font-semibold ${table.color}`}>{table.name}</code>
               </div>
-              <p className="text-[9px] text-slate-500 mb-2">{table.desc}</p>
+              <p className="text-[9px] text-muted-foreground mb-2">{table.desc}</p>
               <div className="space-y-0.5">
                 {table.cols.map((col) => (
                   <div key={col} className="flex items-center gap-1.5">
-                    <div className={`w-1 h-1 rounded-full ${col.includes("PK") ? "bg-amber-400" : col.includes("FK") ? "bg-cyan-400" : col.includes("UK") ? "bg-green-400" : "bg-slate-600"}`} />
-                    <code className="text-[9px] text-slate-400 font-mono">{col}</code>
+                    <div className={`w-1 h-1 rounded-full ${col.includes("PK") ? "bg-amber-400" : col.includes("FK") ? "bg-cyan-400" : col.includes("UK") ? "bg-green-400" : "bg-muted-foreground/60"}`} />
+                    <code className="text-[9px] text-muted-foreground font-mono">{col}</code>
                   </div>
                 ))}
               </div>
@@ -2519,10 +2519,10 @@ function IntegrationsSection() {
               <Eye className={`h-4 w-4 text-cyan-400`} />
               <code className="text-xs font-mono font-semibold text-cyan-400">v_integration_summary</code>
             </div>
-            <p className="text-[11px] text-slate-400 mb-2">Join ad_integrations + sync logs agregados (total_syncs, successful, failed, last_sync_status, avg_duration)</p>
+            <p className="text-[11px] text-muted-foreground mb-2">Join ad_integrations + sync logs agregados (total_syncs, successful, failed, last_sync_status, avg_duration)</p>
             <div className="flex flex-wrap gap-1">
               {["provider", "status", "account_name", "last_sync_at", "total_syncs", "successful_syncs", "failed_syncs", "last_sync_status", "avg_duration_ms"].map((col) => (
-                <code key={col} className="text-[8px] bg-slate-800/40 text-slate-500 rounded px-1.5 py-0.5 font-mono">{col}</code>
+                <code key={col} className="text-[8px] bg-muted/40 text-muted-foreground rounded px-1.5 py-0.5 font-mono">{col}</code>
               ))}
             </div>
           </div>
@@ -2562,21 +2562,21 @@ function IntegrationsSection() {
               note: "Business API v1.3 — token exchange via JSON",
             },
           ].map((p) => (
-            <div key={p.provider} className={`bg-slate-800/30 border ${p.border} rounded-xl p-3`}>
+            <div key={p.provider} className={`bg-muted/30 border ${p.border} rounded-xl p-3`}>
               <p className={`text-[11px] font-semibold ${p.color} mb-1.5`}>{p.provider}</p>
               <div className="flex flex-wrap gap-1.5 mb-1.5">
                 {p.vars.map((v) => (
-                  <code key={v} className="text-[9px] bg-slate-800/60 text-slate-400 rounded px-2 py-0.5 font-mono">{v}</code>
+                  <code key={v} className="text-[9px] bg-muted/60 text-muted-foreground rounded px-2 py-0.5 font-mono">{v}</code>
                 ))}
               </div>
-              <p className="text-[9px] text-slate-500">{p.note}</p>
+              <p className="text-[9px] text-muted-foreground">{p.note}</p>
             </div>
           ))}
 
-          <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-3">
-            <p className="text-[11px] font-semibold text-slate-300 mb-1.5">Geral</p>
-            <code className="text-[9px] bg-slate-800/60 text-slate-400 rounded px-2 py-0.5 font-mono">APP_URL</code>
-            <p className="text-[9px] text-slate-500 mt-1">URL do frontend para redirect apos callback (ex: https://www.intentia.com.br)</p>
+          <div className="bg-muted/30 border border-border/30 rounded-xl p-3">
+            <p className="text-[11px] font-semibold text-foreground/80 mb-1.5">Geral</p>
+            <code className="text-[9px] bg-muted/60 text-muted-foreground rounded px-2 py-0.5 font-mono">APP_URL</code>
+            <p className="text-[9px] text-muted-foreground mt-1">URL do frontend para redirect apos callback (ex: https://www.intentia.com.br)</p>
           </div>
 
           <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-3">
@@ -2595,10 +2595,10 @@ function IntegrationsSection() {
             { name: "integrationOAuth.ts", desc: "Config OAuth por provider — authUrl, tokenUrl, scopes, helpers (generateState, getUrls)", path: "src/lib/", color: "text-purple-400" },
             { name: "integrationTypes.ts", desc: "Tipos — AdProvider, IntegrationStatus, SyncFrequency, PROVIDER_CONFIGS, helpers", path: "src/lib/", color: "text-amber-400" },
           ].map((c) => (
-            <div key={c.name} className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-3">
+            <div key={c.name} className="bg-muted/30 border border-border/30 rounded-xl p-3">
               <code className={`text-[11px] font-mono font-semibold ${c.color}`}>{c.name}</code>
-              <p className="text-[9px] text-slate-500 mt-1">{c.desc}</p>
-              <code className="text-[8px] text-slate-600 font-mono mt-1 block">{c.path}</code>
+              <p className="text-[9px] text-muted-foreground mt-1">{c.desc}</p>
+              <code className="text-[8px] text-muted-foreground/70 font-mono mt-1 block">{c.path}</code>
             </div>
           ))}
         </div>
@@ -2617,11 +2617,11 @@ function IntegrationsSection() {
             { n: "2", label: "Paginas", icon: Monitor, color: "text-blue-400" },
             { n: "2", label: "Libs", icon: FileText, color: "text-pink-400" },
           ].map((stat) => (
-            <div key={stat.label} className="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex items-center gap-3">
+            <div key={stat.label} className="bg-card/60 border border-border rounded-xl p-3 flex items-center gap-3">
               <stat.icon className={`h-5 w-5 ${stat.color} flex-shrink-0`} />
               <div>
-                <p className="text-lg font-bold text-white">{stat.n}</p>
-                <p className="text-[10px] text-slate-500">{stat.label}</p>
+                <p className="text-lg font-bold text-foreground">{stat.n}</p>
+                <p className="text-[10px] text-muted-foreground">{stat.label}</p>
               </div>
             </div>
           ))}
@@ -2652,7 +2652,7 @@ export default function AdminArchitectureTab() {
               className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-left transition-all ${
                 isActive
                   ? `${section.bg} border border-current/20 ${section.color}`
-                  : "bg-slate-900/40 border border-slate-800 text-slate-500 hover:text-slate-300 hover:bg-slate-800/40"
+                  : "bg-card/40 border border-border text-muted-foreground hover:text-foreground/80 hover:bg-muted/40"
               }`}
             >
               <Icon className={`h-4 w-4 flex-shrink-0 ${isActive ? section.color : ""}`} />

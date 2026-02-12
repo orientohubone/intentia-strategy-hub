@@ -4,7 +4,8 @@ import {
   FolderOpen, 
   Target, 
   BarChart3, 
-  ChevronLeft, 
+  ChevronLeft,
+  ChevronDown,
   Users, 
   Lightbulb, 
   Crosshair,
@@ -29,16 +30,36 @@ interface NavItem {
   active?: boolean;
 }
 
-const mainNavItems: NavItem[] = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { icon: FolderOpen, label: "Projetos", href: "/projects" },
-  { icon: Target, label: "Públicos-Alvo", href: "/audiences" },
-  { icon: BarChart3, label: "Benchmark", href: "/benchmark" },
-  { icon: Lightbulb, label: "Insights", href: "/insights" },
-  { icon: Crosshair, label: "Plano Tático", href: "/tactical" },
-  { icon: ShieldAlert, label: "Alertas", href: "/alertas" },
-  { icon: Megaphone, label: "Operações", href: "/operations" },
-  { icon: Plug, label: "Integrações", href: "/integracoes" },
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+const navSections: NavSection[] = [
+  {
+    title: "Estratégico",
+    items: [
+      { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+      { icon: FolderOpen, label: "Projetos", href: "/projects" },
+      { icon: Target, label: "Públicos-Alvo", href: "/audiences" },
+      { icon: BarChart3, label: "Benchmark", href: "/benchmark" },
+      { icon: Lightbulb, label: "Insights", href: "/insights" },
+    ],
+  },
+  {
+    title: "Tático",
+    items: [
+      { icon: Crosshair, label: "Plano Tático", href: "/tactical" },
+      { icon: ShieldAlert, label: "Alertas", href: "/alertas" },
+    ],
+  },
+  {
+    title: "Operacional",
+    items: [
+      { icon: Megaphone, label: "Operações", href: "/operations" },
+      { icon: Plug, label: "Integrações", href: "/integracoes" },
+    ],
+  },
 ];
 
 const bottomNavItems: NavItem[] = [
@@ -54,6 +75,9 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ mobileOpen = false, onMobileClose }: DashboardSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(navSections.map((s) => [s.title, true]))
+  );
   const [projectCount, setProjectCount] = useState(0);
   const [tenantName, setTenantName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -189,39 +213,59 @@ export function DashboardSidebar({ mobileOpen = false, onMobileClose }: Dashboar
       )}
 
       {/* Main Navigation */}
-      <nav className="flex-1 p-2">
-        <div className="space-y-1">
-          {!collapsed && (
-            <p className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Menu Principal
-            </p>
-          )}
-          {mainNavItems.map((item) => {
-            const isActive = location.pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                onClick={onMobileClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative group",
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/50",
-                  collapsed && "justify-center px-2"
-                )}
-              >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
-                {collapsed && (
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-md border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                    {item.label}
-                  </div>
-                )}
-              </Link>
-            );
-          })}
-        </div>
+      <nav className={cn("flex-1 p-2", !collapsed && "overflow-y-auto")}>
+        {navSections.map((section) => {
+          const isOpen = expandedSections[section.title] ?? true;
+          return (
+            <div key={section.title} className="mb-1">
+              {!collapsed ? (
+                <button
+                  onClick={() => setExpandedSections((prev) => ({ ...prev, [section.title]: !prev[section.title] }))}
+                  className="w-full flex items-center justify-between px-3 pt-3 pb-1 group/section"
+                >
+                  <span className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest">
+                    {section.title}
+                  </span>
+                  <ChevronDown className={cn(
+                    "h-3 w-3 text-muted-foreground/50 transition-transform duration-200",
+                    !isOpen && "-rotate-90"
+                  )} />
+                </button>
+              ) : (
+                <div className="mx-auto my-2 w-6 border-t border-sidebar-border" />
+              )}
+              {(collapsed || isOpen) && (
+                <div className="space-y-0.5">
+                  {section.items.map((item) => {
+                    const isActive = location.pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        to={item.href}
+                        onClick={onMobileClose}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative group",
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+                          collapsed && "justify-center px-2"
+                        )}
+                      >
+                        <item.icon className="h-5 w-5 flex-shrink-0" />
+                        {!collapsed && <span>{item.label}</span>}
+                        {collapsed && (
+                          <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-md border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                            {item.label}
+                          </div>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
       {/* Bottom Navigation */}

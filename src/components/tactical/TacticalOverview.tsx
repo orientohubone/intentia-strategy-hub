@@ -227,10 +227,8 @@ export function TacticalOverview({ tacticalPlan, channelScores, projectName, pro
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg ${ch.bgColor} flex items-center justify-center`}>
-                      <span className={`text-sm font-bold ${ch.color}`}>
-                        {ch.label.charAt(0)}
-                      </span>
+                    <div className="w-10 h-10 rounded-lg bg-white dark:bg-gray-900 border border-border/50 flex items-center justify-center p-2">
+                      <img src={`/${ch.key}-ads.svg`} alt={ch.fullLabel} className={`w-full h-full object-contain ${ch.key === "tiktok" ? "dark:brightness-0 dark:invert" : ""}`} />
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-foreground">{ch.fullLabel}</p>

@@ -41,6 +41,9 @@ import {
   Lock,
   DollarSign,
   Megaphone,
+  Users,
+  CalendarDays,
+  Bell,
 } from "lucide-react";
 
 function ShowcaseSlider() {
@@ -184,6 +187,24 @@ const features: { icon: React.ElementType; title: string; description: string; l
     link: "/gestao-budget",
   },
   {
+    icon: Users,
+    title: "Enriquecimento de ICP com IA",
+    description: "Refine seus públicos-alvo com dados de fontes públicas (SEBRAE, IBGE) e IA. Obtenha perfil ideal, decisores, dores, gatilhos e keywords otimizadas.",
+    link: "/analise-ia",
+  },
+  {
+    icon: CalendarDays,
+    title: "Calendário de Campanhas & Timeline",
+    description: "Visualize todas as campanhas em calendário mensal ou timeline Gantt. Identifique sobreposições, campanhas finalizando e gaps no planejamento.",
+    link: "/gestao-campanhas",
+  },
+  {
+    icon: Bell,
+    title: "Alertas Automáticos de Performance",
+    description: "11 regras inteligentes monitoram budget, eficiência, conversão e qualidade. Alertas críticos, de atenção e informativos por campanha.",
+    link: "/gestao-campanhas",
+  },
+  {
     icon: FileText,
     title: "Relatórios PDF e Exportação CSV",
     description: "Relatórios consolidados por projeto em PDF, exportação por seção e dados em CSV para análise externa. Tudo pronto para apresentar ao cliente.",
@@ -196,9 +217,11 @@ const steps = [
   { number: "02", title: "Análise heurística automática", description: "Em segundos, receba scores de proposta de valor, clareza, jornada, SEO, conversão e conteúdo." },
   { number: "03", title: "Enriqueça com IA", description: "Ative a análise por Gemini ou Claude para obter resumo executivo, SWOT, prontidão e recomendações por canal." },
   { number: "04", title: "Compare com concorrentes", description: "Benchmarks automáticos com SWOT, gap analysis e enriquecimento por IA para cada concorrente." },
-  { number: "05", title: "Mapeie públicos-alvo", description: "Defina audiências com indústria, porte, localização e keywords para refinar sua estratégia." },
+  { number: "05", title: "Mapeie e refine públicos-alvo", description: "Defina audiências e enriqueça o ICP com IA usando dados de fontes públicas (SEBRAE, IBGE) — decisores, dores e keywords otimizadas." },
   { number: "06", title: "Monte o plano tático", description: "Estruture campanhas por canal com templates pré-preenchidos por nicho: copy, segmentação, testes e métricas." },
-  { number: "07", title: "Exporte e apresente", description: "Gere relatórios PDF consolidados, exporte dados em CSV e compartilhe insights com seu time." },
+  { number: "07", title: "Gerencie campanhas e budget", description: "Crie campanhas reais, acompanhe métricas de performance, budget pacing e receba alertas automáticos de otimização." },
+  { number: "08", title: "Monitore com calendário e alertas", description: "Visualize campanhas em calendário ou timeline Gantt. 11 regras de alerta monitoram performance em tempo real." },
+  { number: "09", title: "Exporte e apresente", description: "Gere relatórios PDF consolidados, exporte dados em CSV e compartilhe insights com seu time." },
 ];
 
 const benefits = [
@@ -208,8 +231,10 @@ const benefits = [
   "Alinhe estratégia antes de criar campanhas",
   "Compare seu posicionamento com concorrentes em tempo real",
   "Estruture campanhas com templates táticos validados por nicho",
+  "Refine seu ICP com dados de fontes públicas e inteligência artificial",
+  "Monitore campanhas com calendário, timeline e alertas automáticos",
+  "Conecte contas de mídia via OAuth e sincronize dados reais",
   "Gere relatórios profissionais para apresentar ao cliente",
-  "Transforme planos táticos em playbooks de execução gamificados",
 ];
 
 export default function Landing() {
@@ -270,7 +295,7 @@ export default function Landing() {
                 "description": "Projetos ilimitados, todas as análises por IA ilimitadas (projetos, performance, insights, benchmark), plano tático, exportação e notificações.",
               },
             ],
-            featureList: "Diagnóstico heurístico de URL, Análise por IA (Gemini/Claude), Benchmark competitivo SWOT, Scores por canal, Insights estratégicos, Alertas de investimento, Plano tático por canal, Playbook de execução, Exportação PDF/CSV, Públicos-alvo",
+            featureList: "Diagnóstico heurístico de URL, Análise por IA (Gemini/Claude), Benchmark competitivo SWOT, Scores por canal, Insights estratégicos, Alertas de investimento, Plano tático por canal, Playbook de execução, Gestão de campanhas e métricas, Gestão de budget com pacing, Calendário de campanhas e timeline Gantt, Alertas automáticos de performance, Enriquecimento de ICP com IA, Integrações OAuth (Google/Meta/LinkedIn/TikTok), Exportação PDF/CSV, Públicos-alvo",
           },
         ]}
       />
@@ -391,7 +416,7 @@ export default function Landing() {
               Como Funciona
             </span>
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-              Da URL ao relatório estratégico em <span className="text-primary">7 passos</span>
+              Da URL ao relatório estratégico em <span className="text-primary">9 passos</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Um fluxo completo que combina análise automática, inteligência artificial e benchmark competitivo.
@@ -1009,7 +1034,7 @@ export default function Landing() {
               <div className="bg-primary-foreground/10 rounded-xl p-6 text-center">
                 <BarChart3 className="h-8 w-8 mx-auto mb-3" />
                 <p className="text-3xl font-bold">4</p>
-                <p className="text-sm opacity-80">Canais de mídia</p>
+                <p className="text-sm opacity-80">Canais + Integrações</p>
               </div>
               <div className="bg-primary-foreground/10 rounded-xl p-6 text-center">
                 <Sparkles className="h-8 w-8 mx-auto mb-3" />
@@ -1017,9 +1042,9 @@ export default function Landing() {
                 <p className="text-sm opacity-80">Modelos de IA</p>
               </div>
               <div className="bg-primary-foreground/10 rounded-xl p-6 text-center">
-                <FileText className="h-8 w-8 mx-auto mb-3" />
-                <p className="text-3xl font-bold">5</p>
-                <p className="text-sm opacity-80">Formatos de export</p>
+                <Bell className="h-8 w-8 mx-auto mb-3" />
+                <p className="text-3xl font-bold">11</p>
+                <p className="text-sm opacity-80">Regras de alerta</p>
               </div>
             </div>
           </div>
@@ -1052,6 +1077,7 @@ export default function Landing() {
                 <li>✓ Diagnóstico heurístico de URL</li>
                 <li>✓ Score por canal (4 canais)</li>
                 <li>✓ Insights e alertas automáticos</li>
+                <li>✓ Públicos-alvo com ICP básico</li>
                 <li>✓ API keys (Gemini / Claude)</li>
                 <li>✓ Análise por IA de projetos (3/mês)</li>
                 <li>✓ Benchmark SWOT (5/mês)</li>
@@ -1074,10 +1100,12 @@ export default function Landing() {
               <ul className="space-y-3 text-sm mb-6">
                 <li>✓ Projetos ilimitados</li>
                 <li>✓ Todas as análises por IA ilimitadas</li>
-                <li>✓ Análise de performance por IA</li>
-                <li>✓ Enriquecimento de insights por IA</li>
                 <li>✓ Benchmark ilimitado + IA</li>
+                <li>✓ Enriquecimento de ICP com IA</li>
+                <li>✓ Gestão de campanhas e budget</li>
+                <li>✓ Calendário + alertas de performance</li>
                 <li>✓ Plano Tático por canal</li>
+                <li>✓ Integrações OAuth (Google Ads...)</li>
                 <li>✓ Exportação PDF e CSV</li>
               </ul>
               <Button variant="secondary" className="w-full" onClick={() => navigate('/precos')}>
@@ -1093,6 +1121,7 @@ export default function Landing() {
               <ul className="space-y-3 text-sm text-muted-foreground mb-6">
                 <li>✓ Tudo do Professional</li>
                 <li>✓ Múltiplos usuários + API access</li>
+                <li>✓ Integrações customizadas</li>
                 <li>✓ SLA dedicado 24/7</li>
                 <li>✓ Consultoria estratégica mensal</li>
               </ul>

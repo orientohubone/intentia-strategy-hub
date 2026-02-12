@@ -591,8 +591,8 @@ export function TacticalChannelView({ channel, tacticalPlanId, channelScore, pro
       {/* Channel Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl ${config.bgColor} flex items-center justify-center`}>
-            <span className={`text-lg font-bold ${config.color}`}>{config.label.charAt(0)}</span>
+          <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-900 border border-border/50 flex items-center justify-center p-2">
+            <img src={`/${channel}-ads.svg`} alt={config.fullLabel} className={`w-full h-full object-contain ${channel === "tiktok" ? "dark:brightness-0 dark:invert" : ""}`} />
           </div>
           <div>
             <h2 className="text-lg font-bold text-foreground">{config.fullLabel}</h2>
