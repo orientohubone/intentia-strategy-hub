@@ -30,6 +30,10 @@ import {
   MousePointerClick,
   LayoutDashboard,
   TrendingUp,
+  Link2,
+  Radar,
+  Bot,
+  Activity,
   ExternalLink,
   Info,
 } from "lucide-react";
@@ -44,6 +48,8 @@ import {
   type PageSpeedResult,
   type MetricResult,
 } from "@/lib/pagespeedApi";
+import { fetchSerpRanking, type SerpResponse } from "@/lib/seoSerpApi";
+import { fetchSeoIntelligence, type SeoIntelligenceResponse } from "@/lib/seoIntelligenceApi";
 
 // =====================================================
 // SCORE GAUGE COMPONENT
@@ -177,6 +183,13 @@ export default function SeoGeo() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PageSpeedResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [serpLoading, setSerpLoading] = useState(false);
+  const [serpError, setSerpError] = useState<string | null>(null);
+  const [serpData, setSerpData] = useState<SerpResponse | null>(null);
+  const [serpCustomTerm, setSerpCustomTerm] = useState("");
+  const [intelLoading, setIntelLoading] = useState(false);
+  const [intelError, setIntelError] = useState<string | null>(null);
+  const [intelData, setIntelData] = useState<SeoIntelligenceResponse | null>(null);
 
   // Load projects
   useEffect(() => {
@@ -216,6 +229,10 @@ export default function SeoGeo() {
     setError(null);
     setResult(null);
 
+    // Run PageSpeed + SERP ranking + Intelligence in parallel
+    handleSerpFetch();
+    handleIntelFetch();
+
     try {
       const data = await fetchPageSpeedInsights(project.url, strategy);
       setResult(data);
@@ -223,6 +240,88 @@ export default function SeoGeo() {
       setError(err.message || "Erro ao analisar URL");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleIntelFetch = async () => {
+    const project = projects.find((p: any) => p.id === selectedProjectId);
+    if (!project?.url) return;
+
+    setIntelLoading(true);
+    setIntelError(null);
+    setIntelData(null);
+
+    try {
+      // Get competitor URLs from project
+      const competitorUrls = project.competitor_urls || [];
+
+      // Get user AI keys
+      let aiKeys: { provider: string; apiKey: string; model: string }[] = [];
+      if (user) {
+        const { data: keys } = await (supabase as any)
+          .from("user_api_keys")
+          .select("provider, api_key, preferred_model")
+          .eq("user_id", user.id)
+          .eq("is_valid", true);
+        if (keys) {
+          aiKeys = keys.map((k: any) => ({
+            provider: k.provider,
+            apiKey: k.api_key,
+            model: k.preferred_model || (k.provider === "google_gemini" ? "gemini-2.0-flash" : "claude-sonnet-4-20250514"),
+          }));
+        }
+      }
+
+      const data = await fetchSeoIntelligence({
+        url: project.url,
+        competitorUrls,
+        brandName: project.name,
+        niche: project.niche || "",
+        aiKeys,
+      });
+      setIntelData(data);
+    } catch (err: any) {
+      setIntelError(err.message || "Erro na análise de inteligência");
+    } finally {
+      setIntelLoading(false);
+    }
+  };
+
+  const handleSerpFetch = async () => {
+    const project = projects.find((p: any) => p.id === selectedProjectId);
+    if (!project) return;
+
+    setSerpLoading(true);
+    setSerpError(null);
+    setSerpData(null);
+
+    try {
+      const targetDomain = project.url ? new URL(project.url).hostname : undefined;
+      const terms: string[] = [];
+
+      // Custom term first (if user typed one)
+      if (serpCustomTerm.trim()) {
+        terms.push(serpCustomTerm.trim());
+      }
+
+      // Project name + niche
+      const niche = project.niche?.trim() || "";
+      if (niche) {
+        terms.push(`${project.name} ${niche}`);
+      }
+
+      // Project name alone
+      terms.push(project.name);
+
+      // Deduplicate
+      const uniqueTerms = [...new Set(terms)].slice(0, 3);
+
+      const data = await fetchSerpRanking(uniqueTerms, targetDomain);
+      setSerpData(data);
+    } catch (err: any) {
+      setSerpError(err.message || "Erro ao buscar ranking Google");
+    } finally {
+      setSerpLoading(false);
     }
   };
 
@@ -250,9 +349,9 @@ export default function SeoGeo() {
         {/* Controls */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex flex-col sm:flex-row gap-3 items-end">
-              <div className="flex-1 space-y-1.5">
-                <label className="text-sm font-medium text-foreground">Projeto</label>
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+              <div className="flex-1 min-w-0">
+                <label className="text-sm font-medium text-foreground mb-1.5 block">Projeto</label>
                 <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um projeto analisado..." />
@@ -270,16 +369,17 @@ export default function SeoGeo() {
                     ))}
                   </SelectContent>
                 </Select>
-                {selectedProject?.url && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <ExternalLink className="h-3 w-3" />
-                    {selectedProject.url}
-                  </p>
-                )}
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground">Dispositivo</label>
+              {selectedProject?.url && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1 truncate max-w-[200px] pb-2.5 hidden sm:flex">
+                  <ExternalLink className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{selectedProject.url}</span>
+                </p>
+              )}
+
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">Dispositivo</label>
                 <div className="flex gap-1 bg-muted rounded-lg p-1">
                   <Button
                     size="sm"
@@ -334,6 +434,7 @@ export default function SeoGeo() {
                 </div>
               </CardContent>
             </Card>
+
           </div>
         )}
 
@@ -472,12 +573,19 @@ export default function SeoGeo() {
 
             {/* Tabs: SEO / Accessibility / Opportunities */}
             <Tabs defaultValue="seo" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="seo" className="gap-1.5">
                   <Search className="h-3.5 w-3.5" />
                   SEO
                   <Badge variant="outline" className="text-[9px] ml-1 h-4 px-1">
                     {result.seoScore}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger value="inteligencia" className="gap-1.5">
+                  <Radar className="h-3.5 w-3.5" />
+                  Inteligência
+                  <Badge variant="outline" className="text-[9px] ml-1 h-4 px-1">
+                    Beta
                   </Badge>
                 </TabsTrigger>
                 <TabsTrigger value="accessibility" className="gap-1.5">
@@ -553,6 +661,391 @@ export default function SeoGeo() {
                     )}
                   </CardContent>
                 </Card>
+
+              </TabsContent>
+
+              {/* Inteligência Tab */}
+              <TabsContent value="inteligencia" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Search className="h-5 w-5 text-primary" />
+                      Ranking Google por Projeto
+                    </CardTitle>
+                    <CardDescription>
+                      Busca até 3 variações automaticamente (nome, nome+nicho, termo personalizado). O melhor resultado é exibido.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="text"
+                        placeholder="Termo personalizado (opcional)..."
+                        value={serpCustomTerm}
+                        onChange={(e) => setSerpCustomTerm(e.target.value)}
+                        className="flex-1 h-9 rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        onKeyDown={(e) => e.key === "Enter" && handleSerpFetch()}
+                      />
+                      <Button size="sm" className="gap-2 h-9" onClick={handleSerpFetch} disabled={!selectedProjectId || serpLoading}>
+                        {serpLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                        {serpLoading ? "Buscando..." : "Buscar ranking"}
+                      </Button>
+                    </div>
+
+                    {serpError && (
+                      <div className="flex items-center gap-2 text-red-500 text-sm">
+                        <XCircle className="h-4 w-4 shrink-0" />
+                        {serpError}
+                      </div>
+                    )}
+
+                    {!serpError && !serpData && !serpLoading && (
+                      <div className="text-sm text-muted-foreground py-4 text-center">
+                        Clique em "Buscar ranking" para consultar o Google com variações do nome do projeto.
+                      </div>
+                    )}
+
+                    {serpLoading && (
+                      <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        Consultando Google com até 3 variações...
+                      </div>
+                    )}
+
+                    {serpData && (
+                      <div className="space-y-4">
+                        {/* Query summary */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          {serpData.targetDomain && (
+                            <Badge variant="outline" className="text-xs gap-1">
+                              <Globe className="h-3 w-3" />
+                              {serpData.targetDomain}
+                            </Badge>
+                          )}
+                          <Badge variant={serpData.targetPosition ? "default" : "secondary"} className="text-xs">
+                            {serpData.targetPosition ? `Posição #${serpData.targetPosition}` : "Fora do top 20"}
+                          </Badge>
+                        </div>
+
+                        {/* All queries tried */}
+                        {serpData.allQueries && serpData.allQueries.length > 0 && (
+                          <div className="bg-muted/30 rounded-lg p-3 space-y-1.5">
+                            <p className="text-[11px] font-semibold text-muted-foreground">Consultas realizadas:</p>
+                            {serpData.allQueries.map((q, i) => (
+                              <div key={i} className="flex items-center gap-2 text-xs">
+                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${q.query === serpData.query ? "bg-primary" : "bg-muted-foreground/40"}`} />
+                                <span className={q.query === serpData.query ? "font-semibold text-foreground" : "text-muted-foreground"}>
+                                  "{q.query}"
+                                </span>
+                                <span className="text-muted-foreground">
+                                  — {q.error ? `Erro: ${q.error}` : `${q.resultCount} resultados`}
+                                  {q.targetPosition ? ` (posição #${q.targetPosition})` : ""}
+                                </span>
+                                {q.query === serpData.query && (
+                                  <Badge variant="outline" className="text-[9px] h-4 px-1">melhor</Badge>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {serpData.results.length === 0 ? (
+                          <div className="text-sm text-muted-foreground py-4 text-center">
+                            Nenhum resultado encontrado. Tente um termo personalizado acima.
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-border">
+                            {serpData.results.map((item) => (
+                              <div key={`${item.position}-${item.domain}`} className="flex items-start gap-3 py-3">
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold shrink-0 ${item.isTarget ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                                  {item.position}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-semibold text-foreground truncate">{item.title}</p>
+                                  <p className="text-xs text-muted-foreground truncate">{item.domain}</p>
+                                </div>
+                                {item.isTarget && (
+                                  <Badge className="text-[9px] shrink-0">Seu site</Badge>
+                                )}
+                                <a
+                                  href={item.link}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-xs text-primary hover:underline flex items-center gap-1 shrink-0"
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+                {/* Intelligence Loading */}
+                {intelLoading && (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        Analisando backlinks, concorrentes e visibilidade em LLMs...
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {intelError && (
+                  <Card className="border-red-500/30">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center gap-2 text-red-500 text-sm">
+                        <XCircle className="h-4 w-4 shrink-0" />
+                        {intelError}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Backlinks & Authority */}
+                {intelData?.backlinks && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Link2 className="h-5 w-5 text-primary" />
+                        Backlinks & Autoridade
+                      </CardTitle>
+                      <CardDescription>
+                        Links externos, domínios de referência e sinais de autoridade do seu site
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="rounded-lg border border-border p-3 text-center">
+                          <p className="text-2xl font-bold text-foreground">{intelData.backlinks.externalLinkCount}</p>
+                          <p className="text-[11px] text-muted-foreground">Links externos</p>
+                        </div>
+                        <div className="rounded-lg border border-border p-3 text-center">
+                          <p className="text-2xl font-bold text-foreground">{intelData.backlinks.uniqueReferringDomains.length}</p>
+                          <p className="text-[11px] text-muted-foreground">Domínios únicos</p>
+                        </div>
+                        <div className="rounded-lg border border-border p-3 text-center">
+                          <p className="text-2xl font-bold text-green-600">{intelData.backlinks.dofollowCount}</p>
+                          <p className="text-[11px] text-muted-foreground">Dofollow</p>
+                        </div>
+                        <div className="rounded-lg border border-border p-3 text-center">
+                          <p className="text-2xl font-bold text-yellow-600">{intelData.backlinks.nofollowCount}</p>
+                          <p className="text-[11px] text-muted-foreground">Nofollow</p>
+                        </div>
+                      </div>
+
+                      {/* Authority Signals */}
+                      <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+                        <p className="text-[11px] font-semibold text-muted-foreground">Sinais de autoridade:</p>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant={intelData.backlinks.authoritySignals.hasHttps ? "default" : "secondary"} className="text-[10px] gap-1">
+                            {intelData.backlinks.authoritySignals.hasHttps ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                            HTTPS
+                          </Badge>
+                          <Badge variant={intelData.backlinks.authoritySignals.hasRobotsTxt ? "default" : "secondary"} className="text-[10px] gap-1">
+                            {intelData.backlinks.authoritySignals.hasRobotsTxt ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                            robots.txt
+                          </Badge>
+                          <Badge variant={intelData.backlinks.authoritySignals.hasSitemap ? "default" : "secondary"} className="text-[10px] gap-1">
+                            {intelData.backlinks.authoritySignals.hasSitemap ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                            Sitemap
+                          </Badge>
+                          <Badge variant={intelData.backlinks.authoritySignals.structuredDataCount > 0 ? "default" : "secondary"} className="text-[10px] gap-1">
+                            {intelData.backlinks.authoritySignals.structuredDataCount > 0 ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                            Structured Data ({intelData.backlinks.authoritySignals.structuredDataCount})
+                          </Badge>
+                          {intelData.backlinks.authoritySignals.hreflangCount > 0 && (
+                            <Badge variant="default" className="text-[10px] gap-1">
+                              <CheckCircle2 className="h-3 w-3" />
+                              Hreflang ({intelData.backlinks.authoritySignals.hreflangCount})
+                            </Badge>
+                          )}
+                        </div>
+                        {intelData.backlinks.authoritySignals.socialProfiles.length > 0 && (
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                            <span>Redes sociais:</span>
+                            {intelData.backlinks.authoritySignals.socialProfiles.map((s) => (
+                              <Badge key={s} variant="outline" className="text-[10px]">{s}</Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Top external links */}
+                      {intelData.backlinks.externalLinks.length > 0 && (
+                        <div>
+                          <p className="text-[11px] font-semibold text-muted-foreground mb-2">Links externos encontrados (top {Math.min(10, intelData.backlinks.externalLinks.length)}):</p>
+                          <div className="divide-y divide-border">
+                            {intelData.backlinks.externalLinks.slice(0, 10).map((link, i) => (
+                              <div key={i} className="flex items-center gap-2 py-1.5 text-xs">
+                                <span className="text-muted-foreground w-5 text-right shrink-0">{i + 1}</span>
+                                <span className="font-medium text-foreground truncate flex-1">{link.anchorText || link.domain}</span>
+                                <span className="text-muted-foreground truncate max-w-[150px]">{link.domain}</span>
+                                <a href={link.url} target="_blank" rel="noreferrer" className="shrink-0">
+                                  <ExternalLink className="h-3 w-3 text-primary" />
+                                </a>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Competitor Monitoring */}
+                {intelData?.competitors && intelData.competitors.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Radar className="h-5 w-5 text-primary" />
+                        Monitoramento de Concorrentes
+                      </CardTitle>
+                      <CardDescription>
+                        Análise comparativa dos concorrentes cadastrados no projeto
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="overflow-x-auto">
+                        <div className="min-w-[700px]">
+                          <div className="grid grid-cols-[1.5fr_repeat(5,1fr)] gap-3 text-[11px] text-muted-foreground font-semibold pb-3 border-b border-border">
+                            <span>Domínio</span>
+                            <span>Palavras (H1/Total)</span>
+                            <span>Links ext.</span>
+                            <span>CTAs</span>
+                            <span>Imagens</span>
+                            <span>Sinais</span>
+                          </div>
+                          <div className="divide-y divide-border">
+                            {intelData.competitors.map((comp) => (
+                              <div key={comp.domain} className="grid grid-cols-[1.5fr_repeat(5,1fr)] gap-3 py-3 text-xs">
+                                <div>
+                                  <p className="text-sm font-semibold text-foreground flex items-center gap-1">
+                                    {comp.domain}
+                                    <a href={comp.url} target="_blank" rel="noreferrer">
+                                      <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                                    </a>
+                                  </p>
+                                  <p className="text-[10px] text-muted-foreground truncate max-w-[200px]">
+                                    {comp.reachable ? (comp.title || "Sem título") : "Inacessível"}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold">{comp.h1Count} / {comp.wordCount.toLocaleString()}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold">{comp.externalLinkCount}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold">{comp.ctaCount}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold">{comp.imageCount}</p>
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                  {comp.hasHttps && <Badge variant="outline" className="text-[9px] h-4 px-1">HTTPS</Badge>}
+                                  {comp.hasStructuredData && <Badge variant="outline" className="text-[9px] h-4 px-1">Schema</Badge>}
+                                  {comp.hasSitemap && <Badge variant="outline" className="text-[9px] h-4 px-1">Sitemap</Badge>}
+                                  {comp.socialProfiles.map((s) => (
+                                    <Badge key={s} variant="outline" className="text-[9px] h-4 px-1">{s}</Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* LLM Visibility */}
+                {intelData?.llmResults && intelData.llmResults.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Bot className="h-5 w-5 text-primary" />
+                        Visibilidade em LLMs
+                      </CardTitle>
+                      <CardDescription>
+                        Como sua marca aparece nas respostas de IAs generativas
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {intelData.llmResults.map((llm, i) => (
+                        <div key={i} className="rounded-xl border border-border p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-[10px]">
+                                {llm.provider === "google_gemini" ? "Gemini" : "Claude"} — {llm.model}
+                              </Badge>
+                            </div>
+                            <Badge variant={llm.mentioned ? "default" : "secondary"} className="text-[10px] gap-1">
+                              {llm.mentioned ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                              {llm.mentioned ? "Mencionado" : "Não mencionado"}
+                            </Badge>
+                          </div>
+
+                          {llm.mentionContext && (
+                            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                              <p className="text-xs text-foreground">...{llm.mentionContext}...</p>
+                            </div>
+                          )}
+
+                          {llm.competitorsMentioned.length > 0 && (
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <span>Concorrentes mencionados:</span>
+                              {llm.competitorsMentioned.map((c) => (
+                                <Badge key={c} variant="outline" className="text-[10px]">{c}</Badge>
+                              ))}
+                            </div>
+                          )}
+
+                          <details className="text-xs">
+                            <summary className="text-muted-foreground cursor-pointer hover:text-foreground">Ver resposta completa</summary>
+                            <div className="mt-2 bg-muted/30 rounded-lg p-3 text-muted-foreground whitespace-pre-wrap max-h-[200px] overflow-y-auto">
+                              {llm.fullResponse}
+                            </div>
+                          </details>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* No AI keys message */}
+                {intelData && intelData.llmResults.length === 0 && (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <Bot className="h-5 w-5 shrink-0" />
+                        <div>
+                          <p className="font-medium text-foreground">Visibilidade em LLMs</p>
+                          <p className="text-xs mt-0.5">Configure suas API keys em <a href="/settings" className="text-primary hover:underline">Configurações → Integrações de IA</a> para testar como sua marca aparece em respostas do Gemini e Claude.</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* No competitors message */}
+                {intelData && intelData.competitors.length === 0 && (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <Radar className="h-5 w-5 shrink-0" />
+                        <div>
+                          <p className="font-medium text-foreground">Monitoramento de Concorrentes</p>
+                          <p className="text-xs mt-0.5">Adicione URLs de concorrentes no projeto em <a href="/projects" className="text-primary hover:underline">Projetos</a> para comparar métricas automaticamente.</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
 
               {/* Accessibility Tab */}
