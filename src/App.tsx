@@ -53,6 +53,7 @@ import FeatureRelatorios from "./pages/FeatureRelatorios";
 import AdminLogin from "./pages/AdminLogin";
 import AdminPanel from "./pages/AdminPanel";
 import StatusRssFallback from "./pages/StatusRssFallback";
+import Changelog from "./pages/Changelog";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
 import { ForceLightMode } from "@/components/ForceLightMode";
@@ -87,6 +88,7 @@ const App = () => (
           <Route path="/status" element={<ForceLightMode><Status /></ForceLightMode>} />
           <Route path="/plano-tatico" element={<ForceLightMode><TacticalPlanPage /></ForceLightMode>} />
           <Route path="/comparar" element={<ForceLightMode><Comparar /></ForceLightMode>} />
+          <Route path="/changelog" element={<ForceLightMode><Changelog /></ForceLightMode>} />
           <Route path="/diagnostico-url" element={<ForceLightMode><FeatureDiagnostico /></ForceLightMode>} />
           <Route path="/analise-ia" element={<ForceLightMode><FeatureAnaliseIA /></ForceLightMode>} />
           <Route path="/benchmark-competitivo" element={<ForceLightMode><FeatureBenchmark /></ForceLightMode>} />

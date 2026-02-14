@@ -88,6 +88,11 @@ export function Footer() {
                 </a>
               </li>
               <li>
+                <a href="/changelog" className="text-muted-foreground hover:text-primary transition-colors">
+                  Changelog
+                </a>
+              </li>
+              <li>
                 <a href="/contato" className="text-muted-foreground hover:text-primary transition-colors">
                   Contato
                 </a>
