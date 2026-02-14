@@ -2,7 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
 import { BackToHomeButton } from "@/components/BackToHomeButton";
-import { Image, ArrowRight, FileText } from "lucide-react";
+import { Image, ArrowRight, FileText, Download } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const primaryHSL = "hsl(16, 100%, 55%)";
@@ -54,6 +54,23 @@ const spacingScale = [
   { name: "48px", token: "12", usage: "Espaçamento entre seções de página" },
   { name: "64px", token: "16", usage: "Padding vertical de seções hero" },
 ];
+
+const downloadLogoAsSVG = () => {
+  const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <rect width="120" height="120" rx="24" fill="#151A23"/>
+  <text x="15" y="75" font-family="Inter, system-ui, sans-serif" font-weight="800" font-size="20" fill="#FFFFFF">intentia</text>
+  <text x="85" y="75" font-family="Inter, system-ui, sans-serif" font-weight="800" font-size="20" fill="#FF6B2B">.</text>
+</svg>`;
+  
+  const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'intentia-logo-120.svg';
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
 export default function BrandGuide() {
   return (
@@ -588,33 +605,115 @@ export default function BrandGuide() {
 
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground max-w-2xl">
-              Biblioteca de ícones: <strong className="text-foreground">Lucide React</strong> — ícones de linha com 1.5px de stroke,
-              consistentes e acessíveis. Tamanhos padrão:
+              Ícones da <strong className="text-foreground">Lucide React</strong> — conjunto consistente e moderno com 
+              300+ ícones. Estilo: lineal, 2px stroke, cantos arredondados sutis.
             </p>
-            <div className="grid sm:grid-cols-4 gap-4">
-              {[
-                { size: "h-3 w-3", label: "12px", usage: "Inline, badges, botões small" },
-                { size: "h-3.5 w-3.5", label: "14px", usage: "Botões com texto, menu items" },
-                { size: "h-4 w-4", label: "16px", usage: "Padrão em listas e labels" },
-                { size: "h-5 w-5", label: "20px", usage: "Stats cards, destaques" },
-              ].map((item) => (
-                <div key={item.label} className="p-4 rounded-xl border border-border bg-card text-center space-y-2">
-                  <div className="flex justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className={`${item.size} text-primary`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                      <path d="M2 17l10 5 10-5" />
-                      <path d="M2 12l10 5 10-5" />
-                    </svg>
+            <div className="p-6 rounded-xl border border-border bg-card">
+              <p className="text-xs text-muted-foreground font-mono mb-4">
+                npm install lucide-react
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {['Search', 'BarChart3', 'Target', 'TrendingUp', 'Users', 'Settings', 'FileText', 'Shield'].map((icon) => (
+                  <div key={icon} className="w-12 h-12 rounded-lg border border-border bg-card flex items-center justify-center">
+                    <span className="text-xs text-muted-foreground font-mono">{icon.slice(0, 2)}</span>
                   </div>
-                  <p className="text-sm font-semibold text-foreground">{item.label}</p>
-                  <p className="text-xs text-muted-foreground">{item.usage}</p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </section>
 
-        {/* ─── 9. DARK MODE ─── */}
+        {/* ─── 9. GOOGLE BRAND ASSETS ─── */}
+        <section className="space-y-10">
+          <div className="space-y-3">
+            <h2 className="text-2xl font-bold text-foreground tracking-tight">9. Google Brand Assets</h2>
+            <div className="w-12 h-0.5 bg-primary rounded-full" />
+          </div>
+
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              Arquivos oficiais para verificação e configuração de marca no ecossistema Google.
+              Logotipo em formato quadrado 120×120px conforme exigência para Google Brand verification.
+            </p>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Logo 120x120 */}
+              <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Logotipo 120×120px</h3>
+                <p className="text-sm text-muted-foreground">
+                  Formato exigido pelo Google para Brand verification. 
+                  Quadrado, alta resolução, fundo transparente disponível.
+                </p>
+                
+                <div className="flex items-center justify-center">
+                  <div className="w-32 h-32 rounded-2xl bg-[#151A23] flex items-center justify-center p-2">
+                    <span className="text-xl font-extrabold text-white leading-tight">intentia<span className="text-[#FF6B2B]">.</span></span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <FileText className="w-4 h-4 text-primary" />
+                    <span className="font-mono text-xs">intentia-logo-120.svg</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <FileText className="w-4 h-4 text-primary" />
+                    <span className="font-mono text-xs">intentia-logo-generator.html</span>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <button
+                    onClick={downloadLogoAsSVG}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#FF6B2B] text-white text-sm font-medium h-10 px-4 hover:opacity-90 transition-opacity"
+                  >
+                    <Download className="w-4 h-4" />
+                    Baixar Logo 120×120px
+                  </button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Download automático em SVG, qualidade original preservada
+                  </p>
+                </div>
+              </div>
+
+              {/* Verification Files */}
+              <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Arquivos de Verificação</h3>
+                <p className="text-sm text-muted-foreground">
+                  Meta tags e arquivos para verificação de propriedade do site.
+                </p>
+
+                <div className="space-y-3">
+                  <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                    <p className="text-xs font-mono text-gray-700 mb-1">google839c5f19e40bb364.html</p>
+                    <p className="text-xs text-gray-600">Arquivo de verificação Google Search Console</p>
+                  </div>
+                  
+                  <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                    <p className="text-xs font-mono text-gray-700 mb-1">Meta tag verification:</p>
+                    <code className="text-xs text-gray-600 block mt-1">
+                      &lt;meta name="google-site-verification" content="google839c5f19e40bb364.html" /&gt;
+                    </code>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                    <p className="text-xs font-mono text-gray-700 mb-1">Meta property verification:</p>
+                    <code className="text-xs text-gray-600 block mt-1">
+                      &lt;meta property="google-site-verification" content="https://intentia.com.br/google839c5f19e40bb364.html" /&gt;
+                    </code>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg bg-green-50 border border-green-200">
+                  <p className="text-xs text-green-800 font-medium">Status: Configurado</p>
+                  <p className="text-xs text-green-700">Ambas as verificações estão ativas no index.html</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ─── 10. DARK MODE ─── */}
         <section className="space-y-10">
           <div className="space-y-3">
             <h2 className="text-2xl font-bold text-foreground tracking-tight">9. Dark Mode</h2>
