@@ -56,6 +56,7 @@ import {
   Wifi,
   RefreshCw,
   Link2,
+  Gauge,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -378,7 +379,7 @@ function OverviewSection() {
       </FlowBox>
 
       {/* Tech Stack */}
-      <FlowBox title="Stack Tecnologico" badge="v3.9.0">
+      <FlowBox title="Stack Tecnologico" badge="v4.x">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: "React 18.3", sub: "UI Framework", color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20", tip: "Biblioteca para construcao de interfaces reativas com componentes reutilizaveis e Virtual DOM" },
@@ -406,11 +407,11 @@ function OverviewSection() {
           { n: "35+", label: "Paginas", icon: FileText, color: "text-blue-400" },
           { n: "50+", label: "Componentes", icon: Layers, color: "text-purple-400" },
           { n: "8", label: "Hooks", icon: GitBranch, color: "text-green-400" },
-          { n: "12", label: "Edge Functions", icon: Cloud, color: "text-cyan-400" },
-          { n: "18+", label: "Tabelas SQL", icon: Database, color: "text-emerald-400" },
-          { n: "25", label: "Feature Flags", icon: ToggleLeft, color: "text-amber-400" },
+          { n: "15", label: "Edge Functions", icon: Cloud, color: "text-cyan-400" },
+          { n: "25+", label: "Tabelas SQL", icon: Database, color: "text-emerald-400" },
+          { n: "32+", label: "Feature Flags", icon: ToggleLeft, color: "text-amber-400" },
           { n: "15", label: "Libs", icon: Crown, color: "text-primary" },
-          { n: "35+", label: "Arquivos SQL", icon: FileText, color: "text-red-400" },
+          { n: "45+", label: "Arquivos SQL", icon: FileText, color: "text-red-400" },
         ].map((stat) => (
           <div key={stat.label} className="bg-card/60 border border-border rounded-xl p-3 flex items-center gap-3">
             <stat.icon className={`h-5 w-5 ${stat.color} flex-shrink-0`} />
@@ -459,6 +460,9 @@ function FrontendSection() {
               { path: "/benchmark-competitivo", page: "FeatureBenchmark", desc: "Feature: Benchmark" },
               { path: "/gestao-campanhas", page: "FeatureGestaoCampanhas", desc: "Feature: Campanhas" },
               { path: "/gestao-budget", page: "FeatureGestaoBudget", desc: "Feature: Budget" },
+              { path: "/score-canal", page: "FeatureScoreCanal", desc: "Feature: Score Canal" },
+              { path: "/alertas-insights", page: "FeatureInsights", desc: "Feature: Insights" },
+              { path: "/dados-estruturados", page: "FeatureDadosEstruturados", desc: "Feature: Dados Estruturados" },
               { path: "/relatorios", page: "FeatureRelatorios", desc: "Feature: Relatorios" },
               { path: "/oauth/callback", page: "OAuthCallback", desc: "Retorno OAuth" },
             ].map((route) => (
@@ -489,6 +493,8 @@ function FrontendSection() {
               { path: "/operations", page: "Operations", desc: "Campanhas + Metricas" },
               { path: "/settings", page: "Settings", desc: "Config + API Keys" },
               { path: "/integracoes", page: "Integrations", desc: "OAuth + Sync APIs" },
+              { path: "/seo-geo", page: "SeoGeo", desc: "SEO & Performance" },
+              { path: "/support", page: "Support", desc: "Suporte ao cliente" },
               { path: "/checkout", page: "Checkout", desc: "Pagamento" },
               { path: "/help", page: "Help", desc: "Centro de ajuda" },
             ].map((route) => (
@@ -954,17 +960,19 @@ function FeatureFlagsSection() {
       </FlowBox>
 
       {/* Categories */}
-      <FlowBox title="Categorias de Features" badge="25 features">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <FlowBox title="Categorias de Features" badge="32+ features">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {[
-            { label: "Projetos", icon: FolderOpen, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20", count: 5, tip: "Criacao de projetos, analise de URL, scores por canal, insights e competitor URLs" },
-            { label: "Inteligencia Artificial", icon: Sparkles, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20", count: 3, tip: "Analise por IA (Gemini/Claude), enriquecimento de insights e analise de performance" },
+            { label: "Projetos", icon: FolderOpen, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20", count: 5, tip: "Criacao de projetos, analise de URL, scores por canal, dados estruturados e progress tracker" },
+            { label: "Inteligencia Artificial", icon: Sparkles, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20", count: 5, tip: "Analise por IA (Gemini/Claude), enriquecimento de benchmark/insights, analise de performance e API keys" },
             { label: "Benchmark", icon: BarChart3, color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/20", count: 2, tip: "Comparacao SWOT com concorrentes, gap analysis e scores comparados" },
-            { label: "Plano Tatico", icon: Crosshair, color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20", count: 3, tip: "Templates de campanhas, sugestoes de budget e cronograma por canal" },
-            { label: "Exportacao", icon: Download, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", count: 3, tip: "Exportar relatorios em PDF, dados em JSON e backup completo da conta" },
-            { label: "Marca & Social", icon: Share2, color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20", count: 2, tip: "Brand Guide com identidade visual, tom de voz e posts para redes sociais" },
-            { label: "Insights & Alertas", icon: Lightbulb, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", count: 7, tip: "Insights estrategicos, alertas de investimento prematuro e recomendacoes por canal" },
-            { label: "Configuracoes", icon: Settings, color: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/20", count: 2, tip: "Configuracoes da conta, API keys de IA, preferencias do usuario e enriquecimento de ICP" },
+            { label: "Plano Tatico", icon: Crosshair, color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20", count: 4, tip: "Templates de campanhas, playbook gamificado, operacoes e gestao de campanhas" },
+            { label: "Exportacao", icon: Download, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", count: 3, tip: "Exportar relatorios em PDF, dados em CSV e resultados de IA" },
+            { label: "Marca & Social", icon: Share2, color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20", count: 2, tip: "Brand Guide com identidade visual e posts para redes sociais" },
+            { label: "Insights & Alertas", icon: Lightbulb, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", count: 6, tip: "Scores por canal, insights estrategicos, alertas, publicos-alvo, notificacoes e dark mode" },
+            { label: "Configuracoes", icon: Settings, color: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/20", count: 2, tip: "Backup de dados e chat de suporte" },
+            { label: "Integracoes", icon: Plug, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", count: 5, tip: "Google Ads, Meta Ads, LinkedIn Ads, TikTok Ads e integracoes de marketing" },
+            { label: "SEO & Performance", icon: Gauge, color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20", count: 4, tip: "SEO Analysis, Performance Monitoring, AI Performance Analysis e SEO Geolocalizacao" },
           ].map((cat) => (
             <InfoTip key={cat.label} tip={cat.tip}>
               <div className={`${cat.bg} border ${cat.border} rounded-xl p-3 text-center cursor-help`}>
@@ -1080,7 +1088,7 @@ function EdgeFunctionsSection() {
             },
             {
               name: "admin-api",
-              desc: "API administrativa — CRUD de features, planos, usuarios, status page",
+              desc: "API administrativa — 32+ actions: features, planos, usuarios, status page, suporte",
               trigger: "Invocado pelo AdminPanel",
               input: "action + params (JSON)",
               output: "Dados administrativos",
@@ -1088,6 +1096,39 @@ function EdgeFunctionsSection() {
               color: "text-red-400",
               bg: "bg-red-500/10",
               border: "border-red-500/20",
+            },
+            {
+              name: "oauth-connect",
+              desc: "Gera URL OAuth para conectar contas de ads (Google, Meta, LinkedIn, TikTok)",
+              trigger: "Invocado pelo frontend (Integrations)",
+              input: "provider + redirect_uri",
+              output: "URL de autorizacao OAuth",
+              auth: "JWT Bearer token",
+              color: "text-green-400",
+              bg: "bg-green-500/10",
+              border: "border-green-500/20",
+            },
+            {
+              name: "oauth-callback",
+              desc: "Recebe callback OAuth, troca code por tokens, salva integracao",
+              trigger: "Redirect do provider OAuth",
+              input: "code + state (query params)",
+              output: "Redirect para /oauth/callback",
+              auth: "State token (10min max)",
+              color: "text-blue-400",
+              bg: "bg-blue-500/10",
+              border: "border-blue-500/20",
+            },
+            {
+              name: "integration-sync",
+              desc: "Sincroniza campanhas e metricas das plataformas de ads conectadas",
+              trigger: "Sob demanda ou scheduled",
+              input: "integration_id + period",
+              output: "Sync log com resultados",
+              auth: "JWT Bearer token",
+              color: "text-purple-400",
+              bg: "bg-purple-500/10",
+              border: "border-purple-500/20",
             },
           ].map((fn) => (
             <div key={fn.name} className={`${fn.bg} border ${fn.border} rounded-xl p-4`}>
@@ -1406,6 +1447,91 @@ function DatabaseSection() {
             </div>
           </div>
 
+          {/* Support tables */}
+          <div>
+            <p className="text-[10px] text-rose-400 font-semibold uppercase tracking-wider mb-2">Tabelas Suporte (v4.x)</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[
+                {
+                  name: "support_tickets",
+                  desc: "Chamados de suporte dos clientes",
+                  cols: ["id (PK)", "user_id (FK)", "ticket_number", "subject", "category", "priority", "status", "sla_deadline", "first_response_at", "resolved_at"],
+                  color: "text-rose-400",
+                  border: "border-rose-500/20",
+                },
+                {
+                  name: "support_ticket_messages",
+                  desc: "Mensagens de cada chamado",
+                  cols: ["id (PK)", "ticket_id (FK)", "sender_id", "sender_type", "message", "created_at"],
+                  color: "text-pink-400",
+                  border: "border-pink-500/20",
+                },
+                {
+                  name: "support_categories",
+                  desc: "Categorias de chamados",
+                  cols: ["id (PK)", "name", "description", "icon", "sort_order"],
+                  color: "text-fuchsia-400",
+                  border: "border-fuchsia-500/20",
+                },
+              ].map((table) => (
+                <div key={table.name} className={`bg-muted/30 border ${table.border} rounded-xl p-3`}>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Database className={`h-3.5 w-3.5 ${table.color}`} />
+                    <code className={`text-[11px] font-mono font-semibold ${table.color}`}>{table.name}</code>
+                  </div>
+                  <p className="text-[9px] text-muted-foreground mb-2">{table.desc}</p>
+                  <div className="space-y-0.5">
+                    {table.cols.map((col) => (
+                      <div key={col} className="flex items-center gap-1.5">
+                        <div className={`w-1 h-1 rounded-full ${col.includes("PK") ? "bg-amber-400" : col.includes("FK") ? "bg-cyan-400" : "bg-muted-foreground/60"}`} />
+                        <code className="text-[9px] text-muted-foreground font-mono">{col}</code>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Integration tables */}
+          <div>
+            <p className="text-[10px] text-indigo-400 font-semibold uppercase tracking-wider mb-2">Tabelas Integracoes (v3.8)</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[
+                {
+                  name: "ad_integrations",
+                  desc: "Conexoes OAuth com plataformas de ads",
+                  cols: ["id (PK)", "user_id (FK)", "provider (UK)", "status", "access_token", "refresh_token", "account_id", "account_name", "scopes", "project_mappings (JSONB)"],
+                  color: "text-indigo-400",
+                  border: "border-indigo-500/20",
+                },
+                {
+                  name: "integration_sync_logs",
+                  desc: "Historico de sincronizacoes",
+                  cols: ["id (PK)", "integration_id (FK)", "user_id (FK)", "status", "duration_ms", "records_fetched", "records_created", "records_failed", "period", "errors (JSONB)"],
+                  color: "text-violet-400",
+                  border: "border-violet-500/20",
+                },
+              ].map((table) => (
+                <div key={table.name} className={`bg-muted/30 border ${table.border} rounded-xl p-3`}>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Database className={`h-3.5 w-3.5 ${table.color}`} />
+                    <code className={`text-[11px] font-mono font-semibold ${table.color}`}>{table.name}</code>
+                  </div>
+                  <p className="text-[9px] text-muted-foreground mb-2">{table.desc}</p>
+                  <div className="space-y-0.5">
+                    {table.cols.map((col) => (
+                      <div key={col} className="flex items-center gap-1.5">
+                        <div className={`w-1 h-1 rounded-full ${col.includes("PK") ? "bg-amber-400" : col.includes("FK") ? "bg-cyan-400" : col.includes("UK") ? "bg-green-400" : "bg-muted-foreground/60"}`} />
+                        <code className="text-[9px] text-muted-foreground font-mono">{col}</code>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Operational tables */}
           <div>
             <p className="text-[10px] text-orange-400 font-semibold uppercase tracking-wider mb-2">Tabelas Operacionais (v3.x)</p>
@@ -1490,6 +1616,10 @@ function DatabaseSection() {
             { from: "projects", rel: "1:N", to: "campaigns", desc: "Um projeto tem muitas campanhas" },
             { from: "campaigns", rel: "1:N", to: "campaign_metrics", desc: "Uma campanha tem muitas metricas" },
             { from: "projects", rel: "1:N", to: "budget_allocations", desc: "Um projeto tem alocacoes de budget" },
+            { from: "tenant_settings", rel: "1:N", to: "support_tickets", desc: "Um usuario abre muitos chamados" },
+            { from: "support_tickets", rel: "1:N", to: "support_ticket_messages", desc: "Um chamado tem muitas mensagens" },
+            { from: "tenant_settings", rel: "1:N", to: "ad_integrations", desc: "Um usuario tem integracoes de ads" },
+            { from: "ad_integrations", rel: "1:N", to: "integration_sync_logs", desc: "Uma integracao tem logs de sync" },
           ].map((rel) => (
             <div key={`${rel.from}-${rel.to}`} className="flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
               <code className="text-[10px] text-emerald-400 font-mono">{rel.from}</code>
@@ -1545,7 +1675,7 @@ function SecuritySection() {
         <div className="bg-muted/30 border border-border/30 rounded-xl p-3">
           <p className="text-[10px] font-semibold text-foreground/80 mb-2">Tabelas com RLS ativo:</p>
           <div className="flex flex-wrap gap-1.5">
-            {["tenant_settings", "projects", "insights", "project_channel_scores", "benchmarks", "audiences", "notifications", "user_api_keys", "campaigns", "campaign_metrics", "budget_allocations", "ad_integrations", "integration_sync_logs"].map((t) => (
+            {["tenant_settings", "projects", "insights", "project_channel_scores", "benchmarks", "audiences", "notifications", "user_api_keys", "campaigns", "campaign_metrics", "budget_allocations", "ad_integrations", "integration_sync_logs", "support_tickets", "support_ticket_messages"].map((t) => (
               <code key={t} className="text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 rounded px-2 py-0.5 font-mono">{t}</code>
             ))}
           </div>

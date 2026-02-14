@@ -413,6 +413,187 @@ serve(async (req) => {
       return jsonResponse({ success: true });
     }
 
+    // =====================================================
+    // SUPPORT TICKET ACTIONS
+    // =====================================================
+
+    if (action === "list_support_tickets") {
+      // Buscar tickets com dados do usuário via auth.users
+      const { data, error } = await supabase
+        .from("support_tickets")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) return jsonResponse({ error: error.message }, 500);
+
+      // Enriquecer com dados do usuário
+      const enriched = await Promise.all((data || []).map(async (ticket: any) => {
+        let user_email = 'email@nao.informado';
+        let user_name = 'Cliente';
+        let user_company = 'Empresa não informada';
+        let user_avatar_url = '';
+        let assigned_to_name = 'Não atribuído';
+        let assigned_to_email = '';
+
+        // Buscar dados do usuário
+        if (ticket.user_id) {
+          const { data: userData } = await supabase.auth.admin.getUserById(ticket.user_id);
+          if (userData?.user) {
+            user_email = userData.user.email || user_email;
+            user_name = userData.user.user_metadata?.name || 
+                       userData.user.user_metadata?.full_name || 
+                       userData.user.email?.split('@')[0] || user_name;
+            user_avatar_url = userData.user.user_metadata?.avatar_url || '';
+          }
+        }
+
+        // Buscar empresa
+        if (ticket.tenant_id) {
+          const { data: tenant } = await supabase
+            .from("tenant_settings")
+            .select("company_name")
+            .eq("id", ticket.tenant_id)
+            .single();
+          if (tenant) user_company = tenant.company_name || user_company;
+        }
+
+        // Buscar admin atribuído
+        if (ticket.assigned_to) {
+          const { data: adminUser } = await supabase.auth.admin.getUserById(ticket.assigned_to);
+          if (adminUser?.user) {
+            assigned_to_email = adminUser.user.email || '';
+            assigned_to_name = adminUser.user.user_metadata?.name || 'Admin';
+          }
+        }
+
+        // Buscar categoria
+        let category_name = ticket.category;
+        let category_color = '#6b7280';
+        let category_icon = 'MessageCircle';
+        const { data: cat } = await supabase
+          .from("support_categories")
+          .select("name, color, icon")
+          .eq("slug", ticket.category)
+          .single();
+        if (cat) {
+          category_name = cat.name;
+          category_color = cat.color;
+          category_icon = cat.icon;
+        }
+
+        // Contar mensagens
+        const { count } = await supabase
+          .from("support_ticket_messages")
+          .select("id", { count: 'exact', head: true })
+          .eq("ticket_id", ticket.id);
+
+        // Última mensagem
+        const { data: lastMsg } = await supabase
+          .from("support_ticket_messages")
+          .select("created_at")
+          .eq("ticket_id", ticket.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        // SLA status
+        let sla_status = 'on_track';
+        if (ticket.status === 'resolvido') sla_status = 'resolved';
+        else if (ticket.sla_deadline && new Date(ticket.sla_deadline) < new Date()) sla_status = 'overdue';
+        else if (ticket.sla_deadline && new Date(ticket.sla_deadline) < new Date(Date.now() + 2 * 60 * 60 * 1000)) sla_status = 'due_soon';
+
+        return {
+          ...ticket,
+          user_email,
+          user_name,
+          user_company,
+          user_avatar_url,
+          assigned_to_email,
+          assigned_to_name,
+          category_name,
+          category_color,
+          category_icon,
+          message_count: count || 0,
+          last_message_at: lastMsg?.created_at || null,
+          sla_status,
+        };
+      }));
+
+      return jsonResponse({ data: enriched });
+    }
+
+    if (action === "list_support_messages") {
+      const { data, error } = await supabase
+        .from("support_ticket_messages")
+        .select("*")
+        .eq("ticket_id", params.ticket_id)
+        .order("created_at", { ascending: true });
+      if (error) return jsonResponse({ error: error.message }, 500);
+      return jsonResponse({ data });
+    }
+
+    if (action === "send_support_message") {
+      const { data, error } = await supabase
+        .from("support_ticket_messages")
+        .insert({
+          ticket_id: params.ticket_id,
+          sender_id: params.sender_id || adminId,
+          sender_type: "admin",
+          message: params.message,
+        })
+        .select()
+        .single();
+      if (error) return jsonResponse({ error: error.message }, 500);
+
+      // Atualizar first_response_at se for a primeira resposta admin
+      const { data: ticket } = await supabase
+        .from("support_tickets")
+        .select("first_response_at")
+        .eq("id", params.ticket_id)
+        .single();
+      
+      if (ticket && !ticket.first_response_at) {
+        await supabase
+          .from("support_tickets")
+          .update({ 
+            first_response_at: new Date().toISOString(),
+            status: 'em_andamento'
+          })
+          .eq("id", params.ticket_id);
+      }
+
+      await auditLog(supabase, adminId, "send_support_message", "support_ticket_messages", data.id, { ticket_id: params.ticket_id });
+      return jsonResponse({ data });
+    }
+
+    if (action === "update_ticket_status") {
+      const updates: any = { status: params.status };
+      if (params.status === 'resolvido') {
+        updates.resolved_at = new Date().toISOString();
+      }
+      const { data, error } = await supabase
+        .from("support_tickets")
+        .update(updates)
+        .eq("id", params.ticket_id)
+        .select()
+        .single();
+      if (error) return jsonResponse({ error: error.message }, 500);
+      await auditLog(supabase, adminId, "update_ticket_status", "support_tickets", params.ticket_id, { status: params.status });
+      return jsonResponse({ data });
+    }
+
+    if (action === "assign_ticket") {
+      const { data, error } = await supabase
+        .from("support_tickets")
+        .update({ assigned_to: params.assigned_to })
+        .eq("id", params.ticket_id)
+        .select()
+        .single();
+      if (error) return jsonResponse({ error: error.message }, 500);
+      await auditLog(supabase, adminId, "assign_ticket", "support_tickets", params.ticket_id, { assigned_to: params.assigned_to });
+      return jsonResponse({ data });
+    }
+
     return jsonResponse({ error: `Unknown action: ${action}` }, 400);
 
   } catch (err: any) {

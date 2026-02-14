@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardHeader } from "./DashboardHeader";
+import { FloatingChat } from "./FloatingChat";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -23,6 +24,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {children}
         </main>
       </div>
+
+      <FloatingChat />
     </div>
   );
 }

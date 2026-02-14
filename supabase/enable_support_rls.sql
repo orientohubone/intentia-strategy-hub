@@ -202,11 +202,15 @@ CREATE POLICY "Service role full access categories"
 -- 9. VIEWS — Permissões
 -- ============================================
 
--- v_admin_support_dashboard: acessível por authenticated e service_role
-GRANT SELECT ON v_admin_support_dashboard TO authenticated;
+-- v_admin_support_dashboard: APENAS service_role (faz JOIN com auth.users)
+-- Revogar acesso de authenticated (causa "permission denied for table users")
+REVOKE SELECT ON v_admin_support_dashboard FROM authenticated;
 GRANT SELECT ON v_admin_support_dashboard TO service_role;
 
--- v_support_stats: acessível por authenticated e service_role
+-- Garantir que a view NÃO tem security_invoker (deve rodar como definer/owner)
+ALTER VIEW v_admin_support_dashboard SET (security_invoker = false);
+
+-- v_support_stats: acessível por authenticated (não acessa auth.users)
 GRANT SELECT ON v_support_stats TO authenticated;
 GRANT SELECT ON v_support_stats TO service_role;
 

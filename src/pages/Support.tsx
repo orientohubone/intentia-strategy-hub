@@ -36,10 +36,13 @@ import {
 import { toast } from "sonner";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useAuth } from "@/hooks/useAuth";
+import { useTenantData } from "@/hooks/useTenantData";
 
 export default function Support() {
   const { notifications } = useNotifications();
   const { user } = useAuth();
+  const { tenantSettings } = useTenantData();
+  const isProfessionalPlus = tenantSettings?.plan === 'professional' || tenantSettings?.plan === 'enterprise';
   const [showForm, setShowForm] = useState(false);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -396,15 +399,17 @@ export default function Support() {
                             <Badge variant="secondary" className={`text-xs ${getStatusColor(ticket.status)}`}>
                               {statusInfo.name}
                             </Badge>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setChatDialogOpen(true)}
-                              className="h-8 text-xs gap-1.5"
-                            >
-                              <MessageCircle className="h-3 w-3" />
-                              Conversa {messages.length > 0 && `(${messages.length})`}
-                            </Button>
+                            {isProfessionalPlus && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setChatDialogOpen(true)}
+                                className="h-8 text-xs gap-1.5"
+                              >
+                                <MessageCircle className="h-3 w-3" />
+                                Conversa {messages.length > 0 && `(${messages.length})`}
+                              </Button>
+                            )}
                           </div>
 
                           {/* Messages - Log compacto */}

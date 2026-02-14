@@ -226,3 +226,27 @@ export async function adminUpdateMaintenance(id: string, updates: Record<string,
 export async function adminDeleteMaintenance(id: string) {
   return callAdminApi("delete_maintenance", { id });
 }
+
+// =====================================================
+// SUPPORT TICKETS
+// =====================================================
+
+export async function adminListSupportTickets() {
+  return callAdminApi("list_support_tickets");
+}
+
+export async function adminListSupportMessages(ticketId: string) {
+  return callAdminApi("list_support_messages", { ticket_id: ticketId });
+}
+
+export async function adminSendSupportMessage(ticketId: string, message: string, senderId?: string) {
+  return callAdminApi("send_support_message", { ticket_id: ticketId, message, sender_id: senderId });
+}
+
+export async function adminUpdateTicketStatus(ticketId: string, status: string) {
+  return callAdminApi("update_ticket_status", { ticket_id: ticketId, status });
+}
+
+export async function adminAssignTicket(ticketId: string, assignedTo: string) {
+  return callAdminApi("assign_ticket", { ticket_id: ticketId, assigned_to: assignedTo });
+}

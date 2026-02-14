@@ -9,6 +9,7 @@ import { BrandCasesPosts } from "@/components/BrandCasesPosts";
 import { BrandLandingPosts } from "@/components/BrandLandingPosts";
 import { BrandLaunchPost } from "@/components/BrandLaunchPost";
 import { BrandValuesPosts } from "@/components/BrandValuesPosts";
+import { HelpThumbnails } from "@/components/help";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
@@ -311,6 +312,12 @@ export default function BrandPosts() {
         <section className="space-y-6">
           <h2 className="text-xl font-bold text-foreground">Proposta de Valor</h2>
           <BrandValuesPosts />
+        </section>
+
+        {/* ─── Thumbnails YouTube ─── */}
+        <section className="space-y-6">
+          <h2 className="text-xl font-bold text-foreground">Thumbnails YouTube</h2>
+          <HelpThumbnails />
         </section>
       </div>
 

@@ -33,6 +33,12 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { 
+  adminListSupportTickets, 
+  adminListSupportMessages, 
+  adminSendSupportMessage, 
+  adminUpdateTicketStatus 
+} from "@/lib/adminApi";
+import { 
   SUPPORT_STATUS, 
   SUPPORT_CATEGORIES, 
   SUPPORT_PRIORITIES,
@@ -125,81 +131,47 @@ export function SupportDashboard() {
   const loadTickets = async () => {
     setLoading(true);
     try {
-      let query;
+      const result = await adminListSupportTickets();
       
-      // Tentar usar a view admin primeiro, senão usar a tabela principal
-      try {
-        query = supabase
-          .from("v_admin_support_dashboard")
-          .select("*");
-      } catch (viewError) {
-        console.log("View admin não encontrada, usando tabela principal");
-        query = supabase
-          .from("support_tickets")
-          .select("*");
-      }
-
-      // Aplicar filtros
-      if (filters.status !== "all") {
-        query = query.eq("status", filters.status);
-      }
-      if (filters.priority !== "all") {
-        query = query.eq("priority", filters.priority);
-      }
-      if (filters.category !== "all") {
-        query = query.eq("category", filters.category);
-      }
-      if (filters.search) {
-        query = query.or(`subject.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
-      }
-
-      const { data, error } = await query.order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error loading tickets:", error);
-        
-        // Se erro for de tabela não existente, mostrar modo demo
-        if (error.message?.includes('does not exist') || error.code === 'PGRST116') {
-          console.log("Tabelas de suporte ainda não criadas - modo demo");
+      if (result.error) {
+        console.error("Error loading tickets:", result.error);
+        if (result.error.includes('does not exist')) {
           setTickets([]);
           toast("Sistema em Configuração", {
             description: "As tabelas do sistema de suporte ainda estão sendo criadas.",
             duration: 3000
           });
         } else {
-      toast.error("Erro ao carregar chamados: " + error.message);
+          toast.error("Erro ao carregar chamados: " + result.error);
         }
-      } else {
-        // Se usou a tabela principal, formatar dados para o formato esperado
-        const formattedData = await Promise.all((data || []).map(async (ticket: any) => {
-          // Se for da view admin e já tiver dados do usuário, usar direto
-          if (ticket.user_email && ticket.user_email !== 'email@nao.informado') {
-            return ticket;
-          }
-          
-          // Se for da tabela principal, buscar dados do usuário
-          const userData = await fetchUserData(ticket.user_id);
-          
-          return {
-            ...ticket,
-            ...userData,
-            assigned_to_email: null,
-            assigned_to_name: null,
-            category_name: ticket.category,
-            category_color: '#3b82f6',
-            category_icon: 'MessageCircle',
-            message_count: 0,
-            last_message_at: null,
-            sla_status: 'on_track'
-          };
-        }));
-        
-        setTickets(formattedData);
-        console.log("Tickets carregados:", formattedData.length);
+        return;
       }
-    } catch (error) {
+
+      let data = result.data || [];
+
+      // Aplicar filtros no frontend
+      if (filters.status !== "all") {
+        data = data.filter((t: any) => t.status === filters.status);
+      }
+      if (filters.priority !== "all") {
+        data = data.filter((t: any) => t.priority === filters.priority);
+      }
+      if (filters.category !== "all") {
+        data = data.filter((t: any) => t.category === filters.category);
+      }
+      if (filters.search) {
+        const s = filters.search.toLowerCase();
+        data = data.filter((t: any) => 
+          t.subject?.toLowerCase().includes(s) || t.description?.toLowerCase().includes(s)
+        );
+      }
+
+      data.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setTickets(data);
+      console.log("Tickets carregados:", data.length);
+    } catch (error: any) {
       console.error("Error loading tickets:", error);
-      toast.error("Erro ao carregar chamados: " + error.message);
+      toast.error("Erro ao carregar chamados: " + (error.message || error));
     } finally {
       setLoading(false);
     }
@@ -214,14 +186,9 @@ export function SupportDashboard() {
 
   const loadMessages = async (ticketId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("support_ticket_messages")
-        .select("*")
-        .eq("ticket_id", ticketId)
-        .order("created_at", { ascending: true });
-
-      if (error) throw error;
-      setMessages(data || []);
+      const result = await adminListSupportMessages(ticketId);
+      if (result.error) throw new Error(result.error);
+      setMessages(result.data || []);
     } catch (error) {
       console.error("Error loading messages:", error);
     }
@@ -233,72 +200,16 @@ export function SupportDashboard() {
 
     setSendingMessage(true);
     try {
-      // Enviar mensagem
-      try {
-        const { error } = await supabase
-          .from("support_ticket_messages")
-          .insert({
-            ticket_id: selectedTicket.id,
-            sender_id: (await supabase.auth.getUser()).data.user?.id,
-            sender_type: "admin",
-            message: text.trim()
-          });
-
-        if (error) throw error;
-
-        // Atualizar status do ticket se necessário
-        if (selectedTicket.status === "aberto") {
-          await supabase
-            .from("support_tickets")
-            .update({ 
-              status: "em_analise",
-              first_response_at: new Date().toISOString()
-            })
-            .eq("id", selectedTicket.id);
-        }
-
-        // Notificar cliente
-        try {
-          const { data: userData } = await supabase
-            .from("support_tickets")
-            .select("user_id")
-            .eq("id", selectedTicket.id)
-            .single();
-          
-          if (userData?.user_id) {
-            await supabase
-              .from("notifications")
-              .insert({
-                user_id: userData.user_id,
-                title: "Nova resposta no seu chamado",
-                message: `Sua solicitação #${selectedTicket.ticket_number} recebeu uma nova resposta.`,
-                type: "support_message",
-                metadata: {
-                  ticket_id: selectedTicket.id,
-                  ticket_number: selectedTicket.ticket_number
-                }
-              });
-          }
-        } catch (notificationError) {
-          console.warn("Notification error (expected):", notificationError);
-        }
-      } catch (dbError) {
-        console.log("Modo demo - mensagem simulada");
-        // Modo demo: simular envio
+      const result = await adminSendSupportMessage(selectedTicket.id, text.trim());
+      
+      if (result.error) {
+        throw new Error(result.error);
       }
 
       setNewMessage("");
       loadMessages(selectedTicket.id);
       loadTickets();
-
-      // Forçar atualização do cliente via polling
-      setTimeout(() => {
-        // Força o cliente a recarregar os dados
-        console.log("Enviando sinal de atualização para cliente...");
-      }, 1000);
-
       toast.success("Mensagem enviada: O cliente será notificado sobre sua resposta.");
-
     } catch (error: any) {
       console.error("Error sending message:", error);
       toast.error("Erro ao enviar mensagem: " + error.message);
@@ -308,84 +219,31 @@ export function SupportDashboard() {
   };
 
   const handleUpdateStatus = async (ticketId: string, status: string) => {
+    // Atualizar localmente para feedback imediato
+    const previousStatus = selectedTicket?.status;
+    if (selectedTicket?.id === ticketId) {
+      setSelectedTicket(prev => prev ? { ...prev, status } : null);
+    }
+    setTickets(prev => prev.map(ticket => 
+      ticket.id === ticketId ? { ...ticket, status } : ticket
+    ));
+
     try {
-      const updates: any = { status };
-      
-      if (status === "resolvido") {
-        updates.resolved_at = new Date().toISOString();
-      }
+      const result = await adminUpdateTicketStatus(ticketId, status);
+      if (result.error) throw new Error(result.error);
 
-      // Atualizar o selectedTicket localmente para feedback imediato
-      if (selectedTicket?.id === ticketId) {
-        setSelectedTicket(prev => prev ? { ...prev, status } : null);
-      }
-
-      // Atualizar na lista de tickets
-      setTickets(prev => prev.map(ticket => 
-        ticket.id === ticketId 
-          ? { ...ticket, status }
-          : ticket
-      ));
-
-      try {
-        const { error } = await supabase
-          .from("support_tickets")
-          .update(updates)
-          .eq("id", ticketId);
-
-        if (error) throw error;
-
-        loadTickets();
-        
-        // Notificar cliente sobre mudança de status
-        const ticket = tickets.find(t => t.id === ticketId);
-        if (ticket) {
-          try {
-            const { data: userData } = await supabase
-              .from("support_tickets")
-              .select("user_id")
-              .eq("id", ticketId)
-              .single();
-            
-            if (userData?.user_id) {
-              await supabase
-                .from("notifications")
-                .insert({
-                  user_id: userData.user_id,
-                  title: "Status do seu chamado atualizado",
-                  message: `Seu chamado #${ticket.ticket_number} agora está: ${status.replace('_', ' ')}.`,
-                  type: "support_status",
-                  metadata: {
-                    ticket_id: ticket.id,
-                    ticket_number: ticket.ticket_number,
-                    new_status: status
-                  }
-                });
-            }
-          } catch (notificationError) {
-            console.warn("Notification error (expected):", notificationError);
-          }
-        }
-
-        toast.success("Status atualizado: Chamado #" + ticket?.ticket_number + " atualizado para " + status.replace('_', '.') + ".");
-      } catch (dbError) {
-        console.log("Modo demo - status simulado");
-        // Modo demo: simular atualização
-        loadTickets();
-        toast.success("Status atualizado (modo demo): " + status.replace('_', '.') + ".");
-      }
-
+      loadTickets();
+      const ticket = tickets.find(t => t.id === ticketId);
+      toast.success("Status atualizado: Chamado #" + ticket?.ticket_number + " atualizado para " + status.replace('_', ' ') + ".");
     } catch (error: any) {
       console.error("Error updating status:", error);
       toast.error("Erro ao atualizar status: " + error.message);
-      // Reverter status local se falhar
+      // Reverter
       if (selectedTicket?.id === ticketId) {
-        setSelectedTicket(prev => prev ? { ...prev, status: prev.status } : null);
+        setSelectedTicket(prev => prev ? { ...prev, status: previousStatus || prev.status } : null);
       }
       setTickets(prev => prev.map(ticket => 
-        ticket.id === ticketId 
-          ? { ...ticket, status: ticket.status } // Mantém status original
-          : ticket
+        ticket.id === ticketId ? { ...ticket, status: ticket.status } : ticket
       ));
     }
   };

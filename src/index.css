@@ -296,10 +296,11 @@
 }
 
 .faq-card-expanded {
-  ring: 2px solid rgb(59 130 246);
-  background-color: rgb(239 246 255);
+  border-color: hsl(16 100% 55% / 0.3);
+  background-color: hsl(16 100% 55% / 0.05);
 }
 
 .dark .faq-card-expanded {
-  background-color: rgb(30 58 138);
+  border-color: hsl(16 100% 55% / 0.25);
+  background-color: hsl(16 100% 55% / 0.08);
 }
