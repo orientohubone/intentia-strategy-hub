@@ -46,6 +46,8 @@ import {
   Bell,
 } from "lucide-react";
 
+<meta name="google-site-verification" content="TtTU-mTqFk22dxuGQSKkolq_gdFDWpsDX6IhcdOdAiA" />
+
 function ShowcaseSlider() {
   const [sliderPos, setSliderPos] = useState(50);
   const containerRef = useRef<HTMLDivElement>(null);
