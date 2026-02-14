@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { 
+  Home,
   LayoutDashboard, 
   FolderOpen, 
   Target, 
@@ -41,6 +42,7 @@ const navSections: NavSection[] = [
   {
     title: "Estratégico",
     items: [
+      { icon: Home, label: "Início", href: "/home" },
       { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
       { icon: FolderOpen, label: "Projetos", href: "/projects" },
       { icon: Target, label: "Públicos-Alvo", href: "/audiences" },
@@ -146,7 +148,7 @@ export function DashboardSidebar({ mobileOpen = false, onMobileClose }: Dashboar
     <aside className={cn(
       "bg-sidebar border-r border-sidebar-border h-screen flex flex-col transition-all duration-300",
       // Mobile: fixed overlay, hidden by default
-      "fixed inset-y-0 left-0 z-50 lg:static lg:z-auto",
+      "fixed inset-y-0 left-0 z-50 lg:relative lg:z-30",
       mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
       collapsed ? "w-16" : "w-64"
     )}>
@@ -217,7 +219,7 @@ export function DashboardSidebar({ mobileOpen = false, onMobileClose }: Dashboar
       )}
 
       {/* Main Navigation */}
-      <nav className={cn("flex-1 p-2", !collapsed && "overflow-y-auto")}>
+      <nav className={cn("flex-1 p-2", !collapsed && "overflow-y-auto sidebar-scroll")}>
         {navSections.map((section) => {
           const isOpen = expandedSections[section.title] ?? true;
           return (
@@ -248,17 +250,17 @@ export function DashboardSidebar({ mobileOpen = false, onMobileClose }: Dashboar
                         to={item.href}
                         onClick={onMobileClose}
                         className={cn(
-                          "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative group",
+                          "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative group",
                           isActive
                             ? "bg-sidebar-accent text-sidebar-accent-foreground"
                             : "text-sidebar-foreground hover:bg-sidebar-accent/50",
-                          collapsed && "justify-center px-2"
+                          collapsed && "justify-center px-2 hover:-translate-y-0.5 hover:shadow-md"
                         )}
                       >
                         <item.icon className="h-5 w-5 flex-shrink-0" />
                         {!collapsed && <span>{item.label}</span>}
                         {collapsed && (
-                          <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-md border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                          <div className="absolute left-full ml-2 px-2.5 py-1 bg-popover text-popover-foreground text-xs font-medium rounded-md shadow-lg border border-primary/40 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-[9999]">
                             {item.label}
                           </div>
                         )}
@@ -272,53 +274,46 @@ export function DashboardSidebar({ mobileOpen = false, onMobileClose }: Dashboar
         })}
       </nav>
 
-      {/* Bottom Navigation */}
-      <div className="p-2 border-t border-sidebar-border">
+      {/* Bottom Navigation — always icon-only with tooltip */}
+      <div className={cn(
+        "flex items-center justify-center gap-1 p-2 border-t border-sidebar-border",
+        collapsed ? "flex-col" : "flex-row"
+      )}>
         {bottomNavItems.map((item) => {
           const isActive = location.pathname === item.href;
           const isLogout = item.href === "/logout";
           
           return (
-            <div key={item.href}>
+            <div key={item.href} className="relative group">
               {isLogout ? (
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   className={cn(
-                    "w-full justify-start gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative group",
-                    collapsed && "justify-center px-2"
+                    "h-9 w-9 rounded-lg transition-all duration-200",
+                    "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:-translate-y-0.5 hover:shadow-md"
                   )}
                   onClick={handleLogout}
                 >
-                  <item.icon className="h-5 w-5 flex-shrink-0" />
-                  {!collapsed && <span>{item.label}</span>}
-                  {collapsed && (
-                    <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-md border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                      {item.label}
-                    </div>
-                  )}
+                  <item.icon className="h-4.5 w-4.5" />
                 </Button>
               ) : (
                 <Link
                   to={item.href}
                   onClick={onMobileClose}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative group",
+                    "flex items-center justify-center h-9 w-9 rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
                     isActive
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent/50",
-                    collapsed && "justify-center px-2"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                   )}
                 >
-                  <item.icon className="h-5 w-5 flex-shrink-0" />
-                  {!collapsed && <span>{item.label}</span>}
-                  {collapsed && (
-                    <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-md border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                      {item.label}
-                    </div>
-                  )}
+                  <item.icon className="h-4.5 w-4.5" />
                 </Link>
               )}
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 bg-popover text-popover-foreground text-xs font-medium rounded-md shadow-lg border border-primary/40 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-[9999]">
+                {item.label}
+              </div>
             </div>
           );
         })}

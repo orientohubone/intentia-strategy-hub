@@ -20,7 +20,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <DashboardHeader onMenuToggle={() => setSidebarOpen((v) => !v)} />
 
-        <main className="flex-1 overflow-auto p-3 sm:p-4 lg:p-6">
+        <main className="flex-1 overflow-auto sidebar-scroll p-3 sm:p-4 lg:p-6">
           {children}
         </main>
       </div>

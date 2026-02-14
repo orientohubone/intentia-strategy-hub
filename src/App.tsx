@@ -7,11 +7,13 @@ import { ThemeProvider } from "next-themes";
 import { HelmetProvider } from "react-helmet-async";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
+import Home from "./pages/Home";
 import Pricing from "./pages/Pricing";
 import Auth from "./pages/Auth";
 import About from "./pages/About";
 import Cases from "./pages/Cases";
 import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
@@ -73,6 +75,7 @@ const App = () => (
           <Route path="/sobre" element={<ForceLightMode><About /></ForceLightMode>} />
           <Route path="/cases" element={<ForceLightMode><Cases /></ForceLightMode>} />
           <Route path="/blog" element={<ForceLightMode><Blog /></ForceLightMode>} />
+          <Route path="/blog/:slug" element={<ForceLightMode><BlogPost /></ForceLightMode>} />
           <Route path="/contato" element={<ForceLightMode><Contact /></ForceLightMode>} />
           <Route path="/politica-de-privacidade" element={<ForceLightMode><PrivacyPolicy /></ForceLightMode>} />
           <Route path="/termos-de-servico" element={<ForceLightMode><TermsOfService /></ForceLightMode>} />
@@ -93,6 +96,14 @@ const App = () => (
           <Route path="/gestao-campanhas" element={<ForceLightMode><FeatureGestaoCampanhas /></ForceLightMode>} />
           <Route path="/gestao-budget" element={<ForceLightMode><FeatureGestaoBudget /></ForceLightMode>} />
           <Route path="/relatorios" element={<ForceLightMode><FeatureRelatorios /></ForceLightMode>} />
+          <Route 
+            path="/home" 
+            element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            } 
+          />
           <Route 
             path="/dashboard" 
             element={

@@ -5,7 +5,6 @@ import { ProjectCard } from "@/components/ProjectCard";
 import { ChannelCard } from "@/components/ChannelCard";
 import { StatsCard } from "@/components/StatsCard";
 import { ScoreRing } from "@/components/ScoreRing";
-import { OnboardingChecklist } from "@/components/OnboardingChecklist";
 import { Badge } from "@/components/ui/badge";
 import { FolderOpen, Target, BarChart3, Zap, FileText, FileSpreadsheet, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, TrendingUp, ArrowRight, Megaphone, Play, Pause, CheckCircle2, Archive, FileEdit, DollarSign, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -77,10 +76,8 @@ export default function Dashboard() {
     project_name: string;
   }[]>([]);
   const [campaignsExpanded, setCampaignsExpanded] = useState(false);
-  const [hasAiKey, setHasAiKey] = useState(false);
   const [statsLoading, setStatsLoading] = useState(true);
   const fullName = (user?.user_metadata?.full_name as string | undefined) || user?.email || "Usuário";
-  const hasAvatar = !!(user?.user_metadata?.avatar_url);
 
   useEffect(() => {
     const fetchInsights = async () => {
@@ -221,17 +218,6 @@ export default function Dashboard() {
       }
     };
 
-    const fetchAiKeys = async () => {
-      if (!user) return;
-      try {
-        const { count, error } = await supabase
-          .from("user_api_keys")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id);
-        if (!error && count && count > 0) setHasAiKey(true);
-      } catch {}
-    };
-
     const fetchAllStats = async () => {
       setStatsLoading(true);
       await Promise.all([
@@ -240,7 +226,6 @@ export default function Dashboard() {
         fetchBenchmarksCount(),
         fetchProjectsThisMonth(),
         fetchRecentCampaigns(),
-        fetchAiKeys(),
       ]);
       setStatsLoading(false);
     };
@@ -314,59 +299,22 @@ export default function Dashboard() {
     <DashboardLayout>
       <SEO title="Dashboard" noindex />
           <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
-            {/* Welcome Section */}
-            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 lg:gap-6">
-              <div className="flex-1 relative overflow-hidden rounded-2xl gradient-primary p-5 sm:p-8 shadow-lg">
-                <div className="absolute inset-0">
-                  <div className="absolute -top-10 -left-10 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
-                  <div className="absolute -bottom-10 -right-10 w-56 h-56 bg-black/10 rounded-full blur-2xl"></div>
-                  <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-white/5 rounded-full blur-3xl"></div>
-                </div>
-                <div className="relative z-10">
-                  <h1 className="text-xl sm:text-2xl font-bold text-primary-foreground">
-                    Olá, {fullName}
-                  </h1>
-                  <p className="text-sm sm:text-base text-primary-foreground/80 mt-1">
-                    Sua central de inteligência estratégica para decisões de marketing mais assertivas.
-                  </p>
-                </div>
+            {/* Dashboard Header */}
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h1 className="text-lg sm:text-xl font-bold text-foreground">Dashboard</h1>
+                <p className="text-sm text-muted-foreground">Visão operacional dos seus projetos, campanhas e insights.</p>
               </div>
-              <div className="flex items-center gap-4 p-4 card-elevated shrink-0">
-                <ScoreRing score={averageScore} size="md" label="Score Médio" />
-                <div className="pl-4 border-l border-border">
-                  <p className="text-sm text-muted-foreground">Prontidão Geral</p>
-                  <p className="text-lg font-semibold text-foreground">
-                    {averageScore >= 70 ? "Alta" : averageScore >= 50 ? "Moderada" : "Baixa"}
+              <div className="flex items-center gap-3 shrink-0">
+                <ScoreRing score={averageScore} size="sm" />
+                <div className="hidden sm:block">
+                  <p className="text-xs text-muted-foreground">Score Médio</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {averageScore >= 70 ? "Alto" : averageScore >= 50 ? "Moderado" : averageScore > 0 ? "Baixo" : "—"}
                   </p>
-                  <p className="text-xs text-muted-foreground">{projects.length} projetos ativos</p>
                 </div>
               </div>
             </div>
-
-            {/* Onboarding Checklist */}
-            {(loading || statsLoading) ? (
-              <div className="flex gap-3 overflow-hidden">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="flex-shrink-0 w-[140px] sm:w-[160px] rounded-xl border border-border p-3 sm:p-4 animate-pulse">
-                    <div className="w-10 h-10 rounded-xl bg-muted mb-3" />
-                    <div className="h-3 w-20 bg-muted rounded mb-2" />
-                    <div className="h-2 w-full bg-muted rounded mb-1" />
-                    <div className="h-2 w-2/3 bg-muted rounded" />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <OnboardingChecklist
-                data={{
-                  projectsCount: projects.length,
-                  hasAnalysis: projects.some((p) => p.status === "completed"),
-                  hasAiKey,
-                  benchmarksCount,
-                  audiencesCount,
-                  hasAvatar,
-                }}
-              />
-            )}
 
             {/* Stats Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
