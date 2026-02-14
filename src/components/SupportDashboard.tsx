@@ -29,7 +29,10 @@ import {
   Code,
   Bug,
   Lightbulb,
-  MoreHorizontal
+  MoreHorizontal,
+  ChevronDown,
+  ChevronRight,
+  Building2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -60,6 +63,7 @@ interface SupportTicket {
   user_email: string;
   user_name: string;
   user_company: string;
+  user_avatar_url?: string;
   assigned_to_email?: string;
   assigned_to_name?: string;
   category_name: string;
@@ -70,6 +74,19 @@ interface SupportTicket {
   sla_status: string;
   created_at: string;
   attachments?: string[];
+}
+
+interface ClientGroup {
+  email: string;
+  name: string;
+  company: string;
+  avatarUrl?: string;
+  tickets: SupportTicket[];
+  openCount: number;
+  totalMessages: number;
+  hasUrgent: boolean;
+  hasOverdue: boolean;
+  lastActivity: string;
 }
 
 interface SupportMessage {
@@ -95,6 +112,57 @@ export function SupportDashboard() {
     search: ""
   });
   const [chatDialogOpen, setChatDialogOpen] = useState(false);
+  const [collapsedClients, setCollapsedClients] = useState<Set<string>>(new Set());
+
+  const toggleClient = (email: string) => {
+    setCollapsedClients(prev => {
+      const next = new Set(prev);
+      if (next.has(email)) next.delete(email);
+      else next.add(email);
+      return next;
+    });
+  };
+
+  // Agrupar tickets por cliente
+  const clientGroups: ClientGroup[] = React.useMemo(() => {
+    const map = new Map<string, SupportTicket[]>();
+    tickets.forEach(t => {
+      const key = t.user_email || 'unknown';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(t);
+    });
+
+    const groups: ClientGroup[] = [];
+    map.forEach((tks, email) => {
+      const first = tks[0];
+      const openStatuses = ['aberto', 'em_analise', 'em_andamento', 'aguardando_cliente'];
+      groups.push({
+        email,
+        name: first.user_name || email.split('@')[0],
+        company: first.user_company || '',
+        avatarUrl: first.user_avatar_url,
+        tickets: tks,
+        openCount: tks.filter(t => openStatuses.includes(t.status)).length,
+        totalMessages: tks.reduce((sum, t) => sum + (t.message_count || 0), 0),
+        hasUrgent: tks.some(t => t.priority === 'urgente' && openStatuses.includes(t.status)),
+        hasOverdue: tks.some(t => t.sla_status === 'overdue'),
+        lastActivity: tks.reduce((latest, t) => {
+          const d = t.last_message_at || t.created_at;
+          return d > latest ? d : latest;
+        }, ''),
+      });
+    });
+
+    // Ordenar: clientes com tickets urgentes/overdue primeiro, depois por última atividade
+    groups.sort((a, b) => {
+      if (a.hasOverdue !== b.hasOverdue) return a.hasOverdue ? -1 : 1;
+      if (a.hasUrgent !== b.hasUrgent) return a.hasUrgent ? -1 : 1;
+      if (a.openCount !== b.openCount) return b.openCount - a.openCount;
+      return new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime();
+    });
+
+    return groups;
+  }, [tickets]);
 
   // Carregar tickets
   useEffect(() => {
@@ -335,7 +403,7 @@ export function SupportDashboard() {
         </CardContent>
       </Card>
 
-      {/* Tickets List */}
+      {/* Tickets List — Agrupado por Cliente */}
       <div className="space-y-4">
         {loading ? (
             <Card>
@@ -362,198 +430,225 @@ export function SupportDashboard() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
-              {tickets.map((ticket) => (
-                <Card 
-                  key={ticket.id}
-                  className={`transition-all hover:shadow-md ${
-                    selectedTicket?.id === ticket.id ? 'ring-2 ring-primary' : ''
-                  }`}
-                >
-                  <CardContent className="p-4">
-                    {/* Header - Sempre Visível */}
-                    <div className="flex items-start justify-between gap-4 mb-4">
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <Avatar className="h-9 w-9 flex-shrink-0 mt-0.5">
-                          {ticket.user_avatar_url && <AvatarImage src={ticket.user_avatar_url} alt={ticket.user_name} />}
-                          <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                            {(ticket.user_name || ticket.user_email || 'C').charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="secondary" className="text-xs">
-                            #{ticket.ticket_number}
-                          </Badge>
-                          <Badge variant="secondary" className={`text-xs ${getStatusColor(ticket.status)}`}>
-                            {getStatusInfo(ticket.status).name}
-                          </Badge>
-                          <Badge variant="outline" className={`text-xs ${getPriorityInfo(ticket.priority).color}`}>
-                            {getPriorityInfo(ticket.priority).name}
-                          </Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              if (selectedTicket?.id === ticket.id) {
-                                setSelectedTicket(null);
-                                setChatDialogOpen(false);
-                              } else {
-                                setSelectedTicket(ticket);
-                                setChatDialogOpen(true);
-                              }
-                            }}
-                            className="h-6 px-2"
-                          >
-                            {selectedTicket?.id === ticket.id ? (
-                              <X className="h-3 w-3" />
-                            ) : (
-                              <MessageCircle className="h-3 w-3" />
-                            )}
-                          </Button>
-                        </div>
-                        <h3 className="font-medium text-foreground mb-1">
-                          {ticket.subject}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {selectedTicket?.id === ticket.id ? ticket.description : ticket.description.substring(0, 100) + (ticket.description.length > 100 ? '...' : '')}
-                        </p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <User className="h-3 w-3" />
-                            {ticket.user_name || ticket.user_email}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(ticket.created_at).toLocaleDateString('pt-BR')}
-                          </div>
-                          {ticket.message_count > 0 && (
-                            <div className="flex items-center gap-1">
-                              <MessageCircle className="h-3 w-3" />
-                              {ticket.message_count} msgs
-                            </div>
+            <div className="space-y-3">
+              {clientGroups.map((group) => {
+                const isCollapsed = collapsedClients.has(group.email);
+                return (
+                  <div key={group.email} className="rounded-xl border border-border bg-card/60 overflow-hidden">
+                    {/* Client Header */}
+                    <button
+                      onClick={() => toggleClient(group.email)}
+                      className="w-full flex items-center gap-3 p-3 sm:p-4 hover:bg-muted/40 transition-colors text-left"
+                    >
+                      {isCollapsed ? (
+                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                      )}
+                      <Avatar className="h-8 w-8 shrink-0">
+                        {group.avatarUrl && <AvatarImage src={group.avatarUrl} alt={group.name} />}
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                          {group.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm text-foreground truncate">{group.name}</span>
+                          {group.company && group.company !== 'Empresa não informada' && (
+                            <span className="hidden sm:flex items-center gap-1 text-[11px] text-muted-foreground">
+                              <Building2 className="h-3 w-3" />
+                              {group.company}
+                            </span>
                           )}
                         </div>
+                        <span className="text-[11px] text-muted-foreground">{group.email}</span>
                       </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <div className={`w-3 h-3 rounded-full ${
-                          ticket.sla_status === 'overdue' ? 'bg-red-500' :
-                          ticket.sla_status === 'due_soon' ? 'bg-yellow-500' :
-                          'bg-green-500'
-                        }`} />
-                        <span className="text-xs text-muted-foreground">
-                          {renderCategoryIcon(ticket.category_icon)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Detalhes Expandidos - Só se selecionado */}
-                    {selectedTicket?.id === ticket.id && (
-                      <div className="border-t pt-4 mt-4 space-y-3">
-                        {/* User Info */}
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10">
-                            {selectedTicket.user_avatar_url && <AvatarImage src={selectedTicket.user_avatar_url} alt={selectedTicket.user_name} />}
-                            <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                              {(selectedTicket.user_name || selectedTicket.user_email || 'C').charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm">{selectedTicket.user_name || 'Cliente'}</div>
-                            <div className="text-xs text-muted-foreground">{selectedTicket.user_email}</div>
-                            {selectedTicket.user_company && selectedTicket.user_company !== 'Empresa não informada' && (
-                              <div className="text-xs text-muted-foreground">{selectedTicket.user_company}</div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Reply Input */}
-                        <div>
-                          <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Responder</label>
-                          <div className="flex items-start gap-2">
-                            <Textarea
-                              placeholder="Digite sua resposta..."
-                              value={newMessage}
-                              onChange={(e) => setNewMessage(e.target.value)}
-                              className="flex-1 text-sm min-h-[60px]"
-                              rows={2}
-                            />
-                            <Button 
-                              onClick={() => handleSendMessage()}
-                              disabled={!newMessage.trim() || sendingMessage}
-                              size="icon"
-                              className="h-10 w-10 shrink-0 rounded-full mt-0"
-                            >
-                              {sendingMessage ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
-                              ) : (
-                                <Send className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
-                        </div>
-
-                        {/* Status + Histórico - mesma linha */}
-                        <div className="flex items-center justify-between gap-3 pt-1">
-                          <div className="flex items-center gap-2">
-                            <label className="text-xs font-medium text-muted-foreground">Status:</label>
-                            <Select
-                              value={selectedTicket.status}
-                              onValueChange={(value) => handleUpdateStatus(selectedTicket.id, value)}
-                            >
-                              <SelectTrigger className="w-36 h-8 text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(SUPPORT_STATUS).map(([key, value]) => (
-                                  <SelectItem key={key} value={key}>{value.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setChatDialogOpen(true)}
-                            className="h-8 text-xs gap-1.5"
-                          >
-                            <MessageCircle className="h-3 w-3" />
-                            Conversa {messages.length > 0 && `(${messages.length})`}
-                          </Button>
-                        </div>
-
-                        {/* Messages - Log compacto */}
-                        {messages.length > 0 && (
-                          <div className="bg-muted/40 rounded-lg p-2.5 space-y-1 max-h-28 overflow-y-auto">
-                            {messages.slice(-3).map((message) => (
-                              <div key={message.id} className="flex items-start gap-2 text-xs">
-                                <span className="text-muted-foreground/70 whitespace-nowrap tabular-nums">
-                                  {new Date(message.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                                <span className={`font-medium whitespace-nowrap ${message.sender_type === 'admin' ? 'text-primary' : 'text-foreground'}`}>
-                                  {message.sender_type === 'admin' ? 'Suporte' : (selectedTicket.user_name || 'Cliente').split(' ')[0]}:
-                                </span>
-                                <span className="text-muted-foreground truncate">
-                                  {message.message.length > 60 ? message.message.substring(0, 60) + '…' : message.message}
-                                </span>
-                              </div>
-                            ))}
-                            {messages.length > 3 && (
-                              <button
-                                onClick={() => setChatDialogOpen(true)}
-                                className="text-[11px] text-primary hover:underline"
-                              >
-                                +{messages.length - 3} anteriores
-                              </button>
-                            )}
-                          </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {group.hasOverdue && (
+                          <Badge variant="destructive" className="text-[10px] px-1.5 py-0">SLA</Badge>
                         )}
+                        {group.hasUrgent && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-red-400 text-red-500">Urgente</Badge>
+                        )}
+                        {group.openCount > 0 && (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                            {group.openCount} aberto{group.openCount > 1 ? 's' : ''}
+                          </Badge>
+                        )}
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                          {group.tickets.length} chamado{group.tickets.length > 1 ? 's' : ''}
+                        </Badge>
+                      </div>
+                    </button>
+
+                    {/* Tickets do Cliente */}
+                    {!isCollapsed && (
+                      <div className="border-t border-border divide-y divide-border">
+                        {group.tickets.map((ticket) => (
+                          <div
+                            key={ticket.id}
+                            className={`p-3 sm:p-4 transition-colors hover:bg-muted/30 ${
+                              selectedTicket?.id === ticket.id ? 'bg-primary/5 ring-1 ring-inset ring-primary/20' : ''
+                            }`}
+                          >
+                            {/* Ticket Row */}
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                                  <Badge variant="secondary" className="text-[10px]">
+                                    #{ticket.ticket_number}
+                                  </Badge>
+                                  <Badge variant="secondary" className={`text-[10px] ${getStatusColor(ticket.status)}`}>
+                                    {getStatusInfo(ticket.status).name}
+                                  </Badge>
+                                  <Badge variant="outline" className={`text-[10px] ${getPriorityInfo(ticket.priority).color}`}>
+                                    {getPriorityInfo(ticket.priority).name}
+                                  </Badge>
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {renderCategoryIcon(ticket.category_icon)}
+                                  </span>
+                                </div>
+                                <h3 className="font-medium text-sm text-foreground mb-1">
+                                  {ticket.subject}
+                                </h3>
+                                <p className="text-xs text-muted-foreground mb-1.5">
+                                  {selectedTicket?.id === ticket.id ? ticket.description : ticket.description.substring(0, 120) + (ticket.description.length > 120 ? '...' : '')}
+                                </p>
+                                <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                                  <div className="flex items-center gap-1">
+                                    <Calendar className="h-3 w-3" />
+                                    {new Date(ticket.created_at).toLocaleDateString('pt-BR')}
+                                  </div>
+                                  {ticket.message_count > 0 && (
+                                    <div className="flex items-center gap-1">
+                                      <MessageCircle className="h-3 w-3" />
+                                      {ticket.message_count} msgs
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <div className={`w-2.5 h-2.5 rounded-full ${
+                                  ticket.sla_status === 'overdue' ? 'bg-red-500' :
+                                  ticket.sla_status === 'due_soon' ? 'bg-yellow-500' :
+                                  'bg-green-500'
+                                }`} />
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (selectedTicket?.id === ticket.id) {
+                                      setSelectedTicket(null);
+                                      setChatDialogOpen(false);
+                                    } else {
+                                      setSelectedTicket(ticket);
+                                      setChatDialogOpen(true);
+                                    }
+                                  }}
+                                  className="h-7 px-2 gap-1"
+                                >
+                                  {selectedTicket?.id === ticket.id ? (
+                                    <X className="h-3 w-3" />
+                                  ) : (
+                                    <><MessageCircle className="h-3 w-3" /><span className="text-[10px] hidden sm:inline">Abrir</span></>
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Detalhes Expandidos */}
+                            {selectedTicket?.id === ticket.id && (
+                              <div className="border-t border-border/50 pt-3 mt-3 space-y-3">
+                                {/* Reply Input */}
+                                <div>
+                                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Responder</label>
+                                  <div className="flex items-start gap-2">
+                                    <Textarea
+                                      placeholder="Digite sua resposta..."
+                                      value={newMessage}
+                                      onChange={(e) => setNewMessage(e.target.value)}
+                                      className="flex-1 text-sm min-h-[60px]"
+                                      rows={2}
+                                    />
+                                    <Button 
+                                      onClick={() => handleSendMessage()}
+                                      disabled={!newMessage.trim() || sendingMessage}
+                                      size="icon"
+                                      className="h-10 w-10 shrink-0 rounded-full mt-0"
+                                    >
+                                      {sendingMessage ? (
+                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
+                                      ) : (
+                                        <Send className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                  </div>
+                                </div>
+
+                                {/* Status + Conversa */}
+                                <div className="flex items-center justify-between gap-3 pt-1">
+                                  <div className="flex items-center gap-2">
+                                    <label className="text-xs font-medium text-muted-foreground">Status:</label>
+                                    <Select
+                                      value={selectedTicket.status}
+                                      onValueChange={(value) => handleUpdateStatus(selectedTicket.id, value)}
+                                    >
+                                      <SelectTrigger className="w-36 h-8 text-xs">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {Object.entries(SUPPORT_STATUS).map(([key, value]) => (
+                                          <SelectItem key={key} value={key}>{value.name}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setChatDialogOpen(true)}
+                                    className="h-8 text-xs gap-1.5"
+                                  >
+                                    <MessageCircle className="h-3 w-3" />
+                                    Conversa {messages.length > 0 && `(${messages.length})`}
+                                  </Button>
+                                </div>
+
+                                {/* Messages - Log compacto */}
+                                {messages.length > 0 && (
+                                  <div className="bg-muted/40 rounded-lg p-2.5 space-y-1 max-h-28 overflow-y-auto">
+                                    {messages.slice(-3).map((message) => (
+                                      <div key={message.id} className="flex items-start gap-2 text-xs">
+                                        <span className="text-muted-foreground/70 whitespace-nowrap tabular-nums">
+                                          {new Date(message.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                        <span className={`font-medium whitespace-nowrap ${message.sender_type === 'admin' ? 'text-primary' : 'text-foreground'}`}>
+                                          {message.sender_type === 'admin' ? 'Suporte' : (selectedTicket.user_name || 'Cliente').split(' ')[0]}:
+                                        </span>
+                                        <span className="text-muted-foreground truncate">
+                                          {message.message.length > 60 ? message.message.substring(0, 60) + '…' : message.message}
+                                        </span>
+                                      </div>
+                                    ))}
+                                    {messages.length > 3 && (
+                                      <button
+                                        onClick={() => setChatDialogOpen(true)}
+                                        className="text-[11px] text-primary hover:underline"
+                                      >
+                                        +{messages.length - 3} anteriores
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )}
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

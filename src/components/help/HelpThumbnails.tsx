@@ -196,7 +196,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 // ─── DRAW THUMBNAIL ───
 
-function drawThumbnail(canvas: HTMLCanvasElement, categoryId: string, title: string, description: string) {
+export function drawThumbnail(canvas: HTMLCanvasElement, categoryId: string, title: string, description: string) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   canvas.width = W;

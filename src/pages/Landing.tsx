@@ -372,18 +372,22 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(showAllFeatures ? features : features.slice(0, 6)).map((feature, i) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+            {(showAllFeatures ? features : features.slice(0, 8)).map((feature, i) => {
               const content = (
                 <>
-                  <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center mb-4 group-hover:bg-primary transition-colors">
-                    <feature.icon className="h-6 w-6 text-primary group-hover:text-primary-foreground transition-colors" />
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center shrink-0 group-hover:bg-primary transition-colors">
+                      <feature.icon className="h-4.5 w-4.5 text-primary group-hover:text-primary-foreground transition-colors" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold text-foreground leading-tight">{feature.title}</h3>
+                      <p className="text-xs text-muted-foreground leading-relaxed mt-1 line-clamp-2">{feature.description}</p>
+                    </div>
                   </div>
-                  <h3 className="font-semibold text-foreground mb-2">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
                   {feature.link && (
-                    <span className="inline-flex items-center gap-1 text-xs text-primary font-medium mt-3 group-hover:gap-2 transition-all">
-                      Saiba mais <ArrowRight className="h-3 w-3" />
+                    <span className="inline-flex items-center gap-1 text-[11px] text-primary font-medium mt-2.5 ml-12 group-hover:gap-1.5 transition-all">
+                      Saiba mais <ArrowRight className="h-2.5 w-2.5" />
                     </span>
                   )}
                 </>
@@ -391,36 +395,36 @@ export default function Landing() {
               return feature.link ? (
                 <div
                   key={i}
-                  className="card-elevated p-6 group cursor-pointer"
+                  className="card-elevated p-3.5 sm:p-4 group cursor-pointer"
                   onClick={() => { navigate(feature.link!); window.scrollTo(0, 0); }}
                 >
                   {content}
                 </div>
               ) : (
-                <div key={i} className="card-elevated p-6 group">
+                <div key={i} className="card-elevated p-3.5 sm:p-4 group">
                   {content}
                 </div>
               );
             })}
           </div>
 
-          {!showAllFeatures && features.length > 6 && (
-            <div className="flex justify-center mt-10">
+          {!showAllFeatures && features.length > 8 && (
+            <div className="flex justify-center mt-8">
               <button
                 onClick={() => setShowAllFeatures(true)}
-                className="group inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 transition-all duration-300"
+                className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 transition-all duration-300"
               >
-                <span className="text-sm font-semibold text-primary">Ver todo o potencial da Intentia</span>
+                <span className="text-sm font-semibold text-primary">Ver todas as {features.length} funcionalidades</span>
                 <ArrowRight className="h-4 w-4 text-primary group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           )}
 
-          {showAllFeatures && features.length > 6 && (
-            <div className="flex justify-center mt-10">
+          {showAllFeatures && features.length > 8 && (
+            <div className="flex justify-center mt-8">
               <button
                 onClick={() => setShowAllFeatures(false)}
-                className="group inline-flex items-center gap-2 px-6 py-3 rounded-full bg-muted/50 hover:bg-muted border border-border hover:border-muted-foreground/20 transition-all duration-300"
+                className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-muted/50 hover:bg-muted border border-border hover:border-muted-foreground/20 transition-all duration-300"
               >
                 <span className="text-sm font-medium text-muted-foreground">Recolher</span>
               </button>

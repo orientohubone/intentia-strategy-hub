@@ -5,6 +5,7 @@ import { ProjectCard } from "@/components/ProjectCard";
 import { ChannelCard } from "@/components/ChannelCard";
 import { StatsCard } from "@/components/StatsCard";
 import { ScoreRing } from "@/components/ScoreRing";
+import { OnboardingChecklist } from "@/components/OnboardingChecklist";
 import { Badge } from "@/components/ui/badge";
 import { FolderOpen, Target, BarChart3, Zap, FileText, FileSpreadsheet, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, TrendingUp, ArrowRight, Megaphone, Play, Pause, CheckCircle2, Archive, FileEdit, DollarSign, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -76,7 +77,10 @@ export default function Dashboard() {
     project_name: string;
   }[]>([]);
   const [campaignsExpanded, setCampaignsExpanded] = useState(false);
+  const [hasAiKey, setHasAiKey] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(true);
   const fullName = (user?.user_metadata?.full_name as string | undefined) || user?.email || "Usuário";
+  const hasAvatar = !!(user?.user_metadata?.avatar_url);
 
   useEffect(() => {
     const fetchInsights = async () => {
@@ -217,14 +221,28 @@ export default function Dashboard() {
       }
     };
 
+    const fetchAiKeys = async () => {
+      if (!user) return;
+      try {
+        const { count, error } = await supabase
+          .from("user_api_keys")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id);
+        if (!error && count && count > 0) setHasAiKey(true);
+      } catch {}
+    };
+
     const fetchAllStats = async () => {
+      setStatsLoading(true);
       await Promise.all([
         fetchInsights(),
         fetchAudiencesCount(),
         fetchBenchmarksCount(),
         fetchProjectsThisMonth(),
         fetchRecentCampaigns(),
+        fetchAiKeys(),
       ]);
+      setStatsLoading(false);
     };
 
     fetchAllStats();
@@ -324,6 +342,31 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
+
+            {/* Onboarding Checklist */}
+            {(loading || statsLoading) ? (
+              <div className="flex gap-3 overflow-hidden">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="flex-shrink-0 w-[140px] sm:w-[160px] rounded-xl border border-border p-3 sm:p-4 animate-pulse">
+                    <div className="w-10 h-10 rounded-xl bg-muted mb-3" />
+                    <div className="h-3 w-20 bg-muted rounded mb-2" />
+                    <div className="h-2 w-full bg-muted rounded mb-1" />
+                    <div className="h-2 w-2/3 bg-muted rounded" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <OnboardingChecklist
+                data={{
+                  projectsCount: projects.length,
+                  hasAnalysis: projects.some((p) => p.status === "completed"),
+                  hasAiKey,
+                  benchmarksCount,
+                  audiencesCount,
+                  hasAvatar,
+                }}
+              />
+            )}
 
             {/* Stats Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -472,7 +515,23 @@ export default function Dashboard() {
                     </a>
                   </div>
                   <div className="rounded-xl border border-border bg-card divide-y divide-border">
-                    {recentCampaigns.length === 0 && (
+                    {statsLoading && (
+                      <div className="divide-y divide-border">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="px-3.5 py-2.5 animate-pulse">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-6 h-6 rounded-md bg-muted" />
+                              <div className="flex-1">
+                                <div className="h-3 w-28 bg-muted rounded mb-1" />
+                                <div className="h-2 w-16 bg-muted rounded" />
+                              </div>
+                              <div className="h-4 w-14 bg-muted rounded-full" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {!statsLoading && recentCampaigns.length === 0 && (
                       <div className="flex flex-col items-center text-center py-6 px-4">
                         <Megaphone className="h-8 w-8 text-muted-foreground/30 mb-2" />
                         <p className="text-xs text-muted-foreground">Campanhas aparecerão aqui quando você criar em <a href="/operations" className="text-primary hover:underline font-medium">Operações</a>.</p>
@@ -562,7 +621,20 @@ export default function Dashboard() {
                   </a>
                 </div>
                 <div className="rounded-xl border border-border bg-card divide-y divide-border">
-                  {insights.length === 0 && (
+                  {statsLoading && (
+                    <div className="divide-y divide-border">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="px-3.5 py-2.5 animate-pulse">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-6 h-6 rounded-md bg-muted" />
+                            <div className="h-3 flex-1 bg-muted rounded" />
+                            <div className="h-3 w-3 bg-muted rounded" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {!statsLoading && insights.length === 0 && (
                     <div className="flex flex-col items-center text-center py-6 px-4">
                       <Lightbulb className="h-8 w-8 text-muted-foreground/30 mb-2" />
                       <p className="text-xs font-medium text-foreground mb-1">Insights surgem com a análise</p>
@@ -649,7 +721,22 @@ export default function Dashboard() {
                 )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {activeChannelScores.length === 0 && (
+                {loading && (
+                  <>
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="rounded-xl border border-border bg-card p-4 animate-pulse">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-8 h-8 rounded-lg bg-muted" />
+                          <div className="h-4 w-16 bg-muted rounded" />
+                        </div>
+                        <div className="h-8 w-12 bg-muted rounded mb-2" />
+                        <div className="h-2 w-full bg-muted rounded mb-1" />
+                        <div className="h-2 w-2/3 bg-muted rounded" />
+                      </div>
+                    ))}
+                  </>
+                )}
+                {!loading && activeChannelScores.length === 0 && (
                   <div className="col-span-full flex flex-col items-center text-center py-8 px-4 rounded-xl border border-dashed border-border bg-muted/30">
                     <Globe className="h-10 w-10 text-muted-foreground/30 mb-3" />
                     <p className="text-sm font-medium text-foreground mb-1">Descubra os melhores canais para seu negócio</p>

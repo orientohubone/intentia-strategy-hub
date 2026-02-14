@@ -30,6 +30,9 @@ export function HelpCategoryDetail({ category, getDifficultyColor }: HelpCategor
         <YouTubeEmbed
           videoId={category.videoId || ""}
           title={`Como usar: ${category.title}`}
+          categoryId={category.id}
+          categoryTitle={category.title}
+          categoryDescription={category.description}
         />
 
         {/* Expanded article content */}
