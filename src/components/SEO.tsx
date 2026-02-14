@@ -4,7 +4,7 @@ const SITE_URL = "https://intentia.com.br";
 const SITE_NAME = "Intentia";
 const DEFAULT_TITLE = "Intentia — Estratégia antes da mídia";
 const DEFAULT_DESCRIPTION = "Plataforma de inteligência estratégica para marketing B2B. Do diagnóstico à execução: análise heurística, IA, benchmark competitivo, plano tático por canal e playbook de execução.";
-const DEFAULT_IMAGE = `${SITE_URL}/Intentia-criativo.png`;
+const DEFAULT_IMAGE = `${SITE_URL}/intentia-mktb2b.png`;
 
 interface SEOProps {
   title?: string;
