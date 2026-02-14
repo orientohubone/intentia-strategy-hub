@@ -22,6 +22,7 @@ import Audiences from "./pages/Audiences";
 import Benchmark from "./pages/Benchmark";
 import Settings from "./pages/Settings";
 import Help from "./pages/Help";
+import Support from "./pages/Support";
 import TacticalPlan from "./pages/TacticalPlan";
 import Alerts from "./pages/Alerts";
 import Operations from "./pages/Operations";
@@ -177,6 +178,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Help />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/support" 
+            element={
+              <ProtectedRoute>
+                <Support />
               </ProtectedRoute>
             } 
           />

@@ -285,3 +285,21 @@
   mask-composite: exclude;
   animation: border-beam-spin 8s linear infinite;
 }
+
+/* FAQ Cards - Fix for double expansion */
+.faq-card-wrapper {
+  isolation: isolate;
+}
+
+.faq-card {
+  position: relative;
+}
+
+.faq-card-expanded {
+  ring: 2px solid rgb(59 130 246);
+  background-color: rgb(239 246 255);
+}
+
+.dark .faq-card-expanded {
+  background-color: rgb(30 58 138);
+}

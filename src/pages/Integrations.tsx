@@ -43,6 +43,7 @@ import {
   Info,
   Zap,
   ArrowRight,
+  Lock,
 } from "lucide-react";
 import {
   type AdProvider,
@@ -366,13 +367,13 @@ export default function Integrations() {
         </div>
 
         {/* Info Box */}
-        <div className="flex items-start gap-3 p-3 sm:p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/30">
-          <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-blue-700 dark:text-blue-300">
-            <p className="font-medium mb-1">Como funcionam as integrações</p>
-            <p className="text-blue-600 dark:text-blue-400">
-              Ao conectar uma plataforma de anúncios, a Intentia importa automaticamente suas campanhas, métricas e dados de performance.
-              Os dados são sincronizados conforme a frequência configurada e alimentam o módulo Operacional, Benchmark e Insights.
+        <div className="flex items-start gap-3 p-3 sm:p-4 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/30">
+          <Lock className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-amber-700 dark:text-amber-300">
+            <p className="font-medium mb-1">Integrações em Desenvolvimento</p>
+            <p className="text-amber-600 dark:text-amber-400">
+              As integrações com plataformas de anúncios (Google Ads, Meta Ads, LinkedIn Ads, TikTok Ads) estão em desenvolvimento.
+              Em breve você poderá conectar suas contas para importar automaticamente campanhas, métricas e dados de performance.
             </p>
           </div>
         </div>
@@ -396,71 +397,42 @@ export default function Integrations() {
               return (
                 <div
                   key={provider}
-                  onClick={() => setDetailProvider(provider)}
-                  className={`group relative rounded-2xl border-2 p-5 sm:p-6 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
-                    isConnected
-                      ? "border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50/50 to-background dark:from-green-950/20 dark:to-background"
-                      : isError
-                      ? "border-red-200 dark:border-red-800 bg-gradient-to-br from-red-50/30 to-background dark:from-red-950/10 dark:to-background"
-                      : isExpired
-                      ? "border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/30 to-background dark:from-amber-950/10 dark:to-background"
-                      : "border-border bg-card hover:border-primary/30"
-                  }`}
+                  className={`group relative rounded-2xl border-2 p-5 sm:p-6 cursor-not-allowed transition-all duration-200 border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/30 to-background dark:from-amber-950/10 dark:to-background`}
                 >
-                  {/* Connected glow */}
-                  {isConnected && (
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-green-500/5 to-transparent pointer-events-none" />
-                  )}
+                  {/* Development overlay */}
+                  <div className="absolute inset-0 rounded-2xl bg-amber-500/5 backdrop-blur-[1px] pointer-events-none z-10" />
+                  <div className="absolute top-3 right-3 z-20">
+                    <Badge variant="outline" className="gap-1 text-amber-600 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800">
+                      <Lock className="h-3 w-3" />
+                      Em Desenvolvimento
+                    </Badge>
+                  </div>
 
                   {/* Top row: Icon + Status */}
                   <div className="flex items-start justify-between mb-4 relative">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white dark:bg-gray-900 border border-border/50 shadow-sm flex items-center justify-center p-2.5 sm:p-3 group-hover:shadow-md transition-shadow">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white dark:bg-gray-900 border border-border/50 shadow-sm flex items-center justify-center p-2.5 sm:p-3 opacity-60">
                       <ProviderSvgIcon provider={provider} className="w-full h-full" />
                     </div>
-                    <StatusIndicator status={integration?.status || "disconnected"} />
+                    <StatusIndicator status="disconnected" />
                   </div>
 
                   {/* Name + Description */}
-                  <h3 className="font-semibold text-base sm:text-lg mb-1">{config.name}</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-4 min-h-[2.5rem]">
+                  <h3 className="font-semibold text-base sm:text-lg mb-1 opacity-70">{config.name}</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-4 min-h-[2.5rem] opacity-60">
                     {config.description}
                   </p>
 
-                  {/* Connected info */}
-                  {isConnected && integration ? (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5" />
-                          {formatLastSync(integration.last_sync_at)}
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <Zap className="h-3.5 w-3.5" />
-                          {SYNC_FREQUENCY_CONFIG[integration.sync_frequency].label}
-                        </span>
-                      </div>
-                      {integration.account_name && (
-                        <div className="text-xs text-muted-foreground truncate px-2 py-1.5 rounded-lg bg-muted/50">
-                          {integration.account_name}
-                        </div>
-                      )}
+                  {/* Development message */}
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                    <Lock className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                    <div className="text-xs text-amber-700 dark:text-amber-300">
+                      <p className="font-medium">Em desenvolvimento</p>
+                      <p className="text-amber-600 dark:text-amber-400">Integração disponível em breve</p>
                     </div>
-                  ) : isError && integration?.error_message ? (
-                    <div className="flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400 px-2 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/30">
-                      <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="line-clamp-1">{integration.error_message}</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-[1px] bg-border" />
-                      <span className="text-xs text-muted-foreground flex items-center gap-1 group-hover:text-primary transition-colors">
-                        Configurar <ArrowRight className="h-3 w-3" />
-                      </span>
-                    </div>
-                  )}
+                  </div>
 
                   {/* Features preview */}
-                  <div className="flex flex-wrap gap-1 mt-3">
+                  <div className="flex flex-wrap gap-1 mt-3 opacity-40">
                     {config.features.slice(0, 3).map((f, i) => (
                       <span key={i} className="text-[10px] px-1.5 py-0.5 rounded-md bg-muted/60 text-muted-foreground">
                         {f.length > 30 ? f.slice(0, 28) + "..." : f}
@@ -506,232 +478,8 @@ export default function Integrations() {
       </div>
 
       {/* Detail / Config Dialog */}
-      <Dialog open={!!detailProvider} onOpenChange={() => setDetailProvider(null)}>
-        {detailProvider && detailConfig && (
-          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-white dark:bg-gray-900 border border-border/50 shadow-sm flex items-center justify-center p-2">
-                  <ProviderSvgIcon provider={detailProvider} className="w-full h-full" />
-                </div>
-                <div>
-                  <DialogTitle className="text-lg">{detailConfig.name}</DialogTitle>
-                  <DialogDescription className="text-xs mt-0.5">
-                    <StatusIndicator status={detailIntegration?.status || "disconnected"} />
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
-
-            <div className="space-y-5 mt-2">
-              {/* Description */}
-              <p className="text-sm text-muted-foreground">{detailConfig.description}</p>
-
-              {/* Connected: settings */}
-              {detailIsConnected && detailIntegration ? (
-                <>
-                  {/* Account */}
-                  <div className="rounded-xl border p-4 space-y-3">
-                    <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Conta Conectada</h4>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium">{detailIntegration.account_name}</p>
-                        {detailIntegration.account_id && (
-                          <p className="text-xs text-muted-foreground">{detailIntegration.account_id}</p>
-                        )}
-                      </div>
-                      <Badge variant="outline" className="text-xs gap-1 text-green-600 bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-800">
-                        <CheckCircle2 className="h-3 w-3" />
-                        Ativa
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {/* Sync config */}
-                  <div className="rounded-xl border p-4 space-y-3">
-                    <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Sincronização</h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs text-muted-foreground">Frequência</label>
-                        <Select
-                          value={detailIntegration.sync_frequency}
-                          onValueChange={(val) =>
-                            handleUpdateFrequency(detailProvider, val as SyncFrequency)
-                          }
-                        >
-                          <SelectTrigger className="h-9 mt-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(SYNC_FREQUENCY_CONFIG).map(([key, cfg]) => (
-                              <SelectItem key={key} value={key}>
-                                {cfg.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label className="text-xs text-muted-foreground">Último sync</label>
-                        <div className="h-9 mt-1 flex items-center text-sm">
-                          {formatLastSync(detailIntegration.last_sync_at)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Features */}
-                  <div className="rounded-xl border p-4 space-y-3">
-                    <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Dados Importados</h4>
-                    <div className="space-y-1.5">
-                      {detailConfig.features.map((feature, i) => (
-                        <div key={i} className="flex items-center gap-2 text-sm">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
-                          <span>{feature}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      className="gap-1.5 flex-1 sm:flex-none"
-                      onClick={(e) => { e.stopPropagation(); handleSync(detailProvider); }}
-                      disabled={syncingProvider === detailProvider}
-                    >
-                      <RefreshCw className={`h-3.5 w-3.5 ${syncingProvider === detailProvider ? "animate-spin" : ""}`} />
-                      Sincronizar Agora
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5"
-                      onClick={() => loadSyncLogs(detailIntegration.id)}
-                    >
-                      <History className="h-3.5 w-3.5" />
-                      Histórico
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5"
-                      onClick={() => window.open(detailConfig.docsUrl, "_blank")}
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                      Docs
-                    </Button>
-                  </div>
-
-                  {/* Danger zone */}
-                  <div className="rounded-xl border border-red-200 dark:border-red-800 p-4 space-y-3">
-                    <h4 className="text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-wider">Zona de Perigo</h4>
-                    <div className="flex flex-wrap gap-2">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950/40">
-                            <WifiOff className="h-3.5 w-3.5" />
-                            Desconectar
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Desconectar {detailConfig.name}?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              A sincronização automática será interrompida. Os dados já importados serão mantidos.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDisconnect(detailProvider)} className="bg-red-600 hover:bg-red-700">
-                              Desconectar
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950/40">
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Remover
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Remover integração {detailConfig.name}?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Isso removerá a integração e todo o histórico de sincronização. Os dados já importados nas campanhas serão mantidos.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteIntegration(detailProvider)} className="bg-red-600 hover:bg-red-700">
-                              Remover
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Not connected: setup steps + features */}
-                  <div className="rounded-xl border p-4 space-y-3">
-                    <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Funcionalidades</h4>
-                    <div className="space-y-1.5">
-                      {detailConfig.features.map((feature, i) => (
-                        <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <div className="w-3.5 h-3.5 rounded-full border border-border flex-shrink-0" />
-                          <span>{feature}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border p-4 space-y-3">
-                    <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Passos para Configurar</h4>
-                    <div className="space-y-2">
-                      {detailConfig.setupSteps.map((step, i) => (
-                        <div key={i} className="flex items-start gap-2.5 text-sm">
-                          <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <span className="text-[10px] font-bold text-primary">{i + 1}</span>
-                          </div>
-                          <span>{step}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Button
-                    className="w-full gap-2"
-                    onClick={() => handleConnect(detailProvider)}
-                    disabled={connectingProvider === detailProvider}
-                  >
-                    {connectingProvider === detailProvider ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Plug className="h-4 w-4" />
-                    )}
-                    Conectar {detailConfig.name}
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full gap-1.5 text-muted-foreground"
-                    onClick={() => window.open(detailConfig.docsUrl, "_blank")}
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    Ver documentação da API
-                  </Button>
-                </>
-              )}
-            </div>
-          </DialogContent>
-        )}
+      <Dialog open={false} onOpenChange={() => {}}>
+        {/* Dialog disabled - integrations in development */}
       </Dialog>
 
       {/* Sync Logs Dialog */}

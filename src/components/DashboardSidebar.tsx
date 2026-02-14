@@ -16,6 +16,7 @@ import {
   LogOut, 
   Settings, 
   HelpCircle,
+  MessageCircle,
   X,
 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -67,6 +68,7 @@ const navSections: NavSection[] = [
 const bottomNavItems: NavItem[] = [
   { icon: Settings, label: "Configurações", href: "/settings" },
   { icon: HelpCircle, label: "Ajuda", href: "/help" },
+  { icon: MessageCircle, label: "Suporte", href: "/support" },
   { icon: LogOut, label: "Sair", href: "/logout" },
 ];
 

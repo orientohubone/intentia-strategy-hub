@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Header } from "@/components/Header";
 import { SEO, buildBreadcrumb } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
 import { BackToHomeButton } from "@/components/BackToHomeButton";
@@ -24,6 +25,8 @@ const plans = [
       "Score por canal de mídia",
       "Insights automáticos",
       "Públicos-alvo com ICP básico",
+      "Análise SEO e PageSpeed básica",
+      "Monitoramento de performance",
       "Configuração de API keys (Gemini / Claude)",
       "Análise por IA de projetos (5/mês)",
     ],
@@ -47,6 +50,8 @@ const plans = [
       "Enriquecimento de ICP com IA",
       "Benchmark competitivo com SWOT + IA",
       "Plano Tático por canal",
+      "Análise SEO e PageSpeed Insights",
+      "Monitoramento de performance em tempo real",
       "Integrações OAuth (Google Ads...)",
     ],
     cta: "Assinar Agora",
@@ -137,9 +142,19 @@ const featureComparison: FeatureCategory[] = [
     ],
   },
   {
+    category: "SEO & Performance",
+    features: [
+      { name: "Análise SEO e PageSpeed", starter: true, professional: true, enterprise: true },
+      { name: "Core Web Vitals", starter: true, professional: true, enterprise: true },
+      { name: "Dados estruturados (JSON-LD)", starter: true, professional: true, enterprise: true },
+      { name: "Monitoramento de performance", starter: true, professional: true, enterprise: true },
+      { name: "Análise de performance por IA", starter: false, professional: true, enterprise: true },
+    ],
+  },
+  {
     category: "Integrações",
     features: [
-      { name: "Google Ads (OAuth)", starter: false, professional: true, enterprise: true },
+      { name: "Google Ads (OAuth)", starter: false, professional: "Em breve", enterprise: "Em breve" },
       { name: "Meta Ads (OAuth)", starter: false, professional: "Em breve", enterprise: "Em breve" },
       { name: "LinkedIn Ads (OAuth)", starter: false, professional: "Em breve", enterprise: "Em breve" },
       { name: "TikTok Ads (OAuth)", starter: false, professional: "Em breve", enterprise: "Em breve" },
@@ -173,6 +188,7 @@ const featureComparison: FeatureCategory[] = [
 function FeatureCell({ value }: { value: FeatureValue }) {
   if (value === true) return <Check className="h-5 w-5 text-primary mx-auto" />;
   if (value === false) return <Minus className="h-4 w-4 text-muted-foreground/40 mx-auto" />;
+  if (value === "Em breve") return <Badge className="bg-primary text-primary-foreground border-primary/20 hover:bg-primary/90 rounded-md text-xs font-medium">Em breve</Badge>;
   return <span className="text-sm font-medium text-foreground">{value}</span>;
 }
 

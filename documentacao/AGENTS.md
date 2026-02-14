@@ -8,9 +8,33 @@
 **UI Framework:** shadcn/ui + Tailwind CSS  
 **Backend:** Supabase (PostgreSQL + Auth + Edge Functions)  
 **Propósito:** Plataforma de análise estratégica para marketing B2B  
-**Versão:** 3.8.0
+**Versão:** 3.9.0
 
-## Status Atual: ✅ v3.8.0 (Integrações com APIs de Marketing — OAuth Real)
+## Status Atual: ✅ v3.9.0 (SEO & Performance + Admin Panel v2.8.0)
+
+### Novidades desta Versão
+
+#### 1. SEO & Performance Analysis ✅
+- **Análise SEO completa** com PageSpeed Insights
+- **Core Web Vitals** monitoring (LCP, FID, CLS)
+- **Dados estruturados** (JSON-LD, Open Graph, Twitter Card)
+- **Monitoramento de performance** em tempo real
+- **Análise de performance por IA** para campanhas
+- **Nova categoria** no Admin Panel: "SEO & Performance"
+
+#### 2. Admin Panel v2.8.0 ✅
+- **Nova categoria "Integrações"** com controle de features
+- **Nova categoria "SEO & Performance"** para gestão visual
+- **Controle total** sobre liberação de features por plano
+- **Status "Em desenvolvimento"** para integrações futuras
+- **Interface otimizada** para seletor de status
+- **29 features** totais em 9 categorias
+
+#### 3. Integrações com APIs de Marketing ✅
+- **OAuth Flow** implementado para Google Ads, Meta Ads, LinkedIn Ads, TikTok Ads
+- **Status "Em desenvolvimento"** para todas as integrações
+- **Admin Panel** com controle de liberação
+- **Página /integracoes** com UI de desenvolvimento
 
 ### Funcionalidades Implementadas
 

@@ -43,9 +43,13 @@ import {
   Settings,
   Palette,
   Activity,
+  Plug,
+  Gauge,
+  MessageCircle,
 } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { SupportDashboard } from "@/components/SupportDashboard";
 import { toast } from "sonner";
 import {
   adminListFeatures,
@@ -133,6 +137,8 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: typeof Target; colo
   export: { label: "Exportação", icon: Download, color: "text-emerald-500", bg: "bg-emerald-500/10" },
   social: { label: "Marca & Social", icon: Palette, color: "text-pink-500", bg: "bg-pink-500/10" },
   admin: { label: "Configurações", icon: Settings, color: "text-sky-500", bg: "bg-sky-500/10" },
+  integrations: { label: "Integrações", icon: Plug, color: "text-blue-500", bg: "bg-blue-500/10" },
+  seo_performance: { label: "SEO & Performance", icon: Gauge, color: "text-cyan-500", bg: "bg-cyan-500/10" },
 };
 
 // Keep a simple label map for backwards compat
@@ -155,7 +161,7 @@ export default function AdminPanel() {
   const { admin, logout } = useAdminAuth();
 
   // State
-  const [activeTab, setActiveTab] = useState<"features" | "plans" | "users" | "status" | "architecture">("features");
+  const [activeTab, setActiveTab] = useState<"features" | "plans" | "users" | "status" | "architecture" | "support">("features");
   const [features, setFeatures] = useState<FeatureFlag[]>([]);
   const [planFeatures, setPlanFeatures] = useState<PlanFeature[]>([]);
   const [users, setUsers] = useState<TenantUser[]>([]);
@@ -450,6 +456,7 @@ export default function AdminPanel() {
             { key: "users" as const, label: "Clientes", icon: Users },
             { key: "status" as const, label: "Status Page", icon: Activity },
             { key: "architecture" as const, label: "Arquitetura", icon: Layers },
+            { key: "support" as const, label: "Atendimentos", icon: MessageCircle },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -648,7 +655,7 @@ export default function AdminPanel() {
                                             value={feature.status}
                                             onValueChange={(val) => updateFeatureStatus(feature.feature_key, val)}
                                           >
-                                            <SelectTrigger className="w-[130px] h-7 text-[10px] bg-muted/40 border-border/50 text-muted-foreground flex-shrink-0">
+                                            <SelectTrigger className="w-[150px] h-7 text-[10px] bg-muted/40 border-border/50 text-muted-foreground flex-shrink-0">
                                               <StatusIcon className={`h-3 w-3 mr-1 ${statusCfg.color}`} />
                                               <SelectValue />
                                             </SelectTrigger>
@@ -912,6 +919,10 @@ export default function AdminPanel() {
 
             {activeTab === "architecture" && (
               <AdminArchitectureTab />
+            )}
+
+            {activeTab === "support" && (
+              <SupportDashboard />
             )}
 
             {activeTab === "users" && (

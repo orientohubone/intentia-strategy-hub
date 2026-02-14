@@ -44,6 +44,7 @@ import {
   Users,
   CalendarDays,
   Bell,
+  Plug,
 } from "lucide-react";
 
 <meta name="google-site-verification" content="TtTU-mTqFk22dxuGQSKkolq_gdFDWpsDX6IhcdOdAiA" />
@@ -211,6 +212,24 @@ const features: { icon: React.ElementType; title: string; description: string; l
     title: "Relatórios PDF e Exportação CSV",
     description: "Relatórios consolidados por projeto em PDF, exportação por seção e dados em CSV para análise externa. Tudo pronto para apresentar ao cliente.",
     link: "/relatorios",
+  },
+  {
+    icon: Search,
+    title: "Análise SEO e PageSpeed",
+    description: "Diagnóstico completo de SEO técnico e performance. PageSpeed Insights, Core Web Vitals, estrutura de dados e recomendações de otimização.",
+    link: "/seo-performance",
+  },
+  {
+    icon: TrendingUp,
+    title: "Monitoramento de Performance",
+    description: "Acompanhe métricas de campanhas em tempo real com dashboard operacional, KPIs automáticos e análise de performance por IA.",
+    link: "/gestao-campanhas",
+  },
+  {
+    icon: Plug,
+    title: "Integrações com Plataformas",
+    description: "Conecte suas contas de Google Ads, Meta Ads, LinkedIn Ads e TikTok Ads. Sincronize campanhas, métricas e dados de performance automaticamente.",
+    link: "/integracoes",
   },
 ];
 
@@ -770,8 +789,8 @@ export default function Landing() {
                 glow: "group-hover:shadow-blue-500/10",
                 desc: "Search, Display, Performance Max, YouTube e Discovery",
                 metrics: ["Impressões", "Cliques", "Conversões", "Custo", "ROAS"],
-                badge: "Disponível",
-                badgeColor: "bg-green-500/10 text-green-600 border-green-500/20",
+                badge: "Em breve",
+                badgeColor: "bg-amber-500/10 text-amber-600 border-amber-500/20",
               },
               {
                 name: "Meta Ads",

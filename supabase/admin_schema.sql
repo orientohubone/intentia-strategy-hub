@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS feature_flags (
   feature_name TEXT NOT NULL,
   description TEXT,
   category TEXT NOT NULL DEFAULT 'general' CHECK (category IN (
-    'analysis', 'ai', 'benchmark', 'tactical', 'export', 'social', 'general', 'admin'
+    'analysis', 'ai', 'benchmark', 'tactical', 'export', 'social', 'general', 'admin', 'integrations', 'seo_performance'
   )),
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN (
     'active',        -- Funcionando normalmente
@@ -179,13 +179,20 @@ INSERT INTO feature_flags (feature_key, feature_name, description, category, sta
   ('brand_posts', 'Posts de Marca', 'Geração de posts para redes sociais', 'social', 'active', 61),
   
   -- General
-  ('channel_scores', 'Score por Canal de Mídia', 'Scores para Google, Meta, LinkedIn e TikTok', 'general', 'active', 70),
-  ('strategic_insights', 'Insights Estratégicos', 'Alertas, oportunidades e melhorias por projeto', 'general', 'active', 71),
-  ('strategic_alerts', 'Alertas Estratégicos', 'Página dedicada com 4 categorias de alertas', 'general', 'active', 72),
-  ('audiences', 'Públicos-Alvo', 'CRUD de audiências B2B com vinculação a projetos', 'general', 'active', 73),
-  ('notifications', 'Notificações', 'Notificações real-time via Supabase', 'general', 'active', 74),
-  ('dark_mode', 'Tema Escuro', 'Alternância entre tema claro e escuro', 'general', 'active', 75),
-  ('backup_system', 'Backup & Segurança', 'Backup manual/automático e exportação de dados', 'general', 'active', 76)
+  ('channel_scores', 'Score por Canal de Mídia', 'Scores para Google, Meta, LinkedIn e TikTok', 'general', 'active', 70, NULL),
+  ('strategic_insights', 'Insights Estratégicos', 'Alertas, oportunidades e melhorias por projeto', 'general', 'active', 71, NULL),
+  ('strategic_alerts', 'Alertas Estratégicos', 'Página dedicada com 4 categorias de alertas', 'general', 'active', 72, NULL),
+  ('audiences', 'Públicos-Alvo', 'CRUD de audiências B2B com vinculação a projetos', 'general', 'active', 73, NULL),
+  ('notifications', 'Notificações', 'Sistema de notificações em tempo real', 'general', 'active', NULL, 'Bell', 74),
+  ('dark_mode', 'Modo Escuro', 'Tema dark para dashboard', 'general', 'active', NULL, 'Moon', 75),
+  ('backup_system', 'Backup de Dados', 'Sistema de backup e restauração', 'admin', 'active', NULL, 'HardDrive', 76),
+  ('google_ads_integration', 'Google Ads Integration', 'Integração com Google Ads API', 'integrations', 'development', 'Em desenvolvimento - liberação em breve', 'GoogleAdsLogo', 77),
+  ('meta_ads_integration', 'Meta Ads Integration', 'Integração com Meta Ads API', 'integrations', 'development', 'Em desenvolvimento - liberação em breve', 'FacebookLogo', 78),
+  ('linkedin_ads_integration', 'LinkedIn Ads Integration', 'Integração com LinkedIn Ads API', 'integrations', 'development', 'Em desenvolvimento - liberação em breve', 'LinkedinLogo', 79),
+  ('tiktok_ads_integration', 'TikTok Ads Integration', 'Integração com TikTok Ads API', 'integrations', 'development', 'Em desenvolvimento - liberação em breve', 'Music2', 80),
+  ('seo_analysis', 'SEO Analysis', 'Análise SEO e PageSpeed Insights', 'seo_performance', 'active', NULL, 'Search', 81),
+  ('performance_monitoring', 'Performance Monitoring', 'Monitoramento de performance de campanhas', 'seo_performance', 'active', NULL, 'Gauge', 82),
+  ('ai_performance_analysis', 'AI Performance Analysis', 'Análise de performance por IA', 'seo_performance', 'active', NULL, 'TrendingUp', 83)
 ON CONFLICT (feature_key) DO NOTHING;
 
 -- =====================================================
@@ -218,7 +225,14 @@ INSERT INTO plan_features (feature_key, plan, is_enabled, usage_limit, limit_per
   ('audiences', 'starter', true, 1, 'unlimited'),
   ('notifications', 'starter', true, NULL, NULL),
   ('dark_mode', 'starter', true, NULL, NULL),
-  ('backup_system', 'starter', false, NULL, NULL)
+  ('backup_system', 'starter', false, NULL, NULL),
+  ('google_ads_integration', 'starter', false, NULL, NULL),
+  ('meta_ads_integration', 'starter', false, NULL, NULL),
+  ('linkedin_ads_integration', 'starter', false, NULL, NULL),
+  ('tiktok_ads_integration', 'starter', false, NULL, NULL),
+  ('seo_analysis', 'starter', true, NULL, NULL),
+  ('performance_monitoring', 'starter', true, NULL, NULL),
+  ('ai_performance_analysis', 'starter', false, NULL, NULL)
 ON CONFLICT (feature_key, plan) DO NOTHING;
 
 -- Professional
@@ -247,7 +261,14 @@ INSERT INTO plan_features (feature_key, plan, is_enabled, usage_limit, limit_per
   ('audiences', 'professional', true, NULL, NULL),
   ('notifications', 'professional', true, NULL, NULL),
   ('dark_mode', 'professional', true, NULL, NULL),
-  ('backup_system', 'professional', true, NULL, NULL)
+  ('backup_system', 'professional', true, NULL, NULL),
+  ('google_ads_integration', 'professional', false, NULL, NULL),
+  ('meta_ads_integration', 'professional', false, NULL, NULL),
+  ('linkedin_ads_integration', 'professional', false, NULL, NULL),
+  ('tiktok_ads_integration', 'professional', false, NULL, NULL),
+  ('seo_analysis', 'professional', true, NULL, NULL),
+  ('performance_monitoring', 'professional', true, NULL, NULL),
+  ('ai_performance_analysis', 'professional', true, NULL, NULL)
 ON CONFLICT (feature_key, plan) DO NOTHING;
 
 -- Enterprise
@@ -276,7 +297,14 @@ INSERT INTO plan_features (feature_key, plan, is_enabled, usage_limit, limit_per
   ('audiences', 'enterprise', true, NULL, NULL),
   ('notifications', 'enterprise', true, NULL, NULL),
   ('dark_mode', 'enterprise', true, NULL, NULL),
-  ('backup_system', 'enterprise', true, NULL, NULL)
+  ('backup_system', 'enterprise', true, NULL, NULL),
+  ('google_ads_integration', 'enterprise', false, NULL, NULL),
+  ('meta_ads_integration', 'enterprise', false, NULL, NULL),
+  ('linkedin_ads_integration', 'enterprise', false, NULL, NULL),
+  ('tiktok_ads_integration', 'enterprise', false, NULL, NULL),
+  ('seo_analysis', 'enterprise', true, NULL, NULL),
+  ('performance_monitoring', 'enterprise', true, NULL, NULL),
+  ('ai_performance_analysis', 'enterprise', true, NULL, NULL)
 ON CONFLICT (feature_key, plan) DO NOTHING;
 
 -- =====================================================

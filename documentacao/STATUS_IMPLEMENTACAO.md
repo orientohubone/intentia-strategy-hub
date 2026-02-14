@@ -2,9 +2,9 @@
 
 ## 📊 Visão Geral
 
-**Status do Projeto:** v3.8.0 — Integrações com APIs de Marketing (OAuth Real)  
-**Data de Atualização:** 12/02/2026  
-**Versão:** 3.8.0
+**Status do Projeto:** v3.9.0 — SEO & Performance + Admin Panel v2.8.0  
+**Data de Atualização:** 14/02/2026  
+**Versão:** 3.9.0
 
 ---
 
@@ -746,6 +746,44 @@ O **Intentia Strategy Hub** está na **versão 2.8.0** com funcionalidades avan�
 - `META_ADS_CLIENT_ID`, `META_ADS_CLIENT_SECRET`
 - `LINKEDIN_ADS_CLIENT_ID`, `LINKEDIN_ADS_CLIENT_SECRET`
 - `TIKTOK_ADS_CLIENT_ID`, `TIKTOK_ADS_CLIENT_SECRET`
+
+---
+
+## 🆕 v3.9.0 (14/02/2026) - SEO & Performance + Admin Panel v2.8.0
+
+### 📈 SEO & Performance Analysis
+- **[COMPLETO]** Análise SEO completa com PageSpeed Insights
+- **[COMPLETO]** Core Web Vitals monitoring (LCP, FID, CLS)
+- **[COMPLETO]** Dados estruturados (JSON-LD, Open Graph, Twitter Card)
+- **[COMPLETO]** Monitoramento de performance em tempo real
+- **[COMPLETO]** Análise de performance por IA para campanhas
+- **[COMPLETO]** Nova categoria no Admin Panel: "SEO & Performance"
+- **[COMPLETO]** Features: seo_analysis, performance_monitoring, ai_performance_analysis
+- **[COMPLETO]** Distribuição por plano: SEO/Performance básico no Starter, completo no Pro/Enterprise
+
+### 🛠️ Admin Panel v2.8.0
+- **[COMPLETO]** Nova categoria "Integrações" com controle de features
+- **[COMPLETO]** Nova categoria "SEO & Performance" para gestão visual
+- **[COMPLETO]** Controle total sobre liberação de features por plano
+- **[COMPLETO]** Status "Em desenvolvimento" para integrações futuras
+- **[COMPLETO]** Interface otimizada para seletor de status (w-[150px])
+- **[COMPLETO]** 29 features totais em 9 categorias
+- **[COMPLETO]** SQL schema atualizado com nova categoria seo_performance
+- **[COMPLETO]** Plan features configurados para todas as novas features
+- **[COMPLETO]** Upgrade SQL criado para migração fácil
+
+### 🎨 Landing Page e Pricing
+- **[COMPLETO]** Landing page atualizada com novas features (SEO & Performance, Integrações)
+- **[COMPLETO]** 3 novas features adicionadas ao showcase: Análise SEO, Monitoramento Performance, Integrações
+- **[COMPLETO]** Página de preços atualizada com nova categoria "SEO & Performance"
+- **[COMPLETO]** Plan highlights atualizados para refletir novas funcionalidades
+- **[COMPLETO]** Status "Em breve" para integrações na tabela de comparação
+
+### 📚 Documentação
+- **[COMPLETO]** AGENTS.md atualizado para v3.9.0
+- **[COMPLETO]** STATUS_IMPLEMENTACAO.md atualizado com novas features
+- **[COMPLETO]** Novos arquivos SQL: admin_integrations_upgrade.sql, setup_seo_performance_category.sql
+- **[COMPLETO]** Scripts de verificação: verify_features.sql, fix_seo_performance_features.sql
 
 ### Callback URL (mesma para todos os providers)
 ```
