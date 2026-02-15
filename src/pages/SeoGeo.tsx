@@ -206,9 +206,9 @@ export default function SeoGeo() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
-  // Load history for selected project
-  const loadHistory = async (projectId: string) => {
-    if (!user || !projectId) return;
+  // Load history for selected project — returns items so callers can auto-restore
+  const loadHistory = async (projectId: string): Promise<any[]> => {
+    if (!user || !projectId) return [];
     setHistoryLoading(true);
     try {
       const { data } = await (supabase as any)
@@ -218,9 +218,12 @@ export default function SeoGeo() {
         .eq("user_id", user.id)
         .order("analyzed_at", { ascending: false })
         .limit(10);
-      setHistoryItems(data || []);
+      const items = data || [];
+      setHistoryItems(items);
+      return items;
     } catch {
       setHistoryItems([]);
+      return [];
     } finally {
       setHistoryLoading(false);
     }
@@ -308,22 +311,31 @@ export default function SeoGeo() {
     })();
   }, [user]);
 
-  // Load history when project changes
+  // Load history when project changes — auto-restore latest saved analysis
   useEffect(() => {
-    if (selectedProjectId) {
-      loadHistory(selectedProjectId);
-    }
-  }, [selectedProjectId]);
+    if (!selectedProjectId) return;
+    // Clear previous results when switching projects
+    setResult(null);
+    setSerpData(null);
+    setIntelData(null);
+    setError(null);
+    setSerpError(null);
+    setIntelError(null);
+    setCompletedSteps(new Set());
+    setShowHistory(false);
 
-  // Auto-analyze when project is selected via URL param
-  useEffect(() => {
-    if (projectIdParam && projects.length > 0 && !result && !loading) {
-      const project = projects.find((p: any) => p.id === projectIdParam);
-      if (project?.url) {
-        handleAnalyze();
+    (async () => {
+      const items = await loadHistory(selectedProjectId);
+      // Auto-restore the most recent analysis if available
+      if (items.length > 0) {
+        const latest = items[0];
+        if (latest.pagespeed_result) setResult(latest.pagespeed_result);
+        if (latest.serp_data) setSerpData(latest.serp_data);
+        if (latest.intelligence_data) setIntelData(latest.intelligence_data);
+        if (latest.strategy) setStrategy(latest.strategy);
       }
-    }
-  }, [projectIdParam, projects]);
+    })();
+  }, [selectedProjectId]);
 
   const selectedProject = projects.find((p: any) => p.id === selectedProjectId);
 

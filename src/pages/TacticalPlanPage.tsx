@@ -24,6 +24,17 @@ import {
   Shield,
   Sparkles,
   TrendingUp,
+  Monitor,
+  Factory,
+  GraduationCap,
+  Landmark,
+  HeartPulse,
+  Building2,
+  ChevronRight,
+  Search,
+  Megaphone,
+  PenTool,
+  type LucideIcon,
 } from "lucide-react";
 
 const channelFeatures = [
@@ -118,21 +129,21 @@ const tacticalSections = [
   },
 ];
 
-const templates = [
-  { name: "SaaS B2B", emoji: "💻", tags: ["Busca", "LinkedIn", "Leads"] },
-  { name: "Consultoria & Serviços", emoji: "🏢", tags: ["Autoridade", "Lead Gen", "Conteúdo"] },
-  { name: "E-commerce & Indústria B2B", emoji: "🏭", tags: ["Performance", "Catálogo", "ROAS"] },
-  { name: "Educação Corporativa", emoji: "🎓", tags: ["Awareness", "Webinar", "Nurturing"] },
-  { name: "Fintech & Financeiro", emoji: "💰", tags: ["Confiança", "Compliance", "Conversão"] },
-  { name: "Saúde Corporativa", emoji: "🏥", tags: ["Credibilidade", "B2B2C", "Regulação"] },
+const templates: { name: string; icon: LucideIcon; color: string; bgColor: string; tags: string[]; desc: string }[] = [
+  { name: "SaaS B2B", icon: Monitor, color: "text-blue-600", bgColor: "bg-blue-500/10", tags: ["Busca", "LinkedIn", "Leads"], desc: "Geração de leads, trials e demos com ciclo consultivo" },
+  { name: "Consultoria & Serviços", icon: Building2, color: "text-purple-600", bgColor: "bg-purple-500/10", tags: ["Autoridade", "Lead Gen", "Conteúdo"], desc: "Autoridade, reuniões e posicionamento especialista" },
+  { name: "E-commerce & Indústria B2B", icon: Factory, color: "text-amber-600", bgColor: "bg-amber-500/10", tags: ["Performance", "Catálogo", "ROAS"], desc: "Catálogo, orçamentos e vendas recorrentes" },
+  { name: "Educação Corporativa", icon: GraduationCap, color: "text-green-600", bgColor: "bg-green-500/10", tags: ["Awareness", "Webinar", "Nurturing"], desc: "Demos, pilotos gratuitos e vendas para RH/T&D" },
+  { name: "Fintech & Financeiro", icon: Landmark, color: "text-emerald-600", bgColor: "bg-emerald-500/10", tags: ["Confiança", "Compliance", "Conversão"], desc: "Confiança, compliance e leads de alto ticket" },
+  { name: "Saúde Corporativa", icon: HeartPulse, color: "text-rose-600", bgColor: "bg-rose-500/10", tags: ["Credibilidade", "B2B2C", "Regulação"], desc: "Saúde ocupacional, bem-estar e benefícios" },
 ];
 
 const flowSteps = [
-  { step: "1", label: "Crie o Projeto", desc: "URL + nicho + concorrentes", icon: Target },
-  { step: "2", label: "Análise Estratégica", desc: "Scores por canal", icon: BarChart3 },
-  { step: "3", label: "Defina Públicos", desc: "Audiências vinculadas", icon: Users },
-  { step: "4", label: "Monte o Plano", desc: "Template ou do zero", icon: Crosshair },
-  { step: "5", label: "Rode o Playbook", desc: "Diretivas priorizadas", icon: Rocket },
+  { step: "1", label: "Crie o Projeto", desc: "URL, nicho e concorrentes", icon: Target, accent: "from-blue-500 to-blue-600" },
+  { step: "2", label: "Análise Estratégica", desc: "Scores automáticos por canal", icon: Search, accent: "from-violet-500 to-violet-600" },
+  { step: "3", label: "Defina Públicos", desc: "Audiências vinculadas ao projeto", icon: Users, accent: "from-emerald-500 to-emerald-600" },
+  { step: "4", label: "Monte o Plano", desc: "Template validado ou do zero", icon: PenTool, accent: "from-amber-500 to-amber-600" },
+  { step: "5", label: "Rode o Playbook", desc: "Diretivas priorizadas por canal", icon: Rocket, accent: "from-primary to-orange-600" },
 ];
 
 export default function TacticalPlanPage() {
@@ -216,25 +227,38 @@ export default function TacticalPlanPage() {
             </p>
           </div>
 
-          <div className="max-w-4xl mx-auto">
-            <div className="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-5 sm:gap-4 items-center">
-              {flowSteps.map((item, index) => {
-                const Icon = item.icon;
-                return (
-                  <div key={index} className="text-center">
-                    <div className="relative inline-flex flex-col items-center">
-                      <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center mb-3 shadow-lg">
-                        <Icon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
-                      </div>
-                      <div className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-foreground text-background text-xs font-bold flex items-center justify-center">
-                        {item.step}
-                      </div>
+          <div className="max-w-5xl mx-auto">
+            {/* Mobile: stack vertical */}
+            <div className="flex flex-col gap-3 sm:hidden">
+              {flowSteps.map((item, index) => (
+                <div key={index} className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-center hover:bg-primary/10 transition-colors">
+                  <div className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground text-sm font-bold mb-2">
+                    {item.step}
+                  </div>
+                  <h4 className="font-semibold text-foreground text-sm">{item.label}</h4>
+                  <p className="text-xs text-muted-foreground mt-1">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: grid with arrows */}
+            <div className="hidden sm:grid sm:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr_auto_1fr] sm:items-stretch sm:gap-3">
+              {flowSteps.map((item, index) => (
+                <>
+                  <div key={item.step} className="rounded-2xl border border-primary/20 bg-primary/5 p-5 text-center hover:bg-primary/10 transition-colors flex flex-col justify-center">
+                    <div className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground text-sm font-bold mb-2 mx-auto">
+                      {item.step}
                     </div>
                     <h4 className="font-semibold text-foreground text-sm">{item.label}</h4>
-                    <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{item.desc}</p>
                   </div>
-                );
-              })}
+                  {index < flowSteps.length - 1 && (
+                    <div key={`arrow-${index}`} className="flex items-center justify-center">
+                      <ChevronRight className="h-5 w-5 text-primary/40" />
+                    </div>
+                  )}
+                </>
+              ))}
             </div>
           </div>
         </div>
@@ -325,26 +349,32 @@ export default function TacticalPlanPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {templates.map((tmpl, index) => (
-              <div
-                key={index}
-                className="rounded-2xl border border-border bg-background p-6 hover:border-primary/30 hover:shadow-md transition-all duration-300"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-lg">
-                    {tmpl.emoji}
+            {templates.map((tmpl, index) => {
+              const Icon = tmpl.icon;
+              return (
+                <div
+                  key={index}
+                  className="rounded-2xl border border-border bg-background p-6 hover:border-primary/30 hover:shadow-md transition-all duration-300 group"
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`h-10 w-10 rounded-lg ${tmpl.bgColor} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
+                      <Icon className={`h-5 w-5 ${tmpl.color}`} />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-foreground">{tmpl.name}</h3>
+                      <p className="text-xs text-muted-foreground leading-snug">{tmpl.desc}</p>
+                    </div>
                   </div>
-                  <h3 className="font-bold text-foreground">{tmpl.name}</h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {tmpl.tags.map((tag, i) => (
+                      <Badge key={i} variant="outline" className="text-[10px]">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {tmpl.tags.map((tag, i) => (
-                    <Badge key={i} variant="outline" className="text-[10px]">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

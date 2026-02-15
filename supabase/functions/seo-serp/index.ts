@@ -35,10 +35,11 @@ function normalizeDomain(input: string): string {
 // =====================================================
 // SERPER.DEV API
 // =====================================================
-// Env var: SERPER_API_KEY
+// Env vars: SERPER_API_KEY, SERPER_API_KEY_2
 // Docs: https://serper.dev/docs
-// Free tier: 2,500 credits on signup
+// Free tier: 2,500 credits per key on signup
 // Each search = 1 credit
+// Round-robin rotation across keys to double quota
 // =====================================================
 
 async function fetchSerperResults(
@@ -120,19 +121,29 @@ serve(async (req) => {
       );
     }
 
-    const apiKey = Deno.env.get("SERPER_API_KEY");
-    if (!apiKey) {
-      console.error("[seo-serp] SERPER_API_KEY env var not set");
+    // Load API keys — support 1 or 2 keys for rotation
+    const keys: string[] = [];
+    const key1 = Deno.env.get("SERPER_API_KEY");
+    const key2 = Deno.env.get("SERPER_API_KEY_2");
+    if (key1) keys.push(key1);
+    if (key2) keys.push(key2);
+
+    if (keys.length === 0) {
+      console.error("[seo-serp] No SERPER_API_KEY env vars set");
       return new Response(
         JSON.stringify({ error: "SERPER_API_KEY não configurada. Configure nas variáveis de ambiente do Supabase." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    console.log(`[seo-serp] ${keys.length} API key(s) loaded, round-robin rotation`);
+
     const normalizedTarget = normalizeDomain(targetDomain);
     const allQueries: any[] = [];
 
-    for (const term of searchTerms.slice(0, 10)) {
+    for (let i = 0; i < Math.min(searchTerms.length, 10); i++) {
+      const term = searchTerms[i];
+      const apiKey = keys[i % keys.length];
       const { organic, error } = await fetchSerperResults(term, apiKey, 10);
 
       if (error) {

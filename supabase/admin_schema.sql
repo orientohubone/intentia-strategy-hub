@@ -190,9 +190,9 @@ INSERT INTO feature_flags (feature_key, feature_name, description, category, sta
   ('meta_ads_integration', 'Meta Ads Integration', 'Integração com Meta Ads API', 'integrations', 'development', 'Em desenvolvimento - liberação em breve', 'FacebookLogo', 78),
   ('linkedin_ads_integration', 'LinkedIn Ads Integration', 'Integração com LinkedIn Ads API', 'integrations', 'development', 'Em desenvolvimento - liberação em breve', 'LinkedinLogo', 79),
   ('tiktok_ads_integration', 'TikTok Ads Integration', 'Integração com TikTok Ads API', 'integrations', 'development', 'Em desenvolvimento - liberação em breve', 'Music2', 80),
-  ('seo_analysis', 'SEO Analysis', 'Análise SEO e PageSpeed Insights', 'seo_performance', 'active', NULL, 'Search', 81),
-  ('performance_monitoring', 'Performance Monitoring', 'Monitoramento de performance de campanhas', 'seo_performance', 'active', NULL, 'Gauge', 82),
-  ('ai_performance_analysis', 'AI Performance Analysis', 'Análise de performance por IA', 'seo_performance', 'active', NULL, 'TrendingUp', 83)
+  ('seo_analysis', 'SEO & Performance', 'Core Web Vitals, SERP ranking (Serper.dev), backlinks, concorrentes e visibilidade em LLMs. Auto-restore da última análise salva ao selecionar projeto.', 'seo_performance', 'active', NULL, 'Search', 81),
+  ('performance_monitoring', 'Histórico de Análises', 'Até 10 análises salvas por projeto com auto-restore. Restauração com um clique. Exportação em PDF, HTML e JSON.', 'seo_performance', 'active', NULL, 'Gauge', 82),
+  ('ai_performance_analysis', 'Inteligência SEO por IA', 'Visibilidade em LLMs (Gemini/Claude), backlinks, autoridade de domínio e monitoramento de concorrentes via API keys do usuário.', 'seo_performance', 'active', NULL, 'TrendingUp', 83)
 ON CONFLICT (feature_key) DO NOTHING;
 
 -- =====================================================
