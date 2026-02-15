@@ -428,9 +428,12 @@ export default function SeoGeo() {
       const targetDomain = project.url ? new URL(project.url).hostname : undefined;
       const terms: string[] = [];
 
-      // Custom term first (if user typed one)
+      // Custom terms first (supports comma-separated)
       if (serpCustomTerm.trim()) {
-        terms.push(serpCustomTerm.trim());
+        serpCustomTerm.split(",").forEach(t => {
+          const trimmed = t.trim();
+          if (trimmed) terms.push(trimmed);
+        });
       }
 
       // Project name + niche
@@ -442,8 +445,8 @@ export default function SeoGeo() {
       // Project name alone
       terms.push(project.name);
 
-      // Deduplicate
-      const uniqueTerms = [...new Set(terms)].slice(0, 3);
+      // Deduplicate, max 10
+      const uniqueTerms = [...new Set(terms)].slice(0, 10);
 
       const data = await fetchSerpRanking(uniqueTerms, targetDomain);
       setSerpData(data);
@@ -969,14 +972,14 @@ export default function SeoGeo() {
                       Ranking Google por Projeto
                     </CardTitle>
                     <CardDescription>
-                      Busca até 3 variações automaticamente (nome, nome+nicho, termo personalizado). O melhor resultado é exibido.
+                      Até 10 termos (separados por vírgula) + nome e nicho do projeto. Resultados via Google Custom Search API.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex flex-col sm:flex-row gap-2">
                       <input
                         type="text"
-                        placeholder="Termo personalizado (opcional)..."
+                        placeholder="Termos separados por vírgula (ex: erp saas, sistema gestão)..."
                         value={serpCustomTerm}
                         onChange={(e) => setSerpCustomTerm(e.target.value)}
                         className="flex-1 h-9 rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -1004,7 +1007,7 @@ export default function SeoGeo() {
                     {serpLoading && (
                       <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
                         <RefreshCw className="h-4 w-4 animate-spin" />
-                        Consultando Google com até 3 variações...
+                        Consultando Google Custom Search...
                       </div>
                     )}
 
@@ -1052,22 +1055,27 @@ export default function SeoGeo() {
                         ) : (
                           <div className="divide-y divide-border">
                             {serpData.results.map((item) => (
-                              <div key={`${item.position}-${item.domain}`} className="flex items-start gap-3 py-3">
+                              <div key={`${item.position}-${item.domain}`} className={`flex items-start gap-3 py-3 ${item.isTarget ? "bg-primary/5 -mx-3 px-3 rounded-lg" : ""}`}>
                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold shrink-0 ${item.isTarget ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                                   {item.position}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-semibold text-foreground truncate">{item.title}</p>
-                                  <p className="text-xs text-muted-foreground truncate">{item.domain}</p>
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-sm font-semibold text-foreground truncate">{item.title}</p>
+                                    {item.isTarget && (
+                                      <Badge className="text-[9px] shrink-0">Seu site</Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-[11px] text-primary/70 truncate">{item.domain}</p>
+                                  {item.snippet && (
+                                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.snippet}</p>
+                                  )}
                                 </div>
-                                {item.isTarget && (
-                                  <Badge className="text-[9px] shrink-0">Seu site</Badge>
-                                )}
                                 <a
                                   href={item.link}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="text-xs text-primary hover:underline flex items-center gap-1 shrink-0"
+                                  className="text-xs text-primary hover:underline flex items-center gap-1 shrink-0 mt-1"
                                 >
                                   <ExternalLink className="h-3 w-3" />
                                 </a>

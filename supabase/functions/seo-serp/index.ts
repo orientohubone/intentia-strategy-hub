@@ -6,6 +6,24 @@ const corsHeaders = {
 };
 
 // =====================================================
+// TYPES
+// =====================================================
+
+interface CseKey {
+  apiKey: string;
+  cxId: string;
+}
+
+interface SerpResultItem {
+  position: number;
+  title: string;
+  link: string;
+  domain: string;
+  snippet: string;
+  isTarget: boolean;
+}
+
+// =====================================================
 // HELPERS
 // =====================================================
 
@@ -19,135 +37,125 @@ function normalizeDomain(input: string): string {
   }
 }
 
-function decodeHtmlEntities(text: string): string {
-  return text
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&#\d+;/g, "")
-    .replace(/<[^>]+>/g, "")
-    .trim();
+// =====================================================
+// GOOGLE CUSTOM SEARCH API KEY ROTATION
+// =====================================================
+// Env vars (individual, one per secret):
+//   GOOGLE_CSE_CX     — Search Engine ID (shared across all keys)
+//   GOOGLE_CSE_KEY_1  — API key 1
+//   GOOGLE_CSE_KEY_2  — API key 2 (optional)
+//   GOOGLE_CSE_KEY_3  — API key 3 (optional)
+//
+// Each key has 100 queries/day free. With 3 keys = 300 queries/day.
+// Rotates through keys on quota errors (HTTP 429 or 403).
+// =====================================================
+
+function loadCseKeys(): CseKey[] {
+  const cxId = Deno.env.get("GOOGLE_CSE_CX") || "";
+  if (!cxId) {
+    console.error("[seo-serp] GOOGLE_CSE_CX env var not set");
+    return [];
+  }
+
+  const keys: CseKey[] = [];
+  for (let i = 1; i <= 5; i++) {
+    const apiKey = Deno.env.get(`GOOGLE_CSE_KEY_${i}`);
+    if (apiKey && apiKey.trim()) {
+      keys.push({ apiKey: apiKey.trim(), cxId });
+    }
+  }
+
+  if (keys.length === 0) {
+    console.error("[seo-serp] No GOOGLE_CSE_KEY_N env vars found (checked 1-5)");
+  } else {
+    console.log(`[seo-serp] Loaded ${keys.length} CSE key(s)`);
+  }
+
+  return keys;
+}
+
+// Track which key index to start with (rotates on quota errors within this invocation)
+let currentKeyIndex = 0;
+
+async function fetchGoogleCse(
+  searchTerm: string,
+  keys: CseKey[],
+  startIndex: number = 1,
+): Promise<{ items: any[]; totalResults: string; keyUsed: number; error?: string }> {
+  if (keys.length === 0) {
+    return { items: [], totalResults: "0", keyUsed: -1, error: "Nenhuma API key configurada. Configure GOOGLE_CSE_KEYS no Supabase." };
+  }
+
+  // Try each key starting from currentKeyIndex
+  for (let attempt = 0; attempt < keys.length; attempt++) {
+    const keyIdx = (currentKeyIndex + attempt) % keys.length;
+    const key = keys[keyIdx];
+
+    const url = new URL("https://www.googleapis.com/customsearch/v1");
+    url.searchParams.set("key", key.apiKey);
+    url.searchParams.set("cx", key.cxId);
+    url.searchParams.set("q", searchTerm);
+    url.searchParams.set("num", "10");
+    url.searchParams.set("start", String(startIndex));
+    url.searchParams.set("gl", "br");
+    url.searchParams.set("hl", "pt-BR");
+
+    console.log(`[seo-serp] CSE request: key=${keyIdx}, term="${searchTerm}", start=${startIndex}`);
+
+    try {
+      const resp = await fetch(url.toString());
+      const data = await resp.json();
+
+      if (resp.ok) {
+        console.log(`[seo-serp] CSE OK: key=${keyIdx}, items=${data.items?.length || 0}, total=${data.searchInformation?.totalResults}`);
+        // Update current key index for next call
+        currentKeyIndex = keyIdx;
+        return {
+          items: data.items || [],
+          totalResults: data.searchInformation?.totalResults || "0",
+          keyUsed: keyIdx,
+        };
+      }
+
+      // Check if quota exceeded — rotate to next key
+      const errorReason = data?.error?.errors?.[0]?.reason || "";
+      const errorMessage = data?.error?.message || `HTTP ${resp.status}`;
+      console.warn(`[seo-serp] CSE error: key=${keyIdx}, status=${resp.status}, reason=${errorReason}, msg=${errorMessage}`);
+
+      if (resp.status === 429 || resp.status === 403 || errorReason === "rateLimitExceeded" || errorReason === "dailyLimitExceeded") {
+        console.log(`[seo-serp] Quota exceeded on key ${keyIdx}, rotating to next key...`);
+        continue; // Try next key
+      }
+
+      // Non-quota error — return it
+      return { items: [], totalResults: "0", keyUsed: keyIdx, error: errorMessage };
+    } catch (err: any) {
+      console.error(`[seo-serp] CSE fetch error: key=${keyIdx}:`, err?.message);
+      continue; // Try next key on network error
+    }
+  }
+
+  // All keys exhausted
+  return { items: [], totalResults: "0", keyUsed: -1, error: "Todas as API keys atingiram o limite diário. Tente novamente amanhã." };
 }
 
 // =====================================================
-// REGEX-BASED GOOGLE SERP PARSER (no DOM dependency)
+// PARSE CSE RESULTS
 // =====================================================
 
-function parseGoogleResults(html: string, normalizedTarget: string) {
-  const results: any[] = [];
-  const seen = new Set<string>();
-
-  // Strategy 1: Match <a href="/url?q=..."><h3>...</h3></a> pattern
-  const pattern1 = /<a[^>]*href="\/url\?q=([^"&]+)[^"]*"[^>]*>[\s\S]*?<h3[^>]*>([\s\S]*?)<\/h3>/gi;
-  let match;
-  while ((match = pattern1.exec(html)) !== null) {
-    const link = decodeURIComponent(match[1]);
-    const title = decodeHtmlEntities(match[2]);
-    if (title && link.startsWith("http") && !seen.has(link)) {
-      seen.add(link);
-      let domain = "";
-      try { domain = new URL(link).hostname.replace(/^www\./, ""); } catch {}
-      results.push({ title, link, domain });
-    }
-  }
-
-  // Strategy 2: Match <a href="https://..."><h3>...</h3></a> (direct links)
-  const pattern2 = /<a[^>]*href="(https?:\/\/(?!www\.google\.|webcache\.)[^"]+)"[^>]*>[\s\S]*?<h3[^>]*>([\s\S]*?)<\/h3>/gi;
-  while ((match = pattern2.exec(html)) !== null) {
-    const link = match[1];
-    const title = decodeHtmlEntities(match[2]);
-    if (title && !seen.has(link)) {
-      seen.add(link);
-      let domain = "";
-      try { domain = new URL(link).hostname.replace(/^www\./, ""); } catch {}
-      results.push({ title, link, domain });
-    }
-  }
-
-  // Strategy 3: Match <h3>...</h3> near <a href="..."> (looser)
-  const pattern3 = /<h3[^>]*>([\s\S]*?)<\/h3>[\s\S]{0,200}?href="(https?:\/\/(?!www\.google\.|webcache\.)[^"]+)"/gi;
-  while ((match = pattern3.exec(html)) !== null) {
-    const title = decodeHtmlEntities(match[1]);
-    const link = match[2];
-    if (title && link && !seen.has(link)) {
-      seen.add(link);
-      let domain = "";
-      try { domain = new URL(link).hostname.replace(/^www\./, ""); } catch {}
-      results.push({ title, link, domain });
-    }
-  }
-
-  // Strategy 4: Reverse — <a href="..."> near <h3>
-  const pattern4 = /href="(https?:\/\/(?!www\.google\.|webcache\.)[^"]+)"[\s\S]{0,200}?<h3[^>]*>([\s\S]*?)<\/h3>/gi;
-  while ((match = pattern4.exec(html)) !== null) {
-    const link = match[1];
-    const title = decodeHtmlEntities(match[2]);
-    if (title && link && !seen.has(link)) {
-      seen.add(link);
-      let domain = "";
-      try { domain = new URL(link).hostname.replace(/^www\./, ""); } catch {}
-      results.push({ title, link, domain });
-    }
-  }
-
-  // Assign positions and target match
-  return results.slice(0, 20).map((r, i) => ({
-    position: i + 1,
-    title: r.title,
-    link: r.link,
-    domain: r.domain,
-    isTarget: normalizedTarget ? r.domain.includes(normalizedTarget) : false,
-  }));
-}
-
-// =====================================================
-// FETCH GOOGLE SERP (with proxy fallback)
-// =====================================================
-
-async function fetchGoogleSerp(searchTerm: string): Promise<{ html: string; status: number }> {
-  const url = `https://www.google.com/search?q=${encodeURIComponent(searchTerm)}&num=20&hl=pt-br&gl=br`;
-
-  const headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
-    "Accept-Encoding": "identity",
-    "Cache-Control": "no-cache",
-  };
-
-  console.log(`[seo-serp] Fetching: ${searchTerm}`);
-
-  const response = await fetch(url, { headers, redirect: "follow" });
-
-  if (response.ok) {
-    const html = await response.text();
-    console.log(`[seo-serp] Direct fetch OK, HTML length: ${html.length}`);
-    return { html, status: response.status };
-  }
-
-  console.warn(`[seo-serp] Direct fetch failed: ${response.status}, trying proxy...`);
-
-  // Proxy fallback
-  const proxyUrl = Deno.env.get("PROXY_URL");
-  const proxyKey = Deno.env.get("PROXY_API_KEY");
-  if (proxyUrl) {
-    const proxyRequestUrl = proxyKey
-      ? `${proxyUrl}?url=${encodeURIComponent(url)}&api_key=${proxyKey}`
-      : `${proxyUrl}?url=${encodeURIComponent(url)}`;
-    const proxyResponse = await fetch(proxyRequestUrl);
-    if (proxyResponse.ok) {
-      const html = await proxyResponse.text();
-      console.log(`[seo-serp] Proxy fetch OK, HTML length: ${html.length}`);
-      return { html, status: 200 };
-    }
-    console.error(`[seo-serp] Proxy also failed: ${proxyResponse.status}`);
-    return { html: "", status: proxyResponse.status };
-  }
-
-  return { html: "", status: response.status };
+function parseCseResults(items: any[], normalizedTarget: string): SerpResultItem[] {
+  return items.map((item: any, i: number) => {
+    let domain = "";
+    try { domain = new URL(item.link).hostname.replace(/^www\./, ""); } catch {}
+    return {
+      position: i + 1,
+      title: item.title || "",
+      link: item.link || "",
+      domain,
+      snippet: item.snippet || "",
+      isTarget: normalizedTarget ? domain.includes(normalizedTarget) : false,
+    };
+  });
 }
 
 // =====================================================
@@ -171,47 +179,52 @@ serve(async (req) => {
       );
     }
 
+    const keys = loadCseKeys();
     const normalizedTarget = normalizeDomain(targetDomain);
     const allQueries: any[] = [];
 
-    for (const term of searchTerms.slice(0, 3)) {
-      const { html, status } = await fetchGoogleSerp(term);
+    for (const term of searchTerms.slice(0, 10)) {
+      // Fetch first 10 results per term (1 API call each)
+      const page1 = await fetchGoogleCse(term, keys, 1);
 
-      if (!html) {
+      if (page1.error) {
         allQueries.push({
           query: term,
           results: [],
-          error: `HTTP ${status}`,
+          targetPosition: null,
+          error: page1.error,
         });
+        // If all keys exhausted, stop trying more terms
+        if (page1.keyUsed === -1 && keys.length > 0) break;
         continue;
       }
 
-      const results = parseGoogleResults(html, normalizedTarget);
-      console.log(`[seo-serp] Query "${term}": ${results.length} results found`);
+      const results = parseCseResults(page1.items, normalizedTarget);
+      console.log(`[seo-serp] Query "${term}": ${results.length} results, target found: ${results.some(r => r.isTarget)}`);
 
       allQueries.push({
         query: term,
         results,
         targetPosition: normalizedTarget
-          ? results.find((r: any) => r.isTarget)?.position || null
+          ? results.find((r) => r.isTarget)?.position || null
           : null,
       });
     }
 
     // Best query = the one with the most results
     const bestQuery = allQueries.reduce((best, q) =>
-      q.results.length > (best?.results?.length || 0) ? q : best
+      (q.results?.length || 0) > (best?.results?.length || 0) ? q : best
     , allQueries[0]);
 
     return new Response(
       JSON.stringify({
-        query: bestQuery.query,
+        query: bestQuery?.query || searchTerms[0],
         targetDomain: normalizedTarget || null,
-        targetPosition: bestQuery.targetPosition || null,
-        results: bestQuery.results,
+        targetPosition: bestQuery?.targetPosition || null,
+        results: bestQuery?.results || [],
         allQueries: allQueries.map((q: any) => ({
           query: q.query,
-          resultCount: q.results.length,
+          resultCount: q.results?.length || 0,
           targetPosition: q.targetPosition || null,
           error: q.error || null,
         })),

@@ -5,6 +5,7 @@ export interface SerpResultItem {
   title: string;
   link: string;
   domain: string;
+  snippet?: string;
   isTarget: boolean;
 }
 
