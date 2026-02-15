@@ -367,20 +367,21 @@ export default function SeoGeo() {
         ? project.competitor_urls.filter((u: string) => u && u.trim())
         : [];
 
-      // Get user AI keys — fetch all keys (don't filter by is_valid, some may not have been validated yet)
+      // Get user AI keys — use correct column names: api_key_encrypted, is_active
       let aiKeys: { provider: string; apiKey: string; model: string }[] = [];
       if (user) {
-        const { data: keys, error: keysError } = await (supabase as any)
+        const { data: keys, error: keysError } = await supabase
           .from("user_api_keys")
-          .select("provider, api_key, preferred_model, is_valid")
-          .eq("user_id", user.id);
-        console.log("[SeoGeo] user_api_keys query result:", { keys: keys?.map((k: any) => ({ provider: k.provider, hasKey: !!k.api_key, keyLen: k.api_key?.length, model: k.preferred_model, is_valid: k.is_valid })), error: keysError });
+          .select("provider, api_key_encrypted, preferred_model, is_active")
+          .eq("user_id", user.id)
+          .eq("is_active", true);
+        console.log("[SeoGeo] user_api_keys query result:", { keys: keys?.map((k: any) => ({ provider: k.provider, hasKey: !!k.api_key_encrypted, keyLen: k.api_key_encrypted?.length, model: k.preferred_model, is_active: k.is_active })), error: keysError });
         if (keys && keys.length > 0) {
           aiKeys = keys
-            .filter((k: any) => k.api_key && k.api_key.trim())
+            .filter((k: any) => k.api_key_encrypted && k.api_key_encrypted.trim())
             .map((k: any) => ({
               provider: k.provider,
-              apiKey: k.api_key,
+              apiKey: k.api_key_encrypted,
               model: k.preferred_model || (k.provider === "google_gemini" ? "gemini-2.0-flash" : "claude-sonnet-4-20250514"),
             }));
         }
