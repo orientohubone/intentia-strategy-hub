@@ -9,11 +9,6 @@ const corsHeaders = {
 // TYPES
 // =====================================================
 
-interface CseKey {
-  apiKey: string;
-  cxId: string;
-}
-
 interface SerpResultItem {
   position: number;
   title: string;
@@ -38,117 +33,63 @@ function normalizeDomain(input: string): string {
 }
 
 // =====================================================
-// GOOGLE CUSTOM SEARCH API KEY ROTATION
+// SERPER.DEV API
 // =====================================================
-// Env vars (individual, one per secret):
-//   GOOGLE_CSE_CX     — Search Engine ID (shared across all keys)
-//   GOOGLE_CSE_KEY_1  — API key 1
-//   GOOGLE_CSE_KEY_2  — API key 2 (optional)
-//   GOOGLE_CSE_KEY_3  — API key 3 (optional)
-//
-// Each key has 100 queries/day free. With 3 keys = 300 queries/day.
-// Rotates through keys on quota errors (HTTP 429 or 403).
+// Env var: SERPER_API_KEY
+// Docs: https://serper.dev/docs
+// Free tier: 2,500 credits on signup
+// Each search = 1 credit
 // =====================================================
 
-function loadCseKeys(): CseKey[] {
-  const cxId = Deno.env.get("GOOGLE_CSE_CX") || "";
-  if (!cxId) {
-    console.error("[seo-serp] GOOGLE_CSE_CX env var not set");
-    return [];
-  }
-
-  const keys: CseKey[] = [];
-  for (let i = 1; i <= 5; i++) {
-    const apiKey = Deno.env.get(`GOOGLE_CSE_KEY_${i}`);
-    if (apiKey && apiKey.trim()) {
-      keys.push({ apiKey: apiKey.trim(), cxId });
-    }
-  }
-
-  if (keys.length === 0) {
-    console.error("[seo-serp] No GOOGLE_CSE_KEY_N env vars found (checked 1-5)");
-  } else {
-    console.log(`[seo-serp] Loaded ${keys.length} CSE key(s)`);
-  }
-
-  return keys;
-}
-
-// Track which key index to start with (rotates on quota errors within this invocation)
-let currentKeyIndex = 0;
-
-async function fetchGoogleCse(
+async function fetchSerperResults(
   searchTerm: string,
-  keys: CseKey[],
-  startIndex: number = 1,
-): Promise<{ items: any[]; totalResults: string; keyUsed: number; error?: string }> {
-  if (keys.length === 0) {
-    return { items: [], totalResults: "0", keyUsed: -1, error: "Nenhuma API key configurada. Configure GOOGLE_CSE_KEYS no Supabase." };
-  }
+  apiKey: string,
+  num: number = 10,
+): Promise<{ organic: any[]; error?: string }> {
+  console.log(`[seo-serp] Serper request: term="${searchTerm}", num=${num}`);
 
-  // Try each key starting from currentKeyIndex
-  for (let attempt = 0; attempt < keys.length; attempt++) {
-    const keyIdx = (currentKeyIndex + attempt) % keys.length;
-    const key = keys[keyIdx];
+  try {
+    const resp = await fetch("https://google.serper.dev/search", {
+      method: "POST",
+      headers: {
+        "X-API-KEY": apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        q: searchTerm,
+        gl: "br",
+        hl: "pt-br",
+        num,
+      }),
+    });
 
-    const url = new URL("https://www.googleapis.com/customsearch/v1");
-    url.searchParams.set("key", key.apiKey);
-    url.searchParams.set("cx", key.cxId);
-    url.searchParams.set("q", searchTerm);
-    url.searchParams.set("num", "10");
-    url.searchParams.set("start", String(startIndex));
-    url.searchParams.set("gl", "br");
-    url.searchParams.set("hl", "pt-BR");
+    const data = await resp.json();
 
-    console.log(`[seo-serp] CSE request: key=${keyIdx}, term="${searchTerm}", start=${startIndex}`);
-
-    try {
-      const resp = await fetch(url.toString());
-      const data = await resp.json();
-
-      if (resp.ok) {
-        console.log(`[seo-serp] CSE OK: key=${keyIdx}, items=${data.items?.length || 0}, total=${data.searchInformation?.totalResults}`);
-        // Update current key index for next call
-        currentKeyIndex = keyIdx;
-        return {
-          items: data.items || [],
-          totalResults: data.searchInformation?.totalResults || "0",
-          keyUsed: keyIdx,
-        };
-      }
-
-      // Check if quota exceeded — rotate to next key
-      const errorReason = data?.error?.errors?.[0]?.reason || "";
-      const errorMessage = data?.error?.message || `HTTP ${resp.status}`;
-      console.warn(`[seo-serp] CSE error: key=${keyIdx}, status=${resp.status}, reason=${errorReason}, msg=${errorMessage}`);
-
-      if (resp.status === 429 || resp.status === 403 || errorReason === "rateLimitExceeded" || errorReason === "dailyLimitExceeded") {
-        console.log(`[seo-serp] Quota exceeded on key ${keyIdx}, rotating to next key...`);
-        continue; // Try next key
-      }
-
-      // Non-quota error — return it
-      return { items: [], totalResults: "0", keyUsed: keyIdx, error: errorMessage };
-    } catch (err: any) {
-      console.error(`[seo-serp] CSE fetch error: key=${keyIdx}:`, err?.message);
-      continue; // Try next key on network error
+    if (!resp.ok) {
+      const errMsg = data?.message || data?.error || `HTTP ${resp.status}`;
+      console.error(`[seo-serp] Serper error: ${resp.status} — ${errMsg}`);
+      return { organic: [], error: errMsg };
     }
-  }
 
-  // All keys exhausted
-  return { items: [], totalResults: "0", keyUsed: -1, error: "Todas as API keys atingiram o limite diário. Tente novamente amanhã." };
+    const organic = data.organic || [];
+    console.log(`[seo-serp] Serper OK: ${organic.length} organic results`);
+    return { organic };
+  } catch (err: any) {
+    console.error(`[seo-serp] Serper fetch error:`, err?.message);
+    return { organic: [], error: err?.message || "Erro de rede" };
+  }
 }
 
 // =====================================================
-// PARSE CSE RESULTS
+// PARSE SERPER RESULTS
 // =====================================================
 
-function parseCseResults(items: any[], normalizedTarget: string): SerpResultItem[] {
-  return items.map((item: any, i: number) => {
+function parseSerperResults(organic: any[], normalizedTarget: string): SerpResultItem[] {
+  return organic.map((item: any, i: number) => {
     let domain = "";
     try { domain = new URL(item.link).hostname.replace(/^www\./, ""); } catch {}
     return {
-      position: i + 1,
+      position: item.position || (i + 1),
       title: item.title || "",
       link: item.link || "",
       domain,
@@ -179,27 +120,32 @@ serve(async (req) => {
       );
     }
 
-    const keys = loadCseKeys();
+    const apiKey = Deno.env.get("SERPER_API_KEY");
+    if (!apiKey) {
+      console.error("[seo-serp] SERPER_API_KEY env var not set");
+      return new Response(
+        JSON.stringify({ error: "SERPER_API_KEY não configurada. Configure nas variáveis de ambiente do Supabase." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const normalizedTarget = normalizeDomain(targetDomain);
     const allQueries: any[] = [];
 
     for (const term of searchTerms.slice(0, 10)) {
-      // Fetch first 10 results per term (1 API call each)
-      const page1 = await fetchGoogleCse(term, keys, 1);
+      const { organic, error } = await fetchSerperResults(term, apiKey, 10);
 
-      if (page1.error) {
+      if (error) {
         allQueries.push({
           query: term,
           results: [],
           targetPosition: null,
-          error: page1.error,
+          error,
         });
-        // If all keys exhausted, stop trying more terms
-        if (page1.keyUsed === -1 && keys.length > 0) break;
         continue;
       }
 
-      const results = parseCseResults(page1.items, normalizedTarget);
+      const results = parseSerperResults(organic, normalizedTarget);
       console.log(`[seo-serp] Query "${term}": ${results.length} results, target found: ${results.some(r => r.isTarget)}`);
 
       allQueries.push({

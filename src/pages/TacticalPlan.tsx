@@ -32,6 +32,12 @@ import {
   Target,
   Eye,
   FolderOpen,
+  Monitor,
+  Factory,
+  GraduationCap,
+  Landmark,
+  HeartPulse,
+  type LucideIcon,
 } from "lucide-react";
 import { CHANNELS, CHANNEL_LIST, FUNNEL_STAGES, COPY_FRAMEWORK_TYPES, QUALITY_SCORE_FACTORS, getScoreColor, getScoreLabel } from "@/lib/tacticalTypes";
 import type { ChannelKey, TacticalAlert } from "@/lib/tacticalTypes";
@@ -39,6 +45,21 @@ import { TACTICAL_TEMPLATES, getTemplateById } from "@/lib/tacticalTemplates";
 import type { TacticalTemplate } from "@/lib/tacticalTemplates";
 import { TacticalChannelView } from "@/components/tactical/TacticalChannelView";
 import { TacticalOverview } from "@/components/tactical/TacticalOverview";
+
+const TEMPLATE_ICON_MAP: Record<string, LucideIcon> = {
+  Monitor,
+  Crosshair,
+  Factory,
+  GraduationCap,
+  Landmark,
+  HeartPulse,
+};
+
+function TemplateIcon({ name, className }: { name: string; className?: string }) {
+  const Icon = TEMPLATE_ICON_MAP[name];
+  if (!Icon) return <Layers className={className} />;
+  return <Icon className={className} />;
+}
 
 type TabKey = "overview" | "templates" | "playbook" | ChannelKey;
 
@@ -821,8 +842,8 @@ export default function TacticalPlan() {
                           }`}
                         >
                           <div className="flex items-start gap-3 mb-3">
-                            <div className={`w-10 h-10 rounded-lg ${tmpl.bgColor} flex items-center justify-center text-lg shrink-0`}>
-                              {tmpl.icon}
+                            <div className={`w-10 h-10 rounded-lg ${tmpl.bgColor} flex items-center justify-center shrink-0`}>
+                              <TemplateIcon name={tmpl.icon} className={`h-5 w-5 ${tmpl.color}`} />
                             </div>
                             <div className="min-w-0">
                               <p className="text-sm font-semibold text-foreground">{tmpl.name}</p>
@@ -864,8 +885,8 @@ export default function TacticalPlan() {
                   return (
                     <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 space-y-4">
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg ${tmpl.bgColor} flex items-center justify-center text-base`}>
-                          {tmpl.icon}
+                        <div className={`w-8 h-8 rounded-lg ${tmpl.bgColor} flex items-center justify-center`}>
+                          <TemplateIcon name={tmpl.icon} className={`h-4 w-4 ${tmpl.color}`} />
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-foreground">Template: {tmpl.name}</p>
@@ -1169,8 +1190,8 @@ export default function TacticalPlan() {
                             }`}
                           >
                             <div className="flex items-start gap-3 mb-3">
-                              <div className={`w-10 h-10 rounded-lg ${tmpl.bgColor} flex items-center justify-center text-lg shrink-0`}>
-                                {tmpl.icon}
+                              <div className={`w-10 h-10 rounded-lg ${tmpl.bgColor} flex items-center justify-center shrink-0`}>
+                                <TemplateIcon name={tmpl.icon} className={`h-5 w-5 ${tmpl.color}`} />
                               </div>
                               <div className="min-w-0">
                                 <p className="text-sm font-semibold text-foreground">{tmpl.name}</p>
@@ -1212,8 +1233,8 @@ export default function TacticalPlan() {
                         <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-lg ${tmpl.bgColor} flex items-center justify-center text-base`}>
-                                {tmpl.icon}
+                              <div className={`w-8 h-8 rounded-lg ${tmpl.bgColor} flex items-center justify-center`}>
+                                <TemplateIcon name={tmpl.icon} className={`h-4 w-4 ${tmpl.color}`} />
                               </div>
                               <div>
                                 <p className="text-sm font-semibold text-foreground">Template: {tmpl.name}</p>

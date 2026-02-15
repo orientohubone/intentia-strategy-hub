@@ -64,7 +64,7 @@ const saasB2B: TacticalTemplate = {
   niche: "Software as a Service",
   description: "Plano tático validado para empresas SaaS B2B com foco em geração de leads qualificados, trials e demos. Estrutura otimizada para ciclo de venda consultivo.",
   tags: ["SaaS", "B2B", "Leads", "Trial", "Demo"],
-  icon: "💻",
+  icon: "Monitor",
   color: "text-blue-600",
   bgColor: "bg-blue-500/10",
   channels: [
@@ -307,7 +307,7 @@ const consultoria: TacticalTemplate = {
   niche: "Consultoria e Serviços Profissionais",
   description: "Plano tático para consultorias, agências e prestadores de serviço B2B. Foco em autoridade, geração de reuniões e posicionamento como especialista.",
   tags: ["Consultoria", "Serviços", "B2B", "Autoridade", "Reuniões"],
-  icon: "🎯",
+  icon: "Crosshair",
   color: "text-purple-600",
   bgColor: "bg-purple-500/10",
   channels: [
@@ -499,7 +499,7 @@ const ecommerceIndustria: TacticalTemplate = {
   niche: "E-commerce B2B e Indústria",
   description: "Plano tático para empresas industriais e e-commerces B2B. Foco em catálogo de produtos, orçamentos e vendas recorrentes com ticket médio alto.",
   tags: ["Indústria", "E-commerce", "B2B", "Catálogo", "Orçamento"],
-  icon: "🏭",
+  icon: "Factory",
   color: "text-amber-600",
   bgColor: "bg-amber-500/10",
   channels: [
@@ -670,7 +670,7 @@ const educacaoCorporativa: TacticalTemplate = {
   niche: "EdTech e Treinamento B2B",
   description: "Plano tático para plataformas de educação corporativa, treinamentos B2B e EdTechs. Foco em demonstrações, pilotos gratuitos e vendas para RH/T&D.",
   tags: ["EdTech", "Treinamento", "RH", "T&D", "Educação"],
-  icon: "🎓",
+  icon: "GraduationCap",
   color: "text-green-600",
   bgColor: "bg-green-500/10",
   channels: [
@@ -831,7 +831,7 @@ const fintechB2B: TacticalTemplate = {
   niche: "Fintech e Serviços Financeiros",
   description: "Plano tático para fintechs e empresas de serviços financeiros B2B. Foco em confiança, compliance, segurança e geração de leads qualificados com alto ticket.",
   tags: ["Fintech", "Financeiro", "B2B", "Compliance", "Segurança"],
-  icon: "💰",
+  icon: "Landmark",
   color: "text-emerald-600",
   bgColor: "bg-emerald-500/10",
   channels: [
@@ -991,7 +991,7 @@ const saudeCorporativa: TacticalTemplate = {
   niche: "Saúde e Bem-estar Corporativo",
   description: "Plano tático para empresas de saúde ocupacional, bem-estar corporativo e benefícios. Foco em RH, redução de absenteísmo e programas de qualidade de vida.",
   tags: ["Saúde", "Bem-estar", "RH", "Benefícios", "Corporativo"],
-  icon: "🏥",
+  icon: "HeartPulse",
   color: "text-rose-600",
   bgColor: "bg-rose-500/10",
   channels: [
