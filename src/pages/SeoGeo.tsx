@@ -36,6 +36,11 @@ import {
   Activity,
   ExternalLink,
   Info,
+  Download,
+  History,
+  FileJson,
+  FileCode,
+  Trash2,
 } from "lucide-react";
 import {
   fetchPageSpeedInsights,
@@ -50,6 +55,7 @@ import {
 } from "@/lib/pagespeedApi";
 import { fetchSerpRanking, type SerpResponse } from "@/lib/seoSerpApi";
 import { fetchSeoIntelligence, type SeoIntelligenceResponse } from "@/lib/seoIntelligenceApi";
+import { exportAsJson, exportAsHtml, exportAsPdf, type SeoAnalysisExportData } from "@/lib/seoExport";
 
 // =====================================================
 // SCORE GAUGE COMPONENT
@@ -191,13 +197,106 @@ export default function SeoGeo() {
   const [intelError, setIntelError] = useState<string | null>(null);
   const [intelData, setIntelData] = useState<SeoIntelligenceResponse | null>(null);
 
+  // Analysis step tracking
+  type AnalysisStep = "pagespeed" | "serp" | "backlinks" | "competitors" | "llm";
+  const [completedSteps, setCompletedSteps] = useState<Set<AnalysisStep>>(new Set());
+
+  // History
+  const [historyItems, setHistoryItems] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Load history for selected project
+  const loadHistory = async (projectId: string) => {
+    if (!user || !projectId) return;
+    setHistoryLoading(true);
+    try {
+      const { data } = await (supabase as any)
+        .from("seo_analysis_history")
+        .select("id, strategy, performance_score, seo_score, accessibility_score, best_practices_score, analyzed_url, analyzed_at, pagespeed_result, serp_data, intelligence_data")
+        .eq("project_id", projectId)
+        .eq("user_id", user.id)
+        .order("analyzed_at", { ascending: false })
+        .limit(10);
+      setHistoryItems(data || []);
+    } catch {
+      setHistoryItems([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  // Save analysis to history
+  const saveToHistory = async () => {
+    if (!user || !selectedProjectId || !result) return;
+    const project = projects.find((p: any) => p.id === selectedProjectId);
+    if (!project) return;
+
+    try {
+      await (supabase as any)
+        .from("seo_analysis_history")
+        .insert({
+          project_id: selectedProjectId,
+          user_id: user.id,
+          strategy,
+          performance_score: result.performanceScore,
+          seo_score: result.seoScore,
+          accessibility_score: result.accessibilityScore,
+          best_practices_score: result.bestPracticesScore,
+          pagespeed_result: result,
+          serp_data: serpData,
+          intelligence_data: intelData,
+          analyzed_url: project.url,
+        });
+      // Reload history
+      loadHistory(selectedProjectId);
+    } catch (err: any) {
+      console.error("Failed to save analysis:", err);
+    }
+  };
+
+  // Restore from history
+  const restoreFromHistory = (item: any) => {
+    if (item.pagespeed_result) setResult(item.pagespeed_result);
+    if (item.serp_data) setSerpData(item.serp_data);
+    if (item.intelligence_data) setIntelData(item.intelligence_data);
+    setStrategy(item.strategy || "mobile");
+    setShowHistory(false);
+  };
+
+  // Delete history item
+  const deleteHistoryItem = async (id: string) => {
+    if (!user) return;
+    await (supabase as any)
+      .from("seo_analysis_history")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id);
+    setHistoryItems(prev => prev.filter(h => h.id !== id));
+  };
+
+  // Build export data
+  const getExportData = (): SeoAnalysisExportData | null => {
+    const project = projects.find((p: any) => p.id === selectedProjectId);
+    if (!project || !result) return null;
+    return {
+      projectName: project.name,
+      projectUrl: project.url,
+      strategy,
+      analyzedAt: result.fetchTime || new Date().toISOString(),
+      pagespeed: result,
+      serp: serpData,
+      intelligence: intelData,
+    };
+  };
+
   // Load projects
   useEffect(() => {
     if (!user) return;
     (async () => {
       const { data } = await (supabase as any)
         .from("projects")
-        .select("id, name, url, niche, score, status, heuristic_analysis")
+        .select("id, name, url, niche, score, status, heuristic_analysis, competitor_urls")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (data) {
@@ -208,6 +307,13 @@ export default function SeoGeo() {
       }
     })();
   }, [user]);
+
+  // Load history when project changes
+  useEffect(() => {
+    if (selectedProjectId) {
+      loadHistory(selectedProjectId);
+    }
+  }, [selectedProjectId]);
 
   // Auto-analyze when project is selected via URL param
   useEffect(() => {
@@ -228,6 +334,9 @@ export default function SeoGeo() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setSerpData(null);
+    setIntelData(null);
+    setCompletedSteps(new Set());
 
     // Run PageSpeed + SERP ranking + Intelligence in parallel
     handleSerpFetch();
@@ -236,6 +345,7 @@ export default function SeoGeo() {
     try {
       const data = await fetchPageSpeedInsights(project.url, strategy);
       setResult(data);
+      setCompletedSteps(prev => new Set([...prev, "pagespeed"]));
     } catch (err: any) {
       setError(err.message || "Erro ao analisar URL");
     } finally {
@@ -253,32 +363,50 @@ export default function SeoGeo() {
 
     try {
       // Get competitor URLs from project
-      const competitorUrls = project.competitor_urls || [];
+      const competitorUrls: string[] = Array.isArray(project.competitor_urls)
+        ? project.competitor_urls.filter((u: string) => u && u.trim())
+        : [];
 
-      // Get user AI keys
+      // Get user AI keys — fetch all keys (don't filter by is_valid, some may not have been validated yet)
       let aiKeys: { provider: string; apiKey: string; model: string }[] = [];
       if (user) {
-        const { data: keys } = await (supabase as any)
+        const { data: keys, error: keysError } = await (supabase as any)
           .from("user_api_keys")
-          .select("provider, api_key, preferred_model")
-          .eq("user_id", user.id)
-          .eq("is_valid", true);
-        if (keys) {
-          aiKeys = keys.map((k: any) => ({
-            provider: k.provider,
-            apiKey: k.api_key,
-            model: k.preferred_model || (k.provider === "google_gemini" ? "gemini-2.0-flash" : "claude-sonnet-4-20250514"),
-          }));
+          .select("provider, api_key, preferred_model, is_valid")
+          .eq("user_id", user.id);
+        console.log("[SeoGeo] user_api_keys query result:", { keys: keys?.map((k: any) => ({ provider: k.provider, hasKey: !!k.api_key, keyLen: k.api_key?.length, model: k.preferred_model, is_valid: k.is_valid })), error: keysError });
+        if (keys && keys.length > 0) {
+          aiKeys = keys
+            .filter((k: any) => k.api_key && k.api_key.trim())
+            .map((k: any) => ({
+              provider: k.provider,
+              apiKey: k.api_key,
+              model: k.preferred_model || (k.provider === "google_gemini" ? "gemini-2.0-flash" : "claude-sonnet-4-20250514"),
+            }));
         }
+        console.log("[SeoGeo] aiKeys to send:", aiKeys.map(k => ({ provider: k.provider, model: k.model, keyLen: k.apiKey?.length })));
       }
+
+      // Use niche or fallback to project name for LLM queries
+      const niche = project.niche?.trim() || project.name;
 
       const data = await fetchSeoIntelligence({
         url: project.url,
         competitorUrls,
         brandName: project.name,
-        niche: project.niche || "",
+        niche,
         aiKeys,
       });
+
+      // Track completed steps based on returned data
+      setCompletedSteps(prev => {
+        const next = new Set(prev);
+        if (data.backlinks) next.add("backlinks");
+        if (data.competitors.length > 0) next.add("competitors");
+        if (data.llmResults.length > 0) next.add("llm");
+        return next;
+      });
+
       setIntelData(data);
     } catch (err: any) {
       setIntelError(err.message || "Erro na análise de inteligência");
@@ -318,6 +446,7 @@ export default function SeoGeo() {
 
       const data = await fetchSerpRanking(uniqueTerms, targetDomain);
       setSerpData(data);
+      setCompletedSteps(prev => new Set([...prev, "serp"]));
     } catch (err: any) {
       setSerpError(err.message || "Erro ao buscar ranking Google");
     } finally {
@@ -418,24 +547,50 @@ export default function SeoGeo() {
           </CardContent>
         </Card>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="space-y-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                  <div className="relative">
-                    <div className="w-16 h-16 rounded-full border-4 border-muted animate-spin border-t-primary" />
-                  </div>
-                  <div className="text-center space-y-1">
-                    <p className="text-sm font-medium text-foreground">Analisando com Google PageSpeed Insights...</p>
-                    <p className="text-xs text-muted-foreground">Isso pode levar de 15 a 45 segundos dependendo do site</p>
-                  </div>
+        {/* Loading State — Step-by-step progress */}
+        {(loading || (intelLoading && !result)) && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="py-8 space-y-6">
+                <div className="text-center space-y-1">
+                  <p className="text-base font-semibold text-foreground">Construindo análise completa...</p>
+                  <p className="text-xs text-muted-foreground">Executando múltiplas análises em paralelo</p>
                 </div>
-              </CardContent>
-            </Card>
-
-          </div>
+                <div className="max-w-md mx-auto space-y-3">
+                  {[
+                    { key: "pagespeed" as AnalysisStep, label: "Core Web Vitals & Performance", icon: Gauge, loading: loading && !completedSteps.has("pagespeed") },
+                    { key: "serp" as AnalysisStep, label: "Ranking no Google (SERP)", icon: Search, loading: serpLoading && !completedSteps.has("serp") },
+                    { key: "backlinks" as AnalysisStep, label: "Backlinks & Autoridade", icon: Link2, loading: intelLoading && !completedSteps.has("backlinks") },
+                    { key: "competitors" as AnalysisStep, label: `Monitoramento de Concorrentes${selectedProject?.competitor_urls?.length ? ` (${selectedProject.competitor_urls.filter((u: string) => u?.trim()).length})` : ""}`, icon: Radar, loading: intelLoading && !completedSteps.has("competitors") },
+                    { key: "llm" as AnalysisStep, label: "Visibilidade em LLMs (IA)", icon: Bot, loading: intelLoading && !completedSteps.has("llm") },
+                  ].map((step) => {
+                    const done = completedSteps.has(step.key);
+                    const active = step.loading;
+                    return (
+                      <div key={step.key} className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border transition-all ${done ? "border-green-500/30 bg-green-500/5" : active ? "border-primary/30 bg-primary/5" : "border-border bg-muted/30 opacity-50"}`}>
+                        <div className="shrink-0">
+                          {done ? (
+                            <CheckCircle2 className="h-5 w-5 text-green-500" />
+                          ) : active ? (
+                            <RefreshCw className="h-5 w-5 text-primary animate-spin" />
+                          ) : (
+                            <Clock className="h-5 w-5 text-muted-foreground/50" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium ${done ? "text-green-600 dark:text-green-400" : active ? "text-foreground" : "text-muted-foreground"}`}>
+                            {step.label}
+                          </p>
+                        </div>
+                        {done && <Badge variant="outline" className="text-[9px] text-green-600 border-green-500/30 shrink-0">OK</Badge>}
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-center text-[11px] text-muted-foreground">Isso pode levar de 15 a 60 segundos dependendo do site e das integrações</p>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Error State */}
@@ -455,27 +610,167 @@ export default function SeoGeo() {
 
         {/* Empty State */}
         {!loading && !result && !error && (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                  <Gauge className="h-8 w-8 text-primary" />
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <Gauge className="h-8 w-8 text-primary" />
+                  </div>
+                  <div className="text-center space-y-2 max-w-md">
+                    <h3 className="text-lg font-semibold text-foreground">Análise SEO & Performance</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Selecione um projeto acima e clique em "Analisar" para obter dados reais do Google PageSpeed Insights,
+                      incluindo Core Web Vitals, SEO, acessibilidade e oportunidades de melhoria.
+                    </p>
+                  </div>
                 </div>
-                <div className="text-center space-y-2 max-w-md">
-                  <h3 className="text-lg font-semibold text-foreground">Análise SEO & Performance</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Selecione um projeto acima e clique em "Analisar" para obter dados reais do Google PageSpeed Insights,
-                    incluindo Core Web Vitals, SEO, acessibilidade e oportunidades de melhoria.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            {/* History in empty state */}
+            {selectedProjectId && historyItems.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <History className="h-5 w-5 text-primary" />
+                    Análises Anteriores
+                  </CardTitle>
+                  <CardDescription>
+                    Restaure uma análise anterior para visualizar sem precisar rodar novamente
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="divide-y divide-border">
+                    {historyItems.map((item) => (
+                      <div key={item.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-[10px] gap-1">
+                              {item.strategy === "mobile" ? <Smartphone className="h-3 w-3" /> : <Monitor className="h-3 w-3" />}
+                              {item.strategy === "mobile" ? "Mobile" : "Desktop"}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(item.analyzed_at).toLocaleString("pt-BR")}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 mt-1.5">
+                            {[
+                              { label: "Perf", score: item.performance_score },
+                              { label: "SEO", score: item.seo_score },
+                              { label: "A11y", score: item.accessibility_score },
+                              { label: "BP", score: item.best_practices_score },
+                            ].map(s => s.score != null && (
+                              <span key={s.label} className={`text-xs font-semibold ${getScoreColor(s.score)}`}>
+                                {s.label}: {s.score}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => restoreFromHistory(item)}>
+                            <RefreshCw className="h-3 w-3" />
+                            Restaurar
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-red-500" onClick={() => deleteHistoryItem(item.id)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         )}
 
         {/* Results */}
         {result && (
           <div className="space-y-6">
+            {/* Action Bar: Save / Export / History */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={saveToHistory}>
+                  <Download className="h-3.5 w-3.5" />
+                  Salvar análise
+                </Button>
+                {historyItems.length > 0 && (
+                  <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => setShowHistory(!showHistory)}>
+                    <History className="h-3.5 w-3.5" />
+                    Histórico ({historyItems.length})
+                  </Button>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[11px] text-muted-foreground hidden sm:inline">Exportar:</span>
+                <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => { const d = getExportData(); d && exportAsPdf(d); }}>
+                  <FileText className="h-3.5 w-3.5" />
+                  PDF
+                </Button>
+                <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => { const d = getExportData(); d && exportAsHtml(d); }}>
+                  <FileCode className="h-3.5 w-3.5" />
+                  HTML
+                </Button>
+                <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => { const d = getExportData(); d && exportAsJson(d); }}>
+                  <FileJson className="h-3.5 w-3.5" />
+                  JSON
+                </Button>
+              </div>
+            </div>
+
+            {/* History Panel (collapsible) */}
+            {showHistory && historyItems.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <History className="h-5 w-5 text-primary" />
+                    Análises Anteriores
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="divide-y divide-border">
+                    {historyItems.map((item) => (
+                      <div key={item.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-[10px] gap-1">
+                              {item.strategy === "mobile" ? <Smartphone className="h-3 w-3" /> : <Monitor className="h-3 w-3" />}
+                              {item.strategy === "mobile" ? "Mobile" : "Desktop"}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(item.analyzed_at).toLocaleString("pt-BR")}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 mt-1.5">
+                            {[
+                              { label: "Perf", score: item.performance_score },
+                              { label: "SEO", score: item.seo_score },
+                              { label: "A11y", score: item.accessibility_score },
+                              { label: "BP", score: item.best_practices_score },
+                            ].map(s => s.score != null && (
+                              <span key={s.label} className={`text-xs font-semibold ${getScoreColor(s.score)}`}>
+                                {s.label}: {s.score}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => restoreFromHistory(item)}>
+                            <RefreshCw className="h-3 w-3" />
+                            Restaurar
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-red-500" onClick={() => deleteHistoryItem(item.id)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Score Overview */}
             <Card>
               <CardHeader className="pb-2">
@@ -1017,15 +1312,28 @@ export default function SeoGeo() {
                   </Card>
                 )}
 
-                {/* No AI keys message */}
+                {/* No AI keys / LLM errors message */}
                 {intelData && intelData.llmResults.length === 0 && (
                   <Card>
                     <CardContent className="pt-6">
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <Bot className="h-5 w-5 shrink-0" />
-                        <div>
+                      <div className="flex items-start gap-3 text-sm text-muted-foreground">
+                        <Bot className="h-5 w-5 shrink-0 mt-0.5" />
+                        <div className="space-y-2">
                           <p className="font-medium text-foreground">Visibilidade em LLMs</p>
-                          <p className="text-xs mt-0.5">Configure suas API keys em <a href="/settings" className="text-primary hover:underline">Configurações → Integrações de IA</a> para testar como sua marca aparece em respostas do Gemini e Claude.</p>
+                          {intelData.llmErrors && intelData.llmErrors.length > 0 ? (
+                            <div className="space-y-1.5">
+                              <p className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">Não foi possível consultar os LLMs:</p>
+                              {intelData.llmErrors.map((err, i) => (
+                                <p key={i} className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                  <XCircle className="h-3 w-3 text-red-400 shrink-0" />
+                                  {err}
+                                </p>
+                              ))}
+                              <p className="text-xs mt-2">Verifique suas API keys em <a href="/settings" className="text-primary hover:underline">Configurações → Integrações de IA</a>.</p>
+                            </div>
+                          ) : (
+                            <p className="text-xs">Configure suas API keys em <a href="/settings" className="text-primary hover:underline">Configurações → Integrações de IA</a> para testar como sua marca aparece em respostas do Gemini e Claude.</p>
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -1057,19 +1365,75 @@ export default function SeoGeo() {
                       Auditoria de Acessibilidade
                     </CardTitle>
                     <CardDescription>
-                      Problemas de acessibilidade detectados pelo Lighthouse
+                      Verificações de acessibilidade WCAG baseadas no Lighthouse — Score: {result.accessibilityScore}/100
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {result.accessibilityAudits.length === 0 ? (
-                      <div className="flex items-center gap-3 py-6 justify-center">
-                        <CheckCircle2 className="h-5 w-5 text-green-500" />
-                        <p className="text-sm text-muted-foreground">Nenhum problema de acessibilidade detectado</p>
+                      <div className="flex flex-col items-center gap-3 py-6">
+                        <CheckCircle2 className="h-8 w-8 text-green-500" />
+                        <div className="text-center">
+                          <p className="text-sm font-medium text-foreground">Excelente! Nenhum problema de acessibilidade detectado</p>
+                          <p className="text-xs text-muted-foreground mt-1">Seu site atende aos padrões WCAG verificados pelo Lighthouse</p>
+                        </div>
                       </div>
                     ) : (
-                      result.accessibilityAudits.map(a => (
-                        <AuditItem key={a.id} title={a.title} score={a.score} description={a.description} />
-                      ))
+                      <div className="space-y-4">
+                        {/* Summary */}
+                        <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/30">
+                          <ScoreGauge score={result.accessibilityScore} size="sm" label="Score" />
+                          <div className="text-xs text-muted-foreground space-y-1">
+                            <p><span className="font-semibold text-red-500">{result.accessibilityAudits.filter(a => a.score !== null && a.score < 0.5).length}</span> problemas críticos</p>
+                            <p><span className="font-semibold text-yellow-500">{result.accessibilityAudits.filter(a => a.score !== null && a.score >= 0.5 && a.score < 0.9).length}</span> avisos</p>
+                            <p><span className="font-semibold text-foreground">{result.accessibilityAudits.length}</span> itens no total</p>
+                          </div>
+                        </div>
+
+                        {/* Critical issues */}
+                        {result.accessibilityAudits.filter(a => a.score !== null && a.score < 0.5).length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-red-500 mb-2 flex items-center gap-1">
+                              <XCircle className="h-3.5 w-3.5" />
+                              Problemas Críticos ({result.accessibilityAudits.filter(a => a.score !== null && a.score < 0.5).length})
+                            </p>
+                            {result.accessibilityAudits
+                              .filter(a => a.score !== null && a.score < 0.5)
+                              .map(a => (
+                                <AuditItem key={a.id} title={a.title} score={a.score} description={a.description} />
+                              ))}
+                          </div>
+                        )}
+
+                        {/* Warnings */}
+                        {result.accessibilityAudits.filter(a => a.score !== null && a.score >= 0.5 && a.score < 0.9).length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-yellow-600 mb-2 flex items-center gap-1">
+                              <AlertTriangle className="h-3.5 w-3.5" />
+                              Avisos ({result.accessibilityAudits.filter(a => a.score !== null && a.score >= 0.5 && a.score < 0.9).length})
+                            </p>
+                            {result.accessibilityAudits
+                              .filter(a => a.score !== null && a.score >= 0.5 && a.score < 0.9)
+                              .map(a => (
+                                <AuditItem key={a.id} title={a.title} score={a.score} description={a.description} />
+                              ))}
+                          </div>
+                        )}
+
+                        {/* Remaining items */}
+                        {result.accessibilityAudits.filter(a => a.score !== null && a.score >= 0.9).length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1">
+                              <Info className="h-3.5 w-3.5" />
+                              Outros ({result.accessibilityAudits.filter(a => a.score !== null && a.score >= 0.9).length})
+                            </p>
+                            {result.accessibilityAudits
+                              .filter(a => a.score !== null && a.score >= 0.9)
+                              .map(a => (
+                                <AuditItem key={a.id} title={a.title} score={a.score} description={a.description} />
+                              ))}
+                          </div>
+                        )}
+                      </div>
                     )}
                   </CardContent>
                 </Card>
@@ -1084,19 +1448,73 @@ export default function SeoGeo() {
                       Oportunidades de Melhoria
                     </CardTitle>
                     <CardDescription>
-                      Sugestões do Lighthouse para melhorar a performance do site
+                      Sugestões do Lighthouse para melhorar a performance — ordenadas por impacto estimado
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {result.opportunities.length === 0 ? (
-                      <div className="flex items-center gap-3 py-6 justify-center">
-                        <CheckCircle2 className="h-5 w-5 text-green-500" />
-                        <p className="text-sm text-muted-foreground">Nenhuma oportunidade de melhoria identificada</p>
+                      <div className="flex flex-col items-center gap-3 py-6">
+                        <CheckCircle2 className="h-8 w-8 text-green-500" />
+                        <div className="text-center">
+                          <p className="text-sm font-medium text-foreground">Nenhuma oportunidade de melhoria identificada</p>
+                          <p className="text-xs text-muted-foreground mt-1">Seu site já está otimizado segundo o Lighthouse</p>
+                        </div>
                       </div>
                     ) : (
-                      result.opportunities.map(a => (
-                        <OpportunityItem key={a.id} audit={a} />
-                      ))
+                      <div className="space-y-4">
+                        {/* Summary bar */}
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/20">
+                          <AlertTriangle className="h-5 w-5 text-yellow-500 shrink-0" />
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-semibold text-foreground">{result.opportunities.length} oportunidades</span> identificadas.
+                            {result.opportunities[0]?.details?.overallSavingsMs && (
+                              <> A maior pode economizar até <span className="font-semibold text-foreground">{Math.round(result.opportunities[0].details.overallSavingsMs)}ms</span> no carregamento.</>
+                            )}
+                          </p>
+                        </div>
+
+                        {/* High impact */}
+                        {(() => {
+                          const high = result.opportunities.filter(a => (a.details?.overallSavingsMs || 0) >= 500);
+                          const medium = result.opportunities.filter(a => {
+                            const ms = a.details?.overallSavingsMs || 0;
+                            return ms >= 100 && ms < 500;
+                          });
+                          const low = result.opportunities.filter(a => (a.details?.overallSavingsMs || 0) < 100);
+
+                          return (
+                            <>
+                              {high.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-red-500 mb-2 flex items-center gap-1">
+                                    <XCircle className="h-3.5 w-3.5" />
+                                    Alto Impacto ({high.length})
+                                  </p>
+                                  {high.map(a => <OpportunityItem key={a.id} audit={a} />)}
+                                </div>
+                              )}
+                              {medium.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-yellow-600 mb-2 flex items-center gap-1">
+                                    <AlertTriangle className="h-3.5 w-3.5" />
+                                    Médio Impacto ({medium.length})
+                                  </p>
+                                  {medium.map(a => <OpportunityItem key={a.id} audit={a} />)}
+                                </div>
+                              )}
+                              {low.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1">
+                                    <Info className="h-3.5 w-3.5" />
+                                    Baixo Impacto ({low.length})
+                                  </p>
+                                  {low.map(a => <OpportunityItem key={a.id} audit={a} />)}
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
                     )}
                   </CardContent>
                 </Card>

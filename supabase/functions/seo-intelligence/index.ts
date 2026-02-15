@@ -384,27 +384,42 @@ serve(async (req) => {
 
     // 4. LLM Visibility (if AI keys provided)
     const llmResults: LlmVisibilityResult[] = [];
-    if (aiKeys && Array.isArray(aiKeys) && brandName && niche) {
+    const llmErrors: string[] = [];
+    console.log(`[seo-intelligence] aiKeys received: ${JSON.stringify(aiKeys?.map((k: any) => ({ provider: k?.provider, model: k?.model, hasKey: !!k?.apiKey })))}`);
+    console.log(`[seo-intelligence] brandName=${brandName}, niche=${niche}`);
+    if (aiKeys && Array.isArray(aiKeys) && aiKeys.length > 0 && brandName && niche) {
       const competitorDomains = (competitorUrls || []).map((cu: string) => {
         try { return new URL(cu).hostname; } catch { return cu; }
       });
 
       for (const key of aiKeys.slice(0, 2)) {
-        if (!key.provider || !key.apiKey || !key.model) continue;
+        if (!key.provider || !key.apiKey || !key.model) {
+          console.warn(`[seo-intelligence] Skipping invalid key:`, JSON.stringify({ provider: key?.provider, model: key?.model, hasKey: !!key?.apiKey }));
+          llmErrors.push(`Key inválida: ${key?.provider || 'sem provider'}`);
+          continue;
+        }
         try {
+          console.log(`[seo-intelligence] Calling LLM: ${key.provider}/${key.model}`);
           const result = await checkLlmVisibility(
             brandName, niche, competitorDomains, key.provider, key.apiKey, key.model
           );
           llmResults.push(result);
-          console.log(`[seo-intelligence] LLM ${key.provider}/${key.model}: mentioned=${result.mentioned}`);
+          console.log(`[seo-intelligence] LLM ${key.provider}/${key.model}: mentioned=${result.mentioned}, responseLen=${result.fullResponse?.length}`);
         } catch (err: any) {
-          console.error(`[seo-intelligence] LLM check failed:`, err?.message);
+          const errMsg = `${key.provider}/${key.model}: ${err?.message || 'Erro desconhecido'}`;
+          console.error(`[seo-intelligence] LLM check failed:`, errMsg);
+          llmErrors.push(errMsg);
         }
       }
+    } else {
+      console.warn(`[seo-intelligence] LLM skipped: aiKeys=${aiKeys?.length || 0}, brandName=${!!brandName}, niche=${!!niche}`);
+      if (!aiKeys || !Array.isArray(aiKeys) || aiKeys.length === 0) llmErrors.push('Nenhuma API key fornecida');
+      if (!brandName) llmErrors.push('Nome da marca não informado');
+      if (!niche) llmErrors.push('Nicho não informado');
     }
 
     return new Response(
-      JSON.stringify({ backlinks, competitors, llmResults }),
+      JSON.stringify({ backlinks, competitors, llmResults, llmErrors }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 

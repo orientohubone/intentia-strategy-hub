@@ -24,6 +24,13 @@ import {
   Rocket,
   MonitorOff,
   MousePointerClick,
+  Compass,
+  Layers,
+  Radio,
+  Sparkles,
+  Clock,
+  CheckCircle2,
+  Circle,
 } from "lucide-react";
 
 /* ─── Hero: Energized Flow ─── */
@@ -326,60 +333,209 @@ export default function Comparar() {
         </div>
       </section>
 
-      {/* ─── Zero UI ─── */}
+      {/* ─── Onde Estamos Hoje ─── */}
       <section className="py-20 md:py-32 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-            <AnimatedSection>
-              <p className="text-sm font-medium text-primary uppercase tracking-widest mb-4">Interface por intenção</p>
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-                Zero UI: quando a <span className="bg-gradient-to-r from-primary to-orange-600 bg-clip-text text-transparent">intenção</span> substitui o clique
-              </h2>
-              <p className="text-muted-foreground leading-relaxed mb-6">
-                A Intentia foi desenhada para operar por intenção, não por comando. A IA observa, interpreta e age. O usuário confirma quando necessário.
-              </p>
-              <div className="space-y-4">
-                {zeroUiFeatures.map((f) => (
-                  <div key={f.label} className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <f.icon className="text-primary" size={20} />
-                    </div>
-                    <span className="font-medium text-foreground">{f.label}</span>
+          <AnimatedSection className="text-center mb-16">
+            <p className="text-sm font-medium text-primary uppercase tracking-widest mb-4">Transparência</p>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
+              Onde estamos <span className="bg-gradient-to-r from-primary to-orange-600 bg-clip-text text-transparent">hoje</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              A Intentia já opera com IA embarcada como motor de análise e decisão. Mas nossa visão vai além — e queremos ser honestos sobre o caminho.
+            </p>
+          </AnimatedSection>
+
+          <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
+            <AnimatedSection delay={0.1}>
+              <div className="bg-card rounded-2xl p-8 border border-border/60 shadow-sm h-full">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                    <CheckCircle2 className="text-emerald-500" size={24} />
                   </div>
-                ))}
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">O que já funciona</h3>
+                    <span className="text-xs font-medium text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">Disponível agora</span>
+                  </div>
+                </div>
+                <ul className="space-y-3 text-muted-foreground">
+                  <li className="flex items-start gap-3"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0" />Diagnóstico heurístico automático de URLs</li>
+                  <li className="flex items-start gap-3"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0" />Análise profunda por IA (Gemini + Claude)</li>
+                  <li className="flex items-start gap-3"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0" />Benchmark competitivo com SWOT automático</li>
+                  <li className="flex items-start gap-3"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0" />Score de prontidão por canal de mídia</li>
+                  <li className="flex items-start gap-3"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0" />Insights e alertas estratégicos gerados por IA</li>
+                  <li className="flex items-start gap-3"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0" />Gestão operacional de campanhas e budget</li>
+                </ul>
               </div>
             </AnimatedSection>
 
             <AnimatedSection delay={0.2}>
-              <div className="relative">
-                <div className="rounded-2xl bg-card border border-border/60 p-8 shadow-lg">
-                  <div className="flex items-center gap-2 mb-6">
-                    <div className="w-3 h-3 rounded-full bg-red-400/60" />
-                    <div className="w-3 h-3 rounded-full bg-yellow-400/60" />
-                    <div className="w-3 h-3 rounded-full bg-green-400/60" />
+              <div className="bg-card rounded-2xl p-8 border border-primary/20 shadow-sm h-full">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Compass className="text-primary" size={24} />
                   </div>
-                  <div className="space-y-4">
-                    <div className="h-3 bg-secondary rounded-full w-3/4" />
-                    <div className="h-3 bg-secondary rounded-full w-1/2" />
-                    <div className="h-3 bg-secondary rounded-full w-5/6" />
-                    <div className="mt-6 p-4 rounded-xl bg-primary/5 border border-primary/10">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                          <Zap className="text-primary-foreground" size={16} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-foreground">Ação executada automaticamente</p>
-                          <p className="text-xs text-muted-foreground">Redistribuição de budget concluída</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="h-3 bg-secondary rounded-full w-2/3" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Para onde vamos</h3>
+                    <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">Visão de futuro</span>
                   </div>
                 </div>
-                <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl" />
+                <ul className="space-y-3 text-muted-foreground">
+                  <li className="flex items-start gap-3"><span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />IA que age proativamente sem esperar comando</li>
+                  <li className="flex items-start gap-3"><span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />Decisões automatizadas com confirmação do usuário</li>
+                  <li className="flex items-start gap-3"><span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />Interface que desaparece — só aparece quando necessário</li>
+                  <li className="flex items-start gap-3"><span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />Redistribuição de budget em tempo real</li>
+                  <li className="flex items-start gap-3"><span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />Execução autônoma de campanhas cross-platform</li>
+                  <li className="flex items-start gap-3"><span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />Aprendizado contínuo por projeto e nicho</li>
+                </ul>
               </div>
             </AnimatedSection>
           </div>
+        </div>
+      </section>
+
+      {/* ─── O Futuro é Zero UI ─── */}
+      <section className="py-20 md:py-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <AnimatedSection className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+              <Sparkles size={16} />
+              Visão de futuro
+            </div>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
+              O futuro da Intentia é{" "}
+              <span className="bg-gradient-to-r from-primary to-orange-600 bg-clip-text text-transparent">Zero UI</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              Zero UI não é ausência de interface — é a interface que só aparece quando importa. A IA observa, interpreta e age. O usuário confirma quando necessário. Essa é a direção que estamos construindo.
+            </p>
+          </AnimatedSection>
+
+          {/* Roadmap visual */}
+          <div className="max-w-3xl mx-auto">
+            {[
+              {
+                phase: "Fase 1",
+                title: "IA como Analista",
+                description: "Diagnóstico automático, scores, insights e alertas gerados por IA. O usuário interpreta e decide.",
+                status: "done" as const,
+                icon: Brain,
+              },
+              {
+                phase: "Fase 2",
+                title: "IA como Conselheira",
+                description: "Recomendações acionáveis, plano tático por canal, sugestões de budget e priorização automática de ações.",
+                status: "current" as const,
+                icon: Layers,
+              },
+              {
+                phase: "Fase 3",
+                title: "IA como Operadora",
+                description: "Execução semi-automática de campanhas, redistribuição de budget em tempo real, otimizações contínuas com aprovação do usuário.",
+                status: "future" as const,
+                icon: Radio,
+              },
+              {
+                phase: "Fase 4",
+                title: "Zero UI — IA como Sistema Nervoso",
+                description: "A interface desaparece. A IA opera por intenção: observa padrões, toma decisões, executa e reporta. O usuário só intervém por exceção.",
+                status: "future" as const,
+                icon: Sparkles,
+              },
+            ].map((item, i, arr) => (
+              <div key={item.phase}>
+                <AnimatedSection delay={i * 0.15}>
+                  <div className={`flex gap-5 ${item.status === "current" ? "relative" : ""}`}>
+                    {/* Timeline dot */}
+                    <div className="flex flex-col items-center shrink-0">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                        item.status === "done"
+                          ? "bg-emerald-500/10"
+                          : item.status === "current"
+                          ? "bg-primary/10 ring-2 ring-primary/30"
+                          : "bg-muted"
+                      }`}>
+                        {item.status === "done" ? (
+                          <CheckCircle2 className="text-emerald-500" size={22} />
+                        ) : item.status === "current" ? (
+                          <item.icon className="text-primary" size={22} />
+                        ) : (
+                          <item.icon className="text-muted-foreground/50" size={22} />
+                        )}
+                      </div>
+                      {i < arr.length - 1 && (
+                        <div className={`w-0.5 flex-1 my-2 ${
+                          item.status === "done" ? "bg-emerald-500/30" : "bg-border"
+                        }`} />
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className={`pb-8 ${item.status === "future" ? "opacity-60" : ""}`}>
+                      <div className="flex items-center gap-3 mb-1">
+                        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                          item.status === "done"
+                            ? "text-emerald-600 bg-emerald-500/10"
+                            : item.status === "current"
+                            ? "text-primary bg-primary/10"
+                            : "text-muted-foreground bg-muted"
+                        }`}>
+                          {item.phase}
+                        </span>
+                        {item.status === "done" && (
+                          <span className="text-xs text-emerald-500 font-medium">Concluída</span>
+                        )}
+                        {item.status === "current" && (
+                          <span className="text-xs text-primary font-medium flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                            Em construção
+                          </span>
+                        )}
+                        {item.status === "future" && (
+                          <span className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                            <Clock size={12} />
+                            Planejada
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-xl font-semibold text-foreground mb-2">{item.title}</h3>
+                      <p className="text-muted-foreground leading-relaxed">{item.description}</p>
+                    </div>
+                  </div>
+                </AnimatedSection>
+              </div>
+            ))}
+          </div>
+
+          {/* Zero UI promise */}
+          <AnimatedSection delay={0.6} className="mt-12">
+            <div className="max-w-4xl mx-auto">
+              <div className="relative rounded-3xl bg-gradient-to-br from-foreground to-foreground/90 p-10 md:p-14 text-center overflow-hidden">
+                <div className="absolute inset-0 opacity-10">
+                  <div className="absolute top-0 left-1/4 w-64 h-64 rounded-full bg-primary blur-3xl" />
+                  <div className="absolute bottom-0 right-1/4 w-48 h-48 rounded-full bg-primary blur-3xl" />
+                </div>
+                <div className="relative z-10">
+                  <h3 className="text-2xl md:text-3xl font-bold text-background mb-4">
+                    Zero UI não é promessa vazia.
+                    <br />
+                    <span className="text-primary">É o norte que guia cada decisão de produto.</span>
+                  </h3>
+                  <p className="text-background/70 text-lg leading-relaxed max-w-2xl mx-auto mb-8">
+                    Cada feature que construímos hoje é um passo em direção a uma plataforma que opera por intenção. Menos cliques, menos dashboards, menos fricção — mais decisão, mais execução, mais resultado.
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-4">
+                    {zeroUiFeatures.map((f) => (
+                      <span key={f.label} className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/20 text-primary text-sm font-medium border border-primary/30">
+                        <f.icon size={16} />
+                        {f.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </AnimatedSection>
         </div>
       </section>
 

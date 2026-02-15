@@ -155,23 +155,27 @@ function parsePageSpeedResponse(json: any, strategy: "mobile" | "desktop"): Page
 
   // SEO audits
   const seoAuditRefs = categories.seo?.auditRefs || [];
+  const seoAuditIds = new Set<string>();
   const seoAudits: SeoAudit[] = seoAuditRefs
     .map((ref: any) => audits[ref.id])
     .filter(Boolean)
-    .map((a: any) => ({
-      id: a.id,
-      title: a.title,
-      description: stripMarkdownLinks(a.description || ""),
-      score: a.score,
-      displayValue: a.displayValue,
-    }));
+    .map((a: any) => {
+      seoAuditIds.add(a.id);
+      return {
+        id: a.id,
+        title: a.title,
+        description: stripMarkdownLinks(a.description || ""),
+        score: a.score,
+        displayValue: a.displayValue,
+      };
+    });
 
-  // Accessibility audits
+  // Accessibility audits — exclude any that already appear in SEO tab
   const a11yAuditRefs = categories.accessibility?.auditRefs || [];
   const accessibilityAudits: SeoAudit[] = a11yAuditRefs
     .map((ref: any) => audits[ref.id])
     .filter(Boolean)
-    .filter((a: any) => a.score !== null && a.score < 1)
+    .filter((a: any) => a.score !== null && a.score < 1 && !seoAuditIds.has(a.id))
     .map((a: any) => ({
       id: a.id,
       title: a.title,
@@ -180,16 +184,21 @@ function parsePageSpeedResponse(json: any, strategy: "mobile" | "desktop"): Page
       displayValue: a.displayValue,
     }));
 
-  // Opportunities (performance improvements)
+  // Opportunities (performance improvements) — exclude perf audit keys to avoid duplication with Core Web Vitals
   const opportunities: LighthouseAudit[] = Object.values(audits)
-    .filter((a: any) => a.details?.type === "opportunity" && a.details?.overallSavingsMs > 0)
+    .filter((a: any) =>
+      a.details?.type === "opportunity" &&
+      a.details?.overallSavingsMs > 0 &&
+      !perfAuditKeys.includes(a.id) &&
+      !seoAuditIds.has(a.id)
+    )
     .sort((a: any, b: any) => (b.details?.overallSavingsMs || 0) - (a.details?.overallSavingsMs || 0))
     .slice(0, 10)
     .map(parseAudit);
 
   // Diagnostics
   const diagnostics: LighthouseAudit[] = Object.values(audits)
-    .filter((a: any) => a.details?.type === "table" && a.score !== null && a.score < 1 && !perfAuditKeys.includes(a.id))
+    .filter((a: any) => a.details?.type === "table" && a.score !== null && a.score < 1 && !perfAuditKeys.includes(a.id) && !seoAuditIds.has(a.id))
     .slice(0, 10)
     .map(parseAudit);
 
