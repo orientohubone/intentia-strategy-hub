@@ -25,6 +25,7 @@ import {
   Plug,
   Gauge,
   DollarSign,
+  MessageCircle,
 } from "lucide-react";
 import type { HelpCategory, FAQItem, FAQCategoryFilter } from "./helpTypes";
 
@@ -538,6 +539,41 @@ export const helpCategories: HelpCategory[] = [
       },
     ],
   },
+  {
+    id: "support",
+    title: "Central de Suporte",
+    description: "Chamados, chat e acompanhamento",
+    icon: <MessageCircle className="h-5 w-5" />,
+    color: "text-violet-600",
+    videoId: "",
+    articles: [
+      {
+        title: "Abrindo um chamado",
+        content: "Suporte → Novo Chamado. Selecione categoria, prioridade, assunto e descrição. Você recebe um número de protocolo imediato.",
+        difficulty: "Iniciante",
+      },
+      {
+        title: "Agrupamento por status",
+        content: "Chamados são agrupados por status: Aberto, Em Análise, Em Andamento, Aguardando Cliente, Resolvido e Cancelado. Grupos ativos abrem automaticamente. Use os botões expandir/recolher para navegar.",
+        difficulty: "Iniciante",
+      },
+      {
+        title: "Respondendo e conversando",
+        content: "Clique no ícone de mensagem para expandir o chamado. Responda diretamente ou abra a conversa completa (plano Professional+). Mensagens do suporte aparecem em tempo real.",
+        difficulty: "Iniciante",
+      },
+      {
+        title: "Status e SLA",
+        content: "Cada chamado tem SLA de resposta. Status: Aberto → Em Análise → Em Andamento → Resolvido. Alertas visuais para prazos próximos ou atrasados.",
+        difficulty: "Intermediário",
+      },
+      {
+        title: "Contato direto",
+        content: "Telefone: +55 (14) 99861-8547 (Seg-Sex, 9h-18h). Email: suporte@intentia.com.br (resposta em até 24h). Tempo médio de resposta: ~2 horas.",
+        difficulty: "Iniciante",
+      },
+    ],
+  },
 ];
 
 // =====================================================
@@ -778,6 +814,22 @@ export const faqItems: FAQItem[] = [
     color: "text-cyan-600",
   },
   {
+    question: "Como funciona o agrupamento de chamados?",
+    answer: "Os chamados são agrupados automaticamente por status: Aberto, Em Análise, Em Andamento, Aguardando Cliente, Resolvido e Cancelado. Grupos com chamados ativos abrem automaticamente ao carregar a página. Chamados resolvidos e cancelados ficam recolhidos para não poluir a visualização. Use os botões de expandir/recolher todos no topo da lista.",
+    category: "suporte",
+    difficulty: "iniciante",
+    icon: <MessageCircle className="h-4 w-4" />,
+    color: "text-violet-600",
+  },
+  {
+    question: "Como acompanho a resposta do suporte?",
+    answer: "Ao abrir um chamado, você recebe um número de protocolo. Na Central de Suporte, clique no ícone de mensagem do chamado para expandir e ver as últimas mensagens. Respostas do suporte aparecem em tempo real. No plano Professional ou Enterprise, você pode abrir a conversa completa em um dialog dedicado.",
+    category: "suporte",
+    difficulty: "iniciante",
+    icon: <MessageCircle className="h-4 w-4" />,
+    color: "text-violet-600",
+  },
+  {
     question: "Como faço backup dos meus dados?",
     answer: "Vá em Configurações → Backup & Segurança de Dados. Você pode criar backups manuais (snapshot completo no servidor) ou exportar todos os dados em JSON para download local. Backups automáticos também são criados antes de exclusões importantes como deletar projetos.",
     category: "seguranca",
@@ -812,4 +864,5 @@ export const faqCategoryFilters: FAQCategoryFilter[] = [
   { id: "dados", label: "Dados", icon: <Database className="h-4 w-4" />, color: "text-teal-600" },
   { id: "operacoes", label: "Operações", icon: <Megaphone className="h-4 w-4" />, color: "text-orange-600" },
   { id: "integracoes", label: "Integrações", icon: <Plug className="h-4 w-4" />, color: "text-blue-600" },
+  { id: "suporte", label: "Suporte", icon: <MessageCircle className="h-4 w-4" />, color: "text-violet-600" },
 ];
