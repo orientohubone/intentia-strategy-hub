@@ -9,6 +9,7 @@ import {
   CAMPAIGN_STATUS_FLOW,
 } from "@/lib/operationalTypes";
 import type { Campaign, OperationalStats, CampaignGroup, CampaignFormData } from "../types";
+import { notifyCampaignCreated, notifyCampaignDeleted, notifyCampaignStatusChanged } from "@/lib/notificationService";
 import { defaultFormData } from "../types";
 
 export function useCampaigns() {
@@ -125,6 +126,7 @@ export function useCampaigns() {
           .insert(payload);
         if (error) throw error;
         toast.success("Campanha criada com sucesso");
+        notifyCampaignCreated(user.id, formData.name.trim(), formData.channel);
       }
 
       resetForm();
@@ -161,6 +163,8 @@ export function useCampaigns() {
         .eq("user_id", user.id);
       if (error) throw error;
       toast.success("Campanha excluída com sucesso");
+      const camp = campaigns.find(c => c.id === id);
+      if (camp) notifyCampaignDeleted(user.id, camp.name);
       loadCampaigns();
       loadStats();
     } catch (error: any) {
@@ -187,6 +191,8 @@ export function useCampaigns() {
         .eq("user_id", user.id);
       if (error) throw error;
       toast.success(`Status alterado para ${CAMPAIGN_STATUS_LABELS[newStatus]}`);
+      const camp = campaigns.find(c => c.id === id);
+      if (camp) notifyCampaignStatusChanged(user.id, camp.name, CAMPAIGN_STATUS_LABELS[newStatus]);
       loadCampaigns();
       loadStats();
     } catch (error: any) {

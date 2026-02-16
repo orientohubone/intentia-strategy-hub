@@ -83,12 +83,12 @@ const STATUS_DISPLAY: Record<string, {
 };
 
 const UPGRADE_BENEFITS = [
-  "Plano Tático completo por canal",
-  "Análise por IA (Gemini + Claude)",
-  "Benchmark com IA e SWOT",
-  "Operações e gestão de campanhas",
-  "Relatórios PDF, CSV e exportações",
-  "Integrações com APIs de marketing",
+  "Projetos e públicos ilimitados",
+  "Análises por IA ilimitadas",
+  "Plano Tático + Playbook ilimitados",
+  "Operações e campanhas ilimitadas",
+  "Exportação PDF e CSV ilimitada",
+  "Suporte prioritário",
 ];
 
 function FeatureBlockedFallback({ check, pageTitle }: { check: FeatureCheck; pageTitle?: string }) {

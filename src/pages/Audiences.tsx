@@ -18,6 +18,7 @@ import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { getUserActiveKeys } from "@/lib/aiAnalyzer";
 import { getModelsForProvider } from "@/lib/aiModels";
 import { runIcpEnrichment, type IcpEnrichmentResult } from "@/lib/icpEnricher";
+import { notifyAudienceCreated, notifyIcpEnriched } from "@/lib/notificationService";
 
 type Audience = {
   id: string;
@@ -124,6 +125,7 @@ export default function Audiences() {
       setSelectedEnrichmentAudience(updatedAudience);
       setEnrichmentDialogOpen(true);
       toast.success("ICP refinado com sucesso!");
+      if (user) notifyIcpEnriched(user.id, audience.name);
     } catch (err: any) {
       console.error("Erro ao refinar ICP:", err);
       toast.error(err?.message || "Erro ao refinar ICP com IA");
@@ -211,6 +213,7 @@ export default function Audiences() {
         
         if (error) throw error;
         toast.success("Público-alvo criado com sucesso!");
+        if (user) notifyAudienceCreated(user.id, formData.name.trim());
       }
 
       resetForm();

@@ -121,9 +121,13 @@ export function useTenantData() {
   const createProject = async (projectData: Omit<Project, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     if (!user) throw new Error('User not authenticated');
 
-    // Check if user can create more projects
-    if (tenantSettings && tenantSettings.analyses_used >= tenantSettings.monthly_analyses_limit) {
-      throw new Error('Monthly analysis limit reached');
+    // Check active project count against plan limit
+    const plan = tenantSettings?.plan || 'starter';
+    const maxFromTenant = (tenantSettings as any)?.max_projects;
+    const maxProjects = maxFromTenant === -1 ? 999999 : (maxFromTenant ?? (plan === 'starter' ? 5 : 999999));
+    const activeCount = projects.filter(p => !(p as any).deleted_at).length;
+    if (activeCount >= maxProjects) {
+      throw new Error(`Limite de ${maxProjects} projetos ativos atingido no plano ${plan === 'starter' ? 'Starter' : plan}. Faça upgrade para criar mais projetos.`);
     }
 
     const { data, error } = await (supabase as any)
@@ -136,17 +140,6 @@ export function useTenantData() {
       .single();
 
     if (error) throw error;
-
-    // Update analyses count
-    if (tenantSettings) {
-      await (supabase as any)
-      .from('tenant_settings')
-      .update({
-        analyses_used: tenantSettings.analyses_used + 1,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('user_id', user.id);
-    }
 
     setProjects(prev => [data, ...prev]);
     return data;

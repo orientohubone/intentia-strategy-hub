@@ -31,6 +31,7 @@ import {
   Save,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { notifyBudgetAllocated } from "@/lib/notificationService";
 import { toast } from "sonner";
 import {
   type CampaignChannel,
@@ -163,6 +164,7 @@ export default function BudgetManagement({ userId, projectId, projectName, onSyn
           });
         if (error) throw error;
         toast.success("Budget alocado com sucesso");
+        notifyBudgetAllocated(userId, formChannel, projectName);
       }
 
       resetForm();

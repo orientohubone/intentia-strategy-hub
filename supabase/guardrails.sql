@@ -261,7 +261,7 @@ CREATE TRIGGER enforce_analysis_limit
 
 -- =====================================================
 -- 8. PROJECT LIMIT PER PLAN
---    Starter: max 3 active projects
+--    Starter: max 5 active projects
 -- =====================================================
 CREATE OR REPLACE FUNCTION public.enforce_project_limit()
 RETURNS trigger
@@ -278,10 +278,10 @@ BEGIN
   WHERE user_id = NEW.user_id;
 
   _max := CASE _plan
-    WHEN 'starter' THEN 3
+    WHEN 'starter' THEN 5
     WHEN 'professional' THEN 999999
     WHEN 'enterprise' THEN 999999
-    ELSE 3
+    ELSE 5
   END;
 
   SELECT count(*) INTO _current

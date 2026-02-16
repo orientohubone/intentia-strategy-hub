@@ -8,6 +8,7 @@ import { ScoreRing } from "@/components/ScoreRing";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { notifyTacticalPlanCreated, notifyPlaybookGenerated } from "@/lib/notificationService";
 import {
   Crosshair,
   Layers,
@@ -406,6 +407,8 @@ export default function TacticalPlan() {
           ? "Plano tático criado com template aplicado!"
           : "Plano tático criado com sucesso!"
       );
+      const pName = projects.find(p => p.id === selectedProjectId)?.name || 'Projeto';
+      notifyTacticalPlanCreated(user.id, pName, !!templateId);
     } catch (err: any) {
       console.error("Error creating tactical plan:", err);
       toast.error("Erro ao criar plano tático");
@@ -638,6 +641,8 @@ export default function TacticalPlan() {
 
       setActiveTab("playbook");
       toast.success("Plano rodado! Diretrizes de execução geradas.");
+      const pName = projects.find(p => p.id === selectedProjectId)?.name || 'Projeto';
+      notifyPlaybookGenerated(user.id, pName);
     } catch (err) {
       console.error("Error generating playbook:", err);
       toast.error("Erro ao gerar playbook");

@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenantData } from "@/hooks/useTenantData";
+import { notifyTicketCreated } from "@/lib/notificationService";
 
 export default function Support() {
   const { notifications } = useNotifications();
@@ -141,6 +142,7 @@ export default function Support() {
     toast.success("Chamado criado com sucesso!", {
       description: `Seu chamado #${ticket.ticket_number} foi registrado. Nossa equipe irá analisar em breve.`,
     });
+    if (user) notifyTicketCreated(user.id, ticket.ticket_number, ticket.subject);
   };
 
   // Carregar mensagens ao selecionar ticket
@@ -462,7 +464,8 @@ export default function Support() {
                                 {/* Seção Expandida */}
                                 {isSelected && (
                                   <div className="border-t pt-4 mt-4 space-y-3">
-                                    {/* Reply Input */}
+                                    {/* Reply Input — Professional+ only */}
+                                    {isProfessionalPlus ? (
                                     <div>
                                       <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Responder</label>
                                       <div className="flex items-start gap-2">
@@ -487,6 +490,13 @@ export default function Support() {
                                         </Button>
                                       </div>
                                     </div>
+                                    ) : (
+                                      <div className="bg-muted/40 rounded-lg p-3 text-center">
+                                        <p className="text-xs text-muted-foreground">
+                                          Chat em tempo real disponível no plano <span className="font-semibold text-primary">Professional</span>. No Starter, acompanhe seus chamados e receba respostas por notificação.
+                                        </p>
+                                      </div>
+                                    )}
 
                                     {/* Status + Conversa */}
                                     <div className="flex items-center justify-between gap-3 pt-1">
@@ -522,7 +532,7 @@ export default function Support() {
                                             </span>
                                           </div>
                                         ))}
-                                        {messages.length > 3 && (
+                                        {messages.length > 3 && isProfessionalPlus && (
                                           <button
                                             onClick={() => setChatDialogOpen(true)}
                                             className="text-[11px] text-primary hover:underline"

@@ -19,6 +19,7 @@ import { runAiAnalysis, getUserActiveKeys } from "@/lib/aiAnalyzer";
 import { AI_MODEL_LABELS, getModelsForProvider } from "@/lib/aiModels";
 import type { AiAnalysisResult, UserApiKey } from "@/lib/aiAnalyzer";
 import { exportAsJson, exportAsMarkdown, exportAsHtml, exportAsPdf } from "@/lib/exportAnalysis";
+import { notifyProjectCreated, notifyProjectDeleted } from "@/lib/notificationService";
 import { fetchProjectReport, generateConsolidatedReport } from "@/lib/reportGenerator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
@@ -303,6 +304,7 @@ export default function Projects() {
         });
         projectId = result.id;
         toast.success(shouldAnalyze ? "Projeto criado! Iniciando análise..." : "Projeto criado! Análise heurística indisponível no momento.");
+      if (!editingId && user) notifyProjectCreated(user.id, projectName);
       }
 
       setFormState({ name: "", niche: "", url: "", competitorUrls: "", status: "pending" });
@@ -602,9 +604,11 @@ export default function Projects() {
   };
 
   const handleDeleteProject = async (projectId: string) => {
+    const projectName = projects.find(p => p.id === projectId)?.name || 'Projeto';
     try {
       await deleteProject(projectId);
       toast.success("Projeto excluído com sucesso!");
+      if (user) notifyProjectDeleted(user.id, projectName);
     } catch (error: any) {
       console.error("Erro ao excluir projeto:", error);
       toast.error(error?.message || "Erro ao excluir projeto. Tente novamente.");
@@ -715,29 +719,38 @@ export default function Projects() {
                     Cancelar
                   </Button>
                 )}
-                {tenantSettings && canAnalyze && (() => {
-                  const used = tenantSettings.analyses_used;
-                  const limit = tenantSettings.monthly_analyses_limit;
-                  const isUnlimited = limit < 0;
-                  const remaining = isUnlimited ? Infinity : limit - used;
-                  const atLimit = !isUnlimited && remaining <= 0;
-                  const nearLimit = !isUnlimited && remaining > 0 && remaining <= 2;
+                {tenantSettings && (() => {
+                  const plan = tenantSettings.plan || 'starter';
+                  const maxProj = (tenantSettings as any).max_projects ?? (plan === 'starter' ? 5 : -1);
+                  const projCount = projects.filter((p: any) => !p.deleted_at).length;
+                  const projUnlimited = maxProj < 0;
+                  const projAtLimit = !projUnlimited && projCount >= maxProj;
+                  const projNear = !projUnlimited && !projAtLimit && maxProj - projCount <= 1;
+
+                  const aUsed = tenantSettings.analyses_used;
+                  const aLimit = tenantSettings.monthly_analyses_limit;
+                  const aUnlimited = aLimit < 0;
+                  const aAtLimit = !aUnlimited && aUsed >= aLimit;
+                  const aNear = !aUnlimited && !aAtLimit && aLimit - aUsed <= 2;
+
+                  const worst = projAtLimit || aAtLimit ? "limit" : projNear || aNear ? "near" : "ok";
                   return (
-                    <div className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border ${
-                      atLimit
+                    <div className={`flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-md border ${
+                      worst === "limit"
                         ? "bg-red-500/10 border-red-500/20 text-red-500"
-                        : nearLimit
+                        : worst === "near"
                           ? "bg-amber-500/10 border-amber-500/20 text-amber-500"
                           : "bg-muted/50 border-border text-muted-foreground"
                     }`}>
                       <BarChart3 className="h-3.5 w-3.5 flex-shrink-0" />
                       <span className="font-medium">
-                        {isUnlimited
-                          ? `${used} análises`
-                          : `${used}/${limit} análises`}
+                        {projUnlimited ? `${projCount} proj` : `${projCount}/${maxProj} proj`}
                       </span>
-                      {atLimit && <span className="text-[10px]">• Limite atingido</span>}
-                      {nearLimit && <span className="text-[10px]">• {remaining} restante{remaining > 1 ? "s" : ""}</span>}
+                      <span className="text-muted-foreground/50">|</span>
+                      <span className="font-medium">
+                        {aUnlimited ? `${aUsed} análises` : `${aUsed}/${aLimit} análises`}
+                      </span>
+                      {(projAtLimit || aAtLimit) && <span className="text-[10px]">• Limite atingido</span>}
                     </div>
                   );
                 })()}

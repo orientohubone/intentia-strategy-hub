@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { notifyApiKeyConfigured, notifyBackupCreated } from "@/lib/notificationService";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -87,9 +88,11 @@ const PLAN_FEATURES: Record<string, { label: string; price: string; features: st
       "5 projetos ativos",
       "Diagnóstico heurístico de URL (6 dimensões)",
       "Score por canal: Google, Meta, LinkedIn, TikTok",
-      "Insights automáticos por projeto",
-      "Alertas de investimento prematuro",
-      "Benchmark competitivo SWOT (5/mês)",
+      "Análise por IA (5/mês)",
+      "Benchmark SWOT (5/mês) + Gap Analysis (3/mês)",
+      "Plano Tático (1/mês) + 3 templates",
+      "Operações e campanhas (2/mês)",
+      "Exportação PDF e CSV (3/mês)",
       "5 públicos-alvo por projeto",
     ],
   },
@@ -100,15 +103,15 @@ const PLAN_FEATURES: Record<string, { label: string; price: string; features: st
     icon: Crown,
     features: [
       "Projetos ilimitados",
-      "Diagnóstico heurístico de URL (6 dimensões)",
-      "Análise por IA — Gemini e Claude",
-      "Score por canal com riscos e recomendações",
-      "Benchmark competitivo com SWOT e gap analysis",
-      "Plano Tático por canal",
-      "Alertas estratégicos consolidados",
+      "Todas as análises por IA ilimitadas",
+      "Benchmark + Gap Analysis ilimitados",
+      "Plano Tático + Playbook ilimitados",
+      "Operações e campanhas ilimitadas",
+      "Exportação PDF e CSV ilimitada",
       "Públicos-alvo ilimitados com keywords",
-      "Exportação PDF e CSV",
+      "Alertas estratégicos consolidados",
       "Notificações em tempo real",
+      "Suporte prioritário",
     ],
   },
   enterprise: {
@@ -186,6 +189,9 @@ export default function Settings() {
   const [exportingData, setExportingData] = useState(false);
   const [deletingBackupId, setDeletingBackupId] = useState<string | null>(null);
 
+  // Usage stats state
+  const [usageStats, setUsageStats] = useState<Record<string, number>>({});
+
   // Sync formData when user object becomes available or changes
   useEffect(() => {
     if (user) {
@@ -201,6 +207,7 @@ export default function Settings() {
       loadTenantSettings();
       loadApiKeys();
       loadBackups();
+      loadUsageStats();
     }
   }, [user]);
 
@@ -225,6 +232,34 @@ export default function Settings() {
       console.error("Error loading tenant settings:", error);
     } finally {
       setTenantLoading(false);
+    }
+  };
+
+  const loadUsageStats = async () => {
+    if (!user) return;
+    try {
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+      const [projects, audiences, benchmarks, campaigns, tacticalPlans, exports] = await Promise.all([
+        (supabase as any).from("projects").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        (supabase as any).from("audiences").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        (supabase as any).from("benchmarks").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("created_at", monthStart),
+        (supabase as any).from("campaigns").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("created_at", monthStart),
+        (supabase as any).from("tactical_plans").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("created_at", monthStart),
+        (supabase as any).from("user_backups").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("created_at", monthStart),
+      ]);
+
+      setUsageStats({
+        projects: projects.count ?? 0,
+        audiences: audiences.count ?? 0,
+        benchmarks: benchmarks.count ?? 0,
+        campaigns: campaigns.count ?? 0,
+        tactical_plans: tacticalPlans.count ?? 0,
+        exports: exports.count ?? 0,
+      });
+    } catch (error) {
+      console.error("Error loading usage stats:", error);
     }
   };
 
@@ -340,6 +375,7 @@ export default function Settings() {
       if (error) throw error;
 
       toast.success(`API key ${provider === "google_gemini" ? "Google Gemini" : "Anthropic Claude"} salva com sucesso!`);
+      if (user) notifyApiKeyConfigured(user.id, provider);
       setApiKeyInputs((prev) => ({ ...prev, [provider]: "" }));
       setShowApiKey((prev) => ({ ...prev, [provider]: false }));
       await loadApiKeys();
@@ -496,6 +532,7 @@ export default function Settings() {
       });
       if (error) throw error;
       toast.success("Backup criado com sucesso!");
+      if (user) notifyBackupCreated(user.id);
       loadBackups();
     } catch (error: any) {
       toast.error("Erro ao criar backup: " + error.message);
@@ -1054,6 +1091,7 @@ export default function Settings() {
                         Todos os dados são isolados por conta com Row Level Security (RLS). 
                         Backups automáticos são criados antes de exclusões importantes. 
                         Você pode criar backups manuais a qualquer momento.
+                        Use seus backups de forma consciente — crie quando houver mudanças relevantes nos seus projetos ou antes de ações importantes.
                       </p>
                     </div>
                   </div>
@@ -1334,12 +1372,12 @@ export default function Settings() {
                           </p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {[
-                              "Análise por IA (Gemini & Claude)",
-                              "Benchmark ilimitado + Gap Analysis",
-                              "Plano Tático por canal",
-                              "Exportação PDF e CSV",
-                              "Notificações em tempo real",
                               "Projetos e públicos ilimitados",
+                              "Análises por IA ilimitadas",
+                              "Plano Tático + Playbook ilimitados",
+                              "Operações e campanhas ilimitadas",
+                              "Exportação PDF e CSV ilimitada",
+                              "Suporte prioritário",
                             ].map((feature) => (
                               <div key={feature} className="flex items-center gap-2 opacity-60">
                                 <div className="h-4 w-4 border-2 border-border rounded-full flex-shrink-0" />
@@ -1360,22 +1398,52 @@ export default function Settings() {
                       </>
                     )}
 
-                    {/* Usage Stats */}
+                    {/* Usage Dashboard */}
                     {tenantSettings && (
-                      <div className="rounded-lg bg-muted/30 p-3">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Análises este mês</span>
-                          <span className="font-semibold text-foreground">
-                            {tenantSettings.analyses_used || 0} / {tenantSettings.monthly_analyses_limit || (isStarter ? 5 : "∞")}
-                          </span>
+                      <div className="space-y-3">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Uso do plano {isStarter ? "(limites mensais)" : ""}
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {(() => {
+                            const usageItems = [
+                              { label: "Projetos ativos", used: usageStats.projects ?? 0, limit: isStarter ? 5 : null, monthly: false },
+                              { label: "Públicos-alvo", used: usageStats.audiences ?? 0, limit: isStarter ? 5 : null, monthly: false },
+                              { label: "Análises heurísticas", used: tenantSettings.analyses_used || 0, limit: isStarter ? (tenantSettings.monthly_analyses_limit || 5) : null, monthly: true },
+                              { label: "Benchmarks SWOT", used: usageStats.benchmarks ?? 0, limit: isStarter ? 5 : null, monthly: true },
+                              { label: "Planos táticos", used: usageStats.tactical_plans ?? 0, limit: isStarter ? 1 : null, monthly: true },
+                              { label: "Campanhas", used: usageStats.campaigns ?? 0, limit: isStarter ? 2 : null, monthly: true },
+                              { label: "Backups", used: usageStats.exports ?? 0, limit: isStarter ? 4 : null, monthly: true },
+                            ];
+                            return usageItems.map((item) => {
+                              const pct = item.limit ? Math.min(100, (item.used / item.limit) * 100) : 0;
+                              const isNearLimit = item.limit ? pct >= 80 : false;
+                              const isAtLimit = item.limit ? item.used >= item.limit : false;
+                              return (
+                                <div key={item.label} className="rounded-lg bg-muted/30 p-2.5 space-y-1.5">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-muted-foreground">{item.label}</span>
+                                    <span className={`text-xs font-semibold ${isAtLimit ? "text-destructive" : isNearLimit ? "text-amber-500" : "text-foreground"}`}>
+                                      {item.used}{item.limit ? ` / ${item.limit}` : ""}{!item.limit ? " / ∞" : ""}{item.monthly ? "" : ""}
+                                    </span>
+                                  </div>
+                                  {item.limit && (
+                                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                                      <div
+                                        className={`h-full rounded-full transition-all ${isAtLimit ? "bg-destructive" : isNearLimit ? "bg-amber-500" : "bg-primary"}`}
+                                        style={{ width: `${pct}%` }}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            });
+                          })()}
                         </div>
                         {isStarter && (
-                          <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-primary transition-all"
-                              style={{ width: `${Math.min(100, ((tenantSettings.analyses_used || 0) / (tenantSettings.monthly_analyses_limit || 5)) * 100)}%` }}
-                            />
-                          </div>
+                          <p className="text-[11px] text-muted-foreground text-center">
+                            Limites mensais são resetados no dia 1 de cada mês. Projetos e públicos são totais.
+                          </p>
                         )}
                       </div>
                     )}

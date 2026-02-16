@@ -168,6 +168,7 @@ INSERT INTO feature_flags (feature_key, feature_name, description, category, sta
   ('tactical_plan', 'Plano Tático por Canal', 'Estruturação de campanhas para Google, Meta, LinkedIn e TikTok', 'tactical', 'active', 40),
   ('tactical_templates', 'Templates Táticos por Nicho', '6 templates pré-preenchidos (SaaS, Consultoria, etc.)', 'tactical', 'active', 41),
   ('tactical_playbook', 'Playbook Gamificado', 'Diretivas de execução priorizadas com KPIs', 'tactical', 'active', 42),
+  ('operations', 'Operações e Campanhas', 'Gestão de campanhas, métricas, budget, calendário e timeline por canal', 'tactical', 'active', 43),
   
   -- Export
   ('export_pdf', 'Relatórios PDF', 'Relatórios consolidados por projeto em PDF', 'export', 'active', 50),
@@ -199,40 +200,41 @@ ON CONFLICT (feature_key) DO NOTHING;
 -- SEED: Plan Features (mapeamento feature → plano)
 -- =====================================================
 
--- Starter (gratuito)
+-- Starter (gratuito) — tudo habilitado, mas com limites
 INSERT INTO plan_features (feature_key, plan, is_enabled, usage_limit, limit_period) VALUES
   ('url_heuristic_analysis', 'starter', true, 5, 'monthly'),
   ('structured_data_viewer', 'starter', true, NULL, NULL),
-  ('structured_data_generator', 'starter', false, NULL, NULL),
+  ('structured_data_generator', 'starter', true, 3, 'monthly'),
   ('html_snapshot', 'starter', true, NULL, NULL),
   ('progress_tracker', 'starter', true, NULL, NULL),
-  ('ai_project_analysis', 'starter', false, NULL, NULL),
-  ('ai_benchmark_enrichment', 'starter', false, NULL, NULL),
-  ('ai_api_keys', 'starter', false, NULL, NULL),
+  ('ai_project_analysis', 'starter', true, 5, 'monthly'),
+  ('ai_benchmark_enrichment', 'starter', true, 3, 'monthly'),
+  ('ai_api_keys', 'starter', true, NULL, NULL),
   ('benchmark_swot', 'starter', true, 5, 'monthly'),
-  ('benchmark_gap_analysis', 'starter', false, NULL, NULL),
-  ('tactical_plan', 'starter', false, NULL, NULL),
-  ('tactical_templates', 'starter', false, NULL, NULL),
-  ('tactical_playbook', 'starter', false, NULL, NULL),
-  ('export_pdf', 'starter', false, NULL, NULL),
-  ('export_csv', 'starter', false, NULL, NULL),
-  ('export_ai_results', 'starter', false, NULL, NULL),
-  ('brand_guide', 'starter', false, NULL, NULL),
-  ('brand_posts', 'starter', false, NULL, NULL),
+  ('benchmark_gap_analysis', 'starter', true, 3, 'monthly'),
+  ('tactical_plan', 'starter', true, 1, 'monthly'),
+  ('tactical_templates', 'starter', true, 3, 'unlimited'),
+  ('tactical_playbook', 'starter', true, 1, 'monthly'),
+  ('operations', 'starter', true, 2, 'monthly'),
+  ('export_pdf', 'starter', true, 3, 'monthly'),
+  ('export_csv', 'starter', true, 3, 'monthly'),
+  ('export_ai_results', 'starter', true, 2, 'monthly'),
+  ('brand_guide', 'starter', true, 1, 'unlimited'),
+  ('brand_posts', 'starter', true, 5, 'monthly'),
   ('channel_scores', 'starter', true, NULL, NULL),
   ('strategic_insights', 'starter', true, NULL, NULL),
   ('strategic_alerts', 'starter', true, NULL, NULL),
-  ('audiences', 'starter', true, 1, 'unlimited'),
+  ('audiences', 'starter', true, 5, 'unlimited'),
   ('notifications', 'starter', true, NULL, NULL),
   ('dark_mode', 'starter', true, NULL, NULL),
-  ('backup_system', 'starter', false, NULL, NULL),
+  ('backup_system', 'starter', true, 4, 'monthly'),
   ('google_ads_integration', 'starter', false, NULL, NULL),
   ('meta_ads_integration', 'starter', false, NULL, NULL),
   ('linkedin_ads_integration', 'starter', false, NULL, NULL),
   ('tiktok_ads_integration', 'starter', false, NULL, NULL),
   ('seo_analysis', 'starter', true, NULL, NULL),
   ('performance_monitoring', 'starter', true, NULL, NULL),
-  ('ai_performance_analysis', 'starter', false, NULL, NULL)
+  ('ai_performance_analysis', 'starter', true, 3, 'monthly')
 ON CONFLICT (feature_key, plan) DO NOTHING;
 
 -- Professional
@@ -250,6 +252,7 @@ INSERT INTO plan_features (feature_key, plan, is_enabled, usage_limit, limit_per
   ('tactical_plan', 'professional', true, NULL, NULL),
   ('tactical_templates', 'professional', true, NULL, NULL),
   ('tactical_playbook', 'professional', true, NULL, NULL),
+  ('operations', 'professional', true, NULL, NULL),
   ('export_pdf', 'professional', true, NULL, NULL),
   ('export_csv', 'professional', true, NULL, NULL),
   ('export_ai_results', 'professional', true, NULL, NULL),
@@ -286,6 +289,7 @@ INSERT INTO plan_features (feature_key, plan, is_enabled, usage_limit, limit_per
   ('tactical_plan', 'enterprise', true, NULL, NULL),
   ('tactical_templates', 'enterprise', true, NULL, NULL),
   ('tactical_playbook', 'enterprise', true, NULL, NULL),
+  ('operations', 'enterprise', true, NULL, NULL),
   ('export_pdf', 'enterprise', true, NULL, NULL),
   ('export_csv', 'enterprise', true, NULL, NULL),
   ('export_ai_results', 'enterprise', true, NULL, NULL),

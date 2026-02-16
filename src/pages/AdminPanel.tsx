@@ -1055,8 +1055,9 @@ export default function AdminPanel() {
                                     onClick={() => {
                                       updateUserLimits(user.user_id, "monthly_analyses_limit", -1);
                                       updateUserLimits(user.user_id, "max_audiences", -1);
+                                      updateUserLimits(user.user_id, "max_projects", -1);
                                     }}
-                                    disabled={saving?.startsWith(`limit-${user.user_id}`) || (user.monthly_analyses_limit === -1 && (user.max_audiences ?? 5) === -1)}
+                                    disabled={saving?.startsWith(`limit-${user.user_id}`) || (user.monthly_analyses_limit === -1 && (user.max_audiences ?? 5) === -1 && (user.max_projects ?? 5) === -1)}
                                   >
                                     Tudo ilimitado
                                   </Button>
@@ -1067,8 +1068,9 @@ export default function AdminPanel() {
                                     onClick={() => {
                                       updateUserLimits(user.user_id, "monthly_analyses_limit", 5);
                                       updateUserLimits(user.user_id, "max_audiences", 5);
+                                      updateUserLimits(user.user_id, "max_projects", 5);
                                     }}
-                                    disabled={saving?.startsWith(`limit-${user.user_id}`) || (user.monthly_analyses_limit === 5 && (user.max_audiences ?? 5) === 5)}
+                                    disabled={saving?.startsWith(`limit-${user.user_id}`) || (user.monthly_analyses_limit === 5 && (user.max_audiences ?? 5) === 5 && (user.max_projects ?? 5) === 5)}
                                   >
                                     Padrão Starter
                                   </Button>
@@ -1140,6 +1142,30 @@ export default function AdminPanel() {
                                         const val = parseInt(e.target.value);
                                         if (!isNaN(val) && val !== (user.max_audiences ?? 5)) {
                                           updateUserLimits(user.user_id, "max_audiences", val);
+                                        }
+                                      }}
+                                      onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                                    />
+                                    <span className="text-[9px] text-muted-foreground/70 w-[72px] text-center">-1 = ∞</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-blue-500/5 border border-blue-500/10">
+                                  <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
+                                  <span className="text-[11px] text-blue-300 flex-1 min-w-0 truncate font-medium">
+                                    Máx. projetos ativos
+                                  </span>
+                                  <div className="flex items-center gap-1 flex-shrink-0">
+                                    <Input
+                                      type="number"
+                                      min={-1}
+                                      placeholder="∞"
+                                      className="h-6 w-14 text-[10px] bg-background border-border text-foreground text-center px-1"
+                                      defaultValue={user.max_projects ?? 5}
+                                      title="Máximo de projetos ativos (-1 = ilimitado)"
+                                      onBlur={(e) => {
+                                        const val = parseInt(e.target.value);
+                                        if (!isNaN(val) && val !== (user.max_projects ?? 5)) {
+                                          updateUserLimits(user.user_id, "max_projects", val);
                                         }
                                       }}
                                       onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
