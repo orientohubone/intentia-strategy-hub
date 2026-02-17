@@ -18,6 +18,7 @@ import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CookiePolicy from "./pages/CookiePolicy";
+import DataDeletion from "./pages/DataDeletion";
 import Projects from "./pages/Projects";
 import Insights from "./pages/Insights";
 import Audiences from "./pages/Audiences";
@@ -81,6 +82,7 @@ const App = () => (
           <Route path="/politica-de-privacidade" element={<ForceLightMode><PrivacyPolicy /></ForceLightMode>} />
           <Route path="/termos-de-servico" element={<ForceLightMode><TermsOfService /></ForceLightMode>} />
           <Route path="/politica-de-cookies" element={<ForceLightMode><CookiePolicy /></ForceLightMode>} />
+          <Route path="/exclusao-de-dados" element={<ForceLightMode><DataDeletion /></ForceLightMode>} />
           <Route path="/brand" element={<ForceLightMode><BrandGuide /></ForceLightMode>} />
           <Route path="/brand/posts" element={<ForceLightMode><BrandPosts /></ForceLightMode>} />
           <Route path="/brand/google-ads-doc" element={<ForceLightMode><GoogleAdsDesignDoc /></ForceLightMode>} />

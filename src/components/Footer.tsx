@@ -152,6 +152,9 @@ export function Footer() {
               <a href="/politica-de-cookies" className="text-muted-foreground hover:text-primary transition-colors">
                 Política de Cookies
               </a>
+              <a href="/exclusao-de-dados" className="text-muted-foreground hover:text-primary transition-colors">
+                Exclusão de Dados
+              </a>
               <a href="/status" className="text-muted-foreground hover:text-primary transition-colors">
                 Status
               </a>
