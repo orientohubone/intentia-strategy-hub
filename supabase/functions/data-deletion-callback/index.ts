@@ -172,7 +172,7 @@ serve(async (req) => {
     // Meta expects a JSON response with:
     // - url: a URL where the user can check the status of their deletion request
     // - confirmation_code: a unique code for this deletion request
-    const appUrl = Deno.env.get("APP_URL") || "https://intentia.orientohub.com.br";
+    const appUrl = Deno.env.get("APP_URL") || "https://intentia.com.br";
     const statusUrl = `${appUrl}/exclusao-de-dados?code=${confirmationCode}`;
 
     return new Response(

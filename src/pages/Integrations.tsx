@@ -24,6 +24,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { FeatureGate } from "@/components/FeatureGate";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -113,6 +115,7 @@ function StatusIndicator({ status }: { status: IntegrationStatus }) {
 
 export default function Integrations() {
   const { user } = useAuth();
+  const { isFeatureAvailable } = useFeatureFlags();
   const [integrations, setIntegrations] = useState<AdIntegration[]>([]);
   const [loading, setLoading] = useState(true);
   const [connectingProvider, setConnectingProvider] = useState<AdProvider | null>(null);
@@ -331,10 +334,11 @@ export default function Integrations() {
   const detailIsConnected = detailIntegration?.status === "connected";
 
   return (
-    <DashboardLayout>
-      <SEO title="Integrações" path="/integracoes" noindex />
+    <FeatureGate featureKey="meta_ads_integration" withLayout={false} pageTitle="Integrações">
+      <DashboardLayout>
+        <SEO title="Integrações" path="/integracoes" noindex />
 
-      <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
@@ -367,13 +371,13 @@ export default function Integrations() {
         </div>
 
         {/* Info Box */}
-        <div className="flex items-start gap-3 p-3 sm:p-4 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/30">
-          <Lock className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-amber-700 dark:text-amber-300">
-            <p className="font-medium mb-1">Integrações em Desenvolvimento</p>
-            <p className="text-amber-600 dark:text-amber-400">
-              As integrações com plataformas de anúncios (Google Ads, Meta Ads, LinkedIn Ads, TikTok Ads) estão em desenvolvimento.
-              Em breve você poderá conectar suas contas para importar automaticamente campanhas, métricas e dados de performance.
+        <div className="flex items-start gap-3 p-3 sm:p-4 rounded-xl border border-primary/20 bg-primary/5">
+          <Info className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-foreground">
+            <p className="font-medium mb-1">Conecte suas contas de anúncios</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              Vincule suas contas de mídia para importar campanhas, métricas e dados de performance automaticamente.
+              Seus tokens são armazenados de forma segura e isolados por conta.
             </p>
           </div>
         </div>
@@ -397,42 +401,148 @@ export default function Integrations() {
               return (
                 <div
                   key={provider}
-                  className={`group relative rounded-2xl border-2 p-5 sm:p-6 cursor-not-allowed transition-all duration-200 border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/30 to-background dark:from-amber-950/10 dark:to-background`}
+                  className={`group relative rounded-2xl border-2 p-5 sm:p-6 transition-all duration-200 ${
+                    isConnected
+                      ? "border-green-300 dark:border-green-800 bg-gradient-to-br from-green-50/30 to-background dark:from-green-950/10 dark:to-background"
+                      : isError || isExpired
+                      ? "border-red-300 dark:border-red-800 bg-gradient-to-br from-red-50/30 to-background dark:from-red-950/10 dark:to-background"
+                      : "border-border hover:border-primary/40 bg-gradient-to-br from-muted/30 to-background hover:shadow-md"
+                  }`}
                 >
-                  {/* Development overlay */}
-                  <div className="absolute inset-0 rounded-2xl bg-amber-500/5 backdrop-blur-[1px] pointer-events-none z-10" />
-                  <div className="absolute top-3 right-3 z-20">
-                    <Badge variant="outline" className="gap-1 text-amber-600 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800">
-                      <Lock className="h-3 w-3" />
-                      Em Desenvolvimento
-                    </Badge>
-                  </div>
-
                   {/* Top row: Icon + Status */}
-                  <div className="flex items-start justify-between mb-4 relative">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white dark:bg-gray-900 border border-border/50 shadow-sm flex items-center justify-center p-2.5 sm:p-3 opacity-60">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white dark:bg-gray-900 border border-border/50 shadow-sm flex items-center justify-center p-2.5 sm:p-3">
                       <ProviderSvgIcon provider={provider} className="w-full h-full" />
                     </div>
-                    <StatusIndicator status="disconnected" />
+                    <StatusIndicator status={integration?.status || "disconnected"} />
                   </div>
 
                   {/* Name + Description */}
-                  <h3 className="font-semibold text-base sm:text-lg mb-1 opacity-70">{config.name}</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-4 min-h-[2.5rem] opacity-60">
+                  <h3 className="font-semibold text-base sm:text-lg mb-1">{config.name}</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-4 min-h-[2.5rem]">
                     {config.description}
                   </p>
 
-                  {/* Development message */}
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
-                    <Lock className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-                    <div className="text-xs text-amber-700 dark:text-amber-300">
-                      <p className="font-medium">Em desenvolvimento</p>
-                      <p className="text-amber-600 dark:text-amber-400">Integração disponível em breve</p>
+                  {/* Connected state */}
+                  {isConnected && integration && (
+                    <div className="space-y-3 mb-4">
+                      <div className="flex items-center gap-2 p-2.5 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+                        <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                        <div className="text-xs min-w-0">
+                          <p className="font-medium text-green-700 dark:text-green-300 truncate">
+                            {integration.account_name || integration.account_id || "Conta conectada"}
+                          </p>
+                          {integration.last_sync_at && (
+                            <p className="text-green-600 dark:text-green-400">
+                              Última sync: {formatLastSync(integration.last_sync_at)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 gap-1.5 text-xs h-8"
+                          onClick={() => handleSync(provider)}
+                          disabled={isSyncing}
+                        >
+                          {isSyncing ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-3.5 w-3.5" />
+                          )}
+                          {isSyncing ? "Sincronizando..." : "Sincronizar"}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1.5 text-xs h-8"
+                          onClick={() => {
+                            if (integration?.id) loadSyncLogs(integration.id);
+                          }}
+                        >
+                          <History className="h-3.5 w-3.5" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive h-8 w-8 p-0">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Desconectar {config.name}?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Isso removerá o acesso à conta de anúncios. Dados já importados serão mantidos.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={() => handleDisconnect(provider)}
+                              >
+                                Desconectar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Error / Expired state */}
+                  {(isError || isExpired) && integration && (
+                    <div className="space-y-3 mb-4">
+                      <div className="flex items-center gap-2 p-2.5 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
+                        <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />
+                        <div className="text-xs">
+                          <p className="font-medium text-red-700 dark:text-red-300">
+                            {isExpired ? "Token expirado" : "Erro na conexão"}
+                          </p>
+                          <p className="text-red-600 dark:text-red-400 line-clamp-1">
+                            {integration.error_message || "Reconecte para restaurar o acesso."}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full gap-1.5 text-xs h-8"
+                        onClick={() => handleConnect(provider)}
+                        disabled={isConnecting}
+                      >
+                        {isConnecting ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-3.5 w-3.5" />
+                        )}
+                        Reconectar
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Disconnected state — Connect button */}
+                  {!isConnected && !isError && !isExpired && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-1.5 mb-4 h-9"
+                      onClick={() => handleConnect(provider)}
+                      disabled={isConnecting}
+                    >
+                      {isConnecting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Zap className="h-4 w-4" />
+                      )}
+                      {isConnecting ? "Conectando..." : "Conectar"}
+                    </Button>
+                  )}
 
                   {/* Features preview */}
-                  <div className="flex flex-wrap gap-1 mt-3 opacity-40">
+                  <div className="flex flex-wrap gap-1">
                     {config.features.slice(0, 3).map((f, i) => (
                       <span key={i} className="text-[10px] px-1.5 py-0.5 rounded-md bg-muted/60 text-muted-foreground">
                         {f.length > 30 ? f.slice(0, 28) + "..." : f}
@@ -478,8 +588,59 @@ export default function Integrations() {
       </div>
 
       {/* Detail / Config Dialog */}
-      <Dialog open={false} onOpenChange={() => {}}>
-        {/* Dialog disabled - integrations in development */}
+      <Dialog open={!!detailProvider} onOpenChange={(open) => !open && setDetailProvider(null)}>
+        {detailProvider && (() => {
+          const config = PROVIDER_CONFIGS[detailProvider];
+          const integration = getIntegration(detailProvider);
+          return (
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <ProviderSvgIcon provider={detailProvider} className="h-5 w-5" />
+                  {config.name}
+                </DialogTitle>
+                <DialogDescription>
+                  Detalhes e configuração da integração
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                {integration && (
+                  <>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Status</span>
+                        <StatusIndicator status={integration.status} />
+                      </div>
+                      {integration.account_name && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Conta</span>
+                          <span className="font-medium truncate ml-4">{integration.account_name}</span>
+                        </div>
+                      )}
+                      {integration.account_id && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">ID</span>
+                          <span className="font-mono text-xs">{integration.account_id}</span>
+                        </div>
+                      )}
+                      {integration.last_sync_at && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Última sync</span>
+                          <span>{formatLastSync(integration.last_sync_at)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" size="sm" onClick={() => setDetailProvider(null)}>
+                  Fechar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          );
+        })()}
       </Dialog>
 
       {/* Sync Logs Dialog */}
@@ -558,6 +719,7 @@ export default function Integrations() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+      </DashboardLayout>
+    </FeatureGate>
   );
 }

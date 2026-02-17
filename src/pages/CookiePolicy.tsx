@@ -224,7 +224,7 @@ export default function CookiePolicy() {
                 </p>
                 <ul className="list-disc list-inside space-y-1 text-sm">
                   <li>Limpar cookies do navegador</li>
-                  <li>Solicitar exclusão via intentia@orientohub.com.br</li>
+                  <li>Solicitar exclusão via intentia.com.br</li>
                   <li>Usar ferramentas de privacidade de navegadores</li>
                 </ul>
               </div>
