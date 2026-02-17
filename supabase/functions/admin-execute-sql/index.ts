@@ -80,6 +80,11 @@ serve(async (req) => {
 
     // Execute SQL
     const startTime = Date.now()
+    
+    // Log para debug
+    console.log('🔍 Executing SQL:', { sqlPath, sqlContent: sqlContent?.substring(0, 100) + '...' })
+    
+    // Executar SQL real via RPC
     const { error, data } = await supabase.rpc('execute_sql', { 
       sql_content: sqlContent 
     })
@@ -142,9 +147,7 @@ serve(async (req) => {
  */
 async function readSQLFile(sqlPath: string): Promise<string | null> {
   try {
-    // Por enquanto, vamos usar um conteúdo de exemplo
-    // Em produção, isso implementaria a leitura real do arquivo
-    
+    // SQLs reais para os exemplos
     const examples: Record<string, string> = {
       'sql/00_setup/schema.sql': `
 -- Schema base (tenant_settings, projects)
@@ -167,21 +170,83 @@ CREATE TABLE IF NOT EXISTS projects (
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+-- Criar função para updated_at automático
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Criar triggers
+CREATE TRIGGER set_tenant_settings_updated_at
+  BEFORE UPDATE ON tenant_settings
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER set_projects_updated_at
+  BEFORE UPDATE ON projects
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
       `,
       'sql/00_setup/storage_setup.sql': `
 -- Configuração do bucket avatars
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('avatars', 'avatars', false)
 ON CONFLICT (id) DO NOTHING;
+
+-- Políticas RLS para o bucket avatars
+CREATE POLICY "Users can upload their own avatar" ON storage.objects
+  FOR INSERT WITH CHECK (bucket_id = 'avatars' AND auth.role() = 'authenticated');
+
+CREATE POLICY "Users can update their own avatar" ON storage.objects
+  FOR UPDATE USING (bucket_id = 'avatars' AND auth.uid::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "Users can view their own avatar" ON storage.objects
+  FOR SELECT USING (bucket_id = 'avatars' AND auth.uid::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "Users can delete their own avatar" ON storage.objects
+  FOR DELETE USING (bucket_id = 'avatars' AND auth.uid::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "Avatars are publicly readable" ON storage.objects
+  FOR SELECT USING (bucket_id = 'avatars');
       `,
       'sql/01_schema/tactical_schema.sql': `
 -- Camada tática (5 tabelas)
 CREATE TABLE IF NOT EXISTS tactical_plans (
   id uuid primary key default gen_random_uuid(),
-  project_id uuid references projects(id),
+  project_id uuid references projects(id) ON DELETE CASCADE,
   name text not null,
-  created_at timestamptz default now()
+  objective text,
+  strategy text,
+  tactics text[],
+  kpi_targets jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
 );
+
+CREATE TABLE IF NOT EXISTS tactical_actions (
+  id uuid primary key default gen_random_uuid(),
+  plan_id uuid references tactical_plans(id) ON DELETE CASCADE,
+  title text not null,
+  description text,
+  channel text,
+  status text default 'pending',
+  priority text default 'medium',
+  due_date date,
+  completed_at timestamptz,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Triggers para updated_at
+CREATE TRIGGER set_tactical_plans_updated_at
+  BEFORE UPDATE ON tactical_plans
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER set_tactical_actions_updated_at
+  BEFORE UPDATE ON tactical_actions
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
       `
     }
 

@@ -69,22 +69,22 @@ export default function Auth() {
 
       if (error) throw error;
 
-      // Create tenant_settings for the new user (starter plan)
-      const userId = signUpData.user?.id;
-      if (userId) {
-        await (supabase.from("tenant_settings") as any).upsert({
-          user_id: userId,
-          company_name: formData.companyName || formData.fullName || formData.email.split("@")[0],
-          plan: "starter",
-          monthly_analyses_limit: 5,
-          analyses_used: 0,
-          full_name: formData.fullName,
-          email: formData.email,
-        }, { onConflict: "user_id" });
+      // Tenant settings é criado automaticamente pelo trigger handle_new_user
+      // Não precisa criar manualmente
+      
+      // Verificar se confirmação de email está desativada
+      if (signUpData.user && !signUpData.user.email_confirmed_at) {
+        // Email confirmation ativada - fluxo normal
+        toast.success("Conta criada com sucesso! Verifique seu email.");
+        setMode("signin");
+        setFormData({ email: "", password: "", fullName: "", companyName: "" });
+      } else {
+        // Email confirmation desativada - redirecionar direto
+        toast.success("Conta criada com sucesso! Redirecionando...");
+        setTimeout(() => {
+          navigate(redirectTo);
+        }, 1000);
       }
-
-      toast.success("Cadastro realizado! Verifique seu email para confirmar.");
-      setFormData({ email: "", password: "", fullName: "", companyName: "" });
     } catch (error: any) {
       toast.error(error.message || "Erro ao criar conta");
     } finally {

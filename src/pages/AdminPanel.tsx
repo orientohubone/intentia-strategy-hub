@@ -416,45 +416,45 @@ export default function AdminPanel() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-card/80 border border-border/80 rounded-xl p-4 shadow-sm">
+          <div className="bg-card border border-border rounded-xl p-4 shadow-md">
             <div className="flex items-center gap-2 mb-2">
               <ToggleLeft className="h-4 w-4 text-green-500" />
-              <span className="text-[11px] text-muted-foreground/90 uppercase tracking-wider">Features Ativas</span>
+              <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Features Ativas</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{activeFeatures}</p>
-            <p className="text-[11px] text-muted-foreground/80">{disabledFeatures} desativadas · {devFeatures} em dev</p>
+            <p className="text-[11px] text-muted-foreground">{disabledFeatures} desativadas · {devFeatures} em dev</p>
           </div>
-          <div className="bg-card/80 border border-border/80 rounded-xl p-4 shadow-sm">
+          <div className="bg-card border border-border rounded-xl p-4 shadow-md">
             <div className="flex items-center gap-2 mb-2">
               <Users className="h-4 w-4 text-blue-500" />
-              <span className="text-[11px] text-muted-foreground/90 uppercase tracking-wider">Clientes</span>
+              <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Clientes</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{totalUsers}</p>
-            <p className="text-[11px] text-muted-foreground/80">{starterUsers} starter · {proUsers} pro · {enterpriseUsers} enterprise</p>
+            <p className="text-[11px] text-muted-foreground">{starterUsers} starter · {proUsers} pro · {enterpriseUsers} enterprise</p>
           </div>
-          <div className="bg-card/80 border border-border/80 rounded-xl p-4 shadow-sm">
+          <div className="bg-card border border-border rounded-xl p-4 shadow-md">
             <div className="flex items-center gap-2 mb-2">
               <Settings2 className="h-4 w-4 text-primary" />
-              <span className="text-[11px] text-muted-foreground/90 uppercase tracking-wider">Total Features</span>
+              <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Total Features</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{features.length}</p>
-            <p className="text-[11px] text-muted-foreground/80">{Object.keys(CATEGORY_LABELS).length} categorias</p>
+            <p className="text-[11px] text-muted-foreground">{Object.keys(CATEGORY_LABELS).length} categorias</p>
           </div>
-          <div className="bg-card/80 border border-border/80 rounded-xl p-4 shadow-sm">
+          <div className="bg-card border border-border rounded-xl p-4 shadow-md">
             <div className="flex items-center gap-2 mb-2">
               <LayoutDashboard className="h-4 w-4 text-purple-500" />
-              <span className="text-[11px] text-muted-foreground/90 uppercase tracking-wider">Planos</span>
+              <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Planos</span>
             </div>
             <p className="text-2xl font-bold text-foreground">3</p>
-            <p className="text-[11px] text-muted-foreground/80">Starter · Professional · Enterprise</p>
+            <p className="text-[11px] text-muted-foreground">Starter · Professional · Enterprise</p>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 bg-card/80 border border-border/80 rounded-xl p-1 shadow-sm">
+        <div className="flex items-center gap-1 bg-card border border-border rounded-xl p-1 shadow-md">
           {[
             { key: "features" as const, label: "Feature Flags", icon: ToggleLeft },
-            { key: "plans" as const, label: "Controle de Planos", icon: Settings2 },
+            { key: "plans" as const, label: "Planos", icon: Settings2 },
             { key: "users" as const, label: "Clientes", icon: Users },
             { key: "status" as const, label: "Status Page", icon: Activity },
             { key: "architecture" as const, label: "Arquitetura", icon: Layers },
@@ -484,14 +484,14 @@ export default function AdminPanel() {
               placeholder={activeTab === "users" ? "Buscar por empresa, nome ou email..." : "Buscar feature..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-card/80 border-border/80 text-foreground placeholder:text-muted-foreground/60 shadow-sm"
+              className="pl-10 bg-card border-border text-foreground placeholder:text-muted-foreground shadow-md"
             />
           </div>
           {activeTab === "features" && (
             <>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-full sm:w-44 bg-card/80 border-border/80 text-foreground shadow-sm">
-                  <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground/80" />
+                <SelectTrigger className="w-full sm:w-44 bg-card border-border text-foreground shadow-md">
+                  <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
                 <SelectContent>
@@ -502,8 +502,8 @@ export default function AdminPanel() {
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-44 bg-card/80 border-border/80 text-foreground shadow-sm">
-                  <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground/80" />
+                <SelectTrigger className="w-full sm:w-44 bg-card border-border text-foreground shadow-md">
+                  <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -517,8 +517,8 @@ export default function AdminPanel() {
           )}
           {activeTab === "users" && (
             <Select value={planFilter} onValueChange={setPlanFilter}>
-              <SelectTrigger className="w-full sm:w-44 bg-card/80 border-border/80 text-foreground shadow-sm">
-                <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground/80" />
+              <SelectTrigger className="w-full sm:w-44 bg-card border-border text-foreground shadow-md">
+                <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                 <SelectValue placeholder="Plano" />
               </SelectTrigger>
               <SelectContent>
@@ -561,7 +561,7 @@ export default function AdminPanel() {
                     );
 
                     return (
-                      <div className="bg-card/80 border border-border/80 rounded-2xl overflow-hidden shadow-sm">
+                      <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-md">
                         {/* Expand/Collapse bar */}
                         <div className="flex items-center justify-between px-5 py-3 border-b border-border">
                           <p className="text-[11px] text-muted-foreground/90 uppercase tracking-wider font-medium">Funcionalidades do Sistema</p>
@@ -757,7 +757,7 @@ export default function AdminPanel() {
                   );
 
                   return (
-                    <div key={plan} className="bg-card/60 border border-border rounded-2xl overflow-hidden">
+                    <div key={plan} className="bg-card border border-border rounded-2xl overflow-hidden shadow-md">
                       {/* Plan header — clickable to collapse */}
                       <button
                         className="w-full flex items-center gap-4 px-5 py-4 hover:bg-muted/20 transition-colors group"
@@ -948,7 +948,7 @@ export default function AdminPanel() {
                     return (
                       <div
                         key={user.user_id}
-                        className="bg-card/60 border border-border rounded-xl overflow-hidden"
+                        className="bg-card border border-border rounded-xl overflow-hidden shadow-md"
                       >
                         <button
                           className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/30 transition-colors"

@@ -126,8 +126,8 @@ function FlowNode({
   label,
   sublabel,
   color = "text-foreground/80",
-  bg = "bg-muted/60",
-  border = "border-border/50",
+  bg = "bg-muted",
+  border = "border-border",
   size = "normal",
   pulse = false,
   tooltip,
@@ -207,8 +207,8 @@ function DottedLine({ direction = "down" }: { direction?: "right" | "down" }) {
 function FlowBox({
   title,
   titleColor = "text-foreground/80",
-  borderColor = "border-border/50",
-  bgColor = "bg-card/40",
+  borderColor = "border-border",
+  bgColor = "bg-card",
   children,
   badge,
   defaultOpen = false,
@@ -360,7 +360,7 @@ function OverviewSection() {
 
         {/* Connection arrows between layers */}
         <div className="flex items-center justify-center gap-2 py-2">
-          <div className="flex items-center gap-2 bg-muted/40 rounded-full px-4 py-1.5">
+          <div className="flex items-center gap-2 bg-muted/60 rounded-full px-4 py-1.5">
             <Monitor className="h-3 w-3 text-blue-400" />
             <div className="flex items-center gap-1">
               <div className="h-px w-3 bg-blue-400/40" />
@@ -389,7 +389,7 @@ function OverviewSection() {
             { label: "Supabase", sub: "BaaS", color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", tip: "Backend-as-a-Service open source: PostgreSQL, Auth, Storage, Edge Functions e Real-time" },
             { label: "TanStack Query", sub: "Data Fetching", color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20", tip: "Gerenciamento de estado assincrono com cache automatico, revalidacao e deduplicacao de requests" },
             { label: "React Router v6", sub: "Routing", color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20", tip: "Navegacao SPA com rotas declarativas, nested routes, loaders e protecao de rotas" },
-            { label: "shadcn/ui", sub: "Components", color: "text-foreground/80", bg: "bg-muted/60", border: "border-border/50", tip: "Componentes acessiveis baseados em Radix UI, copiaveis e customizaveis com Tailwind" },
+            { label: "shadcn/ui", sub: "Components", color: "text-foreground/80", bg: "bg-muted", border: "border-border", tip: "Componentes acessiveis baseados em Radix UI, copiaveis e customizaveis com Tailwind" },
           ].map((tech) => (
             <InfoTip key={tech.label} tip={tech.tip}>
               <div className={`${tech.bg} border ${tech.border} rounded-xl p-3 text-center cursor-help`}>
@@ -413,7 +413,7 @@ function OverviewSection() {
           { n: "15", label: "Libs", icon: Crown, color: "text-primary" },
           { n: "45+", label: "Arquivos SQL", icon: FileText, color: "text-red-400" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-card/60 border border-border rounded-xl p-3 flex items-center gap-3">
+          <div key={stat.label} className="bg-card border border-border rounded-xl p-3 flex items-center gap-3 shadow-sm">
             <stat.icon className={`h-5 w-5 ${stat.color} flex-shrink-0`} />
             <div>
               <p className="text-lg font-bold text-foreground">{stat.n}</p>
@@ -509,7 +509,7 @@ function FrontendSection() {
         </div>
 
         {/* Admin Routes */}
-        <div className="mt-4 pt-4 border-t border-border/50">
+        <div className="mt-4 pt-4 border-t border-border">
           <div className="flex items-center gap-2 mb-3">
             <Shield className="h-3.5 w-3.5 text-red-400" />
             <span className="text-[11px] font-semibold text-red-400 uppercase tracking-wider">Rotas Admin</span>
@@ -536,7 +536,7 @@ function FrontendSection() {
       <FlowBox title="Hierarquia de Componentes" badge="50+ componentes">
         <div className="space-y-4">
           {/* App wrapper */}
-          <div className="bg-muted/30 border border-border/30 rounded-xl p-3">
+          <div className="bg-muted border border-border rounded-xl p-3">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-2 h-2 rounded-full bg-primary" />
               <span className="text-xs font-semibold text-foreground">App.tsx</span>
@@ -643,7 +643,7 @@ function FrontendSection() {
       <FlowBox title="Telas de Aviso — FeatureBlockedScreen" badge="v3.1.0" borderColor="border-amber-500/20" bgColor="bg-amber-500/5">
         <div className="space-y-4">
           {/* Component Overview */}
-          <div className="bg-muted/30 border border-border/30 rounded-xl p-3">
+          <div className="bg-muted border border-border rounded-xl p-3">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-2 h-2 rounded-full bg-amber-500" />
               <span className="text-xs font-semibold text-foreground">FeatureBlockedScreen.tsx</span>
@@ -718,7 +718,7 @@ function FrontendSection() {
           </FlowBox>
 
           {/* Message Customization */}
-          <div className="bg-muted/30 border border-border/30 rounded-xl p-3">
+          <div className="bg-muted border border-border rounded-xl p-3">
             <p className="text-[10px] font-semibold text-green-400 uppercase tracking-wider mb-2">Mensagens Personalizáveis</p>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -805,7 +805,7 @@ function AuthSection() {
           </div>
 
           {/* Key difference */}
-          <div className="bg-muted/30 border border-border/30 rounded-xl p-3 mt-4">
+          <div className="bg-muted border border-border rounded-xl p-3 mt-4">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
               <div>
@@ -989,7 +989,7 @@ function FeatureFlagsSection() {
               { status: "disabled", label: "Desativado", color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20", action: "Bloqueado" },
               { status: "development", label: "Em Dev", color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", action: "Em breve" },
               { status: "maintenance", label: "Manutencao", color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", action: "Aviso" },
-              { status: "deprecated", label: "Descontinuado", color: "text-muted-foreground", bg: "bg-muted/60", border: "border-border/50", action: "Remocao" },
+              { status: "deprecated", label: "Descontinuado", color: "text-muted-foreground", bg: "bg-muted", border: "border-border", action: "Remocao" },
             ].map((s) => (
               <div key={s.status} className={`${s.bg} border ${s.border} rounded-lg px-2 py-2 text-center`}>
                 <p className={`text-[10px] font-medium ${s.color}`}>{s.label}</p>
@@ -1243,19 +1243,19 @@ function EdgeFunctionsSection() {
               </div>
               <p className="text-[11px] text-muted-foreground mb-3">{fn.desc}</p>
               <div className="grid grid-cols-4 gap-2">
-                <div className="bg-muted/40 rounded-lg px-2.5 py-1.5">
+                <div className="bg-muted/60 rounded-lg px-2.5 py-1.5">
                   <p className="text-[9px] text-muted-foreground/70 uppercase">Trigger</p>
                   <p className="text-[10px] text-muted-foreground">{fn.trigger}</p>
                 </div>
-                <div className="bg-muted/40 rounded-lg px-2.5 py-1.5">
+                <div className="bg-muted/60 rounded-lg px-2.5 py-1.5">
                   <p className="text-[9px] text-muted-foreground/70 uppercase">Input</p>
                   <p className="text-[10px] text-muted-foreground">{fn.input}</p>
                 </div>
-                <div className="bg-muted/40 rounded-lg px-2.5 py-1.5">
+                <div className="bg-muted/60 rounded-lg px-2.5 py-1.5">
                   <p className="text-[9px] text-muted-foreground/70 uppercase">Output</p>
                   <p className="text-[10px] text-muted-foreground">{fn.output}</p>
                 </div>
-                <div className="bg-muted/40 rounded-lg px-2.5 py-1.5">
+                <div className="bg-muted/60 rounded-lg px-2.5 py-1.5">
                   <p className="text-[9px] text-muted-foreground/70 uppercase">Auth</p>
                   <p className="text-[10px] text-muted-foreground">{fn.auth}</p>
                 </div>
@@ -1268,7 +1268,7 @@ function EdgeFunctionsSection() {
       {/* Claude Proxy Architecture */}
       <FlowBox title="Arquitetura Claude Proxy" badge="CORS Bypass">
         <div className="space-y-4">
-          <div className="bg-muted/30 border border-border/30 rounded-xl p-3">
+          <div className="bg-muted border border-border rounded-xl p-3">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
               <div>
@@ -1681,7 +1681,7 @@ function DatabaseSection() {
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-4 pt-2 border-t border-border/50">
+          <div className="flex items-center gap-4 pt-2 border-t border-border">
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-amber-400" />
               <span className="text-[9px] text-muted-foreground">Primary Key</span>
@@ -1745,7 +1745,7 @@ function DatabaseSection() {
             { name: "handle_new_user", desc: "Trigger: cria tenant_settings no signup", params: "— (trigger)" },
             { name: "prevent_plan_escalation", desc: "Trigger: impede upgrade nao autorizado", params: "— (trigger)" },
           ].map((fn) => (
-            <div key={fn.name} className="bg-muted/30 border border-border/30 rounded-xl p-3">
+            <div key={fn.name} className="bg-muted border border-border rounded-xl p-3">
               <code className="text-[10px] text-emerald-400 font-mono font-semibold">{fn.name}()</code>
               <p className="text-[9px] text-muted-foreground mt-1">{fn.desc}</p>
               <p className="text-[9px] text-muted-foreground/70 mt-0.5">Params: {fn.params}</p>
@@ -1774,7 +1774,7 @@ function SecuritySection() {
           <FlowNode icon={Database} label="Apenas dados do usuario" sublabel="Isolamento completo entre tenants" color="text-emerald-300" bg="bg-emerald-500/10" border="border-emerald-500/20" />
         </div>
 
-        <div className="bg-muted/30 border border-border/30 rounded-xl p-3">
+        <div className="bg-muted border border-border rounded-xl p-3">
           <p className="text-[10px] font-semibold text-foreground/80 mb-2">Tabelas com RLS ativo:</p>
           <div className="flex flex-wrap gap-1.5">
             {["tenant_settings", "projects", "insights", "project_channel_scores", "benchmarks", "audiences", "notifications", "user_api_keys", "campaigns", "campaign_metrics", "budget_allocations", "ad_integrations", "integration_sync_logs", "support_tickets", "support_ticket_messages"].map((t) => (
@@ -1787,7 +1787,7 @@ function SecuritySection() {
       {/* Security Audit */}
       <FlowBox title="Auditoria de Seguranca" borderColor="border-amber-500/20" bgColor="bg-amber-500/5" badge="Aplicada">
         <div className="space-y-3">
-          <div className="bg-muted/30 border border-border/30 rounded-xl p-3">
+          <div className="bg-muted border border-border rounded-xl p-3">
             <div className="flex items-start gap-2">
               <ShieldCheck className="h-4 w-4 text-green-400 flex-shrink-0 mt-0.5" />
               <div>
@@ -2066,7 +2066,7 @@ function OperationsSection() {
             <p className="text-[10px] text-foreground/80 font-semibold uppercase tracking-wider mb-2">Metricas Gerais (todos os canais)</p>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
               {["Impressoes", "Cliques", "CTR %", "CPC R$", "CPM R$", "Conversoes", "CPA R$", "Custo Total", "Receita", "ROAS x"].map((m) => (
-                <div key={m} className="bg-muted/40 border border-border/30 rounded-lg px-2 py-1.5 text-center">
+                <div key={m} className="bg-muted/60 border border-border rounded-lg px-2 py-1.5 text-center">
                   <p className="text-[9px] text-muted-foreground">{m}</p>
                 </div>
               ))}
@@ -2216,7 +2216,7 @@ function OperationsSection() {
               <p className="text-[11px] text-muted-foreground mb-2">{view.desc}</p>
               <div className="flex flex-wrap gap-1">
                 {view.cols.split(", ").map((col) => (
-                  <code key={col} className="text-[8px] bg-muted/40 text-muted-foreground rounded px-1.5 py-0.5 font-mono">{col}</code>
+                  <code key={col} className="text-[8px] bg-muted/60 text-muted-foreground rounded px-1.5 py-0.5 font-mono">{col}</code>
                 ))}
               </div>
             </div>
@@ -2403,7 +2403,7 @@ function OperationsSection() {
               { label: "Pacing", sub: "Budget subutilizado" },
               { label: "Tendencia", sub: "Sem metricas, alto gasto" },
             ].map((item) => (
-              <div key={item.label} className="bg-muted/40 border border-border/30 rounded-lg px-2.5 py-2 text-center">
+              <div key={item.label} className="bg-muted/60 border border-border rounded-lg px-2.5 py-2 text-center">
                 <p className="text-[10px] text-foreground/80 font-medium">{item.label}</p>
                 <p className="text-[9px] text-muted-foreground">{item.sub}</p>
               </div>
@@ -2452,7 +2452,7 @@ function OperationsSection() {
             { n: "11", label: "Componentes Op.", icon: Layers, color: "text-purple-400" },
             { n: "2", label: "Vistas Calendario", icon: CalendarDays, color: "text-violet-400" },
           ].map((stat) => (
-            <div key={stat.label} className="bg-card/60 border border-border rounded-xl p-3 flex items-center gap-3">
+            <div key={stat.label} className="bg-card border border-border rounded-xl p-3 flex items-center gap-3 shadow-sm">
               <stat.icon className={`h-5 w-5 ${stat.color} flex-shrink-0`} />
               <div>
                 <p className="text-lg font-bold text-foreground">{stat.n}</p>
@@ -2506,7 +2506,7 @@ function IntegrationsSection() {
 
         {/* Key details */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-          <div className="bg-muted/30 border border-border/30 rounded-xl p-3">
+          <div className="bg-muted border border-border rounded-xl p-3">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
               <div>
@@ -2515,7 +2515,7 @@ function IntegrationsSection() {
               </div>
             </div>
           </div>
-          <div className="bg-muted/30 border border-border/30 rounded-xl p-3">
+          <div className="bg-muted border border-border rounded-xl p-3">
             <div className="flex items-start gap-2">
               <Lock className="h-4 w-4 text-green-400 flex-shrink-0 mt-0.5" />
               <div>
@@ -2549,7 +2549,7 @@ function IntegrationsSection() {
         </div>
 
         {/* Token refresh detail */}
-        <div className="bg-muted/30 border border-border/30 rounded-xl p-3 mt-4">
+        <div className="bg-muted border border-border rounded-xl p-3 mt-4">
           <p className="text-[10px] font-semibold text-foreground/80 mb-2">Validade de Tokens por Provider:</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
@@ -2558,7 +2558,7 @@ function IntegrationsSection() {
               { provider: "LinkedIn", access: "60 dias", refresh: "365 dias", color: "text-sky-400" },
               { provider: "TikTok", access: "24 horas", refresh: "365 dias", color: "text-pink-400" },
             ].map((t) => (
-              <div key={t.provider} className="bg-muted/40 rounded-lg px-2.5 py-2">
+              <div key={t.provider} className="bg-muted/60 rounded-lg px-2.5 py-2">
                 <p className={`text-[10px] font-medium ${t.color}`}>{t.provider}</p>
                 <p className="text-[9px] text-muted-foreground">Access: {t.access}</p>
                 <p className="text-[9px] text-muted-foreground">Refresh: {t.refresh}</p>
@@ -2616,19 +2616,19 @@ function IntegrationsSection() {
               </div>
               <p className="text-[11px] text-muted-foreground mb-3">{fn.desc}</p>
               <div className="grid grid-cols-4 gap-2">
-                <div className="bg-muted/40 rounded-lg px-2.5 py-1.5">
+                <div className="bg-muted/60 rounded-lg px-2.5 py-1.5">
                   <p className="text-[9px] text-muted-foreground/70 uppercase">Trigger</p>
                   <p className="text-[10px] text-muted-foreground">{fn.trigger}</p>
                 </div>
-                <div className="bg-muted/40 rounded-lg px-2.5 py-1.5">
+                <div className="bg-muted/60 rounded-lg px-2.5 py-1.5">
                   <p className="text-[9px] text-muted-foreground/70 uppercase">Input</p>
                   <p className="text-[10px] text-muted-foreground">{fn.input}</p>
                 </div>
-                <div className="bg-muted/40 rounded-lg px-2.5 py-1.5">
+                <div className="bg-muted/60 rounded-lg px-2.5 py-1.5">
                   <p className="text-[9px] text-muted-foreground/70 uppercase">Output</p>
                   <p className="text-[10px] text-muted-foreground">{fn.output}</p>
                 </div>
-                <div className="bg-muted/40 rounded-lg px-2.5 py-1.5">
+                <div className="bg-muted/60 rounded-lg px-2.5 py-1.5">
                   <p className="text-[9px] text-muted-foreground/70 uppercase">Auth</p>
                   <p className="text-[10px] text-muted-foreground">{fn.auth}</p>
                 </div>
@@ -2650,7 +2650,7 @@ function IntegrationsSection() {
           <FlowNode icon={Database} label="4. Salva em ad_integrations" sublabel="account_id + descriptiveName" color="text-emerald-300" bg="bg-emerald-500/10" border="border-emerald-500/20" />
         </div>
 
-        <div className="bg-muted/30 border border-border/30 rounded-xl p-3 mt-4">
+        <div className="bg-muted border border-border rounded-xl p-3 mt-4">
           <div className="flex items-start gap-2">
             <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
@@ -2696,7 +2696,7 @@ function IntegrationsSection() {
               color: "text-red-400",
             },
           ].map((item) => (
-            <div key={item.title} className="flex items-start gap-3 bg-muted/30 border border-border/30 rounded-xl p-3">
+            <div key={item.title} className="flex items-start gap-3 bg-muted border border-border rounded-xl p-3">
               <item.icon className={`h-4 w-4 ${item.color} flex-shrink-0 mt-0.5`} />
               <div>
                 <p className={`text-[11px] font-medium ${item.color}`}>{item.title}</p>
@@ -2754,7 +2754,7 @@ function IntegrationsSection() {
             <p className="text-[11px] text-muted-foreground mb-2">Join ad_integrations + sync logs agregados (total_syncs, successful, failed, last_sync_status, avg_duration)</p>
             <div className="flex flex-wrap gap-1">
               {["provider", "status", "account_name", "last_sync_at", "total_syncs", "successful_syncs", "failed_syncs", "last_sync_status", "avg_duration_ms"].map((col) => (
-                <code key={col} className="text-[8px] bg-muted/40 text-muted-foreground rounded px-1.5 py-0.5 font-mono">{col}</code>
+                <code key={col} className="text-[8px] bg-muted/60 text-muted-foreground rounded px-1.5 py-0.5 font-mono">{col}</code>
               ))}
             </div>
           </div>
@@ -2805,7 +2805,7 @@ function IntegrationsSection() {
             </div>
           ))}
 
-          <div className="bg-muted/30 border border-border/30 rounded-xl p-3">
+          <div className="bg-muted border border-border rounded-xl p-3">
             <p className="text-[11px] font-semibold text-foreground/80 mb-1.5">Geral</p>
             <code className="text-[9px] bg-muted/60 text-muted-foreground rounded px-2 py-0.5 font-mono">APP_URL</code>
             <p className="text-[9px] text-muted-foreground mt-1">URL do frontend para redirect apos callback (ex: https://www.intentia.com.br)</p>
@@ -2828,7 +2828,7 @@ function IntegrationsSection() {
             { name: "integrationOAuth.ts", desc: "Config OAuth por provider — authUrl, tokenUrl, scopes, helpers (generateState, getUrls)", path: "src/lib/", color: "text-purple-400" },
             { name: "integrationTypes.ts", desc: "Tipos — AdProvider, IntegrationStatus, SyncFrequency, PROVIDER_CONFIGS, helpers", path: "src/lib/", color: "text-amber-400" },
           ].map((c) => (
-            <div key={c.name} className="bg-muted/30 border border-border/30 rounded-xl p-3">
+            <div key={c.name} className="bg-muted border border-border rounded-xl p-3">
               <code className={`text-[11px] font-mono font-semibold ${c.color}`}>{c.name}</code>
               <p className="text-[9px] text-muted-foreground mt-1">{c.desc}</p>
               <code className="text-[8px] text-muted-foreground/70 font-mono mt-1 block">{c.path}</code>
@@ -2850,7 +2850,7 @@ function IntegrationsSection() {
             { n: "2", label: "Paginas", icon: Monitor, color: "text-blue-400" },
             { n: "2", label: "Libs", icon: FileText, color: "text-pink-400" },
           ].map((stat) => (
-            <div key={stat.label} className="bg-card/60 border border-border rounded-xl p-3 flex items-center gap-3">
+            <div key={stat.label} className="bg-card border border-border rounded-xl p-3 flex items-center gap-3 shadow-sm">
               <stat.icon className={`h-5 w-5 ${stat.color} flex-shrink-0`} />
               <div>
                 <p className="text-lg font-bold text-foreground">{stat.n}</p>
@@ -2885,7 +2885,7 @@ export default function AdminArchitectureTab() {
               className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-left transition-all ${
                 isActive
                   ? `${section.bg} border border-current/20 ${section.color}`
-                  : "bg-card/40 border border-border text-muted-foreground hover:text-foreground/80 hover:bg-muted/40"
+                  : "bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
               }`}
             >
               <Icon className={`h-4 w-4 flex-shrink-0 ${isActive ? section.color : ""}`} />

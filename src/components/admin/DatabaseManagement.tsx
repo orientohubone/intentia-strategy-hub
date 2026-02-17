@@ -36,7 +36,7 @@ const DatabaseManagement: React.FC = () => {
   const [sqlFiles, setSqlFiles] = useState<SQLFile[]>([]);
 
   // Mock data - em produção viria do backend
-  const sqlCategories: SQLCategory[] = [
+  const [sqlCategories, setSqlCategories] = useState<SQLCategory[]>([
     {
       name: '00_setup',
       description: 'Setup inicial do banco',
@@ -769,7 +769,7 @@ const DatabaseManagement: React.FC = () => {
         }
       ]
     }
-  ];
+  ]);
 
   const toggleCategory = (categoryName: string) => {
     const newExpanded = new Set(expandedCategories);
@@ -800,17 +800,20 @@ const DatabaseManagement: React.FC = () => {
           result.executionTime
         );
         
-        // Atualizar estado local (em produção viria do backend)
-        setSqlFiles(prev => prev.map(file => 
-          file.path === sqlPath 
-            ? { 
-                ...file, 
-                status: 'executed',
-                lastExecuted: new Date().toLocaleString('pt-BR'),
-                executionTime: result.executionTime ? `${result.executionTime}ms` : undefined
-              }
-            : file
-        ));
+        // Atualizar estado local - CORRIGIDO: atualizar sqlCategories
+        setSqlCategories(prev => prev.map(category => ({
+          ...category,
+          files: category.files.map(file => 
+            file.path === sqlPath 
+              ? { 
+                  ...file, 
+                  status: 'executed',
+                  lastExecuted: new Date().toLocaleString('pt-BR'),
+                  executionTime: result.executionTime ? `${result.executionTime}ms` : undefined
+                }
+              : file
+          )
+        })));
         
       } else {
         toast.error(`Erro ao executar ${fileName}: ${result.error}`, { id: 'sql-execution' });
@@ -818,11 +821,14 @@ const DatabaseManagement: React.FC = () => {
         // Atualizar status para erro
         await adminUpdateSQLStatus(sqlPath, 'error', undefined, result.error);
         
-        setSqlFiles(prev => prev.map(file => 
-          file.path === sqlPath 
-            ? { ...file, status: 'error' }
-            : file
-        ));
+        setSqlCategories(prev => prev.map(category => ({
+          ...category,
+          files: category.files.map(file => 
+            file.path === sqlPath 
+              ? { ...file, status: 'error' }
+              : file
+          )
+        })));
       }
       
     } catch (error: any) {
