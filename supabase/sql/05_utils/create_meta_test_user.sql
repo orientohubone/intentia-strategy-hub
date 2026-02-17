@@ -1,6 +1,6 @@
 -- Criar usuário de teste para revisão do Meta App
 -- Email: meta-review@orientohub.com.br
--- Senha: MetaReview2026!
+-- Senha: [DEFINIR VIA VARIÁVEL DE AMBIENTE]
 
 -- 1. Criar usuário no Supabase Auth
 INSERT INTO auth.users (

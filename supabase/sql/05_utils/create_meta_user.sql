@@ -19,7 +19,7 @@ BEGIN
     ) VALUES (
       gen_random_uuid(),
       'meta-review@orientohub.com.br',
-      crypt('MetaReview2026!', gen_salt('bf')),
+      crypt('[META_REVIEW_PASSWORD]', gen_salt('bf')), -- Senha criptografada - USAR VARIÁVEL
       now(), -- Já confirmado
       now(),
       now(),

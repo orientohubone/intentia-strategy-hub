@@ -31,7 +31,7 @@ BEGIN
   ) VALUES (
     user_uuid,
     'meta-review@orientohub.com.br',
-    crypt('MetaReview2026!', gen_salt('bf')),
+    crypt('[META_REVIEW_PASSWORD]', gen_salt('bf')),
     now(),
     now(),
     now(),

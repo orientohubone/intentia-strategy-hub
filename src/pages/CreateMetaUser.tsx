@@ -19,7 +19,7 @@ export default function CreateMetaUser() {
       // 1. Criar usuário via signUp
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: 'meta-review@orientohub.com.br',
-        password: 'MetaReview2026!',
+        password: 'META_REVIEW_PASSWORD_2026', // Trocar por senha real
         options: {
           data: {
             name: 'Meta Review',

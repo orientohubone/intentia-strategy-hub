@@ -35,7 +35,7 @@ Acesse `https://intentia.com.br/auth` e crie uma conta gratuita, ou use as crede
 **Credenciais de teste (conta Starter gratuita):**
 ```
 Email: meta-review@orientohub.com.br
-Senha: MetaReview2026!
+Senha: [FORNECIDA SEPARADAMENTE]
 ```
 
 > Estas credenciais permanecerão ativas por pelo menos 1 ano após o envio (até Fevereiro de 2027).
@@ -121,7 +121,7 @@ O app **Intentia Strategy Hub** utiliza a **Meta Marketing API** (Graph API v19.
 ```
 URL:   https://intentia.com.br/auth
 Email: meta-review@orientohub.com.br
-Senha: MetaReview2026!
+Senha: [FORNECIDA SEPARADAMENTE]
 Plano: Starter (gratuito — acesso completo às integrações)
 ```
 
@@ -191,7 +191,7 @@ https://intentia.com.br
 ### "Forneça instruções sobre como acessar o app"
 ```
 1. Acesse https://intentia.com.br/auth
-2. Faça login com: meta-review@orientohub.com.br / MetaReview2026!
+2. Faça login com: meta-review@orientohub.com.br / [FORNECIDA SEPARADAMENTE]
 3. No menu lateral, clique em "Integrações"
 4. No card "Meta Ads", clique em "Conectar"
 5. Autorize o acesso na tela do Facebook
@@ -204,7 +204,7 @@ O app utiliza a Meta Marketing API (Graph API v19.0) para importar dados de camp
 ### "Credenciais de teste"
 ```
 Email: meta-review@orientohub.com.br
-Senha: MetaReview2026!
+Senha: [FORNECIDA SEPARADAMENTE]
 
 Não é necessário pagamento. O plano Starter (gratuito) inclui acesso completo às integrações. Estas credenciais permanecerão ativas por pelo menos 1 ano.
 ```

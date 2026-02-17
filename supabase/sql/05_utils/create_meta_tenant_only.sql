@@ -4,7 +4,7 @@
 -- INSTRUÇÕES:
 -- 1. Primeiro crie o usuário pela UI: https://intentia.com.br/auth
 --    Email: meta-review@orientohub.com.br
---    Senha: MetaReview2026!
+--    Senha: [DEFINIR VIA VARIÁVEL DE AMBIENTE]
 -- 2. Execute este SELECT para obter o ID do usuário:
 --    SELECT id FROM auth.users WHERE email = 'meta-review@orientohub.com.br';
 -- 3. Copie o ID gerado e substitua <USER_ID> abaixo
