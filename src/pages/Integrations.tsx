@@ -334,7 +334,7 @@ export default function Integrations() {
   const detailIsConnected = detailIntegration?.status === "connected";
 
   return (
-    <FeatureGate featureKey="meta_ads_integration" withLayout={false} pageTitle="Integrações">
+    <FeatureGate featureKey="integrations" withLayout={false} pageTitle="Integrações">
       <DashboardLayout>
         <SEO title="Integrações" path="/integracoes" noindex />
 

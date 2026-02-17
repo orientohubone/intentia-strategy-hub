@@ -344,36 +344,62 @@ Para configurar o painel admin do zero:
 
 ### ✅ Prioridade Alta — Sincronização & Gestão (Concluído)
 
-- [x] **Sincronizar Feature Flags com o sistema do usuário** — O componente `FeatureGate` (`src/components/FeatureGate.tsx`) foi criado e integrado em todas as páginas protegidas (Projects, Insights, Benchmark, Audiences, Alerts, TacticalPlan). Quando o admin altera o status de uma feature (manutenção, desativado, em desenvolvimento, descontinuado), o usuário vê uma tela de bloqueio com ícone, badge e mensagem correspondente ao status.
+- [x] **Sincronizar Feature Flags com o sistema do usuário** — O componente `FeatureGate` (`src/components/FeatureGate.tsx`) foi criado e integrado em todas as páginas protegidas. Quando o admin altera o status de uma feature (manutenção, desativado, em desenvolvimento, descontinuado), o usuário vê uma tela de bloqueio com ícone, badge e mensagem correspondente ao status.
 
 - [x] **Sincronizar Controle de Planos com o sistema** — O hook `useFeatureFlags` (`src/hooks/useFeatureFlags.ts`) consulta `feature_flags`, `plan_features` e `user_feature_overrides` para verificar o acesso real do usuário. A prioridade de verificação é: status global → override por usuário → acesso do plano. Features bloqueadas pelo plano exibem tela de upgrade.
 
 - [x] **Adicionar controle de features por cliente na aba Clientes** — Na aba "Clientes" do admin, cada cliente expandido agora mostra switches individuais para cada feature. O admin pode habilitar/desabilitar features independente do plano (usando `user_feature_overrides`). Overrides são indicados com badge roxo e podem ser removidos para voltar ao padrão do plano.
 
+- [x] **Sistema de Telas de Aviso Dinâmicas** — Criado `FeatureBlockedScreen.tsx` com telas específicas para cada status:
+  - **🔒 Upgrade** (plan_blocked) - Crown + botão "Fazer Upgrade para Professional"
+  - **⚡ Desenvolvimento** (development) - Zap + badge "Em Breve"
+  - **🔧 Manutenção** (maintenance) - Lock + badge "Indisponível"
+  - **🚫 Desativado** (disabled) - Lock + badge "Desativado"
+
+- [x] **Integrações de Marketing** — Implementado controle completo para integrações com plataformas de anúncios:
+  - Feature `integrations` - Controle geral da página de Integrações
+  - Features `*_ads_integration` - Controle individual por plataforma (Google, Meta, LinkedIn, TikTok)
+  - Nomes e descrições otimizadas para Admin Panel
+  - Status e mensagens personalizáveis via Admin Panel
+
 ### Arquivos Criados/Modificados
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `src/components/FeatureGate.tsx` | **Novo** — Componente wrapper que verifica feature flags e exibe fallback visual |
+| `src/components/FeatureGate.tsx` | **Atualizado** — Simplificado para usar `FeatureBlockedScreen` |
+| `src/components/FeatureBlockedScreen.tsx` | **Novo** — Telas de aviso dinâmicas (upgrade, development, maintenance, disabled) |
 | `src/hooks/useFeatureFlags.ts` | **Atualizado** — Adicionado suporte a `user_feature_overrides` com prioridade: global → override → plano |
 | `src/pages/AdminPanel.tsx` | **Atualizado** — Carrega overrides, funções toggle/remove, UI interativa na aba Clientes |
+| `src/pages/Integrations.tsx` | **Atualizado** — FeatureKey corrigido para `integrations` (controle geral) |
 | `src/pages/Projects.tsx` | **Atualizado** — Integrado `FeatureGate` com key `url_heuristic_analysis` |
 | `src/pages/Insights.tsx` | **Atualizado** — Integrado `FeatureGate` com key `strategic_insights` |
 | `src/pages/Benchmark.tsx` | **Atualizado** — Integrado `FeatureGate` com key `benchmark_swot` |
 | `src/pages/Audiences.tsx` | **Atualizado** — Integrado `FeatureGate` com key `audiences` |
 | `src/pages/Alerts.tsx` | **Atualizado** — Integrado `FeatureGate` com key `strategic_alerts` |
 | `src/pages/TacticalPlan.tsx` | **Atualizado** — Integrado `FeatureGate` com key `tactical_plan` |
+| `supabase/functions/admin-api/index.ts` | **Atualizado** — Cache-busting headers e versionamento forçado |
 
 ### Mapeamento Feature Key → Página
 
-| Feature Key | Página |
-|-------------|--------|
-| `url_heuristic_analysis` | `/projects` |
-| `strategic_insights` | `/insights` |
-| `benchmark_swot` | `/benchmark` |
-| `audiences` | `/audiences` |
-| `strategic_alerts` | `/alertas` |
-| `tactical_plan` | `/tactical` |
+| Feature Key | Página | Descrição |
+|-------------|--------|-----------|
+| `integrations` | `/integracoes` | Controle geral da página de Integrações de Marketing |
+| `url_heuristic_analysis` | `/projects` | Diagnóstico Heurístico de URL |
+| `strategic_insights` | `/insights` | Insights Estratégicos |
+| `benchmark_swot` | `/benchmark` | Benchmark Competitivo SWOT |
+| `audiences` | `/audiences` | Públicos-Alvo |
+| `strategic_alerts` | `/alertas` | Alertas Estratégicos |
+| `tactical_plan` | `/tactical` | Plano Tático por Canal |
+
+### 🎛️ Features de Integrações (Categoria: integrations)
+
+| Feature Key | Nome | Status Padrão | Descrição |
+|-------------|------|--------------|-----------|
+| `integrations` | Página de Integrações de Marketing | active | Acesso à página completa de integrações |
+| `google_ads_integration` | Google Ads Integration | active | Conexão com Google Ads via OAuth |
+| `meta_ads_integration` | Meta Ads Integration | active | Conexão com Meta Ads (Facebook/Instagram) |
+| `linkedin_ads_integration` | LinkedIn Ads Integration | development | Conexão com LinkedIn Ads via OAuth |
+| `tiktok_ads_integration` | TikTok Ads Integration | development | Conexão com TikTok Ads via OAuth |
 
 ### 🟡 Melhorias Futuras
 
@@ -382,3 +408,5 @@ Para configurar o painel admin do zero:
 - [ ] Dashboard de métricas no admin (signups, análises, conversões)
 - [ ] Notificações admin (novo signup, upgrade de plano, etc.)
 - [x] Gestão de planos com limites editáveis por feature/plano (v3.0.0)
+- [x] Sistema de telas de aviso dinâmicas gerenciáveis via Admin Panel (v3.1.0)
+- [x] Integrações de Marketing com controle granular por plataforma (v3.1.0)

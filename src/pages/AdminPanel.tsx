@@ -46,6 +46,7 @@ import {
   Plug,
   Gauge,
   MessageCircle,
+  Database,
 } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -67,6 +68,7 @@ import {
 } from "@/lib/adminApi";
 import AdminStatusTab from "@/components/AdminStatusTab";
 import AdminArchitectureTab from "@/components/AdminArchitectureTab";
+import DatabaseManagement from "@/components/admin/DatabaseManagement";
 
 // =====================================================
 // TYPES
@@ -161,7 +163,7 @@ export default function AdminPanel() {
   const { admin, logout } = useAdminAuth();
 
   // State
-  const [activeTab, setActiveTab] = useState<"features" | "plans" | "users" | "status" | "architecture" | "support">("features");
+  const [activeTab, setActiveTab] = useState<"features" | "plans" | "users" | "status" | "architecture" | "support" | "database">("features");
   const [features, setFeatures] = useState<FeatureFlag[]>([]);
   const [planFeatures, setPlanFeatures] = useState<PlanFeature[]>([]);
   const [users, setUsers] = useState<TenantUser[]>([]);
@@ -371,7 +373,7 @@ export default function AdminPanel() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border">
+      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-3">
@@ -414,42 +416,42 @@ export default function AdminPanel() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-card/60 border border-border rounded-xl p-4">
+          <div className="bg-card/80 border border-border/80 rounded-xl p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
               <ToggleLeft className="h-4 w-4 text-green-500" />
-              <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Features Ativas</span>
+              <span className="text-[11px] text-muted-foreground/90 uppercase tracking-wider">Features Ativas</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{activeFeatures}</p>
-            <p className="text-[11px] text-muted-foreground/70">{disabledFeatures} desativadas · {devFeatures} em dev</p>
+            <p className="text-[11px] text-muted-foreground/80">{disabledFeatures} desativadas · {devFeatures} em dev</p>
           </div>
-          <div className="bg-card/60 border border-border rounded-xl p-4">
+          <div className="bg-card/80 border border-border/80 rounded-xl p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
               <Users className="h-4 w-4 text-blue-500" />
-              <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Clientes</span>
+              <span className="text-[11px] text-muted-foreground/90 uppercase tracking-wider">Clientes</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{totalUsers}</p>
-            <p className="text-[11px] text-muted-foreground/70">{starterUsers} starter · {proUsers} pro · {enterpriseUsers} enterprise</p>
+            <p className="text-[11px] text-muted-foreground/80">{starterUsers} starter · {proUsers} pro · {enterpriseUsers} enterprise</p>
           </div>
-          <div className="bg-card/60 border border-border rounded-xl p-4">
+          <div className="bg-card/80 border border-border/80 rounded-xl p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
               <Settings2 className="h-4 w-4 text-primary" />
-              <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Total Features</span>
+              <span className="text-[11px] text-muted-foreground/90 uppercase tracking-wider">Total Features</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{features.length}</p>
-            <p className="text-[11px] text-muted-foreground/70">{Object.keys(CATEGORY_LABELS).length} categorias</p>
+            <p className="text-[11px] text-muted-foreground/80">{Object.keys(CATEGORY_LABELS).length} categorias</p>
           </div>
-          <div className="bg-card/60 border border-border rounded-xl p-4">
+          <div className="bg-card/80 border border-border/80 rounded-xl p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
               <LayoutDashboard className="h-4 w-4 text-purple-500" />
-              <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Planos</span>
+              <span className="text-[11px] text-muted-foreground/90 uppercase tracking-wider">Planos</span>
             </div>
             <p className="text-2xl font-bold text-foreground">3</p>
-            <p className="text-[11px] text-muted-foreground/70">Starter · Professional · Enterprise</p>
+            <p className="text-[11px] text-muted-foreground/80">Starter · Professional · Enterprise</p>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 bg-card/60 border border-border rounded-xl p-1">
+        <div className="flex items-center gap-1 bg-card/80 border border-border/80 rounded-xl p-1 shadow-sm">
           {[
             { key: "features" as const, label: "Feature Flags", icon: ToggleLeft },
             { key: "plans" as const, label: "Controle de Planos", icon: Settings2 },
@@ -457,14 +459,15 @@ export default function AdminPanel() {
             { key: "status" as const, label: "Status Page", icon: Activity },
             { key: "architecture" as const, label: "Arquitetura", icon: Layers },
             { key: "support" as const, label: "Atendimentos", icon: MessageCircle },
+            { key: "database" as const, label: "Database", icon: Database },
           ].map((tab) => (
             <button
               key={tab.key}
               onClick={() => { setActiveTab(tab.key); setSearchTerm(""); }}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === tab.key
-                  ? "bg-primary text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground/90 hover:text-foreground hover:bg-muted/60"
               }`}
             >
               <tab.icon className="h-4 w-4" />
@@ -474,21 +477,21 @@ export default function AdminPanel() {
         </div>
 
         {/* Search + Filters */}
-        {activeTab !== "architecture" && <div className="flex flex-col sm:flex-row gap-3">
+        {activeTab !== "architecture" && activeTab !== "database" && <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder={activeTab === "users" ? "Buscar por empresa, nome ou email..." : "Buscar feature..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-card/60 border-border text-foreground placeholder:text-muted-foreground/70"
+              className="pl-10 bg-card/80 border-border/80 text-foreground placeholder:text-muted-foreground/60 shadow-sm"
             />
           </div>
           {activeTab === "features" && (
             <>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-full sm:w-44 bg-card/60 border-border text-foreground">
-                  <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                <SelectTrigger className="w-full sm:w-44 bg-card/80 border-border/80 text-foreground shadow-sm">
+                  <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground/80" />
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
                 <SelectContent>
@@ -499,8 +502,8 @@ export default function AdminPanel() {
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-44 bg-card/60 border-border text-foreground">
-                  <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                <SelectTrigger className="w-full sm:w-44 bg-card/80 border-border/80 text-foreground shadow-sm">
+                  <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground/80" />
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -514,8 +517,8 @@ export default function AdminPanel() {
           )}
           {activeTab === "users" && (
             <Select value={planFilter} onValueChange={setPlanFilter}>
-              <SelectTrigger className="w-full sm:w-44 bg-card/60 border-border text-foreground">
-                <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+              <SelectTrigger className="w-full sm:w-44 bg-card/80 border-border/80 text-foreground shadow-sm">
+                <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground/80" />
                 <SelectValue placeholder="Plano" />
               </SelectTrigger>
               <SelectContent>
@@ -531,7 +534,7 @@ export default function AdminPanel() {
         {/* Content */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-border border-t-primary" />
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-border/60 border-t-primary" />
           </div>
         ) : (
           <>
@@ -558,10 +561,10 @@ export default function AdminPanel() {
                     );
 
                     return (
-                      <div className="bg-card/60 border border-border rounded-2xl overflow-hidden">
+                      <div className="bg-card/80 border border-border/80 rounded-2xl overflow-hidden shadow-sm">
                         {/* Expand/Collapse bar */}
                         <div className="flex items-center justify-between px-5 py-3 border-b border-border">
-                          <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Funcionalidades do Sistema</p>
+                          <p className="text-[11px] text-muted-foreground/90 uppercase tracking-wider font-medium">Funcionalidades do Sistema</p>
                           <div className="flex items-center gap-2">
                             <button onClick={expandAllCategories} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">Expandir</button>
                             <span className="text-border text-[10px]">|</span>
@@ -590,8 +593,8 @@ export default function AdminPanel() {
                                 <div className="flex-1 min-w-0 text-left">
                                   <span className="text-[13px] font-medium text-foreground/90 group-hover:text-foreground transition-colors">{catCfg?.label || cat}</span>
                                 </div>
-                                <span className="text-[11px] text-muted-foreground/70 mr-2">{activeCount}/{catFeatures.length}</span>
-                                <ChevronDown className={`h-4 w-4 text-muted-foreground/70 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`} />
+                                <span className="text-[11px] text-muted-foreground/80 mr-2">{activeCount}/{catFeatures.length}</span>
+                                <ChevronDown className={`h-4 w-4 text-muted-foreground/80 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`} />
                               </button>
 
                               {/* Feature items — vertical list */}
@@ -604,8 +607,8 @@ export default function AdminPanel() {
                                       <div
                                         key={feature.id}
                                         className={`mx-3 mb-1 rounded-lg transition-colors ${
-                                          feature.status === "active" ? "hover:bg-muted/40" :
-                                          feature.status === "disabled" ? "opacity-50" : "hover:bg-muted/20"
+                                          feature.status === "active" ? "hover:bg-muted/50" :
+                                          feature.status === "disabled" ? "opacity-50" : "hover:bg-muted/30"
                                         }`}
                                       >
                                         <div className="flex items-center gap-3 px-3 py-2.5 pl-[52px]">
@@ -622,7 +625,7 @@ export default function AdminPanel() {
                                           <div className="flex-1 min-w-0">
                                             <p className="text-xs font-medium text-foreground/80">{feature.feature_name}</p>
                                             {feature.description && (
-                                              <p className="text-[10px] text-muted-foreground/70 truncate">{feature.description}</p>
+                                              <p className="text-[10px] text-muted-foreground/80 truncate">{feature.description}</p>
                                             )}
                                           </div>
 
@@ -641,7 +644,7 @@ export default function AdminPanel() {
                                                   className={`w-6 h-6 rounded flex items-center justify-center text-[9px] font-bold transition-all ${
                                                     isEnabled
                                                       ? "bg-green-500/15 text-green-400 hover:bg-green-500/25"
-                                                      : "bg-muted/60 text-muted-foreground/70 hover:bg-muted/80"
+                                                      : "bg-muted/50 text-muted-foreground/80 hover:bg-muted/70"
                                                   }`}
                                                 >
                                                   {plan === "starter" ? "S" : plan === "professional" ? "P" : "E"}
@@ -655,7 +658,7 @@ export default function AdminPanel() {
                                             value={feature.status}
                                             onValueChange={(val) => updateFeatureStatus(feature.feature_key, val)}
                                           >
-                                            <SelectTrigger className="w-[150px] h-7 text-[10px] bg-muted/40 border-border/50 text-muted-foreground flex-shrink-0">
+                                            <SelectTrigger className="w-[150px] h-7 text-[10px] bg-muted/50 border-border/60 text-foreground flex-shrink-0 shadow-sm">
                                               <StatusIcon className={`h-3 w-3 mr-1 ${statusCfg.color}`} />
                                               <SelectValue />
                                             </SelectTrigger>
@@ -679,7 +682,7 @@ export default function AdminPanel() {
                                               placeholder="Mensagem de status..."
                                               defaultValue={feature.status_message || ""}
                                               onBlur={(e) => updateFeatureStatusMessage(feature.feature_key, e.target.value)}
-                                              className="h-7 text-[10px] bg-muted/30 border-border/50 text-foreground placeholder:text-muted-foreground/70"
+                                              className="h-7 text-[10px] bg-muted/40 border-border/60 text-foreground placeholder:text-muted-foreground/60 shadow-sm"
                                             />
                                           </div>
                                         )}
@@ -777,20 +780,20 @@ export default function AdminPanel() {
                         <div className="hidden sm:flex items-center gap-3 flex-shrink-0">
                           <div className="text-center">
                             <p className="text-lg font-bold text-foreground">{enabledCount}</p>
-                            <p className="text-[9px] text-muted-foreground/70 uppercase">Ativas</p>
+                            <p className="text-[9px] text-muted-foreground/80 uppercase">Ativas</p>
                           </div>
                           <div className="w-px h-8 bg-border" />
                           <div className="text-center">
                             <p className="text-lg font-bold text-foreground">{features.length - enabledCount}</p>
-                            <p className="text-[9px] text-muted-foreground/70 uppercase">Bloqueadas</p>
+                            <p className="text-[9px] text-muted-foreground/80 uppercase">Bloqueadas</p>
                           </div>
                           <div className="w-px h-8 bg-border" />
                           <div className="text-center">
                             <p className="text-lg font-bold text-foreground">{userCount}</p>
-                            <p className="text-[9px] text-muted-foreground/70 uppercase">Usuários</p>
+                            <p className="text-[9px] text-muted-foreground/80 uppercase">Usuários</p>
                           </div>
                         </div>
-                        <ChevronDown className={`h-4 w-4 text-muted-foreground/70 transition-transform duration-200 ${isPlanCollapsed ? '-rotate-90' : ''}`} />
+                        <ChevronDown className={`h-4 w-4 text-muted-foreground/80 transition-transform duration-200 ${isPlanCollapsed ? '-rotate-90' : ''}`} />
                       </button>
 
                       {/* Plan content — collapsible, grouped by category */}
@@ -818,7 +821,7 @@ export default function AdminPanel() {
                                   <span className="text-[12px] font-medium text-muted-foreground group-hover:text-foreground/90 transition-colors flex-1 text-left">
                                     {catCfg?.label || cat}
                                   </span>
-                                  <span className="text-[10px] text-muted-foreground/70 mr-1">{catEnabled}/{catFeatures.length}</span>
+                                  <span className="text-[10px] text-muted-foreground/80 mr-1">{catEnabled}/{catFeatures.length}</span>
                                   <ChevronDown className={`h-3.5 w-3.5 text-border transition-transform duration-200 ${isCatCollapsed ? '-rotate-90' : ''}`} />
                                 </button>
 
@@ -925,6 +928,10 @@ export default function AdminPanel() {
               <SupportDashboard />
             )}
 
+            {activeTab === "database" && (
+              <DatabaseManagement />
+            )}
+
             {activeTab === "users" && (
               <div className="space-y-2">
                 {filteredUsers.length === 0 ? (
@@ -984,21 +991,21 @@ export default function AdminPanel() {
                             {/* User details */}
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                               <div>
-                                <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wider">Nome</p>
+                                <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider">Nome</p>
                                 <p className="text-xs text-foreground">{user.full_name || "—"}</p>
                               </div>
                               <div>
-                                <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wider">Email</p>
+                                <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider">Email</p>
                                 <p className="text-xs text-foreground truncate">{user.email || "—"}</p>
                               </div>
                               <div>
-                                <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wider">Cadastro</p>
+                                <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider">Cadastro</p>
                                 <p className="text-xs text-foreground">
                                   {new Date(user.created_at).toLocaleDateString("pt-BR")}
                                 </p>
                               </div>
                               <div>
-                                <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wider">Análises</p>
+                                <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider">Análises</p>
                                 <p className="text-xs text-foreground">
                                   {user.analyses_used}/{user.monthly_analyses_limit === -1 ? "∞" : user.monthly_analyses_limit}
                                 </p>

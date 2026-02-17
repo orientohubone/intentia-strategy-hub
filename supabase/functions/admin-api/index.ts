@@ -5,7 +5,13 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-token",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Cache-Control": "no-cache, no-store, must-revalidate",
+  "Pragma": "no-cache",
+  "Expires": "0",
 };
+
+// Version for cache busting - update when deploying
+const API_VERSION = "2026-02-17-v2";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -607,7 +613,11 @@ serve(async (req) => {
 // =====================================================
 
 function jsonResponse(body: any, status = 200) {
-  return new Response(JSON.stringify(body), {
+  return new Response(JSON.stringify({
+    ...body,
+    api_version: API_VERSION,
+    timestamp: new Date().toISOString()
+  }), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });

@@ -55,6 +55,9 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminPanel from "./pages/AdminPanel";
 import StatusRssFallback from "./pages/StatusRssFallback";
 import Changelog from "./pages/Changelog";
+import VerifyTest from "./pages/VerifyTest";
+import VerifySuccess from "./pages/VerifySuccess";
+import CreateMetaUser from "./pages/CreateMetaUser";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
 import { ForceLightMode } from "@/components/ForceLightMode";
@@ -100,6 +103,9 @@ const App = () => (
           <Route path="/gestao-campanhas" element={<ForceLightMode><FeatureGestaoCampanhas /></ForceLightMode>} />
           <Route path="/gestao-budget" element={<ForceLightMode><FeatureGestaoBudget /></ForceLightMode>} />
           <Route path="/relatorios" element={<ForceLightMode><FeatureRelatorios /></ForceLightMode>} />
+          <Route path="/verify-test" element={<ForceLightMode><VerifyTest /></ForceLightMode>} />
+          <Route path="/verify-success" element={<ForceLightMode><VerifySuccess /></ForceLightMode>} />
+          <Route path="/create-meta-user" element={<ForceLightMode><CreateMetaUser /></ForceLightMode>} />
           <Route 
             path="/home" 
             element={
