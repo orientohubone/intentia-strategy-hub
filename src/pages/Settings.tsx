@@ -24,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
@@ -78,22 +79,24 @@ function maskApiKey(key: string): string {
   return key.substring(0, 4) + "••••••••" + key.substring(key.length - 4);
 }
 
-const PLAN_FEATURES: Record<string, { label: string; price: string; features: string[]; color: string; icon: typeof Crown }> = {
+type PlanFeature = { name: string; limit?: string };
+const PLAN_FEATURES: Record<string, { label: string; price: string; features: PlanFeature[]; color: string; icon: typeof Crown }> = {
   starter: {
     label: "Starter",
     price: "Grátis",
     color: "border-border",
     icon: Zap,
     features: [
-      "5 projetos ativos",
-      "Diagnóstico heurístico de URL (6 dimensões)",
-      "Score por canal: Google, Meta, LinkedIn, TikTok",
-      "Análise por IA (5/mês)",
-      "Benchmark SWOT (5/mês) + Gap Analysis (3/mês)",
-      "Plano Tático (1/mês) + 3 templates",
-      "Operações e campanhas (2/mês)",
-      "Exportação PDF e CSV (3/mês)",
-      "5 públicos-alvo por projeto",
+      { name: "Projetos ativos", limit: "5" },
+      { name: "Diagnóstico heurístico de URL", limit: "6 dimensões" },
+      { name: "Score por canal", limit: "4 canais" },
+      { name: "Análise por IA", limit: "5/mês" },
+      { name: "Benchmark SWOT", limit: "5/mês" },
+      { name: "Gap Analysis", limit: "3/mês" },
+      { name: "Plano Tático + Templates", limit: "1/mês" },
+      { name: "Operações e campanhas", limit: "2/mês" },
+      { name: "Exportação PDF e CSV", limit: "3/mês" },
+      { name: "Públicos-alvo", limit: "5/projeto" },
     ],
   },
   professional: {
@@ -102,16 +105,16 @@ const PLAN_FEATURES: Record<string, { label: string; price: string; features: st
     color: "border-primary",
     icon: Crown,
     features: [
-      "Projetos ilimitados",
-      "Todas as análises por IA ilimitadas",
-      "Benchmark + Gap Analysis ilimitados",
-      "Plano Tático + Playbook ilimitados",
-      "Operações e campanhas ilimitadas",
-      "Exportação PDF e CSV ilimitada",
-      "Públicos-alvo ilimitados com keywords",
-      "Alertas estratégicos consolidados",
-      "Notificações em tempo real",
-      "Suporte prioritário",
+      { name: "Projetos ativos", limit: "Ilimitado" },
+      { name: "Análises por IA", limit: "Ilimitado" },
+      { name: "Benchmark + Gap Analysis", limit: "Ilimitado" },
+      { name: "Plano Tático + Playbook", limit: "Ilimitado" },
+      { name: "Operações e campanhas", limit: "Ilimitado" },
+      { name: "Exportação PDF e CSV", limit: "Ilimitado" },
+      { name: "Públicos-alvo + keywords", limit: "Ilimitado" },
+      { name: "Alertas estratégicos" },
+      { name: "Notificações em tempo real" },
+      { name: "Suporte prioritário" },
     ],
   },
   enterprise: {
@@ -120,12 +123,12 @@ const PLAN_FEATURES: Record<string, { label: string; price: string; features: st
     color: "border-amber-500",
     icon: Crown,
     features: [
-      "Tudo do Professional",
-      "API access completo",
-      "Múltiplos usuários por conta",
-      "SLA dedicado com suporte 24/7",
-      "Consultoria estratégica mensal",
-      "Integrações customizadas",
+      { name: "Tudo do Professional" },
+      { name: "API access completo" },
+      { name: "Múltiplos usuários" },
+      { name: "SLA dedicado 24/7" },
+      { name: "Consultoria estratégica" },
+      { name: "Integrações customizadas" },
     ],
   },
 };
@@ -680,6 +683,152 @@ export default function Settings() {
               </p>
             </div>
 
+            {/* Skeleton Loading */}
+            {tenantLoading && (
+              <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-200">
+                {/* Profile Skeleton */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-5 w-5 rounded" />
+                      <Skeleton className="h-5 w-36" />
+                    </div>
+                    <Skeleton className="h-4 w-56 mt-1" />
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <Skeleton className="h-14 w-14 rounded-full" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-48" />
+                        <Skeleton className="h-5 w-16 rounded-full" />
+                      </div>
+                    </div>
+                    <Separator />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-10 w-full rounded-md" />
+                      </div>
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-10 w-full rounded-md" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-20 w-full rounded-md" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Preferences Skeleton */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-5 w-5 rounded" />
+                      <Skeleton className="h-5 w-28" />
+                    </div>
+                    <Skeleton className="h-4 w-48 mt-1" />
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-3 w-48" />
+                        </div>
+                        <Skeleton className="h-5 w-9 rounded-full" />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* AI Keys Skeleton */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-5 w-5 rounded" />
+                      <Skeleton className="h-5 w-36" />
+                    </div>
+                    <Skeleton className="h-4 w-64 mt-1" />
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {[1, 2].map((i) => (
+                      <div key={i} className="rounded-lg border border-border p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Skeleton className="h-8 w-8 rounded-lg" />
+                            <Skeleton className="h-4 w-28" />
+                          </div>
+                          <Skeleton className="h-5 w-20 rounded-full" />
+                        </div>
+                        <Skeleton className="h-10 w-full rounded-md" />
+                        <Skeleton className="h-8 w-24 rounded-md" />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* Backup Skeleton */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-5 w-5 rounded" />
+                      <Skeleton className="h-5 w-40" />
+                    </div>
+                    <Skeleton className="h-4 w-52 mt-1" />
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Skeleton className="h-12 w-full rounded-lg" />
+                      <Skeleton className="h-12 w-full rounded-lg" />
+                    </div>
+                    <Separator />
+                    <div className="space-y-2">
+                      {[1, 2].map((i) => (
+                        <div key={i} className="flex items-center gap-3 p-3 rounded-lg border border-border">
+                          <Skeleton className="h-8 w-8 rounded-lg" />
+                          <div className="flex-1 space-y-1.5">
+                            <Skeleton className="h-4 w-28" />
+                            <Skeleton className="h-3 w-40" />
+                          </div>
+                          <Skeleton className="h-7 w-16 rounded-md" />
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Plan Skeleton */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-5 w-5 rounded" />
+                      <Skeleton className="h-5 w-36" />
+                    </div>
+                    <Skeleton className="h-4 w-56 mt-1" />
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/50">
+                      <Skeleton className="h-10 w-10 rounded-xl" />
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-5 w-24" />
+                        <Skeleton className="h-3 w-16" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <Skeleton key={i} className="h-10 w-full rounded-lg" />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* All content — hidden while loading */}
+            {!tenantLoading && (<>
             {/* Profile Section */}
             <Card>
               <CardHeader>
@@ -1071,48 +1220,45 @@ export default function Settings() {
 
             {/* Backup & Data Security */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <HardDrive className="h-5 w-5" />
-                  Backup & Segurança de Dados
+              <CardHeader className="px-4 sm:px-6">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <HardDrive className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                  Backup & Segurança
                 </CardTitle>
-                <CardDescription>
-                  Crie backups dos seus dados, exporte e gerencie a segurança da sua conta
+                <CardDescription className="text-xs sm:text-sm">
+                  Crie backups, exporte dados e gerencie a segurança da conta
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-5">
+              <CardContent className="space-y-5 px-4 sm:px-6">
                 {/* Info box */}
-                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 sm:p-4">
-                  <div className="flex gap-2 sm:gap-3">
-                    <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-foreground">Seus dados estão protegidos</p>
-                      <p className="text-xs text-muted-foreground">
-                        Todos os dados são isolados por conta com Row Level Security (RLS). 
-                        Backups automáticos são criados antes de exclusões importantes. 
-                        Você pode criar backups manuais a qualquer momento.
-                        Use seus backups de forma consciente — crie quando houver mudanças relevantes nos seus projetos ou antes de ações importantes.
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                  <div className="flex gap-2">
+                    <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="text-xs sm:text-sm font-medium text-foreground">Seus dados estão protegidos</p>
+                      <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
+                        Dados isolados por conta com RLS. Backups automáticos antes de exclusões. Crie backups manuais antes de ações importantes.
                       </p>
                     </div>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
                   <Button
                     variant="outline"
                     onClick={handleCreateBackup}
                     disabled={creatingBackup}
-                    className="justify-start h-auto py-3"
+                    className="justify-start h-auto py-2.5 sm:py-3 px-3"
                   >
                     {creatingBackup ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 mr-1.5 sm:mr-2 animate-spin flex-shrink-0" />
                     ) : (
-                      <Database className="h-4 w-4 mr-2" />
+                      <Database className="h-4 w-4 mr-1.5 sm:mr-2 flex-shrink-0" />
                     )}
-                    <div className="text-left">
-                      <div className="text-sm font-medium">Criar Backup</div>
-                      <div className="text-[10px] text-muted-foreground">Snapshot completo no servidor</div>
+                    <div className="text-left min-w-0">
+                      <div className="text-xs sm:text-sm font-medium truncate">Criar Backup</div>
+                      <div className="text-[10px] text-muted-foreground hidden sm:block">Snapshot completo no servidor</div>
                     </div>
                   </Button>
 
@@ -1120,16 +1266,16 @@ export default function Settings() {
                     variant="outline"
                     onClick={handleExportData}
                     disabled={exportingData}
-                    className="justify-start h-auto py-3"
+                    className="justify-start h-auto py-2.5 sm:py-3 px-3"
                   >
                     {exportingData ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 mr-1.5 sm:mr-2 animate-spin flex-shrink-0" />
                     ) : (
-                      <FileJson className="h-4 w-4 mr-2" />
+                      <FileJson className="h-4 w-4 mr-1.5 sm:mr-2 flex-shrink-0" />
                     )}
-                    <div className="text-left">
-                      <div className="text-sm font-medium">Exportar Dados</div>
-                      <div className="text-[10px] text-muted-foreground">Download JSON completo</div>
+                    <div className="text-left min-w-0">
+                      <div className="text-xs sm:text-sm font-medium truncate">Exportar Dados</div>
+                      <div className="text-[10px] text-muted-foreground hidden sm:block">Download JSON completo</div>
                     </div>
                   </Button>
                 </div>
@@ -1139,7 +1285,7 @@ export default function Settings() {
                 {/* Backup list */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-semibold text-foreground">Backups Salvos</h4>
+                    <h4 className="text-xs sm:text-sm font-semibold text-foreground">Backups Salvos</h4>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -1171,46 +1317,39 @@ export default function Settings() {
                         return (
                           <div
                             key={backup.id}
-                            className="rounded-lg border border-border p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                            className="rounded-lg border border-border p-2.5 sm:p-3 space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-3"
                           >
-                            <div className="flex items-start gap-3 min-w-0">
-                              <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
+                            <div className="flex items-start gap-2.5 min-w-0">
+                              <div className={`h-7 w-7 sm:h-8 sm:w-8 rounded-lg flex items-center justify-center shrink-0 ${
                                 backup.backup_type === "auto"
                                   ? "bg-amber-500/10 text-amber-500"
                                   : "bg-primary/10 text-primary"
                               }`}>
                                 {backup.backup_type === "auto" ? (
-                                  <Clock className="h-4 w-4" />
+                                  <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                 ) : (
-                                  <HardDrive className="h-4 w-4" />
+                                  <HardDrive className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                 )}
                               </div>
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium text-foreground truncate">
-                                    {backup.backup_type === "auto" ? "Backup Automático" : "Backup Manual"}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                  <span className="text-xs sm:text-sm font-medium text-foreground">
+                                    {backup.backup_type === "auto" ? "Automático" : "Manual"}
                                   </span>
-                                  <Badge variant="outline" className="text-[10px] shrink-0">
-                                    {totalRecords} registros
+                                  <Badge variant="outline" className="text-[9px] sm:text-[10px] shrink-0 px-1.5 py-0">
+                                    {totalRecords} reg.
                                   </Badge>
+                                  <span className="text-[10px] text-muted-foreground">{sizeKB} KB</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
-                                  <span>{createdDate.toLocaleDateString("pt-BR")} às {createdDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
-                                  <span>·</span>
-                                  <span>{sizeKB} KB</span>
+                                <div className="flex flex-wrap items-center gap-x-1.5 text-[10px] text-muted-foreground mt-0.5">
+                                  <span>{createdDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} {createdDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
                                   {expiresDate && (
-                                    <>
-                                      <span>·</span>
-                                      <span>Expira {expiresDate.toLocaleDateString("pt-BR")}</span>
-                                    </>
+                                    <span>· Exp. {expiresDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</span>
                                   )}
                                 </div>
-                                {backup.notes && (
-                                  <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{backup.notes}</p>
-                                )}
                               </div>
                             </div>
-                            <div className="flex gap-1.5 shrink-0 self-end sm:self-center">
+                            <div className="flex gap-1.5 shrink-0 pl-9 sm:pl-0">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -1223,7 +1362,7 @@ export default function Settings() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                                className="h-7 w-7 p-0 text-destructive hover:text-destructive"
                                 onClick={() => setDeletingBackupId(backup.id)}
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -1291,32 +1430,32 @@ export default function Settings() {
 
               return (
                 <Card className={`${planInfo.color} border-2`}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <CreditCard className="h-5 w-5" />
+                  <CardHeader className="px-4 sm:px-6">
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                      <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
                       Plano e Assinatura
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-xs sm:text-sm">
                       Gerencie seu plano e veja os recursos disponíveis
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-5">
+                  <CardContent className="space-y-5 px-4 sm:px-6">
                     {/* Current Plan Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-muted/50">
-                      <div className="flex items-center gap-3">
-                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-xl bg-muted/50">
+                      <div className="flex items-center gap-2.5 sm:gap-3">
+                        <div className={`h-9 w-9 sm:h-10 sm:w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                           isStarter ? "bg-muted text-muted-foreground" : isProfessional ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-600"
                         }`}>
-                          <PlanIcon className="h-5 w-5" />
+                          <PlanIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-foreground text-lg">{planInfo.label}</h3>
-                            <Badge variant={isStarter ? "secondary" : "default"} className={isProfessional ? "bg-primary" : isEnterprise ? "bg-amber-500" : ""}>
+                            <h3 className="font-bold text-foreground text-base sm:text-lg">{planInfo.label}</h3>
+                            <Badge variant={isStarter ? "secondary" : "default"} className={`text-[10px] sm:text-xs ${isProfessional ? "bg-primary" : isEnterprise ? "bg-amber-500" : ""}`}>
                               Ativo
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground">{planInfo.price}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">{planInfo.price}</p>
                         </div>
                       </div>
                       {!isEnterprise && (
@@ -1354,9 +1493,23 @@ export default function Settings() {
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {planInfo.features.map((feature) => (
-                          <div key={feature} className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-                            <span className="text-sm text-foreground">{feature}</span>
+                          <div
+                            key={feature.name}
+                            className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                              <span className="text-xs sm:text-sm text-foreground truncate">{feature.name}</span>
+                            </div>
+                            {feature.limit && (
+                              <span className={`text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+                                feature.limit === "Ilimitado"
+                                  ? "bg-primary/10 text-primary"
+                                  : "bg-muted text-muted-foreground"
+                              }`}>
+                                {feature.limit}
+                              </span>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -1372,16 +1525,26 @@ export default function Settings() {
                           </p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {[
-                              "Projetos e públicos ilimitados",
-                              "Análises por IA ilimitadas",
-                              "Plano Tático + Playbook ilimitados",
-                              "Operações e campanhas ilimitadas",
-                              "Exportação PDF e CSV ilimitada",
-                              "Suporte prioritário",
+                              { name: "Projetos e públicos", limit: "Ilimitado" },
+                              { name: "Análises por IA", limit: "Ilimitado" },
+                              { name: "Plano Tático + Playbook", limit: "Ilimitado" },
+                              { name: "Operações e campanhas", limit: "Ilimitado" },
+                              { name: "Exportação PDF e CSV", limit: "Ilimitado" },
+                              { name: "Suporte prioritário" },
                             ].map((feature) => (
-                              <div key={feature} className="flex items-center gap-2 opacity-60">
-                                <div className="h-4 w-4 border-2 border-border rounded-full flex-shrink-0" />
-                                <span className="text-sm text-muted-foreground">{feature}</span>
+                              <div
+                                key={feature.name}
+                                className="flex items-center justify-between gap-2 rounded-lg border border-dashed border-border/60 bg-muted/20 px-3 py-2 opacity-60"
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <div className="h-3.5 w-3.5 border-2 border-border rounded-full flex-shrink-0" />
+                                  <span className="text-xs sm:text-sm text-muted-foreground truncate">{feature.name}</span>
+                                </div>
+                                {feature.limit && (
+                                  <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 bg-primary/5 text-primary/60">
+                                    {feature.limit}
+                                  </span>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -1451,6 +1614,7 @@ export default function Settings() {
                 </Card>
               );
             })()}
+            </>)}
           </div>
 
       {/* Delete Backup Confirmation Dialog */}

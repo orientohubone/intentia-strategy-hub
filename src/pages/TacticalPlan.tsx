@@ -950,12 +950,11 @@ export default function TacticalPlan() {
             {/* Tactical Plan Content */}
             {!loading && tacticalPlan && (
               <div className="space-y-6">
-                {/* Channel Tabs */}
-                <div className="flex items-center gap-1 overflow-x-auto pb-1 border-b border-border">
+                {/* Desktop: Tabs horizontais */}
+                <div className="hidden md:flex items-center gap-1 overflow-x-auto pb-1 border-b border-border">
                   {tabs.map((tab) => {
                     const isActive = activeTab === tab.key;
                     const isChannel = tab.key !== "overview" && tab.key !== "templates" && tab.key !== "playbook";
-                    const channelConf = isChannel ? CHANNELS[tab.key as ChannelKey] : null;
                     const tactScore = isChannel ? getChannelTactScore(tab.key as ChannelKey) : null;
 
                     return (
@@ -989,6 +988,64 @@ export default function TacticalPlan() {
                       </button>
                     );
                   })}
+                </div>
+
+                {/* Mobile: Navegação + Cards de canais */}
+                <div className="md:hidden space-y-3">
+                  {/* Botões de navegação */}
+                  <div className="flex gap-2">
+                    {tabs.filter(t => t.key === "overview" || t.key === "templates" || t.key === "playbook").map((tab) => (
+                      <button
+                        key={tab.key}
+                        onClick={() => setActiveTab(tab.key)}
+                        className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
+                          activeTab === tab.key
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}
+                      >
+                        <tab.icon className="h-3.5 w-3.5" />
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Grid de canais 2x2 */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {CHANNEL_LIST.map((ch) => {
+                      const isActive = activeTab === ch.key;
+                      const tactScore = getChannelTactScore(ch.key);
+                      const score = tactScore?.tactical_score || 0;
+
+                      return (
+                        <button
+                          key={ch.key}
+                          onClick={() => setActiveTab(ch.key as TabKey)}
+                          className={`flex items-center gap-2.5 p-3 rounded-xl border-2 transition-all ${
+                            isActive
+                              ? `${ch.borderColor} ${ch.bgColor} shadow-sm`
+                              : "border-border bg-card hover:border-muted-foreground/20"
+                          }`}
+                        >
+                          <img
+                            src={`/${ch.key}-ads.svg`}
+                            alt={ch.label}
+                            className={`h-5 w-5 object-contain ${ch.key === "tiktok" ? "dark:brightness-0 dark:invert" : ""}`}
+                          />
+                          <div className="flex flex-col items-start min-w-0">
+                            <span className={`text-xs font-semibold truncate ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
+                              {ch.label}
+                            </span>
+                            {score > 0 && (
+                              <span className={`text-[10px] font-bold ${getScoreColor(score)}`}>
+                                Score: {score}
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Run Plan Button */}

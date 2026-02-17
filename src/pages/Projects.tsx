@@ -621,11 +621,9 @@ export default function Projects() {
     <DashboardLayout>
       <SEO title="Projetos" noindex />
           <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">Projetos</h1>
-                <p className="text-muted-foreground">Gerencie seus projetos e análises.</p>
-              </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Projetos</h1>
+              <p className="text-sm text-muted-foreground">Gerencie seus projetos e análises.</p>
             </div>
 
             <form onSubmit={handleProjectSubmit} className="grid gap-4 p-4 border border-border rounded-lg bg-card">
@@ -702,14 +700,17 @@ export default function Projects() {
                   </span>
                 </div>
               )}
-              <div className="flex items-center gap-3">
-                <Button type="submit" disabled={analyzing}>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <Button type="submit" disabled={analyzing} className="text-sm">
                   {analyzing ? (
                     <>
                       <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2"></span>
-                      Análise em andamento...
+                      <span className="hidden sm:inline">Análise em andamento...</span>
+                      <span className="sm:hidden">Analisando...</span>
                     </>
-                  ) : editingId ? "Salvar alterações" : canAnalyze ? "Criar projeto e analisar URL" : "Criar projeto"}
+                  ) : editingId ? "Salvar alterações" : canAnalyze ? (
+                    <><span className="hidden sm:inline">Criar projeto e analisar URL</span><span className="sm:hidden">Criar e analisar</span></>
+                  ) : "Criar projeto"}
                 </Button>
                 {editingId && (
                   <Button type="button" variant="outline" disabled={analyzing} onClick={() => {
@@ -804,9 +805,9 @@ export default function Projects() {
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                       <div>
                         <h2 className="text-lg font-semibold text-foreground">{project.name}</h2>
-                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
                           <span>{project.niche} •</span>
-                          <span className="truncate max-w-[200px]">{project.url}</span>
+                          <span className="truncate max-w-[140px] sm:max-w-[200px] md:max-w-[300px]">{project.url}</span>
                           <TooltipProvider delayDuration={300}>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -923,23 +924,25 @@ export default function Projects() {
                           const getScoreBg = (v: number) => v >= 70 ? "bg-green-500" : v >= 50 ? "bg-yellow-500" : "bg-red-500";
 
                           return (
-                            <div className="border border-border rounded-xl p-4 sm:p-6 space-y-4">
-                              <div className="flex items-center justify-between">
-                                <button
-                                  type="button"
-                                  className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-                                  onClick={() => toggleSection(project.id, "heuristic")}
-                                >
-                                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isSectionCollapsed(project.id, "heuristic") ? "-rotate-90" : ""}`} />
-                                  <FileSearch className="h-5 w-5 text-primary" />
-                                  <h3 className="text-base font-semibold text-foreground">Análise Heurística</h3>
-                                  <Badge variant="outline" className="text-xs">
-                                    {project.heuristic_completed_at
-                                      ? new Date(project.heuristic_completed_at).toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
-                                      : "Concluída"}
-                                  </Badge>
-                                </button>
-                                <div className="flex items-center gap-1.5">
+                            <div className="border border-border rounded-xl p-3 sm:p-4 md:p-6 space-y-4">
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <button
+                                    type="button"
+                                    className="flex items-center gap-1.5 sm:gap-2 cursor-pointer hover:opacity-80 transition-opacity min-w-0"
+                                    onClick={() => toggleSection(project.id, "heuristic")}
+                                  >
+                                    <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 flex-shrink-0 ${isSectionCollapsed(project.id, "heuristic") ? "-rotate-90" : ""}`} />
+                                    <FileSearch className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                                    <h3 className="text-sm sm:text-base font-semibold text-foreground truncate">Análise Heurística</h3>
+                                    <Badge variant="outline" className="text-[10px] sm:text-xs hidden sm:inline-flex">
+                                      {project.heuristic_completed_at
+                                        ? new Date(project.heuristic_completed_at).toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+                                        : "Concluída"}
+                                    </Badge>
+                                  </button>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -948,7 +951,8 @@ export default function Projects() {
                                     title="Análise completa de SEO, Core Web Vitals e Performance"
                                   >
                                     <Globe className="h-3.5 w-3.5" />
-                                    SEO & Performance
+                                    <span className="hidden sm:inline">SEO & Performance</span>
+                                    <span className="sm:hidden">SEO</span>
                                   </Button>
                                   {hasAiKeys && canAiAnalysis ? (
                                     <>
@@ -957,7 +961,7 @@ export default function Projects() {
                                         onValueChange={setSelectedAiModel}
                                         disabled={aiAnalyzing === project.id}
                                       >
-                                        <SelectTrigger className="h-8 w-[160px] text-xs border-primary/30 bg-primary/5">
+                                        <SelectTrigger className="h-8 w-[130px] sm:w-[160px] text-xs border-primary/30 bg-primary/5">
                                           <SelectValue placeholder="Modelo IA" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -987,9 +991,10 @@ export default function Projects() {
                                       </Button>
                                     </>
                                   ) : (
-                                    <Button size="sm" variant="ghost" className="gap-1.5 text-muted-foreground" onClick={() => window.location.href = "/settings"}>
-                                      <Settings className="h-4 w-4" />
-                                      Configurar IA
+                                    <Button size="sm" variant="ghost" className="gap-1.5 text-muted-foreground text-xs" onClick={() => window.location.href = "/settings"}>
+                                      <Settings className="h-3.5 w-3.5" />
+                                      <span className="hidden sm:inline">Configurar IA</span>
+                                      <span className="sm:hidden">Config IA</span>
                                     </Button>
                                   )}
                                 </div>
@@ -1183,47 +1188,65 @@ export default function Projects() {
                           const readinessColor = ai.investmentReadiness.score >= 70 ? "text-green-600" : ai.investmentReadiness.score >= 50 ? "text-yellow-600" : "text-red-500";
 
                           return (
-                            <div className="border border-primary/20 rounded-xl p-4 sm:p-6 space-y-5 bg-primary/[0.02]">
-                              <div className="flex items-center justify-between flex-wrap gap-2">
-                                <button
-                                  type="button"
-                                  className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-                                  onClick={() => toggleSection(project.id, "ai")}
-                                >
-                                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isSectionCollapsed(project.id, "ai") ? "-rotate-90" : ""}`} />
-                                  <Sparkles className="h-5 w-5 text-primary" />
-                                  <h3 className="text-base font-semibold text-foreground">Análise por IA</h3>
-                                  <Badge variant="outline" className="text-xs">
-                                    {ai.provider === "google_gemini" ? "Gemini" : "Claude"} • {ai.model.split("-").slice(0, 3).join("-")}
-                                  </Badge>
-                                  {ai.analyzedAt && (
-                                    <span className="text-[10px] text-muted-foreground hidden sm:inline">
-                                      {new Date(ai.analyzedAt).toLocaleDateString("pt-BR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                                    </span>
-                                  )}
-                                </button>
-                                <div className="flex items-center gap-1">
+                            <div className="border border-primary/20 rounded-xl p-3 sm:p-4 md:p-6 space-y-5 bg-primary/[0.02]">
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between gap-2">
+                                  <button
+                                    type="button"
+                                    className="flex items-center gap-1.5 sm:gap-2 cursor-pointer hover:opacity-80 transition-opacity min-w-0"
+                                    onClick={() => toggleSection(project.id, "ai")}
+                                  >
+                                    <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 flex-shrink-0 ${isSectionCollapsed(project.id, "ai") ? "-rotate-90" : ""}`} />
+                                    <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                                    <h3 className="text-sm sm:text-base font-semibold text-foreground truncate">Análise por IA</h3>
+                                    <Badge variant="outline" className="text-[10px] sm:text-xs hidden sm:inline-flex">
+                                      {ai.provider === "google_gemini" ? "Gemini" : "Claude"} • {ai.model.split("-").slice(0, 3).join("-")}
+                                    </Badge>
+                                  </button>
+                                  {/* Mobile: dropdown export | Desktop: inline buttons */}
                                   {(() => {
                                     const ha = heuristicResults[project.id] || project.heuristic_analysis as UrlAnalysis | undefined;
                                     const exportData = { projectName: project.name, projectUrl: project.url, projectNiche: project.niche, heuristic: ha as UrlAnalysis | undefined, ai };
                                     return (
                                       <>
-                                        <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => exportAsJson(exportData)} title="Exportar JSON">
-                                          <Download className="h-3 w-3 mr-1" />JSON
-                                        </Button>
-                                        <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => exportAsMarkdown(exportData)} title="Exportar Markdown">
-                                          MD
-                                        </Button>
-                                        <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => exportAsHtml(exportData)} title="Exportar HTML">
-                                          HTML
-                                        </Button>
-                                        <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => exportAsPdf(exportData)} title="Exportar PDF">
-                                          PDF
-                                        </Button>
+                                        <div className="hidden sm:flex items-center gap-1">
+                                          <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => exportAsJson(exportData)} title="Exportar JSON">
+                                            <Download className="h-3 w-3 mr-1" />JSON
+                                          </Button>
+                                          <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => exportAsMarkdown(exportData)} title="Exportar Markdown">
+                                            MD
+                                          </Button>
+                                          <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => exportAsHtml(exportData)} title="Exportar HTML">
+                                            HTML
+                                          </Button>
+                                          <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => exportAsPdf(exportData)} title="Exportar PDF">
+                                            PDF
+                                          </Button>
+                                        </div>
+                                        <div className="sm:hidden">
+                                          <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                              <Button size="icon" variant="ghost" className="h-7 w-7">
+                                                <Download className="h-3.5 w-3.5" />
+                                              </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                              <DropdownMenuItem onClick={() => exportAsJson(exportData)}>Exportar JSON</DropdownMenuItem>
+                                              <DropdownMenuItem onClick={() => exportAsMarkdown(exportData)}>Exportar Markdown</DropdownMenuItem>
+                                              <DropdownMenuItem onClick={() => exportAsHtml(exportData)}>Exportar HTML</DropdownMenuItem>
+                                              <DropdownMenuItem onClick={() => exportAsPdf(exportData)}>Exportar PDF</DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                          </DropdownMenu>
+                                        </div>
                                       </>
                                     );
                                   })()}
                                 </div>
+                                {ai.analyzedAt && (
+                                  <p className="text-[10px] text-muted-foreground pl-7 sm:pl-9">
+                                    {ai.provider === "google_gemini" ? "Gemini" : "Claude"} • {new Date(ai.analyzedAt).toLocaleDateString("pt-BR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                  </p>
+                                )}
                               </div>
 
                               {!isSectionCollapsed(project.id, "ai") && (<>
@@ -1331,33 +1354,33 @@ export default function Projects() {
                         })()}
 
                         {/* Project Score Overview */}
-                        <div className="border border-border rounded-xl p-4 sm:p-6 space-y-4">
+                        <div className="border border-border rounded-xl p-3 sm:p-4 md:p-6 space-y-4">
                           <button
                             type="button"
-                            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                            className="flex items-center gap-1.5 sm:gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                             onClick={() => toggleSection(project.id, "overview")}
                           >
-                            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isSectionCollapsed(project.id, "overview") ? "-rotate-90" : ""}`} />
-                            <TrendingUp className="h-5 w-5 text-primary" />
-                            <h3 className="text-base font-semibold text-foreground">Visão Geral do Projeto</h3>
+                            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 flex-shrink-0 ${isSectionCollapsed(project.id, "overview") ? "-rotate-90" : ""}`} />
+                            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                            <h3 className="text-sm sm:text-base font-semibold text-foreground">Visão Geral do Projeto</h3>
                           </button>
                           {!isSectionCollapsed(project.id, "overview") && (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <div className="bg-muted/50 rounded-xl p-4 text-center">
-                              <p className="text-sm text-muted-foreground mb-1">Score Geral</p>
-                              <p className={`text-3xl font-bold ${
+                          <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                            <div className="bg-muted/50 rounded-xl p-3 sm:p-4 text-center">
+                              <p className="text-[10px] sm:text-sm text-muted-foreground mb-1">Score</p>
+                              <p className={`text-xl sm:text-3xl font-bold ${
                                 project.score >= 70 ? "text-green-600" : project.score >= 50 ? "text-yellow-600" : "text-red-500"
                               }`}>{project.score}</p>
-                              <p className="text-xs text-muted-foreground mt-1">de 100</p>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">de 100</p>
                             </div>
-                            <div className="bg-muted/50 rounded-xl p-4 text-center">
-                              <p className="text-sm text-muted-foreground mb-1">Status</p>
-                              <p className="text-lg font-semibold text-foreground capitalize">{project.status === "completed" ? "Concluído" : project.status === "analyzing" ? "Analisando..." : "Pendente"}</p>
+                            <div className="bg-muted/50 rounded-xl p-3 sm:p-4 text-center">
+                              <p className="text-[10px] sm:text-sm text-muted-foreground mb-1">Status</p>
+                              <p className="text-sm sm:text-lg font-semibold text-foreground capitalize">{project.status === "completed" ? "Concluído" : project.status === "analyzing" ? "Analisando" : "Pendente"}</p>
                             </div>
-                            <div className="bg-muted/50 rounded-xl p-4 text-center sm:col-span-2 lg:col-span-1">
-                              <p className="text-sm text-muted-foreground mb-1">Última Análise</p>
-                              <p className="text-lg font-semibold text-foreground">
-                                {project.last_update ? new Date(project.last_update).toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                            <div className="bg-muted/50 rounded-xl p-3 sm:p-4 text-center">
+                              <p className="text-[10px] sm:text-sm text-muted-foreground mb-1">Análise</p>
+                              <p className="text-sm sm:text-lg font-semibold text-foreground">
+                                {project.last_update ? new Date(project.last_update).toLocaleDateString("pt-BR", { day: "numeric", month: "short" }) : "—"}
                               </p>
                             </div>
                           </div>
@@ -1365,19 +1388,22 @@ export default function Projects() {
                         </div>
 
                         {/* Channel Scores Cards */}
-                        <div className="border border-border rounded-xl p-4 sm:p-6 space-y-4">
-                          <div className="flex items-center justify-between">
+                        <div className="border border-border rounded-xl p-3 sm:p-4 md:p-6 space-y-4">
+                          <div className="flex items-center justify-between gap-2">
                             <button
                               type="button"
-                              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                              className="flex items-center gap-1.5 sm:gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                               onClick={() => toggleSection(project.id, "channels")}
                             >
-                              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isSectionCollapsed(project.id, "channels") ? "-rotate-90" : ""}`} />
-                              <Globe className="h-5 w-5 text-primary" />
-                              <h3 className="text-base font-semibold text-foreground">Scores por Canal</h3>
+                              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 flex-shrink-0 ${isSectionCollapsed(project.id, "channels") ? "-rotate-90" : ""}`} />
+                              <Globe className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                              <h3 className="text-sm sm:text-base font-semibold text-foreground">Scores por Canal</h3>
                             </button>
                             {!isSectionCollapsed(project.id, "channels") && (
-                              <Button size="sm" variant="outline" onClick={() => handleChannelSave(project.id)}>Salvar alterações</Button>
+                              <Button size="sm" variant="outline" className="text-xs" onClick={() => handleChannelSave(project.id)}>
+                                <span className="hidden sm:inline">Salvar alterações</span>
+                                <span className="sm:hidden">Salvar</span>
+                              </Button>
                             )}
                           </div>
                           {!isSectionCollapsed(project.id, "channels") && (
@@ -1390,15 +1416,15 @@ export default function Projects() {
                               const scoreColor = existing.score >= 70 ? "text-green-600" : existing.score >= 50 ? "text-yellow-600" : "text-red-500";
 
                               return (
-                                <div key={channel} className={`rounded-xl border p-4 space-y-3 ${channelColors[channel]}`}>
+                                <div key={channel} className={`rounded-xl border p-3 sm:p-4 space-y-3 ${channelColors[channel]}`}>
                                   <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2.5">
-                                      <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white dark:bg-gray-900 border border-border/50 p-1.5 flex-shrink-0">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center bg-white dark:bg-gray-900 border border-border/50 p-1 sm:p-1.5 flex-shrink-0">
                                         <img src={channelLogos[channel]} alt={channelNames[channel]} className={`w-full h-full object-contain ${channel === "tiktok" ? "dark:brightness-0 dark:invert" : ""}`} />
                                       </div>
-                                      <h4 className="font-semibold text-foreground">{channelNames[channel]}</h4>
+                                      <h4 className="text-sm sm:text-base font-semibold text-foreground">{channelNames[channel]}</h4>
                                     </div>
-                                    <span className={`text-2xl font-bold ${scoreColor}`}>{existing.score}</span>
+                                    <span className={`text-xl sm:text-2xl font-bold ${scoreColor}`}>{existing.score}</span>
                                   </div>
                                   {existing.is_recommended !== undefined && (
                                     <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${
@@ -1454,15 +1480,15 @@ export default function Projects() {
                         </div>
 
                         {/* Insights Section */}
-                        <div className="border border-border rounded-xl p-4 sm:p-6 space-y-4">
+                        <div className="border border-border rounded-xl p-3 sm:p-4 md:p-6 space-y-4">
                           <button
                             type="button"
-                            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                            className="flex items-center gap-1.5 sm:gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                             onClick={() => toggleSection(project.id, "insights")}
                           >
-                            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isSectionCollapsed(project.id, "insights") ? "-rotate-90" : ""}`} />
-                            <AlertTriangle className="h-5 w-5 text-primary" />
-                            <h3 className="text-base font-semibold text-foreground">Insights ({projectInsights.length})</h3>
+                            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 flex-shrink-0 ${isSectionCollapsed(project.id, "insights") ? "-rotate-90" : ""}`} />
+                            <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                            <h3 className="text-sm sm:text-base font-semibold text-foreground">Insights ({projectInsights.length})</h3>
                           </button>
                           
                           {!isSectionCollapsed(project.id, "insights") && (<>
