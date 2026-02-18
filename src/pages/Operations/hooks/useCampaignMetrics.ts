@@ -72,7 +72,7 @@ export function useCampaignMetrics() {
         next.delete(campaignId);
       } else {
         next.add(campaignId);
-        if (!campaignMetricsEntries[campaignId]) {
+        if (!campaignMetricsEntries[campaignId] || campaignMetricsEntries[campaignId].length === 0) {
           loadCampaignMetrics(campaignId);
         }
       }

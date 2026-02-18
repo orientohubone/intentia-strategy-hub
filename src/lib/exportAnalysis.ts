@@ -1,4 +1,4 @@
-import type { AiAnalysisResult, BenchmarkAiResult } from "./aiAnalyzer";
+import type { AiAnalysisResult, BenchmarkAiResult, PerformanceAiResult } from "./aiAnalyzer";
 import type { UrlAnalysis } from "./urlAnalyzer";
 
 interface ExportData {
@@ -839,6 +839,170 @@ th{background:#f3f4f6;font-weight:600;font-size:10px;text-transform:uppercase;co
   printWindow.document.write(`<h2>Plano de Ação</h2>`);
   for (const a of ai.actionPlan) {
     printWindow.document.write(`<div class="rec"><strong>${a.action}</strong><span class="tag">${a.timeframe}</span> <span class="tag">${priorityLabel(a.priority)}</span><p style="margin:4px 0;color:#555">${a.expectedOutcome}</p></div>`);
+  }
+
+  printWindow.document.write(`<div class="footer">Intentia Strategy Hub &bull; ${formatDate(new Date().toISOString())}</div></body></html>`);
+  printWindow.document.close();
+
+  setTimeout(() => {
+    printWindow.print();
+  }, 500);
+}
+
+// =====================================================
+// PERFORMANCE ANALYSIS EXPORT
+// =====================================================
+
+export function exportPerformanceAnalysisAsPdf(
+  campaignName: string,
+  channel: string,
+  analysis: PerformanceAiResult
+) {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Por favor, permita popups para exportar em PDF');
+    return;
+  }
+
+  const healthColor = (score: number) => {
+    if (score >= 80) return '#059669';
+    if (score >= 60) return '#d97706';
+    if (score >= 40) return '#ea580c';
+    return '#dc2626';
+  };
+
+  const healthLabel = (score: number) => {
+    if (score >= 80) return 'Excelente';
+    if (score >= 60) return 'Bom';
+    if (score >= 40) return 'Regular';
+    return 'Crítico';
+  };
+
+  const verdictLabel = (verdict: string) => {
+    const map: Record<string, string> = {
+      below: 'Abaixo',
+      on_track: 'No Target',
+      above: 'Acima'
+    };
+    return map[verdict] || verdict;
+  };
+
+  const priorityLabel = (priority: string) => {
+    const map: Record<string, string> = {
+      immediate: 'Alta',
+      short_term: 'Média',
+      medium_term: 'Baixa'
+    };
+    return map[priority] || priority;
+  };
+
+  printWindow.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Análise de Performance - ${campaignName}</title>
+  <style>
+    body{font-family:Arial,sans-serif;font-size:11px;line-height:1.4;color:#333;max-width:800px;margin:0 auto;padding:20px}
+    h1{font-size:20px;color:#1f2937;border-bottom:2px solid #e5e7eb;padding-bottom:8px;margin-bottom:16px}
+    h2{font-size:16px;color:#374151;margin-top:24px;margin-bottom:12px}
+    h3{font-size:14px;color:#4b5563;margin-top:20px;margin-bottom:8px}
+    .meta{font-size:10px;color:#6b7280;background:#f9fafb;padding:8px;border-radius:4px;margin-bottom:16px}
+    .card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:12px;margin-bottom:12px}
+    .grid{display:grid;gap:12px}
+    .grid-2{grid-template-columns:1fr 1fr}
+    .grid-3{grid-template-columns:1fr 1fr 1fr}
+    .grid-4{grid-template-columns:1fr 1fr 1fr 1fr}
+    .kpi{text-align:center;padding:8px;border-radius:6px}
+    .kpi-value{font-size:24px;font-weight:700}
+    .kpi-label{font-size:9px;color:#6b7280;text-transform:uppercase}
+    .recommendation{background:#fef3c7;border-left:3px solid #f59e0b;padding:8px;margin-bottom:8px}
+    .alert{background:#fef2f2;border-left:3px solid #ef4444;padding:8px;margin-bottom:8px}
+    .success{background:#f0fdf4;border-left:3px solid #22c55e;padding:8px;margin-bottom:8px}
+    table{width:100%;border-collapse:collapse;margin-bottom:16px}
+    th,td{padding:8px;text-align:left;border-bottom:1px solid #e5e7eb;font-size:10px}
+    th{background:#f9fafb;font-weight:600}
+    .footer{margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:9px;color:#6b7280;text-align:center}
+    @media print{body{padding:15px}
+  </style>
+</head>
+<body>
+<h1>Análise de Performance — ${campaignName}</h1>
+<p class="meta"><strong>${campaignName}</strong> &bull; ${channel} &bull; Saúde Geral: ${analysis.overallHealth.score}/100 &bull; ${formatDate(analysis.analyzedAt)}</p>
+`);
+
+  // Health Score Overview
+  printWindow.document.write(`
+<div class="card">
+  <div class="grid grid-4">
+    <div class="kpi" style="background:${healthColor(analysis.overallHealth.score)}20">
+      <div class="kpi-value" style="color:${healthColor(analysis.overallHealth.score)}">${analysis.overallHealth.score}</div>
+      <div class="kpi-label">Saúde Geral</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-value">${Object.keys(analysis.kpiAnalysis).length}</div>
+      <div class="kpi-label">KPIs Analisados</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-value">${analysis.funnelAnalysis.length}</div>
+      <div class="kpi-label">Estágios Funil</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-value">${analysis.actionPlan.length}</div>
+      <div class="kpi-label">Ações Recomendadas</div>
+    </div>
+  </div>
+</div>
+`);
+
+  // Executive Summary
+  printWindow.document.write(`<h2>Resumo Executivo</h2>`);
+  printWindow.document.write(`<div class="card">${analysis.executiveSummary}</div>`);
+
+  // KPI Analysis
+  printWindow.document.write(`<h2>Análise de KPIs</h2>`);
+  printWindow.document.write(`<div class="grid grid-2">`);
+  for (const kpi of analysis.kpiAnalysis) {
+    const status = kpi.verdict === 'above' ? 'success' : kpi.verdict === 'below' ? 'alert' : 'card';
+    printWindow.document.write(`
+      <div class="${status}">
+        <h3>${kpi.metric}</h3>
+        <p><strong>Valor:</strong> ${kpi.currentValue}</p>
+        <p><strong>Benchmark:</strong> ${kpi.benchmark}</p>
+        <p><strong>Status:</strong> ${verdictLabel(kpi.verdict)}</p>
+        <p>${kpi.insight}</p>
+      </div>
+    `);
+  }
+  printWindow.document.write(`</div>`);
+
+  // Funnel Analysis
+  printWindow.document.write(`<h2>Análise de Funil</h2>`);
+  printWindow.document.write(`<table><thead><tr><th>Estágio</th><th>Performance</th><th>Gargalo?</th><th>Recomendação</th></tr></thead><tbody>`);
+  for (const stage of analysis.funnelAnalysis) {
+    printWindow.document.write(`
+      <tr>
+        <td><strong>${stage.stage}</strong></td>
+        <td>${stage.performance}</td>
+        <td>${stage.bottleneck ? 'Sim' : 'Não'}</td>
+        <td>${stage.recommendation}</td>
+      </tr>
+    `);
+  }
+  printWindow.document.write(`</tbody></table>`);
+
+  // Action Plan
+  printWindow.document.write(`<h2>Plano de Ação</h2>`);
+  for (const action of analysis.actionPlan) {
+    const priorityColor = action.priority === 'immediate' ? '#dc2626' : action.priority === 'short_term' ? '#d97706' : '#059669';
+    printWindow.document.write(`
+      <div class="recommendation">
+        <strong>${action.action}</strong>
+        <span style="color:${priorityColor};font-size:9px;text-transform:uppercase">${priorityLabel(action.priority)}</span>
+        <span style="color:#6b7280;font-size:9px">Esforço: ${action.effort === 'high' ? 'Alto' : action.effort === 'medium' ? 'Médio' : 'Baixo'}</span>
+        <p style="margin:4px 0;color:#555">${action.expectedImpact}</p>
+      </div>
+    `);
   }
 
   printWindow.document.write(`<div class="footer">Intentia Strategy Hub &bull; ${formatDate(new Date().toISOString())}</div></body></html>`);

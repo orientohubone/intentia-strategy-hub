@@ -24,16 +24,17 @@ import Insights from "./pages/Insights";
 import Audiences from "./pages/Audiences";
 import Benchmark from "./pages/Benchmark";
 import Settings from "./pages/Settings";
-import Help from "./pages/Help";
-import Support from "./pages/Support";
 import TacticalPlan from "./pages/TacticalPlan";
 import Alerts from "./pages/Alerts";
 import Operations from "./pages/Operations";
+import Reports from "./pages/Reports";
+import Help from "./pages/Help";
+import Support from "./pages/Support";
 import Integrations from "./pages/Integrations";
 import SeoGeo from "./pages/SeoGeo";
-import OAuthCallback from "./pages/OAuthCallback";
 import Checkout from "./pages/Checkout";
 import Subscribe from "./pages/Subscribe";
+import OAuthCallback from "./pages/OAuthCallback";
 import NotFound from "./pages/NotFound";
 import BrandGuide from "./pages/BrandGuide";
 import BrandPosts from "./pages/BrandPosts";
@@ -191,6 +192,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Operations />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/reports" 
+            element={
+              <ProtectedRoute>
+                <Reports />
               </ProtectedRoute>
             } 
           />

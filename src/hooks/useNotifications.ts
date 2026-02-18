@@ -17,12 +17,34 @@ export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [processedNotifications, setProcessedNotifications] = useState<Set<string>>(new Set());
   const { user } = useAuth();
 
   useEffect(() => {
     if (user) {
       loadNotifications();
       setupRealtimeSubscription();
+      
+      // Sync unread count every 5 seconds to fix any drift quickly
+      const syncInterval = setInterval(async () => {
+        try {
+          const { data, error } = await supabase
+            .from("notifications")
+            .select("read")
+            .eq("user_id", user.id)
+            .eq("read", false);
+          
+          if (!error && data) {
+            setUnreadCount(data.length);
+          }
+        } catch (error) {
+          console.error("Error syncing unread count:", error);
+        }
+      }, 5000);
+      
+      return () => {
+        clearInterval(syncInterval);
+      };
     }
   }, [user]);
 
@@ -41,7 +63,12 @@ export function useNotifications() {
       if (error) throw error;
 
       setNotifications(data || []);
-      setUnreadCount(data?.filter(n => !n.read).length || 0);
+      // Calculate unread count from actual data
+      const unreadCount = data?.filter(n => !n.read).length || 0;
+      setUnreadCount(unreadCount);
+      
+      // Reset processed notifications set with current IDs
+      setProcessedNotifications(new Set((data as any)?.map((n: any) => n.id) || []));
     } catch (error) {
       console.error("Error loading notifications:", error);
     } finally {
@@ -65,11 +92,21 @@ export function useNotifications() {
         (payload) => {
           if (payload.eventType === 'INSERT') {
             const newNotif = payload.new as Notification;
+            
+            // Prevent processing the same notification multiple times
+            if (processedNotifications.has(newNotif.id)) return;
+            
+            setProcessedNotifications(prev => new Set([...prev, newNotif.id]));
+            
             setNotifications(prev => {
               if (prev.some(n => n.id === newNotif.id)) return prev;
               return [newNotif, ...prev];
             });
-            setUnreadCount(prev => prev + 1);
+            
+            // Only increment if this notification is unread
+            if (!newNotif.read) {
+              setUnreadCount(prev => prev + 1);
+            }
           } else if (payload.eventType === 'DELETE') {
             const oldNotif = payload.old as { id: string };
             setNotifications(prev => prev.filter(n => n.id !== oldNotif.id));
@@ -152,7 +189,7 @@ export function useNotifications() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("notifications")
         .insert({
           ...notification,

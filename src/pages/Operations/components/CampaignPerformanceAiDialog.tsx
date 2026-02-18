@@ -27,9 +27,11 @@ import {
   ThumbsUp,
   TrendingUp,
   XCircle,
+  Download,
 } from "lucide-react";
 import type { PerformanceAiResult } from "@/lib/aiAnalyzer";
 import { AI_MODEL_LABELS } from "@/lib/aiModels";
+import { exportPerformanceAnalysisAsPdf } from "@/lib/exportAnalysis";
 
 interface Props {
   open: boolean;
@@ -174,14 +176,26 @@ export default function CampaignPerformanceAiDialog({
                 <Sparkles className="h-5 w-5 text-primary" />
                 Análise de Performance — {campaignName}
               </DialogTitle>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => setIsFullscreen(!isFullscreen)}
-              >
-                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => exportPerformanceAnalysisAsPdf(campaignName, channel, analysis)}
+                  title="Exportar PDF"
+                >
+                  <Download className="h-3 w-3 mr-1" />
+                  PDF
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                >
+                  {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Badge variant="outline" className="text-[10px]">

@@ -7,13 +7,13 @@ import {
   CAMPAIGN_STATUS_LABELS,
   CHANNEL_LABELS,
 } from "@/lib/operationalTypes";
-import {
-  getUserActiveKeys,
+import { getUserActiveKeys,
   runPerformanceAiAnalysis,
   type PerformanceAiResult,
   type PerformanceMetricsForPrompt,
 } from "@/lib/aiAnalyzer";
 import { getModelsForProvider } from "@/lib/aiModels";
+import { notifyPerformanceAnalysisCompleted } from "@/lib/notificationService";
 import type { Campaign, MetricsSummaryData } from "../types";
 import type { CampaignMetrics as CampaignMetricsType } from "@/lib/operationalTypes";
 
@@ -173,15 +173,7 @@ export function useAiPerformance(
 
       if (aiNotificationSentRef.current !== campaign.id) {
         aiNotificationSentRef.current = campaign.id;
-        await (supabase as any).from("notifications").insert({
-          user_id: user.id,
-          title: "Análise de Performance Concluída",
-          message: `Análise por IA da campanha "${campaign.name}" concluída. Saúde: ${result.overallHealth.score}/100.`,
-          type: "success",
-          read: false,
-          action_url: "/operations",
-          action_text: "Ver Análise",
-        });
+        await notifyPerformanceAnalysisCompleted(user.id, campaign.name, result.overallHealth.score);
       }
     } catch (error: any) {
       console.error("Erro na análise de performance:", error);
@@ -200,6 +192,7 @@ export function useAiPerformance(
     selectedAiModel,
     setSelectedAiModel,
     aiAnalyzing,
+    setAiAnalyzing,
     aiResults,
     aiDialogCampaignId,
     setAiDialogCampaignId,

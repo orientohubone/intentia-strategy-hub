@@ -19,6 +19,7 @@ import { CampaignForm } from "./components/CampaignForm";
 import { CampaignRow } from "./components/CampaignRow";
 import { CampaignExpandedMetrics } from "./components/CampaignExpandedMetrics";
 import CampaignPerformanceAiDialog from "./components/CampaignPerformanceAiDialog";
+import { PerformanceAnalysisCard } from "@/components/PerformanceAnalysisCard";
 import BudgetManagement from "./components/BudgetManagement";
 import CampaignCalendarManager from "./components/CampaignCalendarManager";
 import PerformanceAlerts from "./components/PerformanceAlerts";
@@ -86,6 +87,7 @@ export default function Operations() {
     selectedAiModel,
     setSelectedAiModel,
     aiAnalyzing,
+    setAiAnalyzing,
     aiResults,
     aiDialogCampaignId,
     setAiDialogCampaignId,
@@ -266,46 +268,58 @@ export default function Operations() {
                               {isChannelExpanded(group.projectId, channel) && (
                               <div className="divide-y">
                                 {items.map((campaign) => (
-                                  <CampaignRow
-                                    key={campaign.id}
-                                    campaign={campaign}
-                                    isExpanded={expandedCampaigns.has(campaign.id)}
-                                    hasAiResult={!!aiResults[campaign.id]}
-                                    onStatusChange={handleStatusChange}
-                                    onToggleExpand={toggleCampaignExpand}
-                                    onShowAiDialog={setAiDialogCampaignId}
-                                    onEdit={handleEdit}
-                                    onDelete={handleDelete}
-                                  >
-                                    {expandedCampaigns.has(campaign.id) && (
-                                      <CampaignExpandedMetrics
-                                        campaign={campaign}
-                                        summary={metricsSummaries[campaign.id]}
-                                        metricsEntries={campaignMetricsEntries[campaign.id] || []}
-                                        metricsLoading={metricsEntriesLoading[campaign.id] || false}
-                                        metricsFormCampaignId={metricsFormCampaignId}
-                                        metricsFormDraft={metricsFormDrafts[campaign.id]}
-                                        editingMetricId={editingMetricId}
-                                        canAiKeys={canAiKeys}
-                                        canAiPerformance={canAiPerformance}
-                                        hasAiKeys={hasAiKeys}
-                                        availableAiModels={availableAiModels}
-                                        selectedAiModel={selectedAiModel}
-                                        onSelectedAiModelChange={setSelectedAiModel}
-                                        aiAnalyzing={aiAnalyzing}
-                                        hasAiResult={!!aiResults[campaign.id]}
-                                        onAiAnalysis={handleAiPerformanceAnalysis}
-                                        onShowAiDialog={setAiDialogCampaignId}
-                                        onMetricsSubmit={(data) => handleMetricsSubmit(campaign.id, data, onReload)}
-                                        onMetricsUpdate={(metricId, data) => handleMetricsUpdate(campaign.id, metricId, data, onReload)}
-                                        onMetricsEdit={(metric) => handleMetricsEdit(campaign.id, metric)}
-                                        onMetricsDelete={(metricId) => handleMetricsDelete(campaign.id, metricId, onReload)}
-                                        onMetricsCancel={() => cancelMetricsForm(campaign.id)}
-                                        onMetricsFormDraftChange={(data) => setMetricsFormDrafts((prev) => ({ ...prev, [campaign.id]: data }))}
-                                        onOpenNewMetricsForm={() => openNewMetricsForm(campaign.id)}
+                                  <div key={campaign.id}>
+                                    <CampaignRow
+                                      campaign={campaign}
+                                      isExpanded={expandedCampaigns.has(campaign.id)}
+                                      hasAiResult={!!aiResults[campaign.id]}
+                                      onStatusChange={handleStatusChange}
+                                      onToggleExpand={toggleCampaignExpand}
+                                      onShowAiDialog={setAiDialogCampaignId}
+                                      onEdit={handleEdit}
+                                      onDelete={handleDelete}
+                                    >
+                                      {expandedCampaigns.has(campaign.id) && (
+                                        <CampaignExpandedMetrics
+                                          campaign={campaign}
+                                          summary={metricsSummaries[campaign.id]}
+                                          metricsEntries={campaignMetricsEntries[campaign.id] || []}
+                                          metricsLoading={metricsEntriesLoading[campaign.id] || false}
+                                          metricsFormCampaignId={metricsFormCampaignId === campaign.id ? campaign.id : null}
+                                          metricsFormDraft={metricsFormDrafts[campaign.id]}
+                                          editingMetricId={editingMetricId?.[campaign.id] || null}
+                                          canAiKeys={canAiKeys}
+                                          canAiPerformance={canAiPerformance}
+                                          hasAiKeys={hasAiKeys}
+                                          availableAiModels={availableAiModels}
+                                          selectedAiModel={selectedAiModel}
+                                          onSelectedAiModelChange={setSelectedAiModel}
+                                          aiAnalyzing={aiAnalyzing}
+                                          hasAiResult={!!aiResults[campaign.id]}
+                                          onAiAnalysis={handleAiPerformanceAnalysis}
+                                          onShowAiDialog={setAiDialogCampaignId}
+                                          onMetricsSubmit={(data) => handleMetricsSubmit(campaign.id, data, onReload)}
+                                          onMetricsUpdate={(metricId, data) => handleMetricsUpdate(campaign.id, metricId, data, onReload)}
+                                          onMetricsEdit={(metric) => handleMetricsEdit(campaign.id, metric)}
+                                          onMetricsDelete={(metricId) => handleMetricsDelete(campaign.id, metricId, onReload)}
+                                          onMetricsCancel={() => cancelMetricsForm(campaign.id)}
+                                          onMetricsFormDraftChange={(data) => setMetricsFormDrafts((prev) => ({ ...prev, [campaign.id]: data }))}
+                                          onOpenNewMetricsForm={() => openNewMetricsForm(campaign.id)}
+                                        />
+                                      )}
+                                    </CampaignRow>
+                                    
+                                    {/* Performance Analysis Card - shown when analyzing this campaign */}
+                                    {aiAnalyzing === campaign.id && (
+                                      <PerformanceAnalysisCard
+                                        campaignName={campaign.name}
+                                        channel={CHANNEL_LABELS[campaign.channel] || campaign.channel}
+                                        model={selectedAiModel.split("::")[1] || "IA"}
+                                        onComplete={() => setAiAnalyzing(null)}
+                                        onCancel={() => setAiAnalyzing(null)}
                                       />
                                     )}
-                                  </CampaignRow>
+                                  </div>
                                 ))}
                               </div>
                               )}

@@ -1,12 +1,12 @@
 # Status de Implementação - Intentia Strategy Hub
 
-**Versão:** 4.0.0  
-**Data:** 16/02/2026  
-**Status:** Limites & Uso Centralizado + Notificações
+**Versão:** 4.1.0  
+**Data:** 18/02/2026  
+**Status:** Cards Interativos de IA + Notificações Otimizadas
 
 > ⚠️ **Este arquivo foi refatorado.** A documentação completa está em `docs/`.
 
-## � Documentação Refatorada
+## 📚 Documentação Refatorada
 
 | Arquivo | Conteúdo | ~Linhas |
 |---|---|---|
@@ -19,28 +19,56 @@
 | [docs/INTEGRACOES_OAUTH.md](./docs/INTEGRACOES_OAUTH.md) | OAuth flow, sync, Edge Functions, env vars | ~130 |
 | [docs/CHANGELOG.md](./docs/CHANGELOG.md) | Histórico de versões e entregáveis por release | ~180 |
 
-## 📋 Resumo da v4.0.0
+## 📋 Resumo da v4.1.0
 
-### Notificações Centralizadas
-- `notificationService.ts` — serviço centralizado com funções por ação
-- Integrado em: Projects, TacticalPlan, Audiences, Operations, Settings, Support
-- Suporte restrito: chat bloqueado para Starter
+### 🎯 Cards Interativos de IA
+- **AiAnalysisCard.tsx** - Card para análise de projetos
+  - Progresso animado com estágios contextuais
+  - Sugestões rotativas (café, água, e-mails, continuar trabalhando)
+  - Design moderno com gradiente e ícones animados
+  - Auto-redirecionamento ao finalizar
 
-### Limites & Uso
-- Bug fix: limite de projetos Starter 3→5 (trigger SQL + frontend)
-- Coluna `max_projects` em tenant_settings + trigger dinâmico
-- Dashboard de Uso: 7 métricas com barras de progresso (verde/amarelo/vermelho)
-- Admin Panel: campo "Máx. projetos ativos" + botões atualizados
-- Contador duplo em Projects: projetos + análises
-- Backup Starter: 1→4/mês + mensagem uso consciente
+- **PerformanceAnalysisCard.tsx** - Card para análise de campanhas
+  - Foco em métricas de performance (ROAS, CPA, CTR)
+  - Sugestões adaptadas para tempo de análise
+  - Preview de KPIs analisados
+  - Estado de conclusão verde
 
-### SQL Pendente
-- Rodar `supabase/add_max_projects_column.sql`
-- Rodar `UPDATE plan_features SET usage_limit = 4 WHERE feature_key = 'backup_system' AND plan = 'starter';`
+### 🔔 Sistema de Notificações Otimizado
+- **Deducação por ID** - Previne notificações duplicadas
+- **Sincronização automática** - A cada 5 segundos corrige drift do contador
+- **Links funcionais** - `/projects#project-${id}` e `/operations`
+- **Notificações centralizadas**:
+  - `notifyAiAnalysisCompleted()` - Projects
+  - `notifyPerformanceAnalysisCompleted()` - Operations
+
+### 🎨 Experiência do Usuário
+- **Transformação da espera** - Cards produtivos durante análises longas
+- **Feedback visual constante** - Progress bars e sugestões dinâmicas
+- **Redução de ansiedade** - Sugestões práticas e countdown
+- **Notificações precisas** - Sem acumulação visual, links diretos
+
+### 📍 Implementação
+- **Projects.tsx** - Card após cada projeto quando `aiAnalyzing === projectId`
+- **Operations/index.tsx** - Card após cada CampaignRow quando `aiAnalyzing === campaignId`
+- **useNotifications.ts** - Hook otimizado com deduplicação
+- **notificationService.ts** - Serviços centralizados de notificação
+
+### 📚 Central de Ajuda Atualizada
+- **Nova categoria "Notificações"** - Sistema completo de alertas
+- **FAQs atualizadas** - Cards interativos, sincronização, links
+- **Documentação de análise por IA** - Fluxo com cards interativos
+- **Guia de uso** - Como aproveitar o tempo de espera
 
 ---
 
 ## 📋 Roadmap
+
+### ✅ Concluído v4.1.0
+- [x] Cards interativos para todos os mecanismos de IA
+- [x] Sistema de notificações otimizado
+- [x] Central de ajuda atualizada
+- [x] Experiência de espera produtiva
 
 ### Próximos Passos
 - [ ] Relatórios de performance automatizados

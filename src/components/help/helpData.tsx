@@ -104,7 +104,7 @@ export const helpCategories: HelpCategory[] = [
       },
       {
         title: "Executando análise",
-        content: "Selecione modelo, clique em IA. Gera resumo, SWOT, recomendações e plano de ação.",
+        content: "Selecione modelo, clique em 'Analisar com IA'. Card interativo aparece com progresso e sugestões (café, água, e-mails). Gera resumo, SWOT, recomendações e plano de ação.",
         difficulty: "Iniciante",
       },
       {
@@ -435,6 +435,36 @@ export const helpCategories: HelpCategory[] = [
     ],
   },
   {
+    id: "notifications",
+    title: "Notificações",
+    description: "Alertas e feedback em tempo real",
+    icon: <Bell className="h-5 w-5" />,
+    color: "text-purple-600",
+    videoId: "",
+    articles: [
+      {
+        title: "Sistema de notificações",
+        content: "Sino no header mostra contador de notificações não lidas. Dropdown com lista completa.",
+        difficulty: "Iniciante",
+      },
+      {
+        title: "Notificações de análise",
+        content: "Análises por IA geram notificações automáticas quando concluídas. Link direto para resultados.",
+        difficulty: "Intermediário",
+      },
+      {
+        title: "Cards interativos",
+        content: "Durante análises longas, cards aparecem com sugestões (café, água, e-mails) e progresso em tempo real.",
+        difficulty: "Intermediário",
+      },
+      {
+        title: "Gerenciando notificações",
+        content: "Marque como lida individualmente ou todas de uma vez. Exclua notificações desnecessárias.",
+        difficulty: "Iniciante",
+      },
+    ],
+  },
+  {
     id: "operations",
     title: "Operações",
     description: "Gestão de campanhas",
@@ -459,7 +489,7 @@ export const helpCategories: HelpCategory[] = [
       },
       {
         title: "Análise por IA",
-        content: "Com métricas, use IA para saúde geral, KPIs vs benchmark, análise de funil, plano de ação.",
+        content: "Com métricas registradas, clique em 'Análise por IA'. Card interativo aparece com progresso e sugestões. Gera saúde geral, KPIs vs benchmark, análise de funil e plano de ação.",
         difficulty: "Avançado",
       },
     ],
@@ -647,9 +677,25 @@ export const faqItems: FAQItem[] = [
   },
   {
     question: "Como recebo notificações?",
-    answer: "Notificações são enviadas em tempo real via Supabase Subscriptions. Você recebe alertas quando análises são concluídas, novos insights são gerados ou quando há atualizações importantes. Acesse pelo ícone de sino no header.",
+    answer: "Notificações são enviadas em tempo real via Supabase Subscriptions. Você recebe alertas quando análises por IA são concluídas, com links diretos para os resultados. Acesse pelo ícone de sino no header.",
     category: "configuracoes",
     difficulty: "iniciante",
+    icon: <Bell className="h-4 w-4" />,
+    color: "text-gray-600",
+  },
+  {
+    question: "O que são os cards interativos durante análises?",
+    answer: "Quando você inicia uma análise por IA (em projetos ou campanhas), um card interativo aparece com progresso em tempo real e sugestões produtivas (pegar um café, beber água, verificar e-mails). O card mostra o estágio atual da análise e sugestões que mudam a cada 4 segundos.",
+    category: "configuracoes",
+    difficulty: "iniciante",
+    icon: <Sparkles className="h-4 w-4" />,
+    color: "text-purple-600",
+  },
+  {
+    question: "Por que o contador de notificações às vezes mostra números altos?",
+    answer: "O contador pode acumular temporariamente devido a múltiplos eventos em tempo real, mas se sincroniza automaticamente a cada 5 segundos com o valor correto. Isso garante que você sempre veja o número exato de notificações não lidas.",
+    category: "configuracoes",
+    difficulty: "intermediario",
     icon: <Bell className="h-4 w-4" />,
     color: "text-gray-600",
   },

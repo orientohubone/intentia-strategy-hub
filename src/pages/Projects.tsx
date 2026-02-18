@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { analyzeUrl, saveAnalysisResults, analyzeCompetitors, cleanBenchmarks, saveCompetitorBenchmark, checkBenchmarkLimit } from "@/lib/urlAnalyzer";
 import type { UrlAnalysis } from "@/lib/urlAnalyzer";
 import { AnalysisProgressTracker } from "@/components/AnalysisProgressTracker";
+import { AiAnalysisCard } from "@/components/AiAnalysisCard";
 import { StructuredDataViewer } from "@/components/StructuredDataViewer";
 import type { CompetitorStructuredData } from "@/components/StructuredDataViewer";
 import { StructuredDataGenerator } from "@/components/StructuredDataGenerator";
@@ -19,7 +20,7 @@ import { runAiAnalysis, getUserActiveKeys } from "@/lib/aiAnalyzer";
 import { AI_MODEL_LABELS, getModelsForProvider } from "@/lib/aiModels";
 import type { AiAnalysisResult, UserApiKey } from "@/lib/aiAnalyzer";
 import { exportAsJson, exportAsMarkdown, exportAsHtml, exportAsPdf } from "@/lib/exportAnalysis";
-import { notifyProjectCreated, notifyProjectDeleted } from "@/lib/notificationService";
+import { notifyProjectCreated, notifyProjectDeleted, notifyAiAnalysisCompleted } from "@/lib/notificationService";
 import { fetchProjectReport, generateConsolidatedReport } from "@/lib/reportGenerator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
@@ -513,15 +514,7 @@ export default function Projects() {
       // Single notification — guarded by ref to prevent duplicates
       if (aiNotificationSentRef.current !== projectId) {
         aiNotificationSentRef.current = projectId;
-        await (supabase as any).from("notifications").insert({
-          user_id: user.id,
-          title: "Análise por IA Concluída",
-          message: `Análise por IA de "${project.name}" concluída. Prontidão para investimento: ${result.investmentReadiness.score}/100.`,
-          type: "success",
-          read: false,
-          action_url: "/projects",
-          action_text: "Ver Resultados",
-        });
+        await notifyAiAnalysisCompleted(user.id, project.name, projectId, result.investmentReadiness.score);
       }
 
       await refetch();
@@ -801,7 +794,8 @@ export default function Projects() {
                 const projectInsights = insights[project.id] || [];
 
                 return (
-                  <div key={project.id} className="border border-border rounded-lg bg-card p-4 space-y-4">
+                  <>
+                    <div key={project.id} id={`project-${project.id}`} className="border border-border rounded-lg bg-card p-4 space-y-4">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                       <div>
                         <h2 className="text-lg font-semibold text-foreground">{project.name}</h2>
@@ -1580,6 +1574,17 @@ export default function Projects() {
                       </div>
                     )}
                   </div>
+                  
+                  {/* AI Analysis Card - shown when analyzing this project */}
+                  {aiAnalyzing === project.id && (
+                    <AiAnalysisCard
+                      projectName={project.name}
+                      model={selectedAiModel.split("::")[1] || "IA"}
+                      onComplete={() => setAiAnalyzing(null)}
+                      onCancel={() => setAiAnalyzing(null)}
+                    />
+                  )}
+                </>
                 );
               })}
             </div>

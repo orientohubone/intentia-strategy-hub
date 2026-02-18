@@ -205,6 +205,30 @@ export function notifyBudgetAllocated(userId: string, channel: string, projectNa
 }
 
 // =====================================================
+// ANÁLISE POR IA
+// =====================================================
+
+export function notifyAiAnalysisCompleted(userId: string, projectName: string, projectId: string, readinessScore: number) {
+  return createNotification(userId, {
+    title: "Análise por IA Concluída",
+    message: `Análise por IA de "${projectName}" concluída. Prontidão para investimento: ${readinessScore}/100.`,
+    type: "success",
+    action_url: `/projects#project-${projectId}`,
+    action_text: "Ver Análise",
+  });
+}
+
+export function notifyPerformanceAnalysisCompleted(userId: string, campaignName: string, healthScore: number) {
+  return createNotification(userId, {
+    title: "Análise de Performance Concluída",
+    message: `Análise por IA da campanha "${campaignName}" concluída. Saúde: ${healthScore}/100.`,
+    type: "success",
+    action_url: "/operations",
+    action_text: "Ver Análise",
+  });
+}
+
+// =====================================================
 // CONFIGURAÇÕES
 // =====================================================
 
