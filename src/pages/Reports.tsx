@@ -36,7 +36,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// Tipos para os relatÃ³rios
+// Tipos para os relatórios
 
 interface ProjectReports {
   projectName: string;
@@ -54,7 +54,7 @@ const CACHE_TTL_MS = 2 * 60 * 1000;
 const reportsCache = new Map<string, ReportsCacheState>();
 const REPORT_TYPES = [
   { value: "all", label: "Todos os Tipos" },
-  { value: "project_analysis", label: "AnÃ¡lise de Projeto" },
+  { value: "project_analysis", label: "Análise de Projeto" },
   { value: "campaign_analysis", label: "Performance" },
   { value: "benchmark", label: "Benchmark" },
   { value: "consolidated", label: "Consolidado" },
@@ -62,7 +62,7 @@ const REPORT_TYPES = [
 
 const CATEGORIES = [
   { value: "all", label: "Todas as Categorias" },
-  { value: "AnÃ¡lise de Projeto", label: "AnÃ¡lise de Projeto" },
+  { value: "Análise de Projeto", label: "Análise de Projeto" },
   { value: "Performance", label: "Performance" },
   { value: "Benchmark", label: "Benchmark" },
   { value: "Consolidado", label: "Consolidado" },
@@ -76,6 +76,13 @@ const SORT_OPTIONS = [
   { value: "score_desc", label: "Maior Score" },
   { value: "score_asc", label: "Menor Score" },
 ];
+
+const TYPE_CATEGORY_FALLBACK: Record<string, string> = {
+  project_analysis: "Análise de Projeto",
+  campaign_analysis: "Performance",
+  benchmark: "Benchmark Competitivo",
+  consolidated: "Consolidado",
+};
 
 const getTypeIcon = (type: string) => {
   switch (type) {
@@ -92,18 +99,18 @@ const getTypeIcon = (type: string) => {
   }
 };
 
-const getTypeColor = (type: string) => {
+const getTypeContainerClass = (type: string) => {
   switch (type) {
     case "project_analysis":
-      return "text-blue-600 bg-blue-50 border-blue-200";
+      return "bg-primary/10 text-primary border-primary/20";
     case "campaign_analysis":
-      return "text-green-600 bg-green-50 border-green-200";
+      return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
     case "benchmark":
-      return "text-purple-600 bg-purple-50 border-purple-200";
+      return "bg-amber-500/10 text-amber-600 border-amber-500/20";
     case "consolidated":
-      return "text-orange-600 bg-orange-50 border-orange-200";
+      return "bg-blue-500/10 text-blue-600 border-blue-500/20";
     default:
-      return "text-gray-600 bg-gray-50 border-gray-200";
+      return "bg-muted text-muted-foreground border-border";
   }
 };
 
@@ -111,6 +118,142 @@ const getScoreColor = (score: number) => {
   if (score >= 80) return "text-green-600";
   if (score >= 60) return "text-yellow-600";
   return "text-red-600";
+};
+
+const toText = (value: unknown, fallback = "N/A") => {
+  if (value === null || value === undefined) return fallback;
+  const text = String(value).trim();
+  return text.length > 0 ? text : fallback;
+};
+
+const toStringArray = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value.map((item) => String(item));
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return parsed.map((item) => String(item));
+      } catch {
+        // fallback below
+      }
+    }
+    return trimmed
+      .split(/\r?\n|;/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return [];
+};
+
+const toNumber = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const normalized = value.replace(",", ".").trim();
+    const parsed = Number(normalized);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+};
+
+const sanitizeFilename = (name: string) =>
+  name
+    .replace(/[<>:"/\\|?*]/g, "-")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 120) || "relatorio";
+
+const escapeHtml = (value: unknown) =>
+  String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const parseJsonObject = (value: unknown): Record<string, unknown> | null => {
+  if (!value) return null;
+  if (typeof value === "object" && !Array.isArray(value)) return value as Record<string, unknown>;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
+const normalizeAiAnalysis = (metadata: Record<string, unknown>) => {
+  const directCandidates = [
+    metadata.ai_analysis,
+    metadata.aiAnalysis,
+    metadata.ai_enrichment,
+    metadata.aiEnrichment,
+    metadata.ia_analysis,
+    metadata.iaAnalysis,
+    metadata.ia_enriquecimento,
+    metadata.ai,
+  ];
+
+  for (const candidate of directCandidates) {
+    const parsed = parseJsonObject(candidate);
+    if (parsed) return parsed;
+  }
+
+  const nestedCandidates = [
+    parseJsonObject(metadata.analysis)?.ai,
+    parseJsonObject(metadata.enrichment)?.ai,
+    parseJsonObject(metadata.metadata)?.ai_analysis,
+  ];
+
+  for (const candidate of nestedCandidates) {
+    const parsed = parseJsonObject(candidate);
+    if (parsed) return parsed;
+  }
+
+  return {} as Record<string, unknown>;
+};
+
+const getCategoryIcon = (category: string) => {
+  switch (category) {
+    case "Análise de Projeto":
+      return <Target className="h-3.5 w-3.5" />;
+    case "Insight Estratégico":
+      return <Lightbulb className="h-3.5 w-3.5" />;
+    case "Performance":
+      return <BarChart3 className="h-3.5 w-3.5" />;
+    case "Benchmark Competitivo":
+      return <TrendingUp className="h-3.5 w-3.5" />;
+    case "Consolidado":
+      return <FileText className="h-3.5 w-3.5" />;
+    default:
+      return <FolderOpen className="h-3.5 w-3.5" />;
+  }
+};
+
+const getCategoryTone = (category: string) => {
+  switch (category) {
+    case "Análise de Projeto":
+      return "bg-primary/10 text-primary border-primary/20";
+    case "Insight Estratégico":
+      return "bg-amber-500/10 text-amber-600 border-amber-500/20";
+    case "Performance":
+      return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+    case "Benchmark Competitivo":
+      return "bg-blue-500/10 text-blue-600 border-blue-500/20";
+    case "Consolidado":
+      return "bg-violet-500/10 text-violet-600 border-violet-500/20";
+    default:
+      return "bg-muted text-muted-foreground border-border";
+  }
 };
 
 export default function Reports() {
@@ -124,6 +267,7 @@ export default function Reports() {
   const [sortBy, setSortBy] = useState("date_desc");
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   // Carregar relatórios do Supabase
   useEffect(() => {
     if (!userId) {
@@ -152,7 +296,7 @@ export default function Reports() {
     try {
       if (!options?.silent && !cached) setLoading(true);
       
-      // Buscar projetos com dados completos das anÃ¡lises
+      // Buscar projetos com dados completos das análises
       const { data: projects, error: projectsError } = await supabase
         .from("projects")
         .select(`
@@ -203,17 +347,116 @@ export default function Reports() {
 
       if (projectsError) throw projectsError;
 
-      // Transformar dados em relatÃ³rios
+      // Buscar relatórios já salvos na tabela reports (fonte oficial quando disponível)
+      let persistedReports: any[] = [];
+      const { data: reportsFromDb, error: reportsError } = await supabase
+        .from("reports")
+        .select(`
+          id,
+          project_id,
+          title,
+          type,
+          category,
+          format,
+          score,
+          is_favorite,
+          metadata,
+          campaign_name,
+          channel,
+          created_at
+        `)
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false }) as any;
+
+      if (reportsError) {
+        // Mantém compatibilidade com ambientes onde a tabela ainda não foi migrada.
+        console.warn("Tabela reports indisponível, usando fallback dinâmico:", reportsError.message);
+      } else {
+        persistedReports = reportsFromDb || [];
+      }
+
+      // Transformar dados em relatórios
       const transformedReports: Report[] = [];
 
       projects?.forEach((project: any) => {
-        // 1. RelatÃ³rio de AnÃ¡lise HeurÃ­stica + IA (se existir anÃ¡lise do projeto)
-        if (project.heuristic_analysis || project.ai_analysis) {
+        const insights = project.insights || [];
+        const channelScores = project.project_channel_scores || [];
+        const benchmarks = project.benchmarks || [];
+
+        const insightEvents = insights.map((insight: any) => ({
+          id: insight.id,
+          title: insight.title,
+          type: insight.type,
+          description: insight.description,
+          action: insight.action,
+          score: insight.metadata?.score ?? null,
+          created_at: insight.created_at,
+          metadata: insight.metadata || {},
+        }));
+
+        const channelEvents = channelScores.map((channelScore: any) => ({
+          id: channelScore.id,
+          channel: channelScore.channel,
+          score: channelScore.score,
+          created_at: channelScore.created_at,
+          metadata: channelScore.metadata || {},
+        }));
+
+        const benchmarkEvents = benchmarks.map((benchmark: any) => ({
+          id: benchmark.id,
+          competitor_name: benchmark.competitor_name,
+          competitor_url: benchmark.competitor_url,
+          competitor_niche: benchmark.competitor_niche,
+          overall_score: benchmark.overall_score,
+          value_proposition_score: benchmark.value_proposition_score,
+          offer_clarity_score: benchmark.offer_clarity_score,
+          user_journey_score: benchmark.user_journey_score,
+          strengths: benchmark.strengths,
+          weaknesses: benchmark.weaknesses,
+          opportunities: benchmark.opportunities,
+          threats: benchmark.threats,
+          strategic_insights: benchmark.strategic_insights,
+          recommendations: benchmark.recommendations,
+          created_at: benchmark.created_at,
+          metadata: benchmark.metadata || {},
+        }));
+
+        const timeline = [
+          ...insightEvents.map((event: any) => ({
+            source: "insight",
+            title: event.title || "Insight",
+            date: event.created_at,
+            details: event.description || event.action || "",
+          })),
+          ...channelEvents.map((event: any) => ({
+            source: "performance",
+            title: `Performance ${String(event.channel || "").toUpperCase()}`,
+            date: event.created_at,
+            details: `Score ${event.score ?? "-"}/100`,
+          })),
+          ...benchmarkEvents.map((event: any) => ({
+            source: "benchmark",
+            title: `Benchmark vs ${event.competitor_name || "Concorrente"}`,
+            date: event.created_at,
+            details: `Score ${event.overall_score ?? "-"}/100`,
+          })),
+        ]
+          .filter((event) => event.date)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+        // 1. Relatório de Análise Heurística + IA (se existir análise do projeto)
+        if (
+          project.heuristic_analysis ||
+          project.ai_analysis ||
+          insightEvents.length > 0 ||
+          channelEvents.length > 0 ||
+          benchmarkEvents.length > 0
+        ) {
           transformedReports.push({
             id: `analysis-${project.id}`,
-            title: `AnÃ¡lise Completa - ${project.name}`,
+            title: `Análise Completa - ${project.name}`,
             type: "project_analysis",
-            category: "AnÃ¡lise de Projeto",
+            category: "Análise de Projeto",
             projectName: project.name,
             projectId: project.id,
             date: project.created_at || new Date().toISOString(),
@@ -225,19 +468,22 @@ export default function Reports() {
               niche: project.niche,
               heuristic_analysis: project.heuristic_analysis,
               ai_analysis: project.ai_analysis,
-              project_score: project.score
+              project_score: project.score,
+              insight_events: insightEvents,
+              channel_events: channelEvents,
+              benchmark_events: benchmarkEvents,
+              event_timeline: timeline,
             },
           });
         }
 
-        // 2. RelatÃ³rios de Insights (se existirem insights individuais)
-        const insights = project.insights || [];
+        // 2. Relatórios de Insights (se existirem insights individuais)
         insights.forEach((insight: any) => {
           transformedReports.push({
             id: `insight-${insight.id}`,
             title: `Insight - ${insight.title}`,
             type: "project_analysis",
-            category: "Insight EstratÃ©gico",
+            category: "Insight Estratégico",
             projectName: project.name,
             projectId: project.id,
             date: insight.created_at,
@@ -253,8 +499,7 @@ export default function Reports() {
           });
         });
 
-        // 3. RelatÃ³rios de Performance por Canal
-        const channelScores = project.project_channel_scores || [];
+        // 3. Relatórios de Performance por Canal
         channelScores.forEach((channelScore: any) => {
           transformedReports.push({
             id: `channel-${channelScore.id}`,
@@ -273,8 +518,7 @@ export default function Reports() {
           });
         });
 
-        // 4. RelatÃ³rios de Benchmark
-        const benchmarks = project.benchmarks || [];
+        // 4. Relatórios de Benchmark
         benchmarks.forEach((benchmark: any) => {
           transformedReports.push({
             id: `benchmark-${benchmark.id}`,
@@ -306,11 +550,11 @@ export default function Reports() {
         });
       });
 
-      // 5. RelatÃ³rio Consolidado (se houver anÃ¡lises)
+      // 5. Relatório Consolidado (se houver análises)
       if (transformedReports.length > 0) {
         transformedReports.push({
           id: "consolidated",
-          title: `RelatÃ³rio Consolidado - ${new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}`,
+          title: `Relatório Consolidado - ${new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}`,
           type: "consolidated",
           category: "Consolidado",
           projectName: "Todos os Projetos",
@@ -327,18 +571,65 @@ export default function Reports() {
         });
       }
 
-      setReports(transformedReports);
-      reportsCache.set(userId, { reports: transformedReports, fetchedAt: Date.now() });
-      console.log('RelatÃ³rios carregados:', transformedReports.length);
+      const projectNameById = new Map(
+        (projects || []).map((project: any) => [project.id, project.name])
+      );
+
+      const normalizedPersistedReports: Report[] = persistedReports.map((report: any) => {
+        const projectId = report.project_id || report.metadata?.project_id || "unknown";
+        const projectName =
+          projectNameById.get(projectId) ||
+          report.metadata?.project_name ||
+          report.metadata?.projectName ||
+          "Projeto";
+
+        return {
+          id: `db-${report.id}`,
+          title: report.title || "Relatório",
+          type: report.type || "consolidated",
+          category: report.category || TYPE_CATEGORY_FALLBACK[report.type] || "Consolidado",
+          projectName,
+          projectId,
+          date: report.created_at || new Date().toISOString(),
+          isFavorite: Boolean(report.is_favorite),
+          format: report.format || "pdf",
+          score: toNumber(report.score) ?? 0,
+          metadata: report.metadata || {},
+          campaignName: report.campaign_name || undefined,
+          channel: report.channel || undefined,
+        };
+      });
+
+      const persistedSignature = new Set(
+        normalizedPersistedReports.map((report) => {
+          const title = report.title.trim().toLowerCase();
+          return `${report.type}|${report.projectId}|${title}`;
+        })
+      );
+
+      const generatedFallback = transformedReports.filter((report) => {
+        const title = report.title.trim().toLowerCase();
+        const signature = `${report.type}|${report.projectId}|${title}`;
+        return !persistedSignature.has(signature);
+      });
+
+      const finalReports =
+        normalizedPersistedReports.length > 0
+          ? [...normalizedPersistedReports, ...generatedFallback]
+          : transformedReports;
+
+      setReports(finalReports);
+      reportsCache.set(userId, { reports: finalReports, fetchedAt: Date.now() });
+      console.log("Relatórios carregados:", finalReports.length);
     } catch (error) {
-      console.error("Erro ao carregar relatÃ³rios:", error);
-      toast.error("Erro ao carregar relatÃ³rios");
+      console.error("Erro ao carregar relatórios:", error);
+      toast.error("Erro ao carregar relatórios");
     } finally {
       if (!options?.silent || !cached) setLoading(false);
     }
   };
 
-  // Agrupar relatÃ³rios por projeto
+  // Agrupar relatórios por projeto
   const reportsByProject = reports.reduce((acc, report) => {
     const projectId = report.projectId || "unknown";
     if (!acc[projectId]) {
@@ -352,7 +643,7 @@ export default function Reports() {
     return acc;
   }, {} as Record<string, ProjectReports>);
 
-  // Filtrar relatÃ³rios
+  // Filtrar relatórios
   const filteredProjects = Object.entries(reportsByProject)
     .map(([projectId, projectData]) => {
       const filteredReports = projectData.reports
@@ -393,142 +684,308 @@ export default function Reports() {
     })
     .filter((project) => project.reports.length > 0);
 
-  const handleDownload = async (report: Report) => {
+  const handleDownload = async (report: Report, format: "pdf" | "json" | "html" = "html") => {
     try {
-      toast.success("Preparando download...");
+      toast.success(`Preparando ${format.toUpperCase()}...`);
       
-      // Gerar HTML com dados completos das anÃ¡lises
+      // Gerar HTML com dados completos das análises
       let htmlContent = '';
       
       if (report.type === "project_analysis") {
-        const metadata = report.metadata || {};
-        const heuristic = metadata.heuristic_analysis || {};
-        const ai = metadata.ai_analysis || {};
+        const metadata = (report.metadata || {}) as Record<string, unknown>;
+        const heuristic = (metadata.heuristic_analysis || {}) as Record<string, unknown>;
+        const ai = normalizeAiAnalysis(metadata);
+        const insightEvents = Array.isArray(metadata.insight_events) ? metadata.insight_events : [];
+        const channelEvents = Array.isArray(metadata.channel_events) ? metadata.channel_events : [];
+        const benchmarkEvents = Array.isArray(metadata.benchmark_events) ? metadata.benchmark_events : [];
+        const timelineEvents = Array.isArray(metadata.event_timeline) ? metadata.event_timeline : [];
+        const aiExecutiveSummary = toText(
+          ai.executive_summary ?? ai.executiveSummary ?? ai.summary ?? ai.resumo_executivo ?? "",
+          ""
+        );
+        const aiStrengths = toStringArray(ai.strengths ?? ai.pontos_fortes ?? ai.strength_points);
+        const aiWeaknesses = toStringArray(ai.weaknesses ?? ai.pontos_fracos ?? ai.weak_points ?? ai.gaps);
+        const aiRecommendations = toStringArray(
+          ai.recommendations ?? ai.recomendacoes ?? ai.actions ?? ai.next_steps
+        );
+        const hasAiSection =
+          aiExecutiveSummary.length > 0 ||
+          aiStrengths.length > 0 ||
+          aiWeaknesses.length > 0 ||
+          aiRecommendations.length > 0 ||
+          Object.keys(ai).length > 0;
+        const heuristicScores = heuristic?.scores || {};
+        const scoreValue = (...values: unknown[]) => {
+          for (const value of values) {
+            const parsed = toNumber(value);
+            if (parsed !== null) return parsed;
+          }
+          return null;
+        };
+        const heuristicCards = [
+          {
+            label: "Proposta de Valor",
+            value: scoreValue(heuristicScores.valueProposition, heuristicScores.value_proposition),
+          },
+          {
+            label: "Clareza da Oferta",
+            value: scoreValue(heuristicScores.offerClarity, heuristicScores.offer_clarity),
+          },
+          {
+            label: "Jornada do Usuário",
+            value: scoreValue(heuristicScores.userJourney, heuristicScores.user_journey),
+          },
+          {
+            label: "SEO",
+            value: scoreValue(heuristicScores.seoReadiness, heuristicScores.seo_readiness, heuristicScores.seo),
+          },
+          {
+            label: "Conversão",
+            value: scoreValue(heuristicScores.conversionOptimization, heuristicScores.conversion_optimization),
+          },
+          {
+            label: "Conteúdo",
+            value: scoreValue(heuristicScores.contentQuality, heuristicScores.content_quality),
+          },
+        ].filter((item) => item.value !== null);
+        const legacyCards = [
+          { label: "Proposta de Valor", data: heuristic.proposta },
+          { label: "Clareza da Oferta", data: heuristic.clareza },
+          { label: "Jornada do Usuário", data: heuristic.jornada },
+          { label: "SEO", data: heuristic.seo },
+        ].filter((item) => item.data);
         
         htmlContent = `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>AnÃ¡lise de Projeto - ${report.projectName}</title>
+  <title>Análise de Projeto - ${report.projectName}</title>
   <style>
-    body{font-family:Arial,sans-serif;font-size:11px;line-height:1.4;color:#333;max-width:800px;margin:0 auto;padding:20px}
-    h1{font-size:20px;color:#1f2937;border-bottom:2px solid #e5e7eb;padding-bottom:8px;margin-bottom:16px}
-    h2{font-size:16px;color:#374151;margin-top:24px;margin-bottom:12px}
-    h3{font-size:14px;color:#4b5563;margin-top:20px;margin-bottom:8px}
-    .card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:12px;margin-bottom:12px}
-    .score{font-size:24px;font-weight:700;color:#059669}
-    .score-item{display:flex;justify-content:space-between;margin-bottom:4px}
-    .score-value{font-weight:600}
-    .badge{display:inline-block;padding:2px 6px;border-radius:3px;font-size:9px;text-transform:uppercase;font-weight:600;margin-right:4px}
+    :root{
+      --bg:#fcfcfd;
+      --card:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --primary:#ff5a1f;
+      --primary-soft:#fff1eb;
+      --success:#10b981;
+      --shadow:0 1px 3px rgba(17,24,39,0.08),0 1px 2px rgba(17,24,39,0.06);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#fff 0%,var(--bg) 100%);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--text);padding:28px}
+    .container{max-width:980px;margin:0 auto}
+    .hero{background:linear-gradient(135deg,var(--primary-soft) 0%,#fff 100%);border:1px solid #ffd9ca;border-radius:14px;padding:20px 22px;box-shadow:var(--shadow);margin-bottom:18px}
+    .hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .hero h1{margin:0;font-size:24px;line-height:1.2}
+    .hero p{margin:4px 0 0;color:var(--muted);font-size:12px}
+    .score-pill{background:var(--card);border:1px solid #ffd9ca;border-radius:999px;padding:8px 12px;font-weight:700;color:var(--primary);font-size:13px;white-space:nowrap}
+    .summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+    .summary-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+    .summary-card .k{font-size:11px;color:var(--muted);display:block}
+    .summary-card .v{font-size:13px;font-weight:600}
+    .section{margin-top:18px}
+    .section-title{font-size:15px;font-weight:700;margin:0 0 10px;padding-left:10px;border-left:4px solid var(--primary)}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow)}
+    .card h3{margin:0 0 8px;font-size:13px}
+    .score{font-size:30px;font-weight:800;color:var(--success)}
+    .score-item{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12px}
+    .score-value{font-weight:700}
+    .muted{color:var(--muted)}
+    ul{margin:8px 0 0 18px;padding:0}
+    li{margin:4px 0}
+    .badge{display:inline-block;padding:3px 8px;border-radius:999px;font-size:10px;text-transform:uppercase;font-weight:700;background:#f3f4f6;color:#374151}
     .badge-warning{background:#fef3c7;color:#92400e}
     .badge-opportunity{background:#dbeafe;color:#1e40af}
     .badge-improvement{background:#f3f4f6;color:#374151}
-    .footer{margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:9px;color:#6b7280;text-align:center}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .section{margin-bottom:20px}
-    .metadata{background:#f3f4f6;padding:8px;border-radius:4px;font-family:monospace;font-size:10px}
+    .event-list{display:grid;grid-template-columns:1fr;gap:8px}
+    .event p{margin:4px 0;font-size:12px}
+    .timeline{border-left:2px solid #fed7c8;padding-left:12px}
+    .timeline .event{position:relative}
+    .timeline .event:before{content:"";position:absolute;left:-18px;top:6px;width:8px;height:8px;border-radius:999px;background:var(--primary)}
+    .metadata{background:#f8fafc;border:1px solid #e2e8f0;padding:8px;border-radius:8px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;white-space:pre-wrap}
+    .footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);text-align:center}
+    @media (max-width: 760px){
+      .summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .grid{grid-template-columns:1fr}
+      body{padding:16px}
+    }
   </style>
 </head>
 <body>
-  <h1>AnÃ¡lise de Projeto</h1>
-  <div class="card">
-    <p><strong>Projeto:</strong> ${report.projectName}</p>
-    <p><strong>URL:</strong> ${metadata.url || 'N/A'}</p>
-    <p><strong>Nicho:</strong> ${metadata.niche || 'N/A'}</p>
-    <p><strong>Data:</strong> ${new Date(report.date).toLocaleDateString('pt-BR')}</p>
-    <p><strong>Score Geral:</strong> <span class="score">${report.score}/100</span></p>
+  <div class="container">
+  <div class="hero">
+    <div class="hero-top">
+      <div>
+        <h1>Análise de Projeto</h1>
+        <p>Relatório centralizado de desempenho e inteligência estratégica</p>
+      </div>
+      <div class="score-pill">Score Geral: ${report.score}/100</div>
+    </div>
+    <div class="summary">
+      <div class="summary-card">
+        <span class="k">Projeto</span>
+        <span class="v">${escapeHtml(report.projectName)}</span>
+      </div>
+      <div class="summary-card">
+        <span class="k">URL</span>
+        <span class="v">${escapeHtml(metadata.url || 'N/A')}</span>
+      </div>
+      <div class="summary-card">
+        <span class="k">Nicho</span>
+        <span class="v">${escapeHtml(metadata.niche || 'N/A')}</span>
+      </div>
+      <div class="summary-card">
+        <span class="k">Data</span>
+        <span class="v">${new Date(report.date).toLocaleDateString('pt-BR')}</span>
+      </div>
+    </div>
   </div>
 
-  ${Object.keys(heuristic).length > 0 ? `
+  ${(heuristicCards.length > 0 || legacyCards.length > 0) ? `
   <div class="section">
-    <h2>AnÃ¡lise HeurÃ­stica</h2>
+    <h2 class="section-title">Análise Heurística</h2>
     <div class="grid">
-      ${heuristic.proposta ? `
+      ${heuristicCards.map((card) => `
       <div class="card">
-        <h3>Proposta de Valor</h3>
+        <h3>${card.label}</h3>
         <div class="score-item">
           <span>Score:</span>
-          <span class="score-value">${heuristic.proposta.score || 0}/100</span>
+          <span class="score-value">${card.value ?? 0}/100</span>
         </div>
-        <p><strong>Veredito:</strong> ${heuristic.proposta.veredito || 'N/A'}</p>
-        <p><strong>Insights:</strong> ${heuristic.proposta.insights || 'N/A'}</p>
-      </div>` : ''}
-      
-      ${heuristic.clareza ? `
+      </div>`).join("")}
+
+      ${legacyCards.map((card) => `
       <div class="card">
-        <h3>Clareza da Oferta</h3>
+        <h3>${card.label}</h3>
         <div class="score-item">
           <span>Score:</span>
-          <span class="score-value">${heuristic.clareza.score || 0}/100</span>
+          <span class="score-value">${card.data?.score || 0}/100</span>
         </div>
-        <p><strong>Veredito:</strong> ${heuristic.clareza.veredito || 'N/A'}</p>
-        <p><strong>Insights:</strong> ${heuristic.clareza.insights || 'N/A'}</p>
-      </div>` : ''}
-      
-      ${heuristic.jornada ? `
-      <div class="card">
-        <h3>Jornada do UsuÃ¡rio</h3>
-        <div class="score-item">
-          <span>Score:</span>
-          <span class="score-value">${heuristic.jornada.score || 0}/100</span>
-        </div>
-        <p><strong>Veredito:</strong> ${heuristic.jornada.veredito || 'N/A'}</p>
-        <p><strong>Insights:</strong> ${heuristic.jornada.insights || 'N/A'}</p>
-      </div>` : ''}
-      
-      ${heuristic.seo ? `
-      <div class="card">
-        <h3>OtimizaÃ§Ã£o SEO</h3>
-        <div class="score-item">
-          <span>Score:</span>
-          <span class="score-value">${heuristic.seo.score || 0}/100</span>
-        </div>
-        <p><strong>Veredito:</strong> ${heuristic.seo.veredito || 'N/A'}</p>
-        <p><strong>Insights:</strong> ${heuristic.seo.insights || 'N/A'}</p>
-      </div>` : ''}
+        <p><strong>Veredito:</strong> ${escapeHtml(toText(card.data?.veredito))}</p>
+        <p><strong>Insights:</strong> ${escapeHtml(toText(card.data?.insights))}</p>
+      </div>`).join("")}
     </div>
   </div>` : ''}
 
-  ${ai.executive_summary ? `
+  ${(heuristicCards.length === 0 && legacyCards.length === 0 && Object.keys(heuristic).length > 0) ? `
   <div class="section">
-    <h2>AnÃ¡lise por IA</h2>
+    <h2 class="section-title">Análise Heurística</h2>
+    <div class="card">
+      <p class="muted">Dados heurísticos detectados, porém em formato não padronizado para visualização resumida.</p>
+      <div class="metadata">${JSON.stringify(heuristic, null, 2)}</div>
+    </div>
+  </div>` : ''}
+
+  ${hasAiSection ? `
+  <div class="section">
+    <h2 class="section-title">Análise por IA</h2>
+    ${aiExecutiveSummary ? `
     <div class="card">
       <h3>Resumo Executivo</h3>
-      <p>${ai.executive_summary}</p>
-    </div>
+      <p>${escapeHtml(aiExecutiveSummary)}</p>
+    </div>` : ""}
     
-    ${ai.strengths && ai.strengths.length > 0 ? `
+    ${aiStrengths.length > 0 ? `
     <div class="card">
       <h3>Pontos Fortes</h3>
-      <ul>${ai.strengths.map((s: string) => `<li>${s}</li>`).join('')}</ul>
+      <ul>${aiStrengths.map((s) => `<li>${escapeHtml(toText(s))}</li>`).join('')}</ul>
     </div>` : ''}
     
-    ${ai.weaknesses && ai.weaknesses.length > 0 ? `
+    ${aiWeaknesses.length > 0 ? `
     <div class="card">
       <h3>Pontos a Melhorar</h3>
-      <ul>${ai.weaknesses.map((w: string) => `<li>${w}</li>`).join('')}</ul>
+      <ul>${aiWeaknesses.map((w) => `<li>${escapeHtml(toText(w))}</li>`).join('')}</ul>
     </div>` : ''}
     
-    ${ai.recommendations ? `
+    ${aiRecommendations.length > 0 ? `
     <div class="card">
-      <h3>RecomendaÃ§Ãµes EstratÃ©gicas</h3>
-      <p>${ai.recommendations}</p>
+      <h3>Recomendações Estratégicas</h3>
+      <ul>${aiRecommendations.map((item) => `<li>${escapeHtml(toText(item))}</li>`).join("")}</ul>
     </div>` : ''}
+
+    ${aiExecutiveSummary.length === 0 && aiStrengths.length === 0 && aiWeaknesses.length === 0 && aiRecommendations.length === 0 && Object.keys(ai).length > 0 ? `
+    <div class="card">
+      <h3>Dados de IA</h3>
+      <div class="metadata">${escapeHtml(JSON.stringify(ai, null, 2))}</div>
+    </div>` : ""}
   </div>` : ''}
 
-  ${report.category === "Insight EstratÃ©gico" ? `
+  ${insightEvents.length > 0 ? `
   <div class="section">
-    <h2>Insight EstratÃ©gico</h2>
+    <h2 class="section-title">Eventos de Insights (${insightEvents.length})</h2>
+    <div class="event-list">
+    ${insightEvents.map((event: any) => `
+      <div class="card event">
+        <p><strong>Título:</strong> ${escapeHtml(toText(event.title))}</p>
+        <p><strong>Tipo:</strong> ${escapeHtml(toText(event.type, "improvement"))}</p>
+        <p><strong>Data:</strong> ${event.created_at ? new Date(event.created_at).toLocaleDateString('pt-BR') : 'N/A'}</p>
+        <p><strong>Descrição:</strong> ${escapeHtml(toText(event.description))}</p>
+        <p><strong>Ação:</strong> ${escapeHtml(toText(event.action))}</p>
+      </div>
+    `).join("")}
+    </div>
+  </div>` : ''}
+
+  ${channelEvents.length > 0 ? `
+  <div class="section">
+    <h2 class="section-title">Eventos de Performance (${channelEvents.length})</h2>
+    <div class="grid">
+    ${channelEvents.map((event: any) => `
+      <div class="card event">
+        <p><strong>Canal:</strong> ${escapeHtml(toText(event.channel)).toUpperCase()}</p>
+        <p><strong>Score:</strong> ${toNumber(event.score) ?? 0}/100</p>
+        <p><strong>Data:</strong> ${event.created_at ? new Date(event.created_at).toLocaleDateString('pt-BR') : 'N/A'}</p>
+      </div>
+    `).join("")}
+    </div>
+  </div>` : ''}
+
+  ${benchmarkEvents.length > 0 ? `
+  <div class="section">
+    <h2 class="section-title">Eventos de Benchmark (${benchmarkEvents.length})</h2>
+    <div class="grid">
+    ${benchmarkEvents.map((event: any) => `
+      <div class="card event">
+        <p><strong>Concorrente:</strong> ${escapeHtml(toText(event.competitor_name))}</p>
+        <p><strong>URL:</strong> ${escapeHtml(toText(event.competitor_url))}</p>
+        <p><strong>Score:</strong> ${toNumber(event.overall_score) ?? 0}/100</p>
+        <p><strong>Data:</strong> ${event.created_at ? new Date(event.created_at).toLocaleDateString('pt-BR') : 'N/A'}</p>
+      </div>
+    `).join("")}
+    </div>
+  </div>` : ''}
+
+  ${timelineEvents.length > 0 ? `
+  <div class="section">
+    <h2 class="section-title">Linha do Tempo Consolidada (${timelineEvents.length})</h2>
+    <div class="timeline">
+    ${timelineEvents.map((event: any) => `
+      <div class="card event">
+        <p><strong>Origem:</strong> ${escapeHtml(toText(event.source))}</p>
+        <p><strong>Evento:</strong> ${escapeHtml(toText(event.title))}</p>
+        <p><strong>Data:</strong> ${event.date ? new Date(event.date).toLocaleDateString('pt-BR') : 'N/A'}</p>
+        <p><strong>Detalhes:</strong> ${escapeHtml(toText(event.details))}</p>
+      </div>
+    `).join("")}
+    </div>
+  </div>` : ''}
+
+  ${report.category === "Insight Estratégico" ? `
+  <div class="section">
+    <h2 class="section-title">Insight Estratégico</h2>
     <div class="card">
-      <span class="badge badge-${metadata.type}">${metadata.type}</span>
-      <h3>${report.title.replace('Insight - ', '')}</h3>
-      <p><strong>DescriÃ§Ã£o:</strong> ${metadata.description || 'N/A'}</p>
-      <p><strong>AÃ§Ã£o Recomendada:</strong> ${metadata.action || 'N/A'}</p>
+      <span class="badge badge-${toText(metadata.type, "improvement")}">${escapeHtml(toText(metadata.type, "improvement"))}</span>
+      <h3>${escapeHtml(report.title.replace('Insight - ', ''))}</h3>
+      <p><strong>Descrição:</strong> ${escapeHtml(toText(metadata.description))}</p>
+      <p><strong>Ação Recomendada:</strong> ${escapeHtml(toText(metadata.action))}</p>
     </div>
   </div>` : ''}
 
   <div class="footer">Intentia Strategy Hub &bull; ${new Date().toLocaleDateString('pt-BR')}</div>
+  </div>
 </body>
 </html>`;
       } else if (report.type === "campaign_analysis") {
@@ -551,7 +1008,7 @@ export default function Reports() {
   </style>
 </head>
 <body>
-  <h1>AnÃ¡lise de Performance</h1>
+  <h1>Análise de Performance</h1>
   <div class="card">
     <p><strong>Campanha:</strong> ${report.campaignName}</p>
     <p><strong>Canal:</strong> ${report.channel}</p>
@@ -562,13 +1019,13 @@ export default function Reports() {
 
   ${report.metadata && Object.keys(report.metadata).length > 0 ? `
   <div class="card">
-    <h2>MÃ©tricas Detalhadas</h2>
+    <h2>Métricas Detalhadas</h2>
     <div class="metadata">${JSON.stringify(report.metadata, null, 2)}</div>
   </div>` : ''}
 
   <div class="card">
     <h2>Insights de Performance</h2>
-    <p>AnÃ¡lise de performance gerada pela plataforma com base nos dados do canal ${report.channel}.</p>
+    <p>Análise de performance gerada pela plataforma com base nos dados do canal ${report.channel}.</p>
     <p>Score de ${report.score}/100 indica ${report.score >= 80 ? 'performance excelente' : report.score >= 60 ? 'performance boa' : 'performance precisa melhorar'}.</p>
   </div>
 
@@ -577,6 +1034,8 @@ export default function Reports() {
 </html>`;
       } else if (report.type === "benchmark") {
         const metadata = report.metadata || {};
+        const benchmarkStrengths = toStringArray(metadata.strengths);
+        const benchmarkWeaknesses = toStringArray(metadata.weaknesses);
         
         htmlContent = `
 <!DOCTYPE html>
@@ -630,27 +1089,27 @@ export default function Reports() {
     </div>
   </div>
 
-  ${metadata.strengths && metadata.strengths.length > 0 ? `
+  ${benchmarkStrengths.length > 0 ? `
   <div class="card">
     <h3>Pontos Fortes do Concorrente</h3>
-    <ul>${metadata.strengths.map((s: string) => `<li>${s}</li>`).join('')}</ul>
+    <ul>${benchmarkStrengths.map((s) => `<li>${toText(s)}</li>`).join('')}</ul>
   </div>` : ''}
 
-  ${metadata.weaknesses && metadata.weaknesses.length > 0 ? `
+  ${benchmarkWeaknesses.length > 0 ? `
   <div class="card">
     <h3>Pontos Fracos do Concorrente</h3>
-    <ul>${metadata.weaknesses.map((w: string) => `<li>${w}</li>`).join('')}</ul>
+    <ul>${benchmarkWeaknesses.map((w) => `<li>${toText(w)}</li>`).join('')}</ul>
   </div>` : ''}
 
   ${metadata.strategic_insights ? `
   <div class="card">
-    <h3>Insights EstratÃ©gicos</h3>
+    <h3>Insights Estratégicos</h3>
     <p>${metadata.strategic_insights}</p>
   </div>` : ''}
 
   ${metadata.recommendations ? `
   <div class="card">
-    <h3>RecomendaÃ§Ãµes</h3>
+    <h3>Recomendações</h3>
     <p>${metadata.recommendations}</p>
   </div>` : ''}
 
@@ -658,7 +1117,7 @@ export default function Reports() {
 </body>
 </html>`;
       } else {
-        // GenÃ©rico para outros tipos
+        // Genérico para outros tipos
         htmlContent = `
 <!DOCTYPE html>
 <html>
@@ -695,31 +1154,72 @@ export default function Reports() {
 </html>`;
       }
 
-      // Fazer download do HTML
-      const blob = new Blob([htmlContent], { type: 'text/html' });
+      if (format === "json") {
+        const jsonBlob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+        const jsonUrl = window.URL.createObjectURL(jsonBlob);
+        const jsonLink = document.createElement("a");
+        jsonLink.href = jsonUrl;
+        jsonLink.download = `${sanitizeFilename(report.title)}.json`;
+        document.body.appendChild(jsonLink);
+        jsonLink.click();
+        document.body.removeChild(jsonLink);
+        window.URL.revokeObjectURL(jsonUrl);
+        toast.success("Download JSON concluído!");
+        return;
+      }
+
+      if (format === "pdf") {
+        const printFrame = document.createElement("iframe");
+        printFrame.style.position = "fixed";
+        printFrame.style.right = "0";
+        printFrame.style.bottom = "0";
+        printFrame.style.width = "0";
+        printFrame.style.height = "0";
+        printFrame.style.border = "0";
+        document.body.appendChild(printFrame);
+
+        const frameDoc = printFrame.contentDocument || printFrame.contentWindow?.document;
+        if (!frameDoc) throw new Error("Não foi possível preparar impressão.");
+        frameDoc.open();
+        frameDoc.write(htmlContent);
+        frameDoc.close();
+
+        setTimeout(() => {
+          printFrame.contentWindow?.focus();
+          printFrame.contentWindow?.print();
+          setTimeout(() => {
+            document.body.removeChild(printFrame);
+          }, 1200);
+        }, 250);
+
+        toast.success("Visualização pronta. Salve como PDF na janela de impressão.");
+        return;
+      }
+
+      const blob = new Blob([htmlContent], { type: "text/html" });
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `${report.title.replace(/\s+/g, '-')}.html`;
+      a.download = `${sanitizeFilename(report.title)}.html`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-      
-      toast.success("Download concluÃ­do!");
-    } catch (error) {
+      toast.success("Download HTML concluído!");
+    } catch (error: unknown) {
       console.error("Erro ao fazer download:", error);
-      toast.error("Erro ao fazer download");
+      const message = error instanceof Error ? error.message : "Falha ao gerar arquivo";
+      toast.error(`Erro ao fazer download: ${message}`);
     }
   };
 
   const handleToggleFavorite = async (reportId: string) => {
     try {
-      // Encontrar o relatÃ³rio atual
+      // Encontrar o relatório atual
       const currentReport = reports.find(r => r.id === reportId);
       if (!currentReport) {
-        console.error('RelatÃ³rio nÃ£o encontrado:', reportId);
-        toast.error("RelatÃ³rio nÃ£o encontrado");
+        console.error('Relatório não encontrado:', reportId);
+        toast.error("Relatório não encontrado");
         return;
       }
 
@@ -742,8 +1242,37 @@ export default function Reports() {
   const toggleProject = (projectId: string) => {
     setExpandedProjects((prev) => {
       const next = new Set(prev);
-      if (next.has(projectId)) next.delete(projectId);
-      else next.add(projectId);
+      if (next.has(projectId)) {
+        next.delete(projectId);
+      } else {
+        next.add(projectId);
+      }
+      return next;
+    });
+  };
+
+  const toggleCategory = (projectId: string, category: string) => {
+    const key = `${projectId}:${category}`;
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const setProjectCategoriesExpanded = (
+    projectId: string,
+    categories: string[],
+    expanded: boolean
+  ) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      categories.forEach((category) => {
+        const key = `${projectId}:${category}`;
+        if (expanded) next.add(key);
+        else next.delete(key);
+      });
       return next;
     });
   };
@@ -761,9 +1290,9 @@ export default function Reports() {
   if (loading) {
     return (
       <>
-        <SEO title="RelatÃ³rios" description="Central de relatÃ³rios e anÃ¡lises" />
+        <SEO title="Relatórios" description="Central de relatórios e análises" />
         <DashboardLayout>
-          <FeatureGate featureKey="reports" withLayout={false} pageTitle="RelatÃ³rios">
+          <FeatureGate featureKey="reports" withLayout={false} pageTitle="Relatórios">
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[1, 2, 3, 4].map((i) => (
@@ -791,21 +1320,21 @@ export default function Reports() {
 
   return (
     <>
-      <SEO title="RelatÃ³rios" description="Central de relatÃ³rios e anÃ¡lises" />
+      <SEO title="Relatórios" description="Central de relatórios e análises" />
       <DashboardLayout>
-        <FeatureGate featureKey="reports" withLayout={false} pageTitle="RelatÃ³rios">
+        <FeatureGate featureKey="reports" withLayout={false} pageTitle="Relatórios">
           <div className="space-y-6">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">RelatÃ³rios</h1>
+                <h1 className="text-2xl font-bold text-foreground">Relatórios</h1>
                 <p className="text-muted-foreground">
-                  Central de relatÃ³rios e anÃ¡lises geradas pela plataforma
+                  Central de relatórios e análises geradas pela plataforma
                 </p>
               </div>
               <Button className="gap-2" onClick={loadReports}>
                 <Download className="h-4 w-4" />
-                Gerar RelatÃ³rio Consolidado
+                Gerar Relatório Consolidado
               </Button>
             </div>
 
@@ -813,12 +1342,12 @@ export default function Reports() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total de RelatÃ³rios</CardTitle>
+                  <CardTitle className="text-sm font-medium">Total de Relatórios</CardTitle>
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{reports.length}</div>
-                  <p className="text-xs text-muted-foreground">Gerados este mÃªs</p>
+                  <p className="text-xs text-muted-foreground">Gerados este mês</p>
                 </CardContent>
               </Card>
               <Card>
@@ -830,24 +1359,24 @@ export default function Reports() {
                   <div className="text-2xl font-bold">
                     {reports.filter(r => r.isFavorite).length}
                   </div>
-                  <p className="text-xs text-muted-foreground">RelatÃ³rios marcados</p>
+                  <p className="text-xs text-muted-foreground">Relatórios marcados</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">AnÃ¡lises de IA</CardTitle>
+                  <CardTitle className="text-sm font-medium">Análises de IA</CardTitle>
                   <Lightbulb className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
                     {reports.filter(r => r.type === "project_analysis" || r.type === "campaign_analysis").length}
                   </div>
-                  <p className="text-xs text-muted-foreground">Com inteligÃªncia artificial</p>
+                  <p className="text-xs text-muted-foreground">Com inteligência artificial</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Score MÃ©dio</CardTitle>
+                  <CardTitle className="text-sm font-medium">Score Médio</CardTitle>
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -867,7 +1396,7 @@ export default function Reports() {
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
-                        placeholder="Buscar relatÃ³rios..."
+                        placeholder="Buscar relatórios..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="pl-10"
@@ -931,9 +1460,9 @@ export default function Reports() {
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-12">
                     <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Nenhum relatÃ³rio encontrado</h3>
+                    <h3 className="text-lg font-semibold mb-2">Nenhum relatório encontrado</h3>
                     <p className="text-muted-foreground text-center">
-                      Tente ajustar os filtros ou criar novas anÃ¡lises para gerar relatÃ³rios.
+                      Tente ajustar os filtros ou criar novas análises para gerar relatórios.
                     </p>
                   </CardContent>
                 </Card>
@@ -943,6 +1472,25 @@ export default function Reports() {
                   const reportCount = project.reports.length;
                   const favoriteCount = project.reports.filter(r => r.isFavorite).length;
                   const avgScore = Math.round(project.reports.reduce((acc, r) => acc + r.score, 0) / reportCount);
+                  const categoryPriority: Record<string, number> = {
+                    "Análise de Projeto": 1,
+                    "Insight Estratégico": 2,
+                    "Performance": 3,
+                    "Benchmark Competitivo": 4,
+                    "Consolidado": 5,
+                  };
+                  const reportsByCategory = project.reports.reduce((acc, report) => {
+                    const key = report.category || "Outros";
+                    if (!acc[key]) acc[key] = [];
+                    acc[key].push(report);
+                    return acc;
+                  }, {} as Record<string, Report[]>);
+                  const sortedCategoryEntries = Object.entries(reportsByCategory).sort((a, b) => {
+                    const aOrder = categoryPriority[a[0]] ?? 999;
+                    const bOrder = categoryPriority[b[0]] ?? 999;
+                    if (aOrder !== bOrder) return aOrder - bOrder;
+                    return a[0].localeCompare(b[0]);
+                  });
 
                   return (
                     <div key={project.projectId} className="space-y-3">
@@ -958,9 +1506,9 @@ export default function Reports() {
                               <div>
                                 <h3 className="font-semibold text-sm sm:text-base">{project.projectName}</h3>
                                 <p className="text-xs text-muted-foreground">
-                                  {reportCount} relatÃ³rio{reportCount !== 1 ? "s" : ""}
-                                  {favoriteCount > 0 && ` Â· ${favoriteCount} favorito${favoriteCount !== 1 ? "s" : ""}`}
-                                  <span className="text-xs text-muted-foreground"> Â· Score mÃ©dio: {avgScore}/100</span>
+                                  {reportCount} relatório{reportCount !== 1 ? "s" : ""}
+                                  {favoriteCount > 0 && ` · ${favoriteCount} favorito${favoriteCount !== 1 ? "s" : ""}`}
+                                  <span className="text-xs text-muted-foreground"> · Score médio: {avgScore}/100</span>
                                 </p>
                               </div>
                             </div>
@@ -972,72 +1520,151 @@ export default function Reports() {
                       {/* Reports for this Project */}
                       {isExpanded && (
                         <div className="space-y-2 pl-8">
-                          {project.reports.map((report) => (
-                            <Card key={report.id} className="hover:shadow-md transition-shadow">
-                              <CardContent className="p-4">
-                                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                                  <div className="flex-1 space-y-2">
-                                    <div className="flex items-start gap-3">
-                                      <div className={`p-2 rounded-lg border ${getTypeColor(report.type)}`}>
-                                        {getTypeIcon(report.type)}
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <h4 className="font-semibold text-foreground leading-tight">
-                                          {report.title}
-                                        </h4>
-                                        <div className="flex flex-wrap items-center gap-2 mt-1">
-                                          <Badge variant="secondary" className="text-xs">
-                                            {report.category}
-                                          </Badge>
-                                          {report.campaignName && (
-                                            <Badge variant="outline" className="text-xs">
-                                              <Megaphone className="h-3 w-3 mr-1" />
-                                              {report.campaignName}
-                                            </Badge>
-                                          )}
-                                          <Badge variant="outline" className="text-xs">
-                                            <Calendar className="h-3 w-3 mr-1" />
-                                            {formatDate(report.date)}
-                                          </Badge>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              onClick={() =>
+                                setProjectCategoriesExpanded(
+                                  project.projectId,
+                                  sortedCategoryEntries.map(([category]) => category),
+                                  false
+                                )
+                              }
+                            >
+                              Colapsar todas
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              onClick={() =>
+                                setProjectCategoriesExpanded(
+                                  project.projectId,
+                                  sortedCategoryEntries.map(([category]) => category),
+                                  true
+                                )
+                              }
+                            >
+                              Expandir todas
+                            </Button>
+                          </div>
+                          {sortedCategoryEntries.map(([category, categoryReports]) => (
+                            <div key={category} className="space-y-2">
+                              {(() => {
+                                const categoryKey = `${project.projectId}:${category}`;
+                                const isCategoryExpanded = expandedCategories.has(categoryKey);
+                                return (
+                                  <>
+                                    <button
+                                      onClick={() => toggleCategory(project.projectId, category)}
+                                      className="w-full flex items-center justify-between rounded-lg border border-border/70 bg-muted/20 px-3 py-2 hover:bg-muted/30 transition-colors"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <div className={`h-7 w-7 rounded-md border flex items-center justify-center ${getCategoryTone(category)}`}>
+                                          {getCategoryIcon(category)}
                                         </div>
+                                        <p className="text-xs font-semibold text-foreground">{category}</p>
                                       </div>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <div className="text-right">
-                                      <div className={`text-2xl font-bold ${getScoreColor(report.score)}`}>
-                                        {report.score}
+                                      <div className="flex items-center gap-2">
+                                        <Badge variant="outline" className="text-[10px]">
+                                          {categoryReports.length} relatório{categoryReports.length !== 1 ? "s" : ""}
+                                        </Badge>
+                                        {isCategoryExpanded ? (
+                                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                        ) : (
+                                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                        )}
                                       </div>
-                                      <p className="text-xs text-muted-foreground">Score</p>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleToggleFavorite(report.id)}
-                                        className="p-2"
-                                      >
-                                        <Star
-                                          className={`h-4 w-4 ${
-                                            report.isFavorite
-                                              ? "fill-yellow-400 text-yellow-400"
-                                              : "text-muted-foreground"
-                                          }`}
-                                        />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleDownload(report)}
-                                        className="p-2"
-                                      >
-                                        <Download className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
+                                    </button>
+
+                                    {isCategoryExpanded && categoryReports.map((report) => (
+                                      <Card key={report.id} className="hover:shadow-md transition-shadow">
+                                        <CardContent className="p-4">
+                                          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                            <div className="flex-1 space-y-2">
+                                              <div className="flex items-start gap-3">
+                                                <div
+                                                  className={`h-9 w-9 rounded-lg border flex items-center justify-center shrink-0 ${getTypeContainerClass(report.type)}`}
+                                                >
+                                                  {getTypeIcon(report.type)}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                  <h4 className="font-semibold text-foreground leading-tight">
+                                                    {report.title}
+                                                  </h4>
+                                                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                                                    {report.campaignName && (
+                                                      <Badge variant="outline" className="text-xs">
+                                                        <Megaphone className="h-3 w-3 mr-1" />
+                                                        {report.campaignName}
+                                                      </Badge>
+                                                    )}
+                                                    <Badge variant="outline" className="text-xs">
+                                                      <Calendar className="h-3 w-3 mr-1" />
+                                                      {formatDate(report.date)}
+                                                    </Badge>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                              <div className="text-right">
+                                                <div className={`text-2xl font-bold ${getScoreColor(report.score)}`}>
+                                                  {report.score}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">Score</p>
+                                              </div>
+                                              <div className="flex items-center gap-1.5">
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  onClick={() => handleToggleFavorite(report.id)}
+                                                  className="p-2"
+                                                >
+                                                  <Star
+                                                    className={`h-4 w-4 ${
+                                                      report.isFavorite
+                                                        ? "fill-yellow-400 text-yellow-400"
+                                                        : "text-muted-foreground"
+                                                    }`}
+                                                  />
+                                                </Button>
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => handleDownload(report, "pdf")}
+                                                  className="h-8 px-2 text-[10px]"
+                                                >
+                                                  PDF
+                                                </Button>
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => handleDownload(report, "json")}
+                                                  className="h-8 px-2 text-[10px]"
+                                                >
+                                                  JSON
+                                                </Button>
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => handleDownload(report, "html")}
+                                                  className="h-8 px-2 text-[10px]"
+                                                >
+                                                  HTML
+                                                </Button>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </CardContent>
+                                      </Card>
+                                    ))}
+                                  </>
+                                );
+                              })()}
+                            </div>
                           ))}
                         </div>
                       )}
@@ -1052,6 +1679,7 @@ export default function Reports() {
     </>
   );
 }
+
 
 
 
