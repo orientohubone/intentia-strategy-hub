@@ -105,8 +105,17 @@ type ProjectGroup = {
   hasAiEnrichment: boolean;
 };
 
+type InsightsCacheState = {
+  insights: Insight[];
+  fetchedAt: number;
+};
+
+const CACHE_TTL_MS = 2 * 60 * 1000;
+const insightsCache = new Map<string, InsightsCacheState>();
+
 export default function Insights() {
   const { user } = useAuth();
+  const userId = user?.id;
   const { isFeatureAvailable } = useFeatureFlags();
   const canAiEnrichment = isFeatureAvailable("ai_insights_enrichment");
   const [insights, setInsights] = useState<Insight[]>([]);
@@ -118,33 +127,52 @@ export default function Insights() {
   const [fullscreen, setFullscreen] = useState(false);
 
   useEffect(() => {
-    if (user) fetchInsights();
-  }, [user]);
+    if (!userId) {
+      setInsights([]);
+      setLoading(false);
+      return;
+    }
 
-  const fetchInsights = async () => {
-    if (!user) return;
+    const cached = insightsCache.get(userId);
+    if (cached) {
+      setInsights(cached.insights);
+      setLoading(false);
+      if (Date.now() - cached.fetchedAt >= CACHE_TTL_MS) {
+        void fetchInsights({ silent: true });
+      }
+      return;
+    }
+
+    void fetchInsights();
+  }, [userId]);
+
+  const fetchInsights = async (options?: { silent?: boolean }) => {
+    if (!userId) return;
+    const cached = insightsCache.get(userId);
     try {
-      setLoading(true);
+      if (!options?.silent && !cached) setLoading(true);
       const { data } = await (supabase as any)
         .from("insights")
         .select(`
           *,
           projects!inner(name, niche, url)
         `)
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
-      setInsights((data || []).map((item: any) => ({
+      const mapped = (data || []).map((item: any) => ({
         ...item,
         project_name: item.projects?.name,
         project_niche: item.projects?.niche,
         project_url: item.projects?.url,
-      })));
+      }));
+      setInsights(mapped);
+      insightsCache.set(userId, { insights: mapped, fetchedAt: Date.now() });
     } catch (error) {
       console.error("Erro ao buscar insights:", error);
       toast.error("Erro ao carregar insights");
     } finally {
-      setLoading(false);
+      if (!options?.silent || !cached) setLoading(false);
     }
   };
 

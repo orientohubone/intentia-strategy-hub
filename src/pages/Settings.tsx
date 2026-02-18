@@ -133,9 +133,21 @@ const PLAN_FEATURES: Record<string, { label: string; price: string; features: Pl
   },
 };
 
+const SETTINGS_CACHE_TTL = 1000 * 60 * 2;
+type SettingsPageCache = {
+  tenantSettings: any | null;
+  companyName: string;
+  apiKeys: Record<ApiKeyProvider, ApiKeyEntry>;
+  backups: any[];
+  usageStats: Record<string, number>;
+  timestamp: number;
+};
+const settingsPageCache = new Map<string, SettingsPageCache>();
+
 export default function Settings() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const userId = user?.id;
   const { isFeatureAvailable } = useFeatureFlags();
   const canAiKeys = isFeatureAvailable("ai_api_keys");
   const [loading, setLoading] = useState(false);
@@ -197,31 +209,47 @@ export default function Settings() {
 
   // Sync formData when user object becomes available or changes
   useEffect(() => {
-    if (user) {
+    if (!userId || !user) return;
+
+    setFormData(prev => ({
+      ...prev,
+      email: user.email || prev.email,
+      fullName: (user.user_metadata?.full_name as string) || prev.fullName,
+      bio: (user.user_metadata?.bio as string) || prev.bio,
+      avatarUrl: (user.user_metadata?.avatar_url as string) || prev.avatarUrl,
+      language: (user.user_metadata?.language as string) || prev.language,
+      timezone: (user.user_metadata?.timezone as string) || prev.timezone,
+    }));
+
+    const cached = settingsPageCache.get(userId);
+    const isFreshCache = !!cached && Date.now() - cached.timestamp < SETTINGS_CACHE_TTL;
+
+    if (isFreshCache) {
+      setTenantSettings(cached.tenantSettings);
+      setApiKeys(cached.apiKeys);
+      setBackups(cached.backups);
+      setUsageStats(cached.usageStats);
       setFormData(prev => ({
         ...prev,
-        email: user.email || prev.email,
-        fullName: (user.user_metadata?.full_name as string) || prev.fullName,
-        bio: (user.user_metadata?.bio as string) || prev.bio,
-        avatarUrl: (user.user_metadata?.avatar_url as string) || prev.avatarUrl,
-        language: (user.user_metadata?.language as string) || prev.language,
-        timezone: (user.user_metadata?.timezone as string) || prev.timezone,
+        companyName: cached.companyName || prev.companyName,
       }));
-      loadTenantSettings();
-      loadApiKeys();
-      loadBackups();
-      loadUsageStats();
+      setTenantLoading(false);
     }
-  }, [user]);
 
-  const loadTenantSettings = async () => {
-    if (!user) return;
+    loadTenantSettings({ silent: isFreshCache });
+    loadApiKeys();
+    loadBackups();
+    loadUsageStats();
+  }, [userId, user]);
+
+  const loadTenantSettings = async ({ silent = false }: { silent?: boolean } = {}) => {
+    if (!userId) return;
     try {
-      setTenantLoading(true);
+      if (!silent) setTenantLoading(true);
       const { data: tenant } = await supabase
         .from("tenant_settings")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .single();
       
       if (tenant) {
@@ -230,6 +258,15 @@ export default function Settings() {
           ...prev,
           companyName: tenant.company_name || "",
         }));
+        const prevCache = settingsPageCache.get(userId);
+        settingsPageCache.set(userId, {
+          tenantSettings: tenant,
+          companyName: tenant.company_name || "",
+          apiKeys: prevCache?.apiKeys || apiKeys,
+          backups: prevCache?.backups || backups,
+          usageStats: prevCache?.usageStats || usageStats,
+          timestamp: Date.now(),
+        });
       }
     } catch (error) {
       console.error("Error loading tenant settings:", error);
@@ -239,27 +276,37 @@ export default function Settings() {
   };
 
   const loadUsageStats = async () => {
-    if (!user) return;
+    if (!userId) return;
     try {
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
       const [projects, audiences, benchmarks, campaigns, tacticalPlans, exports] = await Promise.all([
-        (supabase as any).from("projects").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-        (supabase as any).from("audiences").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-        (supabase as any).from("benchmarks").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("created_at", monthStart),
-        (supabase as any).from("campaigns").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("created_at", monthStart),
-        (supabase as any).from("tactical_plans").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("created_at", monthStart),
-        (supabase as any).from("user_backups").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("created_at", monthStart),
+        (supabase as any).from("projects").select("id", { count: "exact", head: true }).eq("user_id", userId),
+        (supabase as any).from("audiences").select("id", { count: "exact", head: true }).eq("user_id", userId),
+        (supabase as any).from("benchmarks").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", monthStart),
+        (supabase as any).from("campaigns").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", monthStart),
+        (supabase as any).from("tactical_plans").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", monthStart),
+        (supabase as any).from("user_backups").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", monthStart),
       ]);
 
-      setUsageStats({
+      const nextStats = {
         projects: projects.count ?? 0,
         audiences: audiences.count ?? 0,
         benchmarks: benchmarks.count ?? 0,
         campaigns: campaigns.count ?? 0,
         tactical_plans: tacticalPlans.count ?? 0,
         exports: exports.count ?? 0,
+      };
+      setUsageStats(nextStats);
+      const prevCache = settingsPageCache.get(userId);
+      settingsPageCache.set(userId, {
+        tenantSettings: prevCache?.tenantSettings || tenantSettings,
+        companyName: prevCache?.companyName || formData.companyName,
+        apiKeys: prevCache?.apiKeys || apiKeys,
+        backups: prevCache?.backups || backups,
+        usageStats: nextStats,
+        timestamp: Date.now(),
       });
     } catch (error) {
       console.error("Error loading usage stats:", error);
@@ -305,12 +352,12 @@ export default function Settings() {
 
   const loadApiKeys = async () => {
     try {
-      if (!user) return;
+      if (!userId) return;
 
       const { data, error } = await supabase
         .from("user_api_keys")
         .select("*")
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
 
       if (error) {
         console.error("Error loading API keys:", error);
@@ -331,6 +378,15 @@ export default function Settings() {
           };
         });
         setApiKeys(updated);
+        const prevCache = settingsPageCache.get(userId);
+        settingsPageCache.set(userId, {
+          tenantSettings: prevCache?.tenantSettings || tenantSettings,
+          companyName: prevCache?.companyName || formData.companyName,
+          apiKeys: updated,
+          backups: prevCache?.backups || backups,
+          usageStats: prevCache?.usageStats || usageStats,
+          timestamp: Date.now(),
+        });
       }
     } catch (error) {
       console.error("Error loading API keys:", error);
@@ -509,14 +565,25 @@ export default function Settings() {
   const loadBackups = async () => {
     try {
       setLoadingBackups(true);
-      if (!user) return;
+      if (!userId) return;
       const { data, error } = await supabase
         .from("user_data_backups")
         .select("id, backup_type, record_counts, size_bytes, notes, created_at, expires_at")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(10);
-      if (!error && data) setBackups(data);
+      if (!error && data) {
+        setBackups(data);
+        const prevCache = settingsPageCache.get(userId);
+        settingsPageCache.set(userId, {
+          tenantSettings: prevCache?.tenantSettings || tenantSettings,
+          companyName: prevCache?.companyName || formData.companyName,
+          apiKeys: prevCache?.apiKeys || apiKeys,
+          backups: data,
+          usageStats: prevCache?.usageStats || usageStats,
+          timestamp: Date.now(),
+        });
+      }
     } catch {
       // silently fail
     } finally {
@@ -684,7 +751,7 @@ export default function Settings() {
             </div>
 
             {/* Skeleton Loading */}
-            {tenantLoading && (
+            {tenantLoading && !tenantSettings && (
               <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-200">
                 {/* Profile Skeleton */}
                 <Card>
@@ -828,7 +895,7 @@ export default function Settings() {
             )}
 
             {/* All content — hidden while loading */}
-            {!tenantLoading && (<>
+            {(!tenantLoading || !!tenantSettings) && (<>
             {/* Profile Section */}
             <Card>
               <CardHeader>

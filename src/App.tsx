@@ -28,6 +28,7 @@ import TacticalPlan from "./pages/TacticalPlan";
 import Alerts from "./pages/Alerts";
 import Operations from "./pages/Operations";
 import Reports from "./pages/Reports";
+import FeatureRelatorios from "./pages/FeatureRelatorios";
 import Help from "./pages/Help";
 import Support from "./pages/Support";
 import Integrations from "./pages/Integrations";
@@ -51,7 +52,6 @@ import FeatureInsights from "./pages/FeatureInsights";
 import FeatureDadosEstruturados from "./pages/FeatureDadosEstruturados";
 import FeatureGestaoCampanhas from "./pages/FeatureGestaCampanhas";
 import FeatureGestaoBudget from "./pages/FeatureGestaoBudget";
-import FeatureRelatorios from "./pages/FeatureRelatorios";
 import AdminLogin from "./pages/AdminLogin";
 import AdminPanel from "./pages/AdminPanel";
 import StatusRssFallback from "./pages/StatusRssFallback";
@@ -62,12 +62,13 @@ import CreateMetaUser from "./pages/CreateMetaUser";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
 import { ForceLightMode } from "@/components/ForceLightMode";
+import { FeatureGate } from "@/components/FeatureGate";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <HelmetProvider>
-  <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange={false}>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
@@ -199,7 +200,9 @@ const App = () => (
             path="/reports" 
             element={
               <ProtectedRoute>
-                <Reports />
+                <FeatureGate featureKey="reports_feature">
+                  <Reports />
+                </FeatureGate>
               </ProtectedRoute>
             } 
           />

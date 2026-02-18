@@ -36,62 +36,123 @@ export interface FeatureCheck {
   message?: string;
 }
 
+type FeatureFlagsState = {
+  features: FeatureFlag[];
+  planAccess: PlanFeatureAccess[];
+  userOverrides: UserFeatureOverride[];
+  userPlan: string;
+  fetchedAt: number;
+};
+
+const CACHE_TTL_MS = 2 * 60 * 1000;
+const featureFlagsCache = new Map<string, FeatureFlagsState>();
+const featureFlagsInFlight = new Map<string, Promise<FeatureFlagsState>>();
+
 // =====================================================
 // HOOK
 // =====================================================
 
 export function useFeatureFlags() {
   const { user } = useAuth();
+  const userId = user?.id;
   const [features, setFeatures] = useState<FeatureFlag[]>([]);
   const [planAccess, setPlanAccess] = useState<PlanFeatureAccess[]>([]);
   const [userOverrides, setUserOverrides] = useState<UserFeatureOverride[]>([]);
   const [userPlan, setUserPlan] = useState<string>("starter");
   const [loading, setLoading] = useState(true);
 
-  const loadData = useCallback(async () => {
-    if (!user) return;
+  const applyState = useCallback((state: FeatureFlagsState) => {
+    setFeatures(state.features);
+    setPlanAccess(state.planAccess);
+    setUserOverrides(state.userOverrides);
+    setUserPlan(state.userPlan);
+  }, []);
+
+  const loadData = useCallback(async (options?: { force?: boolean; silent?: boolean }) => {
+    if (!userId) return;
+
+    const force = !!options?.force;
+    const silent = !!options?.silent;
+    const cached = featureFlagsCache.get(userId);
+    const isCacheFresh = !!cached && (Date.now() - cached.fetchedAt < CACHE_TTL_MS);
+
+    if (!force && cached && isCacheFresh) {
+      applyState(cached);
+      if (!silent) setLoading(false);
+      return;
+    }
+
+    if (!silent && !cached) {
+      setLoading(true);
+    }
 
     try {
-      // Load feature flags
-      const { data: flags } = await (supabase as any)
-        .from("feature_flags")
-        .select("feature_key, feature_name, description, category, status, status_message");
+      let request = featureFlagsInFlight.get(userId);
+      if (!request || force) {
+        request = (async () => {
+          const [flagsRes, tenantRes, overridesRes] = await Promise.all([
+            (supabase as any)
+              .from("feature_flags")
+              .select("feature_key, feature_name, description, category, status, status_message"),
+            (supabase as any)
+              .from("tenant_settings")
+              .select("plan")
+              .eq("user_id", userId)
+              .single(),
+            (supabase as any)
+              .from("user_feature_overrides")
+              .select("feature_key, is_enabled, reason")
+              .eq("user_id", userId),
+          ]);
 
-      // Load user's plan
-      const { data: tenant } = await (supabase as any)
-        .from("tenant_settings")
-        .select("plan")
-        .eq("user_id", user.id)
-        .single();
+          const plan = tenantRes?.data?.plan || "starter";
+          const { data: pf } = await (supabase as any)
+            .from("plan_features")
+            .select("feature_key, is_enabled, usage_limit, limit_period")
+            .eq("plan", plan);
 
-      const plan = tenant?.plan || "starter";
-      setUserPlan(plan);
+          return {
+            features: flagsRes?.data || [],
+            planAccess: pf || [],
+            userOverrides: overridesRes?.data || [],
+            userPlan: plan,
+            fetchedAt: Date.now(),
+          } as FeatureFlagsState;
+        })();
+        featureFlagsInFlight.set(userId, request);
+      }
 
-      // Load plan features for user's plan
-      const { data: pf } = await (supabase as any)
-        .from("plan_features")
-        .select("feature_key, is_enabled, usage_limit, limit_period")
-        .eq("plan", plan);
-
-      // Load per-user feature overrides
-      const { data: overrides } = await (supabase as any)
-        .from("user_feature_overrides")
-        .select("feature_key, is_enabled, reason")
-        .eq("user_id", user.id);
-
-      if (flags) setFeatures(flags);
-      if (pf) setPlanAccess(pf);
-      if (overrides) setUserOverrides(overrides);
+      const next = await request;
+      featureFlagsCache.set(userId, next);
+      applyState(next);
     } catch (err) {
       console.error("[feature-flags] Error loading:", err);
     } finally {
+      featureFlagsInFlight.delete(userId);
       setLoading(false);
     }
-  }, [user]);
+  }, [applyState, userId]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (!userId) {
+      setFeatures([]);
+      setPlanAccess([]);
+      setUserOverrides([]);
+      setUserPlan("starter");
+      setLoading(false);
+      return;
+    }
+
+    const cached = featureFlagsCache.get(userId);
+    if (cached) {
+      applyState(cached);
+      setLoading(false);
+      void loadData({ silent: true });
+      return;
+    }
+
+    void loadData();
+  }, [applyState, loadData, userId]);
 
   // Build lookup maps
   const featureMap = useMemo(() => {
@@ -196,6 +257,6 @@ export function useFeatureFlags() {
     loading,
     checkFeature,
     isFeatureAvailable,
-    refresh: loadData,
+    refresh: () => loadData({ force: true }),
   };
 }

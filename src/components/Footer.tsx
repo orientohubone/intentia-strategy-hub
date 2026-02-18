@@ -56,6 +56,11 @@ export function Footer() {
                 </a>
               </li>
               <li>
+                <a href="/relatorios" className="text-muted-foreground hover:text-primary transition-colors">
+                  Relatórios
+                </a>
+              </li>
+              <li>
                 <a href="/comparar" className="text-muted-foreground hover:text-primary transition-colors">
                   Comparar
                 </a>

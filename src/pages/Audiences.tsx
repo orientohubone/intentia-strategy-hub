@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+﻿import { useEffect, useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { FeatureGate } from "@/components/FeatureGate";
 import { SEO } from "@/components/SEO";
@@ -43,8 +43,17 @@ const sizeConfig = {
   enterprise: { label: "Enterprise", color: "bg-purple-100 text-purple-800" },
 };
 
+
+type AudiencesCacheState = {
+  audiences: Audience[];
+  fetchedAt: number;
+};
+
+const CACHE_TTL_MS = 2 * 60 * 1000;
+const audiencesCache = new Map<string, AudiencesCacheState>();
 export default function Audiences() {
   const { user } = useAuth();
+  const userId = user?.id;
   const { projects, tenantSettings } = useTenantData();
   const [audiences, setAudiences] = useState<Audience[]>([]);
   const [loading, setLoading] = useState(true);
@@ -145,32 +154,51 @@ export default function Audiences() {
   });
 
   useEffect(() => {
-    fetchAudiences();
-  }, [user]);
+    if (!userId) {
+      setAudiences([]);
+      setLoading(false);
+      return;
+    }
 
-  const fetchAudiences = async () => {
-    if (!user) return;
+    const cached = audiencesCache.get(userId);
+    if (cached) {
+      setAudiences(cached.audiences);
+      setLoading(false);
+      if (Date.now() - cached.fetchedAt >= CACHE_TTL_MS) {
+        void fetchAudiences({ silent: true });
+      }
+      return;
+    }
+
+    void fetchAudiences();
+  }, [userId]);
+
+  const fetchAudiences = async (options?: { silent?: boolean }) => {
+    if (!userId) return;
+    const cached = audiencesCache.get(userId);
     try {
-      setLoading(true);
+      if (!options?.silent && !cached) setLoading(true);
       const { data, error } = await (supabase as any)
         .from("audiences")
         .select(`
           *,
           projects!inner(name)
         `)
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setAudiences((data || []).map((item: any) => ({
+      const mapped = (data || []).map((item: any) => ({
         ...item,
         project_name: item.projects?.name,
-      })));
+      }));
+      setAudiences(mapped);
+      audiencesCache.set(userId, { audiences: mapped, fetchedAt: Date.now() });
     } catch (error) {
       console.error("Erro ao buscar públicos:", error);
       toast.error("Erro ao carregar públicos-alvo");
     } finally {
-      setLoading(false);
+      if (!options?.silent || !cached) setLoading(false);
     }
   };
 
@@ -201,7 +229,7 @@ export default function Audiences() {
           .from("audiences")
           .update(payload)
           .eq("id", editingId)
-          .eq("user_id", user.id);
+          .eq("user_id", userId);
         
         if (error) throw error;
         toast.success("Público-alvo atualizado com sucesso!");
@@ -614,3 +642,7 @@ export default function Audiences() {
     </FeatureGate>
   );
 }
+
+
+
+

@@ -47,6 +47,8 @@ import {
   Gauge,
   MessageCircle,
   Database,
+  FileText,
+  TrendingUp,
 } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -163,7 +165,7 @@ export default function AdminPanel() {
   const { admin, logout } = useAdminAuth();
 
   // State
-  const [activeTab, setActiveTab] = useState<"features" | "plans" | "users" | "status" | "architecture" | "support" | "database">("features");
+  const [activeTab, setActiveTab] = useState<"features" | "plans" | "users" | "status" | "reports" | "architecture" | "support" | "database">("features");
   const [features, setFeatures] = useState<FeatureFlag[]>([]);
   const [planFeatures, setPlanFeatures] = useState<PlanFeature[]>([]);
   const [users, setUsers] = useState<TenantUser[]>([]);
@@ -457,6 +459,7 @@ export default function AdminPanel() {
             { key: "plans" as const, label: "Planos", icon: Settings2 },
             { key: "users" as const, label: "Clientes", icon: Users },
             { key: "status" as const, label: "Status Page", icon: Activity },
+            { key: "reports" as const, label: "Relatórios", icon: FileText },
             { key: "architecture" as const, label: "Arquitetura", icon: Layers },
             { key: "support" as const, label: "Atendimentos", icon: MessageCircle },
             { key: "database" as const, label: "Database", icon: Database },
@@ -914,9 +917,127 @@ export default function AdminPanel() {
             )}
 
             {/* =====================================================
-                TAB: USERS
+                TAB: REPORTS
                 ===================================================== */}
-            {activeTab === "status" && (
+            {activeTab === "reports" && (
+              <div className="space-y-6">
+                <div className="text-center py-12 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-semibold mb-2">Relatórios</h3>
+                  <p className="text-sm mb-6">Gerencie o acesso à tela de relatórios</p>
+                  
+                  <div className="max-w-md mx-auto space-y-4">
+                    <Card className="bg-card border-border shadow-md">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4 text-blue-500" />
+                          Feature Flag: Relatórios
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                          Controle o acesso dos usuários à tela de relatórios estratégicos
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {(() => {
+                          const feature = features.find(f => f.feature_key === "reports_feature");
+                          return (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm font-medium">Tela de Relatórios</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    reports_feature
+                                  </p>
+                                </div>
+                                <Badge className={`text-xs ${
+                                  feature?.status === 'active' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                  feature?.status === 'development' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                  feature?.status === 'disabled' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                  feature?.status === 'maintenance' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                  'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                                }`}>
+                                  {feature?.status === 'active' ? 'Ativo' :
+                                   feature?.status === 'development' ? 'Em Desenvolvimento' :
+                                   feature?.status === 'disabled' ? 'Desativado' :
+                                   feature?.status === 'maintenance' ? 'Em Manutenção' :
+                                   feature?.status === 'deprecated' ? 'Descontinuado' :
+                                   feature?.status || 'Desconhecido'}
+                                </Badge>
+                              </div>
+                              
+                              <div className="pt-3 border-t border-border/50">
+                                <p className="text-xs text-muted-foreground mb-3">
+                                  Status por plano:
+                                </p>
+                                <div className="space-y-2">
+                                  {["starter", "professional", "enterprise"].map((plan) => {
+                                    const planFeature = planFeatures.find(pf => pf.feature_key === "reports_feature" && pf.plan === plan);
+                                    const isEnabled = planFeature?.is_enabled ?? false;
+                                    const isActive = feature?.status === "active";
+                                    
+                                    return (
+                                      <div key={plan} className="flex items-center justify-between text-xs">
+                                        <span className="capitalize">{PLAN_CONFIG[plan as keyof typeof PLAN_CONFIG]?.label || plan}</span>
+                                        <div className="flex items-center gap-2">
+                                          <Badge className={isEnabled ? "bg-green-500/10 text-green-400 border-green-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"}>
+                                            {isEnabled ? "Ativo" : "Inativo"}
+                                          </Badge>
+                                          {!isActive && (
+                                            <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20">
+                                              Feature inativa
+                                            </Badge>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="bg-card border-border shadow-md">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-purple-500" />
+                          Arquitetura da Feature
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-xs">
+                            <div className="w-2 h-2 rounded-full bg-green-500" />
+                            <span>Reports.tsx - Página principal de relatórios</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs">
+                            <div className="w-2 h-2 rounded-full bg-blue-500" />
+                            <span>Feature Flag: reports_feature</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs">
+                            <div className="w-2 h-2 rounded-full bg-purple-500" />
+                            <span>Categoria: general</span>
+                          </div>
+                        </div>
+                        
+                        <div className="pt-2 border-t border-border/50">
+                          <p className="text-xs text-muted-foreground">
+                            <strong>Fluxo:</strong> Admin Panel → Feature Flags → Relatórios → reports_feature
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* =====================================================
+                TAB: ARCHITECTURE
+                ===================================================== */}
+            {activeTab === "architecture" && (
               <AdminStatusTab />
             )}
 

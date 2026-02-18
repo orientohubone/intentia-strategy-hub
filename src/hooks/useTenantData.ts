@@ -37,73 +37,128 @@ export interface TenantSettings {
   updated_at: string;
 }
 
+type TenantDataState = {
+  projects: Project[];
+  tenantSettings: TenantSettings | null;
+  fetchedAt: number;
+};
+
+const CACHE_TTL_MS = 2 * 60 * 1000;
+const tenantDataCache = new Map<string, TenantDataState>();
+const tenantDataInFlight = new Map<string, Promise<TenantDataState>>();
+
 export function useTenantData() {
   const { user } = useAuth();
+  const userId = user?.id;
   const [projects, setProjects] = useState<Project[]>([]);
   const [tenantSettings, setTenantSettings] = useState<TenantSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       setProjects([]);
       setTenantSettings(null);
       setLoading(false);
       return;
     }
 
-    fetchTenantData();
-  }, [user]);
+    const cached = tenantDataCache.get(userId);
+    if (cached) {
+      setProjects(cached.projects);
+      setTenantSettings(cached.tenantSettings);
+      setLoading(false);
 
-  const fetchTenantData = async () => {
+      if (Date.now() - cached.fetchedAt >= CACHE_TTL_MS) {
+        void fetchTenantData(userId, { silent: true });
+      }
+      return;
+    }
+
+    void fetchTenantData(userId);
+  }, [userId]);
+
+  const fetchTenantData = async (
+    targetUserId: string = userId ?? '',
+    options?: { force?: boolean; silent?: boolean }
+  ) => {
+    if (!targetUserId) return;
+    const force = !!options?.force;
+    const silent = !!options?.silent;
+    const cached = tenantDataCache.get(targetUserId);
+    const isCacheFresh = !!cached && (Date.now() - cached.fetchedAt < CACHE_TTL_MS);
+
+    if (!force && cached && isCacheFresh) {
+      setProjects(cached.projects);
+      setTenantSettings(cached.tenantSettings);
+      setLoading(false);
+      return;
+    }
+
     try {
-      setLoading(true);
-
-      // Fetch tenant settings
-      const { data: settings, error: settingsError } = await (supabase as any)
-        .from('tenant_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (settingsError && settingsError.code !== 'PGRST116') {
-        console.error('Error fetching tenant settings:', settingsError);
+      if (!silent && !cached) {
+        setLoading(true);
       }
 
-      if (settings) {
-        setTenantSettings(settings);
-      } else {
-        // Create default tenant settings for new users
-        await createDefaultTenantSettings();
+      let request = tenantDataInFlight.get(targetUserId);
+      if (!request || force) {
+        request = (async () => {
+          const { data: settings, error: settingsError } = await (supabase as any)
+            .from('tenant_settings')
+            .select('*')
+            .eq('user_id', targetUserId)
+            .single();
+
+          let nextSettings = settings || null;
+          if (settingsError && settingsError.code !== 'PGRST116') {
+            console.error('Error fetching tenant settings:', settingsError);
+          }
+
+          if (!nextSettings) {
+            nextSettings = await createDefaultTenantSettings(targetUserId);
+          }
+
+          const { data: userProjects, error: projectsError } = await (supabase as any)
+            .from('projects')
+            .select('*')
+            .eq('user_id', targetUserId)
+            .order('created_at', { ascending: false });
+
+          if (projectsError) {
+            console.error('Error fetching projects:', projectsError);
+          }
+
+          return {
+            projects: userProjects || [],
+            tenantSettings: nextSettings,
+            fetchedAt: Date.now(),
+          } as TenantDataState;
+        })();
+        tenantDataInFlight.set(targetUserId, request);
       }
 
-      // Fetch user's projects (tenant isolation)
-      const { data: userProjects, error: projectsError } = await (supabase as any)
-        .from('projects')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (projectsError) {
-        console.error('Error fetching projects:', projectsError);
-      } else {
-        setProjects(userProjects || []);
-      }
+      const next = await request;
+      tenantDataCache.set(targetUserId, next);
+      setProjects(next.projects);
+      setTenantSettings(next.tenantSettings);
 
     } catch (error) {
       console.error('Error fetching tenant data:', error);
     } finally {
+      tenantDataInFlight.delete(targetUserId);
       setLoading(false);
     }
   };
 
-  const createDefaultTenantSettings = async () => {
+  const createDefaultTenantSettings = async (targetUserId: string) => {
+    if (!targetUserId) return null;
+
     const { data: userData } = await supabase.auth.getUser();
     
     if (userData?.user?.user_metadata) {
       const { data, error } = await (supabase as any)
         .from('tenant_settings')
         .insert({
-          user_id: user.id,
+          user_id: targetUserId,
           company_name: userData.user.user_metadata.company_name || 'Default Company',
           plan: 'starter',
           monthly_analyses_limit: 5,
@@ -113,9 +168,10 @@ export function useTenantData() {
         .single();
 
       if (!error && data) {
-        setTenantSettings(data);
+        return data as TenantSettings;
       }
     }
+    return null;
   };
 
   const createProject = async (projectData: Omit<Project, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
@@ -141,7 +197,17 @@ export function useTenantData() {
 
     if (error) throw error;
 
-    setProjects(prev => [data, ...prev]);
+    setProjects(prev => {
+      const next = [data, ...prev];
+      if (userId) {
+        tenantDataCache.set(userId, {
+          projects: next,
+          tenantSettings,
+          fetchedAt: Date.now(),
+        });
+      }
+      return next;
+    });
     return data;
   };
 
@@ -158,11 +224,19 @@ export function useTenantData() {
 
     if (error) throw error;
 
-    setProjects(prev => 
-      prev.map(project => 
+    setProjects(prev => {
+      const next = prev.map(project => 
         project.id === id ? { ...project, ...data } : project
-      )
-    );
+      );
+      if (userId) {
+        tenantDataCache.set(userId, {
+          projects: next,
+          tenantSettings,
+          fetchedAt: Date.now(),
+        });
+      }
+      return next;
+    });
     return data;
   };
 
@@ -177,7 +251,17 @@ export function useTenantData() {
 
     if (error) throw error;
 
-    setProjects(prev => prev.filter(project => project.id !== id));
+    setProjects(prev => {
+      const next = prev.filter(project => project.id !== id);
+      if (userId) {
+        tenantDataCache.set(userId, {
+          projects: next,
+          tenantSettings,
+          fetchedAt: Date.now(),
+        });
+      }
+      return next;
+    });
   };
 
   return {
@@ -187,6 +271,6 @@ export function useTenantData() {
     createProject,
     updateProject,
     deleteProject,
-    refetch: fetchTenantData,
+    refetch: (targetUserId?: string) => fetchTenantData(targetUserId ?? userId ?? '', { force: true }),
   };
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { SEO } from "@/components/SEO";
 import { FeatureGate } from "@/components/FeatureGate";
@@ -30,31 +30,13 @@ import {
   Eye,
   FolderOpen,
   ChevronDown,
-  ChevronRight,
-  Loader2,
+  ChevronRight
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// Tipos para os relatórios
-interface Report {
-  id: string;
-  title: string;
-  type: "project_analysis" | "campaign_analysis" | "benchmark" | "consolidated";
-  category: string;
-  projectName?: string;
-  projectId?: string;
-  campaignName?: string;
-  channel?: string;
-  date: string;
-  isFavorite: boolean;
-  format: string;
-  size?: string;
-  score: number;
-  fileUrl?: string;
-  metadata?: Record<string, any>;
-}
+// Tipos para os relatÃ³rios
 
 interface ProjectReports {
   projectName: string;
@@ -62,9 +44,17 @@ interface ProjectReports {
   reports: Report[];
 }
 
+
+type ReportsCacheState = {
+  reports: Report[];
+  fetchedAt: number;
+};
+
+const CACHE_TTL_MS = 2 * 60 * 1000;
+const reportsCache = new Map<string, ReportsCacheState>();
 const REPORT_TYPES = [
   { value: "all", label: "Todos os Tipos" },
-  { value: "project_analysis", label: "Análise de Projeto" },
+  { value: "project_analysis", label: "AnÃ¡lise de Projeto" },
   { value: "campaign_analysis", label: "Performance" },
   { value: "benchmark", label: "Benchmark" },
   { value: "consolidated", label: "Consolidado" },
@@ -72,7 +62,7 @@ const REPORT_TYPES = [
 
 const CATEGORIES = [
   { value: "all", label: "Todas as Categorias" },
-  { value: "Análise de Projeto", label: "Análise de Projeto" },
+  { value: "AnÃ¡lise de Projeto", label: "AnÃ¡lise de Projeto" },
   { value: "Performance", label: "Performance" },
   { value: "Benchmark", label: "Benchmark" },
   { value: "Consolidado", label: "Consolidado" },
@@ -125,6 +115,7 @@ const getScoreColor = (score: number) => {
 
 export default function Reports() {
   const { user } = useAuth();
+  const userId = user?.id;
   const [loading, setLoading] = useState(true);
   const [reports, setReports] = useState<Report[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -133,20 +124,35 @@ export default function Reports() {
   const [sortBy, setSortBy] = useState("date_desc");
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
-
   // Carregar relatórios do Supabase
   useEffect(() => {
-    if (!user) return;
-    loadReports();
-  }, [user]);
+    if (!userId) {
+      setReports([]);
+      setLoading(false);
+      return;
+    }
 
-  const loadReports = async () => {
-    if (!user) return;
+    const cached = reportsCache.get(userId);
+    if (cached) {
+      setReports(cached.reports);
+      setLoading(false);
+      if (Date.now() - cached.fetchedAt >= CACHE_TTL_MS) {
+        void loadReports({ silent: true });
+      }
+      return;
+    }
+
+    void loadReports();
+  }, [userId]);
+
+  const loadReports = async (options?: { silent?: boolean }) => {
+    if (!userId) return;
+    const cached = reportsCache.get(userId);
 
     try {
-      setLoading(true);
+      if (!options?.silent && !cached) setLoading(true);
       
-      // Buscar projetos com dados completos das análises
+      // Buscar projetos com dados completos das anÃ¡lises
       const { data: projects, error: projectsError } = await supabase
         .from("projects")
         .select(`
@@ -192,22 +198,22 @@ export default function Reports() {
             metadata
           )
         `)
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .order("created_at", { ascending: false }) as any;
 
       if (projectsError) throw projectsError;
 
-      // Transformar dados em relatórios
+      // Transformar dados em relatÃ³rios
       const transformedReports: Report[] = [];
 
       projects?.forEach((project: any) => {
-        // 1. Relatório de Análise Heurística + IA (se existir análise do projeto)
+        // 1. RelatÃ³rio de AnÃ¡lise HeurÃ­stica + IA (se existir anÃ¡lise do projeto)
         if (project.heuristic_analysis || project.ai_analysis) {
           transformedReports.push({
             id: `analysis-${project.id}`,
-            title: `Análise Completa - ${project.name}`,
+            title: `AnÃ¡lise Completa - ${project.name}`,
             type: "project_analysis",
-            category: "Análise de Projeto",
+            category: "AnÃ¡lise de Projeto",
             projectName: project.name,
             projectId: project.id,
             date: project.created_at || new Date().toISOString(),
@@ -224,14 +230,14 @@ export default function Reports() {
           });
         }
 
-        // 2. Relatórios de Insights (se existirem insights individuais)
+        // 2. RelatÃ³rios de Insights (se existirem insights individuais)
         const insights = project.insights || [];
         insights.forEach((insight: any) => {
           transformedReports.push({
             id: `insight-${insight.id}`,
             title: `Insight - ${insight.title}`,
             type: "project_analysis",
-            category: "Insight Estratégico",
+            category: "Insight EstratÃ©gico",
             projectName: project.name,
             projectId: project.id,
             date: insight.created_at,
@@ -247,7 +253,7 @@ export default function Reports() {
           });
         });
 
-        // 3. Relatórios de Performance por Canal
+        // 3. RelatÃ³rios de Performance por Canal
         const channelScores = project.project_channel_scores || [];
         channelScores.forEach((channelScore: any) => {
           transformedReports.push({
@@ -267,7 +273,7 @@ export default function Reports() {
           });
         });
 
-        // 4. Relatórios de Benchmark
+        // 4. RelatÃ³rios de Benchmark
         const benchmarks = project.benchmarks || [];
         benchmarks.forEach((benchmark: any) => {
           transformedReports.push({
@@ -300,11 +306,11 @@ export default function Reports() {
         });
       });
 
-      // 5. Relatório Consolidado (se houver análises)
+      // 5. RelatÃ³rio Consolidado (se houver anÃ¡lises)
       if (transformedReports.length > 0) {
         transformedReports.push({
           id: "consolidated",
-          title: `Relatório Consolidado - ${new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}`,
+          title: `RelatÃ³rio Consolidado - ${new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}`,
           type: "consolidated",
           category: "Consolidado",
           projectName: "Todos os Projetos",
@@ -322,16 +328,17 @@ export default function Reports() {
       }
 
       setReports(transformedReports);
-      console.log('Relatórios carregados:', transformedReports.length);
+      reportsCache.set(userId, { reports: transformedReports, fetchedAt: Date.now() });
+      console.log('RelatÃ³rios carregados:', transformedReports.length);
     } catch (error) {
-      console.error("Erro ao carregar relatórios:", error);
-      toast.error("Erro ao carregar relatórios");
+      console.error("Erro ao carregar relatÃ³rios:", error);
+      toast.error("Erro ao carregar relatÃ³rios");
     } finally {
-      setLoading(false);
+      if (!options?.silent || !cached) setLoading(false);
     }
   };
 
-  // Agrupar relatórios por projeto
+  // Agrupar relatÃ³rios por projeto
   const reportsByProject = reports.reduce((acc, report) => {
     const projectId = report.projectId || "unknown";
     if (!acc[projectId]) {
@@ -345,7 +352,7 @@ export default function Reports() {
     return acc;
   }, {} as Record<string, ProjectReports>);
 
-  // Filtrar relatórios
+  // Filtrar relatÃ³rios
   const filteredProjects = Object.entries(reportsByProject)
     .map(([projectId, projectData]) => {
       const filteredReports = projectData.reports
@@ -390,7 +397,7 @@ export default function Reports() {
     try {
       toast.success("Preparando download...");
       
-      // Gerar HTML com dados completos das análises
+      // Gerar HTML com dados completos das anÃ¡lises
       let htmlContent = '';
       
       if (report.type === "project_analysis") {
@@ -403,7 +410,7 @@ export default function Reports() {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Análise de Projeto - ${report.projectName}</title>
+  <title>AnÃ¡lise de Projeto - ${report.projectName}</title>
   <style>
     body{font-family:Arial,sans-serif;font-size:11px;line-height:1.4;color:#333;max-width:800px;margin:0 auto;padding:20px}
     h1{font-size:20px;color:#1f2937;border-bottom:2px solid #e5e7eb;padding-bottom:8px;margin-bottom:16px}
@@ -424,7 +431,7 @@ export default function Reports() {
   </style>
 </head>
 <body>
-  <h1>Análise de Projeto</h1>
+  <h1>AnÃ¡lise de Projeto</h1>
   <div class="card">
     <p><strong>Projeto:</strong> ${report.projectName}</p>
     <p><strong>URL:</strong> ${metadata.url || 'N/A'}</p>
@@ -435,7 +442,7 @@ export default function Reports() {
 
   ${Object.keys(heuristic).length > 0 ? `
   <div class="section">
-    <h2>Análise Heurística</h2>
+    <h2>AnÃ¡lise HeurÃ­stica</h2>
     <div class="grid">
       ${heuristic.proposta ? `
       <div class="card">
@@ -461,7 +468,7 @@ export default function Reports() {
       
       ${heuristic.jornada ? `
       <div class="card">
-        <h3>Jornada do Usuário</h3>
+        <h3>Jornada do UsuÃ¡rio</h3>
         <div class="score-item">
           <span>Score:</span>
           <span class="score-value">${heuristic.jornada.score || 0}/100</span>
@@ -472,7 +479,7 @@ export default function Reports() {
       
       ${heuristic.seo ? `
       <div class="card">
-        <h3>Otimização SEO</h3>
+        <h3>OtimizaÃ§Ã£o SEO</h3>
         <div class="score-item">
           <span>Score:</span>
           <span class="score-value">${heuristic.seo.score || 0}/100</span>
@@ -485,7 +492,7 @@ export default function Reports() {
 
   ${ai.executive_summary ? `
   <div class="section">
-    <h2>Análise por IA</h2>
+    <h2>AnÃ¡lise por IA</h2>
     <div class="card">
       <h3>Resumo Executivo</h3>
       <p>${ai.executive_summary}</p>
@@ -505,19 +512,19 @@ export default function Reports() {
     
     ${ai.recommendations ? `
     <div class="card">
-      <h3>Recomendações Estratégicas</h3>
+      <h3>RecomendaÃ§Ãµes EstratÃ©gicas</h3>
       <p>${ai.recommendations}</p>
     </div>` : ''}
   </div>` : ''}
 
-  ${report.category === "Insight Estratégico" ? `
+  ${report.category === "Insight EstratÃ©gico" ? `
   <div class="section">
-    <h2>Insight Estratégico</h2>
+    <h2>Insight EstratÃ©gico</h2>
     <div class="card">
       <span class="badge badge-${metadata.type}">${metadata.type}</span>
       <h3>${report.title.replace('Insight - ', '')}</h3>
-      <p><strong>Descrição:</strong> ${metadata.description || 'N/A'}</p>
-      <p><strong>Ação Recomendada:</strong> ${metadata.action || 'N/A'}</p>
+      <p><strong>DescriÃ§Ã£o:</strong> ${metadata.description || 'N/A'}</p>
+      <p><strong>AÃ§Ã£o Recomendada:</strong> ${metadata.action || 'N/A'}</p>
     </div>
   </div>` : ''}
 
@@ -544,7 +551,7 @@ export default function Reports() {
   </style>
 </head>
 <body>
-  <h1>Análise de Performance</h1>
+  <h1>AnÃ¡lise de Performance</h1>
   <div class="card">
     <p><strong>Campanha:</strong> ${report.campaignName}</p>
     <p><strong>Canal:</strong> ${report.channel}</p>
@@ -555,13 +562,13 @@ export default function Reports() {
 
   ${report.metadata && Object.keys(report.metadata).length > 0 ? `
   <div class="card">
-    <h2>Métricas Detalhadas</h2>
+    <h2>MÃ©tricas Detalhadas</h2>
     <div class="metadata">${JSON.stringify(report.metadata, null, 2)}</div>
   </div>` : ''}
 
   <div class="card">
     <h2>Insights de Performance</h2>
-    <p>Análise de performance gerada pela plataforma com base nos dados do canal ${report.channel}.</p>
+    <p>AnÃ¡lise de performance gerada pela plataforma com base nos dados do canal ${report.channel}.</p>
     <p>Score de ${report.score}/100 indica ${report.score >= 80 ? 'performance excelente' : report.score >= 60 ? 'performance boa' : 'performance precisa melhorar'}.</p>
   </div>
 
@@ -637,13 +644,13 @@ export default function Reports() {
 
   ${metadata.strategic_insights ? `
   <div class="card">
-    <h3>Insights Estratégicos</h3>
+    <h3>Insights EstratÃ©gicos</h3>
     <p>${metadata.strategic_insights}</p>
   </div>` : ''}
 
   ${metadata.recommendations ? `
   <div class="card">
-    <h3>Recomendações</h3>
+    <h3>RecomendaÃ§Ãµes</h3>
     <p>${metadata.recommendations}</p>
   </div>` : ''}
 
@@ -651,7 +658,7 @@ export default function Reports() {
 </body>
 </html>`;
       } else {
-        // Genérico para outros tipos
+        // GenÃ©rico para outros tipos
         htmlContent = `
 <!DOCTYPE html>
 <html>
@@ -699,7 +706,7 @@ export default function Reports() {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
       
-      toast.success("Download concluído!");
+      toast.success("Download concluÃ­do!");
     } catch (error) {
       console.error("Erro ao fazer download:", error);
       toast.error("Erro ao fazer download");
@@ -708,11 +715,11 @@ export default function Reports() {
 
   const handleToggleFavorite = async (reportId: string) => {
     try {
-      // Encontrar o relatório atual
+      // Encontrar o relatÃ³rio atual
       const currentReport = reports.find(r => r.id === reportId);
       if (!currentReport) {
-        console.error('Relatório não encontrado:', reportId);
-        toast.error("Relatório não encontrado");
+        console.error('RelatÃ³rio nÃ£o encontrado:', reportId);
+        toast.error("RelatÃ³rio nÃ£o encontrado");
         return;
       }
 
@@ -754,13 +761,26 @@ export default function Reports() {
   if (loading) {
     return (
       <>
-        <SEO title="Relatórios" description="Central de relatórios e análises" />
+        <SEO title="RelatÃ³rios" description="Central de relatÃ³rios e anÃ¡lises" />
         <DashboardLayout>
-          <FeatureGate featureKey="reports" withLayout={false} pageTitle="Relatórios">
+          <FeatureGate featureKey="reports" withLayout={false} pageTitle="RelatÃ³rios">
             <div className="space-y-6">
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin" />
-                <span className="ml-2">Carregando relatórios...</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <Card key={i}>
+                    <CardHeader className="space-y-2">
+                      <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-7 w-16 bg-muted rounded animate-pulse" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-16 bg-muted/70 rounded animate-pulse" />
+                ))}
               </div>
             </div>
           </FeatureGate>
@@ -771,21 +791,21 @@ export default function Reports() {
 
   return (
     <>
-      <SEO title="Relatórios" description="Central de relatórios e análises" />
+      <SEO title="RelatÃ³rios" description="Central de relatÃ³rios e anÃ¡lises" />
       <DashboardLayout>
-        <FeatureGate featureKey="reports" withLayout={false} pageTitle="Relatórios">
+        <FeatureGate featureKey="reports" withLayout={false} pageTitle="RelatÃ³rios">
           <div className="space-y-6">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Relatórios</h1>
+                <h1 className="text-2xl font-bold text-foreground">RelatÃ³rios</h1>
                 <p className="text-muted-foreground">
-                  Central de relatórios e análises geradas pela plataforma
+                  Central de relatÃ³rios e anÃ¡lises geradas pela plataforma
                 </p>
               </div>
               <Button className="gap-2" onClick={loadReports}>
                 <Download className="h-4 w-4" />
-                Gerar Relatório Consolidado
+                Gerar RelatÃ³rio Consolidado
               </Button>
             </div>
 
@@ -793,12 +813,12 @@ export default function Reports() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total de Relatórios</CardTitle>
+                  <CardTitle className="text-sm font-medium">Total de RelatÃ³rios</CardTitle>
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{reports.length}</div>
-                  <p className="text-xs text-muted-foreground">Gerados este mês</p>
+                  <p className="text-xs text-muted-foreground">Gerados este mÃªs</p>
                 </CardContent>
               </Card>
               <Card>
@@ -810,24 +830,24 @@ export default function Reports() {
                   <div className="text-2xl font-bold">
                     {reports.filter(r => r.isFavorite).length}
                   </div>
-                  <p className="text-xs text-muted-foreground">Relatórios marcados</p>
+                  <p className="text-xs text-muted-foreground">RelatÃ³rios marcados</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Análises de IA</CardTitle>
+                  <CardTitle className="text-sm font-medium">AnÃ¡lises de IA</CardTitle>
                   <Lightbulb className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
                     {reports.filter(r => r.type === "project_analysis" || r.type === "campaign_analysis").length}
                   </div>
-                  <p className="text-xs text-muted-foreground">Com inteligência artificial</p>
+                  <p className="text-xs text-muted-foreground">Com inteligÃªncia artificial</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Score Médio</CardTitle>
+                  <CardTitle className="text-sm font-medium">Score MÃ©dio</CardTitle>
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -847,7 +867,7 @@ export default function Reports() {
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
-                        placeholder="Buscar relatórios..."
+                        placeholder="Buscar relatÃ³rios..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="pl-10"
@@ -911,9 +931,9 @@ export default function Reports() {
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-12">
                     <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Nenhum relatório encontrado</h3>
+                    <h3 className="text-lg font-semibold mb-2">Nenhum relatÃ³rio encontrado</h3>
                     <p className="text-muted-foreground text-center">
-                      Tente ajustar os filtros ou criar novas análises para gerar relatórios.
+                      Tente ajustar os filtros ou criar novas anÃ¡lises para gerar relatÃ³rios.
                     </p>
                   </CardContent>
                 </Card>
@@ -938,9 +958,9 @@ export default function Reports() {
                               <div>
                                 <h3 className="font-semibold text-sm sm:text-base">{project.projectName}</h3>
                                 <p className="text-xs text-muted-foreground">
-                                  {reportCount} relatório{reportCount !== 1 ? "s" : ""}
-                                  {favoriteCount > 0 && ` · ${favoriteCount} favorito${favoriteCount !== 1 ? "s" : ""}`}
-                                  <span className="text-xs text-muted-foreground"> · Score médio: {avgScore}/100</span>
+                                  {reportCount} relatÃ³rio{reportCount !== 1 ? "s" : ""}
+                                  {favoriteCount > 0 && ` Â· ${favoriteCount} favorito${favoriteCount !== 1 ? "s" : ""}`}
+                                  <span className="text-xs text-muted-foreground"> Â· Score mÃ©dio: {avgScore}/100</span>
                                 </p>
                               </div>
                             </div>
@@ -1032,3 +1052,8 @@ export default function Reports() {
     </>
   );
 }
+
+
+
+
+

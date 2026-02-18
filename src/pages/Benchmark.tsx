@@ -46,9 +46,19 @@ interface Project {
   score: number;
 }
 
+type BenchmarkCacheState = {
+  benchmarks: BenchmarkSummary[];
+  projects: Project[];
+  stats: any;
+  fetchedAt: number;
+};
+
+const CACHE_TTL_MS = 2 * 60 * 1000;
+const benchmarkCache = new Map<string, BenchmarkCacheState>();
 
 export default function Benchmark() {
   const { user } = useAuth();
+  const userId = user?.id;
   const [benchmarks, setBenchmarks] = useState<BenchmarkSummary[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,8 +92,28 @@ export default function Benchmark() {
   const aiNotificationSentRef = useRef<string | null>(null);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!userId) {
+      setBenchmarks([]);
+      setProjects([]);
+      setStats(null);
+      setLoading(false);
+      return;
+    }
+
+    const cached = benchmarkCache.get(userId);
+    if (cached) {
+      setBenchmarks(cached.benchmarks);
+      setProjects(cached.projects);
+      setStats(cached.stats);
+      setLoading(false);
+      if (Date.now() - cached.fetchedAt >= CACHE_TTL_MS) {
+        void loadData({ silent: true });
+      }
+      return;
+    }
+
+    void loadData();
+  }, [userId]);
 
   // Load benchmark limit for Starter plan
   useEffect(() => {
@@ -119,7 +149,10 @@ export default function Benchmark() {
     loadAiKeys();
   }, [user]);
 
-  const loadData = async () => {
+  const loadData = async (options?: { silent?: boolean }) => {
+    if (!userId) return;
+    const cached = benchmarkCache.get(userId);
+    if (!options?.silent && !cached) setLoading(true);
     try {
       const [benchmarksResult, projectsResult, statsResult] = await Promise.all([
         supabase
@@ -139,13 +172,22 @@ export default function Benchmark() {
       if (projectsResult.error) throw projectsResult.error;
       if (statsResult.error) throw statsResult.error;
 
-      setBenchmarks(benchmarksResult.data || []);
-      setProjects(projectsResult.data || []);
-      setStats(statsResult.data || []);
+      const nextBenchmarks = benchmarksResult.data || [];
+      const nextProjects = projectsResult.data || [];
+      const nextStats = statsResult.data || [];
+      setBenchmarks(nextBenchmarks);
+      setProjects(nextProjects);
+      setStats(nextStats);
+      benchmarkCache.set(userId, {
+        benchmarks: nextBenchmarks,
+        projects: nextProjects,
+        stats: nextStats,
+        fetchedAt: Date.now(),
+      });
     } catch (error: any) {
       toast.error("Erro ao carregar dados: " + error.message);
     } finally {
-      setLoading(false);
+      if (!options?.silent || !cached) setLoading(false);
     }
   };
 

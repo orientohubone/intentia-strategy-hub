@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { SEO } from "@/components/SEO";
 import { OnboardingChecklist } from "@/components/OnboardingChecklist";
@@ -111,8 +111,23 @@ type RecentActivity = {
   time: string;
 };
 
+type HomeStatsCache = {
+  audiencesCount: number;
+  benchmarksCount: number;
+  totalInsightsCount: number;
+  hasAiKey: boolean;
+  notificationsCount: number;
+};
+
+const HOME_CACHE_TTL = 1000 * 60 * 2;
+const homeStatsCache = new Map<string, { data: HomeStatsCache; timestamp: number }>();
+const homeStatsInFlight = new Map<string, Promise<HomeStatsCache>>();
+const homeActivityCache = new Map<string, { data: RecentActivity[]; timestamp: number }>();
+const homeActivityInFlight = new Map<string, Promise<RecentActivity[]>>();
+
 export default function Home() {
   const { user } = useAuth();
+  const userId = user?.id;
   const { projects, loading } = useTenantData();
   const navigate = useNavigate();
 
@@ -123,50 +138,76 @@ export default function Home() {
   const [hasAiKey, setHasAiKey] = useState(false);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [notificationsCount, setNotificationsCount] = useState(0);
+  const [activityLoading, setActivityLoading] = useState(true);
 
   const fullName = (user?.user_metadata?.full_name as string | undefined) || user?.email || "Usuário";
   const hasAvatar = !!(user?.user_metadata?.avatar_url);
+  const isNextStepsLoading = loading || statsLoading;
 
   const averageScore = projects.length > 0
     ? Math.round(projects.reduce((sum, p) => sum + p.score, 0) / projects.length)
     : 0;
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) {
+      setStatsLoading(false);
+      setActivityLoading(false);
+      return;
+    }
 
-    const fetchStats = async () => {
-      setStatsLoading(true);
-      try {
+    const applyStats = (data: HomeStatsCache) => {
+      setAudiencesCount(data.audiencesCount);
+      setBenchmarksCount(data.benchmarksCount);
+      setTotalInsightsCount(data.totalInsightsCount);
+      setHasAiKey(data.hasAiKey);
+      setNotificationsCount(data.notificationsCount);
+    };
+
+    const loadStats = async () => {
+      if (homeStatsInFlight.has(userId)) return homeStatsInFlight.get(userId)!;
+
+      const loadPromise = (async () => {
         const [audiences, benchmarks, insights, aiKeys, notifications] = await Promise.all([
-          supabase.from("audiences").select("*", { count: "exact", head: true }).eq("user_id", user.id),
-          supabase.from("benchmarks").select("*", { count: "exact", head: true }).eq("user_id", user.id),
-          supabase.from("insights").select("*", { count: "exact", head: true }).eq("user_id", user.id),
-          supabase.from("user_api_keys").select("*", { count: "exact", head: true }).eq("user_id", user.id),
-          (supabase as any).from("notifications").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("read", false),
+          supabase.from("audiences").select("*", { count: "exact", head: true }).eq("user_id", userId),
+          supabase.from("benchmarks").select("*", { count: "exact", head: true }).eq("user_id", userId),
+          supabase.from("insights").select("*", { count: "exact", head: true }).eq("user_id", userId),
+          supabase.from("user_api_keys").select("*", { count: "exact", head: true }).eq("user_id", userId),
+          supabase.from("notifications").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("read", false),
         ]);
 
-        setAudiencesCount(audiences.count || 0);
-        setBenchmarksCount(benchmarks.count || 0);
-        setTotalInsightsCount(insights.count || 0);
-        setHasAiKey((aiKeys.count || 0) > 0);
-        setNotificationsCount(notifications.count || 0);
-      } catch (err) {
-        console.error("Error fetching home stats:", err);
-      }
+        const next: HomeStatsCache = {
+          audiencesCount: audiences.count || 0,
+          benchmarksCount: benchmarks.count || 0,
+          totalInsightsCount: insights.count || 0,
+          hasAiKey: (aiKeys.count || 0) > 0,
+          notificationsCount: notifications.count || 0,
+        };
+        homeStatsCache.set(userId, { data: next, timestamp: Date.now() });
+        return next;
+      })();
 
-      // Fetch recent activity
+      homeStatsInFlight.set(userId, loadPromise);
       try {
+        return await loadPromise;
+      } finally {
+        homeStatsInFlight.delete(userId);
+      }
+    };
+
+    const loadRecentActivity = async () => {
+      if (homeActivityInFlight.has(userId)) return homeActivityInFlight.get(userId)!;
+
+      const loadPromise = (async () => {
         const activities: RecentActivity[] = [];
 
-        // Recent projects
-        const { data: recentProjects } = await (supabase as any)
+        const { data: recentProjects } = await supabase
           .from("projects")
           .select("id, name, status, updated_at")
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .order("updated_at", { ascending: false })
           .limit(3);
 
-        (recentProjects || []).forEach((p: any) => {
+        (recentProjects || []).forEach((p: { id: string; name: string; status: string; updated_at: string }) => {
           activities.push({
             id: `project-${p.id}`,
             type: "project",
@@ -176,15 +217,14 @@ export default function Home() {
           });
         });
 
-        // Recent insights
-        const { data: recentInsights } = await (supabase as any)
+        const { data: recentInsights } = await supabase
           .from("insights")
           .select("id, title, type, created_at")
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .order("created_at", { ascending: false })
           .limit(3);
 
-        (recentInsights || []).forEach((i: any) => {
+        (recentInsights || []).forEach((i: { id: string; title: string; type: "warning" | "opportunity" | "improvement"; created_at: string }) => {
           activities.push({
             id: `insight-${i.id}`,
             type: "insight",
@@ -194,22 +234,69 @@ export default function Home() {
           });
         });
 
-        // Sort by most recent
-        activities.sort((a, b) => {
-          // Simple sort — most recent first based on original order
-          return 0;
-        });
+        const next = activities.slice(0, 5);
+        homeActivityCache.set(userId, { data: next, timestamp: Date.now() });
+        return next;
+      })();
 
-        setRecentActivity(activities.slice(0, 5));
-      } catch (err) {
-        console.error("Error fetching recent activity:", err);
+      homeActivityInFlight.set(userId, loadPromise);
+      try {
+        return await loadPromise;
+      } finally {
+        homeActivityInFlight.delete(userId);
       }
-
-      setStatsLoading(false);
     };
 
-    fetchStats();
-  }, [user]);
+    const cachedStats = homeStatsCache.get(userId);
+    const hasFreshStats = !!cachedStats && Date.now() - cachedStats.timestamp < HOME_CACHE_TTL;
+    if (hasFreshStats) {
+      applyStats(cachedStats.data);
+      setStatsLoading(false);
+    } else {
+      setStatsLoading(true);
+    }
+
+    const cachedActivity = homeActivityCache.get(userId);
+    const hasFreshActivity = !!cachedActivity && Date.now() - cachedActivity.timestamp < HOME_CACHE_TTL;
+    if (hasFreshActivity) {
+      setRecentActivity(cachedActivity.data);
+      setActivityLoading(false);
+    } else {
+      setActivityLoading(true);
+    }
+
+    let active = true;
+
+    loadStats()
+      .then((data) => {
+        if (!active) return;
+        applyStats(data);
+      })
+      .catch((err) => {
+        console.error("Error fetching home stats:", err);
+      })
+      .finally(() => {
+        if (!active) return;
+        setStatsLoading(false);
+      });
+
+    loadRecentActivity()
+      .then((data) => {
+        if (!active) return;
+        setRecentActivity(data);
+      })
+      .catch((err) => {
+        console.error("Error fetching recent activity:", err);
+      })
+      .finally(() => {
+        if (!active) return;
+        setActivityLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [userId]);
 
   const formatRelativeTime = (iso: string) => {
     const diff = Date.now() - new Date(iso).getTime();
@@ -370,7 +457,7 @@ export default function Home() {
               </button>
             </div>
             <div className="rounded-xl border border-border bg-card divide-y divide-border">
-              {statsLoading && (
+              {activityLoading && (
                 <div className="divide-y divide-border">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="px-4 py-3 animate-pulse">
@@ -386,7 +473,7 @@ export default function Home() {
                   ))}
                 </div>
               )}
-              {!statsLoading && recentActivity.length === 0 && (
+              {!activityLoading && recentActivity.length === 0 && (
                 <div className="flex flex-col items-center text-center py-8 px-4">
                   <Clock className="h-8 w-8 text-muted-foreground/30 mb-2" />
                   <p className="text-xs font-medium text-foreground mb-1">Nenhuma atividade ainda</p>
@@ -419,7 +506,7 @@ export default function Home() {
           <div className="space-y-3">
             <h2 className="text-base font-semibold text-foreground">Próximos Passos</h2>
             <div className="space-y-2.5">
-              {projects.length === 0 && (
+              {!isNextStepsLoading && projects.length === 0 && (
                 <div
                   className="flex items-start gap-3 p-4 rounded-xl border border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30 cursor-pointer hover:shadow-sm transition-shadow"
                   onClick={() => navigate("/projects")}
@@ -436,7 +523,7 @@ export default function Home() {
                   <ArrowRight className="h-4 w-4 text-muted-foreground mt-1 shrink-0" />
                 </div>
               )}
-              {projects.length > 0 && !projects.some((p) => p.status === "completed") && (
+              {!isNextStepsLoading && projects.length > 0 && !projects.some((p) => p.status === "completed") && (
                 <div
                   className="flex items-start gap-3 p-4 rounded-xl border border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/30 cursor-pointer hover:shadow-sm transition-shadow"
                   onClick={() => navigate("/projects")}
@@ -453,7 +540,7 @@ export default function Home() {
                   <ArrowRight className="h-4 w-4 text-muted-foreground mt-1 shrink-0" />
                 </div>
               )}
-              {projects.some((p) => p.status === "completed") && !hasAiKey && (
+              {!isNextStepsLoading && projects.some((p) => p.status === "completed") && !hasAiKey && (
                 <div
                   className="flex items-start gap-3 p-4 rounded-xl border border-purple-200 bg-purple-50/50 dark:border-purple-900 dark:bg-purple-950/30 cursor-pointer hover:shadow-sm transition-shadow"
                   onClick={() => navigate("/settings")}
@@ -470,7 +557,7 @@ export default function Home() {
                   <ArrowRight className="h-4 w-4 text-muted-foreground mt-1 shrink-0" />
                 </div>
               )}
-              {benchmarksCount === 0 && projects.some((p) => p.status === "completed") && (
+              {!isNextStepsLoading && benchmarksCount === 0 && projects.some((p) => p.status === "completed") && (
                 <div
                   className="flex items-start gap-3 p-4 rounded-xl border border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/30 cursor-pointer hover:shadow-sm transition-shadow"
                   onClick={() => navigate("/benchmark")}
@@ -510,3 +597,5 @@ export default function Home() {
     </DashboardLayout>
   );
 }
+
+

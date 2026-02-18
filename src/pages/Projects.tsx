@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { SEO } from "@/components/SEO";
@@ -794,8 +794,8 @@ export default function Projects() {
                 const projectInsights = insights[project.id] || [];
 
                 return (
-                  <>
-                    <div key={project.id} id={`project-${project.id}`} className="border border-border rounded-lg bg-card p-4 space-y-4">
+                  <React.Fragment key={project.id}>
+                    <div id={`project-${project.id}`} className="border border-border rounded-lg bg-card p-4 space-y-4">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                       <div>
                         <h2 className="text-lg font-semibold text-foreground">{project.name}</h2>
@@ -1584,7 +1584,7 @@ export default function Projects() {
                       onCancel={() => setAiAnalyzing(null)}
                     />
                   )}
-                </>
+                </React.Fragment>
                 );
               })}
             </div>

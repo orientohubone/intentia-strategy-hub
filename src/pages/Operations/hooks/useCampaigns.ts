@@ -12,8 +12,18 @@ import type { Campaign, OperationalStats, CampaignGroup, CampaignFormData } from
 import { notifyCampaignCreated, notifyCampaignDeleted, notifyCampaignStatusChanged } from "@/lib/notificationService";
 import { defaultFormData } from "../types";
 
+type CampaignsCacheState = {
+  campaigns: Campaign[];
+  stats: OperationalStats | null;
+  fetchedAt: number;
+};
+
+const CACHE_TTL_MS = 2 * 60 * 1000;
+const campaignsCache = new Map<string, CampaignsCacheState>();
+
 export function useCampaigns() {
   const { user } = useAuth();
+  const userId = user?.id;
   const { projects } = useTenantData();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [stats, setStats] = useState<OperationalStats | null>(null);
@@ -28,20 +38,47 @@ export function useCampaigns() {
   const [formData, setFormData] = useState<CampaignFormData>(defaultFormData);
 
   useEffect(() => {
-    if (user) {
-      loadCampaigns();
-      loadStats();
+    if (!userId) {
+      setCampaigns([]);
+      setStats(null);
+      setLoading(false);
+      return;
     }
-  }, [user]);
 
-  const loadCampaigns = async () => {
-    if (!user) return;
-    setLoading(true);
+    const cached = campaignsCache.get(userId);
+    if (cached) {
+      setCampaigns(cached.campaigns);
+      setStats(cached.stats);
+      setLoading(false);
+      if (Date.now() - cached.fetchedAt >= CACHE_TTL_MS) {
+        void loadCampaigns({ silent: true });
+        void loadStats({ silent: true });
+      }
+      return;
+    }
+
+    void loadCampaigns();
+    void loadStats();
+  }, [userId]);
+
+  const updateCache = (nextCampaigns: Campaign[], nextStats: OperationalStats | null) => {
+    if (!userId) return;
+    campaignsCache.set(userId, {
+      campaigns: nextCampaigns,
+      stats: nextStats,
+      fetchedAt: Date.now(),
+    });
+  };
+
+  const loadCampaigns = async (options?: { silent?: boolean }) => {
+    if (!userId) return;
+    const cached = campaignsCache.get(userId);
+    if (!options?.silent && !cached) setLoading(true);
     try {
       const { data, error } = await (supabase as any)
         .from("campaigns")
         .select("*, projects!inner(name)")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false });
 
@@ -52,25 +89,26 @@ export function useCampaigns() {
         project_name: c.projects?.name || "Sem projeto",
       }));
       setCampaigns(mapped);
+      updateCache(mapped, stats);
     } catch (error: any) {
       console.error("Error loading campaigns:", error);
       toast.error("Erro ao carregar campanhas");
     } finally {
-      setLoading(false);
+      if (!options?.silent || !cached) setLoading(false);
     }
   };
 
-  const loadStats = async () => {
-    if (!user) return;
+  const loadStats = async (options?: { silent?: boolean }) => {
+    if (!userId) return;
     try {
       const { data, error } = await (supabase as any)
         .from("v_operational_stats")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .single();
 
       if (error && error.code !== "PGRST116") throw error;
-      setStats(data || {
+      const nextStats = data || {
         total_campaigns: 0,
         active_campaigns: 0,
         paused_campaigns: 0,
@@ -78,14 +116,16 @@ export function useCampaigns() {
         draft_campaigns: 0,
         total_budget: 0,
         total_spent: 0,
-      });
+      };
+      setStats(nextStats);
+      updateCache(campaigns, nextStats);
     } catch (error: any) {
       console.error("Error loading stats:", error);
     }
   };
 
   const handleSubmit = async () => {
-    if (!user) return;
+    if (!userId) return;
     if (!formData.name.trim()) {
       toast.error("Nome da campanha é obrigatório");
       return;
@@ -101,7 +141,7 @@ export function useCampaigns() {
 
     try {
       const payload: any = {
-        user_id: user.id,
+        user_id: userId,
         name: formData.name.trim(),
         project_id: formData.project_id,
         channel: formData.channel,
@@ -117,7 +157,7 @@ export function useCampaigns() {
           .from("campaigns")
           .update(payload)
           .eq("id", editingId)
-          .eq("user_id", user.id);
+          .eq("user_id", userId);
         if (error) throw error;
         toast.success("Campanha atualizada com sucesso");
       } else {
@@ -126,7 +166,7 @@ export function useCampaigns() {
           .insert(payload);
         if (error) throw error;
         toast.success("Campanha criada com sucesso");
-        notifyCampaignCreated(user.id, formData.name.trim(), formData.channel);
+        notifyCampaignCreated(userId, formData.name.trim(), formData.channel);
       }
 
       resetForm();
@@ -154,17 +194,17 @@ export function useCampaigns() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!user) return;
+    if (!userId) return;
     try {
       const { error } = await (supabase as any)
         .from("campaigns")
         .update({ is_deleted: true })
         .eq("id", id)
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
       if (error) throw error;
       toast.success("Campanha excluída com sucesso");
       const camp = campaigns.find(c => c.id === id);
-      if (camp) notifyCampaignDeleted(user.id, camp.name);
+      if (camp) notifyCampaignDeleted(userId, camp.name);
       loadCampaigns();
       loadStats();
     } catch (error: any) {
@@ -174,7 +214,7 @@ export function useCampaigns() {
   };
 
   const handleStatusChange = async (id: string, newStatus: CampaignStatus) => {
-    if (!user) return;
+    if (!userId) return;
     try {
       const updateData: any = { status: newStatus };
       if (newStatus === "active" && !campaigns.find((c) => c.id === id)?.start_date) {
@@ -188,11 +228,11 @@ export function useCampaigns() {
         .from("campaigns")
         .update(updateData)
         .eq("id", id)
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
       if (error) throw error;
       toast.success(`Status alterado para ${CAMPAIGN_STATUS_LABELS[newStatus]}`);
       const camp = campaigns.find(c => c.id === id);
-      if (camp) notifyCampaignStatusChanged(user.id, camp.name, CAMPAIGN_STATUS_LABELS[newStatus]);
+      if (camp) notifyCampaignStatusChanged(userId, camp.name, CAMPAIGN_STATUS_LABELS[newStatus]);
       loadCampaigns();
       loadStats();
     } catch (error: any) {

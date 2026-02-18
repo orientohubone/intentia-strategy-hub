@@ -22,6 +22,11 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
 export function FloatingChat() {
+  const BUTTON_SIZE = 56;
+  const PANEL_GAP = 12;
+  const PANEL_HEIGHT = 500;
+  const VIEWPORT_PADDING = 8;
+
   const { user } = useAuth();
   const { tenantSettings } = useTenantData();
   const navigate = useNavigate();
@@ -35,7 +40,90 @@ export function FloatingChat() {
   const [unreadCount, setUnreadCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Estado para arrastar o botão
+  const [buttonPosition, setButtonPosition] = useState({ x: window.innerWidth - 100, y: window.innerHeight - 100 });
+  const [viewportSize, setViewportSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartPos = useRef({ x: 0, y: 0 });
+  const elementStartPos = useRef({ x: 0, y: 0 });
+  const dragMovedRef = useRef(false);
+
   const isPro = tenantSettings?.plan === 'professional' || tenantSettings?.plan === 'enterprise';
+
+  // Funções de arrastar para o botão
+  const handleButtonMouseDown = (e: React.MouseEvent) => {
+    if (open) return; // Não permite arrastar quando o chat está aberto
+    
+    setIsDragging(true);
+    dragMovedRef.current = false;
+    dragStartPos.current = { x: e.clientX, y: e.clientY };
+    elementStartPos.current = { x: buttonPosition.x, y: buttonPosition.y };
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging || open) return;
+
+    const deltaX = e.clientX - dragStartPos.current.x;
+    const deltaY = e.clientY - dragStartPos.current.y;
+    if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+      dragMovedRef.current = true;
+    }
+
+    const newX = elementStartPos.current.x + deltaX;
+    const newY = elementStartPos.current.y + deltaY;
+
+    // Limitar posição dentro da viewport
+    const maxX = viewportSize.width - BUTTON_SIZE;
+    const maxY = viewportSize.height - BUTTON_SIZE;
+
+    setButtonPosition({
+      x: Math.max(0, Math.min(newX, maxX)),
+      y: Math.max(0, Math.min(newY, maxY))
+    });
+  }, [isDragging, open, viewportSize.width, viewportSize.height]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const handleButtonClick = () => {
+    if (dragMovedRef.current) {
+      dragMovedRef.current = false;
+      return;
+    }
+    setOpen(!open);
+  };
+
+  useEffect(() => {
+    const onResize = () => {
+      setViewportSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
+    const maxX = viewportSize.width - BUTTON_SIZE;
+    const maxY = viewportSize.height - BUTTON_SIZE;
+    setButtonPosition((prev) => ({
+      x: Math.max(0, Math.min(prev.x, maxX)),
+      y: Math.max(0, Math.min(prev.y, maxY)),
+    }));
+  }, [viewportSize.width, viewportSize.height]);
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   // Buscar ticket de chat ativo (último aberto/em andamento)
   const loadActiveTicket = useCallback(async () => {
@@ -171,8 +259,9 @@ export function FloatingChat() {
       if (error) throw error;
       setNewMessage("");
       loadMessages();
-    } catch (error: any) {
-      toast.error("Erro ao enviar: " + error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Erro desconhecido";
+      toast.error("Erro ao enviar: " + message);
     } finally {
       setSending(false);
     }
@@ -216,6 +305,26 @@ export function FloatingChat() {
   const userName = user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Eu';
   const userAvatarUrl = user?.user_metadata?.avatar_url || '';
   const userInitial = userName.charAt(0).toUpperCase();
+  const panelWidth = Math.min(384, viewportSize.width - (VIEWPORT_PADDING * 2));
+  const centeredLeft = buttonPosition.x + (BUTTON_SIZE / 2) - (panelWidth / 2);
+  const clampedLeft = Math.max(
+    VIEWPORT_PADDING,
+    Math.min(centeredLeft, viewportSize.width - panelWidth - VIEWPORT_PADDING)
+  );
+  const preferredTop = buttonPosition.y - PANEL_HEIGHT - PANEL_GAP;
+  const fallbackTop = buttonPosition.y + BUTTON_SIZE + PANEL_GAP;
+  const rawTop = preferredTop >= VIEWPORT_PADDING ? preferredTop : fallbackTop;
+  const clampedTop = Math.max(
+    VIEWPORT_PADDING,
+    Math.min(rawTop, viewportSize.height - PANEL_HEIGHT - VIEWPORT_PADDING)
+  );
+  const floatingPanelStyle = {
+    left: `${clampedLeft}px`,
+    top: `${clampedTop}px`,
+    width: `${panelWidth}px`,
+    height: `${PANEL_HEIGHT}px`,
+    maxHeight: `calc(100vh - ${VIEWPORT_PADDING * 2}px)`,
+  } as const;
 
   if (!user) return null;
 
@@ -223,17 +332,29 @@ export function FloatingChat() {
   if (!isPro) {
     return (
       <>
-        {/* Botão flutuante com lock */}
+        {/* Botão flutuante com lock - agora arrastável */}
         <button
-          onClick={() => setOpen(!open)}
-          className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-primary shadow-lg shadow-primary/30 flex items-center justify-center text-white hover:scale-105 transition-transform"
+          className={`fixed z-50 h-14 w-14 rounded-full bg-primary shadow-lg shadow-primary/30 flex items-center justify-center text-white hover:scale-105 transition-transform ${
+            isDragging ? 'cursor-grabbing' : 'cursor-grab'
+          }`}
+          style={{
+            left: `${buttonPosition.x}px`,
+            top: `${buttonPosition.y}px`,
+            right: 'auto',
+            bottom: 'auto'
+          }}
+          onMouseDown={handleButtonMouseDown}
+          onClick={handleButtonClick}
         >
           {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
         </button>
 
         {/* Upgrade panel */}
         {open && (
-          <div className="fixed bottom-24 right-6 z-50 w-80 sm:w-96 bg-card border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200">
+          <div
+            className="fixed z-50 bg-card border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200"
+            style={floatingPanelStyle}
+          >
             <div className="bg-gradient-to-r from-primary to-orange-500 p-6 text-white text-center">
               <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-3">
                 <Lock className="h-7 w-7" />
@@ -290,10 +411,19 @@ export function FloatingChat() {
 
   return (
     <>
-      {/* Botão flutuante */}
+      {/* Botão flutuante - agora arrastável */}
       <button
-        onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-primary shadow-lg shadow-primary/30 flex items-center justify-center text-white hover:scale-105 transition-transform"
+        className={`fixed z-50 h-14 w-14 rounded-full bg-primary shadow-lg shadow-primary/30 flex items-center justify-center text-white hover:scale-105 transition-transform ${
+          isDragging ? 'cursor-grabbing' : 'cursor-grab'
+        }`}
+        style={{
+          left: `${buttonPosition.x}px`,
+          top: `${buttonPosition.y}px`,
+          right: 'auto',
+          bottom: 'auto'
+        }}
+        onMouseDown={handleButtonMouseDown}
+        onClick={handleButtonClick}
       >
         {open ? (
           <ChevronDown className="h-6 w-6" />
@@ -309,14 +439,15 @@ export function FloatingChat() {
         )}
       </button>
 
-      {/* Chat Panel */}
+      {/* Chat Panel - fixo, sem arrastar */}
       {open && (
         <div 
           className={`fixed z-50 bg-card border shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 fade-in duration-200 ${
             expanded 
               ? 'inset-0 rounded-none' 
-              : 'bottom-24 right-6 w-80 sm:w-96 h-[500px] rounded-2xl'
+              : 'rounded-2xl'
           }`}
+          style={!expanded ? floatingPanelStyle : undefined}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary to-orange-500 text-white shrink-0">
@@ -461,3 +592,4 @@ export function FloatingChat() {
     </>
   );
 }
+

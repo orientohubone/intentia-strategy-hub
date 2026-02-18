@@ -24,6 +24,18 @@
   </head>
 
   <body>
+    <script>
+      // Prevenir flash de tema antes do React carregar
+      (function() {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+        document.documentElement.style.colorScheme = theme || 'light';
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -40,11 +40,46 @@ type ChannelScore = {
   risks?: string[] | null;
 };
 
+type CampaignListItem = {
+  id: string;
+  name: string;
+  channel: CampaignChannel;
+  status: CampaignStatus;
+  budget_total: number | null;
+  budget_spent: number | null;
+  project_id: string;
+  created_at: string;
+};
+
+type DashboardStatsState = {
+  insights: Insight[];
+  audiencesCount: number;
+  benchmarksCount: number;
+  insightsThisWeek: number;
+  projectsThisMonth: number;
+  totalInsightsCount: number;
+  recentCampaigns: {
+    id: string;
+    name: string;
+    channel: CampaignChannel;
+    status: CampaignStatus;
+    budget_total: number;
+    budget_spent: number;
+    project_name: string;
+  }[];
+};
+
 const statusMap = {
   pending: "pendente",
   analyzing: "em_analise",
   completed: "completo",
 } as const;
+
+const DASHBOARD_CACHE_TTL = 1000 * 60 * 2;
+const dashboardStatsCache = new Map<string, { data: DashboardStatsState; timestamp: number }>();
+const dashboardStatsInFlight = new Map<string, Promise<DashboardStatsState>>();
+const dashboardChannelsCache = new Map<string, { data: Record<string, ChannelScore[]>; timestamp: number }>();
+const dashboardChannelsInFlight = new Map<string, Promise<Record<string, ChannelScore[]>>>();
 
 const formatDate = (iso?: string | null) => {
   if (!iso) return "Sem atualização";
@@ -54,6 +89,7 @@ const formatDate = (iso?: string | null) => {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const userId = user?.id;
   const { projects, loading } = useTenantData();
   const [insights, setInsights] = useState<Insight[]>([]);
   const [channelScores, setChannelScores] = useState<Record<string, ChannelScore[]>>({});
@@ -77,132 +113,116 @@ export default function Dashboard() {
   }[]>([]);
   const [campaignsExpanded, setCampaignsExpanded] = useState(false);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [channelsLoading, setChannelsLoading] = useState(true);
   const fullName = (user?.user_metadata?.full_name as string | undefined) || user?.email || "Usuário";
 
   useEffect(() => {
-    const fetchInsights = async () => {
-      if (!user) return;
-      try {
-        const { data, error } = await (supabase as any)
-          .from("insights")
-          .select("id, type, title, description, action, created_at")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(6);
-        
-        if (error) {
-          console.error("Error fetching insights:", error);
-          setInsights([]);
-        } else {
-          setInsights((data || []) as Insight[]);
-        }
+    if (!userId) {
+      setInsights([]);
+      setAudiencesCount(0);
+      setBenchmarksCount(0);
+      setInsightsThisWeek(0);
+      setProjectsThisMonth(0);
+      setTotalInsightsCount(0);
+      setRecentCampaigns([]);
+      setStatsLoading(false);
+      return;
+    }
 
-        // Get total insights count
-        const { count: totalCount, error: totalError } = await supabase
-          .from("insights")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id);
-        if (!totalError) setTotalInsightsCount(totalCount || 0);
+    const applyState = (next: DashboardStatsState) => {
+      setInsights(next.insights);
+      setAudiencesCount(next.audiencesCount);
+      setBenchmarksCount(next.benchmarksCount);
+      setInsightsThisWeek(next.insightsThisWeek);
+      setProjectsThisMonth(next.projectsThisMonth);
+      setTotalInsightsCount(next.totalInsightsCount);
+      setRecentCampaigns(next.recentCampaigns);
+    };
 
-        // Calculate insights created this week
+    const cached = dashboardStatsCache.get(userId);
+    const isValidCache = cached && Date.now() - cached.timestamp < DASHBOARD_CACHE_TTL;
+    if (isValidCache) {
+      applyState(cached.data);
+      setStatsLoading(false);
+    } else {
+      setStatsLoading(true);
+    }
+
+    const loadStats = async () => {
+      if (dashboardStatsInFlight.has(userId)) {
+        return dashboardStatsInFlight.get(userId)!;
+      }
+
+      const loadPromise = (async () => {
         const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-        const { count: weeklyCount, error: weeklyError } = await supabase
-          .from("insights")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .gte("created_at", oneWeekAgo);
-        
-        if (weeklyError) {
-          console.error("Error fetching weekly insights:", weeklyError);
-          setInsightsThisWeek(0);
-        } else {
-          setInsightsThisWeek(weeklyCount || 0);
-        }
-      } catch (err) {
-        console.error("Unexpected error fetching insights:", err);
-        setInsights([]);
-        setInsightsThisWeek(0);
-      }
-    };
+        const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    const fetchAudiencesCount = async () => {
-      if (!user) return;
-      try {
-        const { count, error } = await supabase
-          .from("audiences")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id);
-        
-        if (error) {
-          console.error("Error fetching audiences count:", error);
-          setAudiencesCount(0);
-        } else {
-          setAudiencesCount(count || 0);
-        }
-      } catch (err) {
-        console.error("Unexpected error fetching audiences:", err);
-        setAudiencesCount(0);
-      }
-    };
+        const [insightsRes, totalInsightsRes, weeklyInsightsRes, audiencesRes, benchmarksRes, projectsMonthRes, campaignsRes] = await Promise.all([
+          supabase
+            .from("insights")
+            .select("id, type, title, description, action, created_at")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false })
+            .limit(6),
+          supabase
+            .from("insights")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", userId),
+          supabase
+            .from("insights")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", userId)
+            .gte("created_at", oneWeekAgo),
+          supabase
+            .from("audiences")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", userId),
+          supabase
+            .from("benchmarks")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", userId),
+          supabase
+            .from("projects")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", userId)
+            .gte("created_at", oneMonthAgo),
+          supabase
+            .from("campaigns")
+            .select("id, name, channel, status, budget_total, budget_spent, project_id, created_at")
+            .eq("user_id", userId)
+            .eq("is_deleted", false)
+            .order("created_at", { ascending: false })
+            .limit(6),
+        ]);
 
-    const fetchBenchmarksCount = async () => {
-      if (!user) return;
-      try {
-        const { count, error } = await supabase
-          .from("benchmarks")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id);
-        
-        if (error) {
-          console.error("Error fetching benchmarks count:", error);
-          setBenchmarksCount(0);
-        } else {
-          setBenchmarksCount(count || 0);
+        if (insightsRes.error) {
+          console.error("Error fetching insights:", insightsRes.error);
         }
-      } catch (err) {
-        console.error("Unexpected error fetching benchmarks:", err);
-        setBenchmarksCount(0);
-      }
-    };
-
-    const fetchProjectsThisMonth = async () => {
-      if (!user) return;
-      const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      try {
-        const { count, error } = await supabase
-          .from("projects")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .gte("created_at", oneMonthAgo);
-        
-        if (error) {
-          console.error("Error fetching projects this month:", error);
-          setProjectsThisMonth(0);
-        } else {
-          setProjectsThisMonth(count || 0);
+        if (weeklyInsightsRes.error) {
+          console.error("Error fetching weekly insights:", weeklyInsightsRes.error);
         }
-      } catch (err) {
-        console.error("Unexpected error fetching projects:", err);
-        setProjectsThisMonth(0);
-      }
-    };
+        if (audiencesRes.error) {
+          console.error("Error fetching audiences count:", audiencesRes.error);
+        }
+        if (benchmarksRes.error) {
+          console.error("Error fetching benchmarks count:", benchmarksRes.error);
+        }
+        if (projectsMonthRes.error) {
+          console.error("Error fetching projects this month:", projectsMonthRes.error);
+        }
+        if (campaignsRes.error) {
+          console.error("Error fetching campaigns:", campaignsRes.error);
+        }
 
-    const fetchRecentCampaigns = async () => {
-      if (!user) return;
-      try {
-        const { data, error } = await (supabase as any)
-          .from("campaigns")
-          .select("id, name, channel, status, budget_total, budget_spent, project_id, created_at")
-          .eq("user_id", user.id)
-          .eq("is_deleted", false)
-          .order("created_at", { ascending: false })
-          .limit(6);
-        if (error) {
-          console.error("Error fetching campaigns:", error);
-          setRecentCampaigns([]);
-        } else {
-          const projectMap = new Map(projects.map(p => [p.id, p.name]));
-          setRecentCampaigns((data || []).map((c: any) => ({
+        const projectMap = new Map(projects.map((p) => [p.id, p.name]));
+        const next: DashboardStatsState = {
+          insights: ((insightsRes.data || []) as Insight[]),
+          audiencesCount: audiencesRes.count || 0,
+          benchmarksCount: benchmarksRes.count || 0,
+          insightsThisWeek: weeklyInsightsRes.count || 0,
+          projectsThisMonth: projectsMonthRes.count || 0,
+          totalInsightsCount: totalInsightsRes.count || 0,
+          recentCampaigns: ((campaignsRes.data || []) as CampaignListItem[]).map((c) => ({
             id: c.id,
             name: c.name,
             channel: c.channel,
@@ -210,48 +230,105 @@ export default function Dashboard() {
             budget_total: c.budget_total || 0,
             budget_spent: c.budget_spent || 0,
             project_name: projectMap.get(c.project_id) || "Projeto",
-          })));
-        }
-      } catch (err) {
-        console.error("Unexpected error fetching campaigns:", err);
-        setRecentCampaigns([]);
+          })),
+        };
+
+        dashboardStatsCache.set(userId, { data: next, timestamp: Date.now() });
+        return next;
+      })();
+
+      dashboardStatsInFlight.set(userId, loadPromise);
+      try {
+        return await loadPromise;
+      } finally {
+        dashboardStatsInFlight.delete(userId);
       }
     };
 
-    const fetchAllStats = async () => {
-      setStatsLoading(true);
-      await Promise.all([
-        fetchInsights(),
-        fetchAudiencesCount(),
-        fetchBenchmarksCount(),
-        fetchProjectsThisMonth(),
-        fetchRecentCampaigns(),
-      ]);
-      setStatsLoading(false);
-    };
+    let active = true;
+    loadStats()
+      .then((next) => {
+        if (!active) return;
+        applyState(next);
+      })
+      .catch((err) => {
+        console.error("Unexpected error fetching dashboard stats:", err);
+      })
+      .finally(() => {
+        if (!active) return;
+        setStatsLoading(false);
+      });
 
-    fetchAllStats();
-  }, [user]);
+    return () => {
+      active = false;
+    };
+  }, [userId, projects]);
 
   useEffect(() => {
-    const fetchChannelScores = async () => {
-      if (!user || projects.length === 0) return;
-      const { data } = await (supabase as any)
-        .from("project_channel_scores")
-        .select("project_id, channel, score, objective, funnel_role, is_recommended, risks")
-        .eq("user_id", user.id);
+    if (!userId || projects.length === 0) {
+      setChannelScores({});
+      setChannelsLoading(false);
+      return;
+    }
 
-      const grouped = (data || []).reduce((acc, item) => {
-        acc[item.project_id] = acc[item.project_id] || [];
-        acc[item.project_id].push(item as ChannelScore);
-        return acc;
-      }, {} as Record<string, ChannelScore[]>);
+    const cached = dashboardChannelsCache.get(userId);
+    const isValidCache = cached && Date.now() - cached.timestamp < DASHBOARD_CACHE_TTL;
+    if (isValidCache) {
+      setChannelScores(cached.data);
+      setChannelsLoading(false);
+    } else {
+      setChannelsLoading(true);
+    }
 
-      setChannelScores(grouped);
+    const loadChannels = async () => {
+      if (dashboardChannelsInFlight.has(userId)) {
+        return dashboardChannelsInFlight.get(userId)!;
+      }
+
+      const loadPromise = (async () => {
+        const { data, error } = await supabase
+          .from("project_channel_scores")
+          .select("project_id, channel, score, objective, funnel_role, is_recommended, risks")
+          .eq("user_id", userId);
+
+        if (error) {
+          console.error("Error fetching channel scores:", error);
+          return {} as Record<string, ChannelScore[]>;
+        }
+
+        const grouped = (data || []).reduce((acc, item) => {
+          acc[item.project_id] = acc[item.project_id] || [];
+          acc[item.project_id].push(item as ChannelScore);
+          return acc;
+        }, {} as Record<string, ChannelScore[]>);
+
+        dashboardChannelsCache.set(userId, { data: grouped, timestamp: Date.now() });
+        return grouped;
+      })();
+
+      dashboardChannelsInFlight.set(userId, loadPromise);
+      try {
+        return await loadPromise;
+      } finally {
+        dashboardChannelsInFlight.delete(userId);
+      }
     };
 
-    fetchChannelScores();
-  }, [user, projects]);
+    let active = true;
+    loadChannels()
+      .then((grouped) => {
+        if (!active) return;
+        setChannelScores(grouped);
+      })
+      .finally(() => {
+        if (!active) return;
+        setChannelsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [userId, projects.length]);
 
   const projectCards = useMemo(() => {
     return projects.map((project) => {
@@ -291,7 +368,7 @@ export default function Dashboard() {
     if (projects.length > 0 && !selectedChannelProjectId) {
       setSelectedChannelProjectId(projects[0]?.id || null);
     }
-  }, [projects]);
+  }, [projects, selectedChannelProjectId]);
 
   const visibleInsights = insightsExpanded ? insights : insights.slice(0, 3);
 
@@ -669,7 +746,7 @@ export default function Dashboard() {
                 )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {loading && (
+                {(loading || channelsLoading) && (
                   <>
                     {[1, 2, 3, 4].map((i) => (
                       <div key={i} className="rounded-xl border border-border bg-card p-4 animate-pulse">
@@ -684,7 +761,7 @@ export default function Dashboard() {
                     ))}
                   </>
                 )}
-                {!loading && activeChannelScores.length === 0 && (
+                {!loading && !channelsLoading && activeChannelScores.length === 0 && (
                   <div className="col-span-full flex flex-col items-center text-center py-8 px-4 rounded-xl border border-dashed border-border bg-muted/30">
                     <Globe className="h-10 w-10 text-muted-foreground/30 mb-3" />
                     <p className="text-sm font-medium text-foreground mb-1">Descubra os melhores canais para seu negócio</p>

@@ -81,6 +81,15 @@ interface DashboardSidebarProps {
   onMobileClose?: () => void;
 }
 
+type SidebarWorkspaceCache = {
+  tenantName: string;
+  projectCount: number;
+  fetchedAt: number;
+};
+
+const WORKSPACE_CACHE_TTL_MS = 2 * 60 * 1000;
+const workspaceCache = new Map<string, SidebarWorkspaceCache>();
+
 export function DashboardSidebar({ mobileOpen = false, onMobileClose }: DashboardSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(
@@ -91,41 +100,74 @@ export function DashboardSidebar({ mobileOpen = false, onMobileClose }: Dashboar
   const [loading, setLoading] = useState(true);
   const location = useLocation();
   const { user } = useAuth();
+  const userId = user?.id;
 
   useEffect(() => {
-    loadWorkspaceData();
-  }, [user]);
+    if (!userId) {
+      setProjectCount(0);
+      setTenantName(null);
+      setLoading(false);
+      return;
+    }
 
-  const loadWorkspaceData = async () => {
-    if (!user) return;
+    const cached = workspaceCache.get(userId);
+    if (cached) {
+      setTenantName(cached.tenantName);
+      setProjectCount(cached.projectCount);
+      setLoading(false);
 
-    setLoading(true);
+      if (Date.now() - cached.fetchedAt >= WORKSPACE_CACHE_TTL_MS) {
+        void loadWorkspaceData(userId, { silent: true });
+      }
+      return;
+    }
+
+    void loadWorkspaceData(userId);
+  }, [userId]);
+
+  const loadWorkspaceData = async (
+    targetUserId: string = userId ?? "",
+    options?: { silent?: boolean }
+  ) => {
+    if (!targetUserId) return;
+    const cached = workspaceCache.get(targetUserId);
+    const hasWorkspaceData = !!cached || tenantName !== null;
+
+    if (!hasWorkspaceData && !options?.silent) {
+      setLoading(true);
+    }
     try {
       // Load tenant settings
       const { data: tenant } = await (supabase as any)
         .from("tenant_settings")
         .select("company_name")
-        .eq("user_id", user.id)
+        .eq("user_id", targetUserId)
         .single();
 
-      if (tenant && tenant?.company_name) {
-        setTenantName(tenant.company_name);
-      } else {
-        setTenantName("Minha Empresa");
-      }
+      const nextTenantName = tenant?.company_name || "Minha Empresa";
+      setTenantName(nextTenantName);
 
       // Load project count
       const { count } = await supabase
         .from("projects")
         .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
+        .eq("user_id", targetUserId);
 
-      setProjectCount(count || 0);
+      const nextProjectCount = count || 0;
+      setProjectCount(nextProjectCount);
+      workspaceCache.set(targetUserId, {
+        tenantName: nextTenantName,
+        projectCount: nextProjectCount,
+        fetchedAt: Date.now(),
+      });
     } catch (error) {
       console.error("Error loading workspace data:", error);
-      setTenantName("Minha Empresa");
+      setTenantName((prev) => prev ?? cached?.tenantName ?? "Minha Empresa");
+      setProjectCount((prev) => prev || cached?.projectCount || 0);
     } finally {
-      setLoading(false);
+      if (!hasWorkspaceData) {
+        setLoading(false);
+      }
     }
   };
 

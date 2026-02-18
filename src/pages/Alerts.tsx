@@ -70,8 +70,19 @@ const channelColors: Record<string, string> = {
   tiktok: "bg-zinc-500/10 text-zinc-600 border-zinc-500/20",
 };
 
+type AlertsCacheState = {
+  projects: Project[];
+  insightAlerts: InsightAlert[];
+  channelRisks: ChannelRisk[];
+  fetchedAt: number;
+};
+
+const CACHE_TTL_MS = 2 * 60 * 1000;
+const alertsCache = new Map<string, AlertsCacheState>();
+
 export default function Alerts() {
   const { user } = useAuth();
+  const userId = user?.id;
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -94,19 +105,40 @@ export default function Alerts() {
   const allSectionKeys = ["premature", "not_recommended", "risks", "warnings"];
 
   useEffect(() => {
-    if (user) loadAlerts();
-  }, [user]);
+    if (!userId) {
+      setProjects([]);
+      setInsightAlerts([]);
+      setChannelRisks([]);
+      setLoading(false);
+      return;
+    }
 
-  const loadAlerts = async () => {
-    if (!user) return;
-    setLoading(true);
+    const cached = alertsCache.get(userId);
+    if (cached) {
+      setProjects(cached.projects);
+      setInsightAlerts(cached.insightAlerts);
+      setChannelRisks(cached.channelRisks);
+      setLoading(false);
+      if (Date.now() - cached.fetchedAt >= CACHE_TTL_MS) {
+        void loadAlerts({ silent: true });
+      }
+      return;
+    }
+
+    void loadAlerts();
+  }, [userId]);
+
+  const loadAlerts = async (options?: { silent?: boolean }) => {
+    if (!userId) return;
+    const cached = alertsCache.get(userId);
+    if (!options?.silent && !cached) setLoading(true);
 
     try {
       // Load projects
       const { data: projectData } = await supabase
         .from("projects")
         .select("id, name, score, url, niche")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .order("name");
 
       const projectsList = (projectData || []) as Project[];
@@ -118,7 +150,7 @@ export default function Alerts() {
       const { data: insightData } = await (supabase as any)
         .from("insights")
         .select("id, project_id, type, title, description, action, created_at")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .eq("type", "warning")
         .order("created_at", { ascending: false });
 
@@ -132,7 +164,7 @@ export default function Alerts() {
       const { data: channelData } = await (supabase as any)
         .from("project_channel_scores")
         .select("project_id, channel, score, is_recommended, risks, objective")
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
 
       const risks: ChannelRisk[] = (channelData || [])
         .filter((c: any) => !c.is_recommended || c.score < 50 || (c.risks && c.risks.length > 0))
@@ -142,10 +174,16 @@ export default function Alerts() {
           project_name: projectMap.get(c.project_id) || "Projeto desconhecido",
         }));
       setChannelRisks(risks);
+      alertsCache.set(userId, {
+        projects: projectsList,
+        insightAlerts: alerts,
+        channelRisks: risks,
+        fetchedAt: Date.now(),
+      });
     } catch (error) {
       console.error("Error loading alerts:", error);
     } finally {
-      setLoading(false);
+      if (!options?.silent || !cached) setLoading(false);
     }
   };
 

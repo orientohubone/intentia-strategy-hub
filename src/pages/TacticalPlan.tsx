@@ -118,8 +118,27 @@ interface ChannelScore {
   risks: string[] | null;
 }
 
+type TacticalProjectsCacheState = {
+  projects: ProjectOption[];
+  selectedProjectId: string | null;
+  fetchedAt: number;
+};
+
+type TacticalProjectDataCacheState = {
+  tacticalPlan: TacticalPlanData | null;
+  channelScores: ChannelScore[];
+  channelTacticalScores: ChannelTacticalScore[];
+  projectAudiences: ProjectAudience[];
+  fetchedAt: number;
+};
+
+const CACHE_TTL_MS = 2 * 60 * 1000;
+const tacticalProjectsCache = new Map<string, TacticalProjectsCacheState>();
+const tacticalProjectDataCache = new Map<string, TacticalProjectDataCacheState>();
+
 export default function TacticalPlan() {
   const { user } = useAuth();
+  const userId = user?.id;
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [tacticalPlan, setTacticalPlan] = useState<TacticalPlanData | null>(null);
@@ -134,93 +153,141 @@ export default function TacticalPlan() {
   const [playbook, setPlaybook] = useState<PlaybookDirective[]>([]);
   const [runningPlan, setRunningPlan] = useState(false);
 
-  useEffect(() => {
-    if (user) loadProjects();
-  }, [user]);
+  const getProjectCacheKey = (projectId: string) => `${userId}:${projectId}`;
 
   useEffect(() => {
-    if (selectedProjectId && user) {
-      setLoadingPlan(true);
-      loadTacticalPlan();
-      loadChannelScores().then((scores) => loadChannelTacticalScores(scores));
-      loadProjectAudiences();
+    if (!userId) {
+      setProjects([]);
+      setSelectedProjectId(null);
+      setLoading(false);
+      return;
     }
-  }, [selectedProjectId, user]);
 
-  const loadProjects = async () => {
-    if (!user) return;
-    setLoading(true);
+    const cached = tacticalProjectsCache.get(userId);
+    if (cached) {
+      setProjects(cached.projects);
+      setSelectedProjectId((prev) => prev || cached.selectedProjectId);
+      setLoading(false);
+
+      if (Date.now() - cached.fetchedAt >= CACHE_TTL_MS) {
+        void loadProjects({ silent: true });
+      }
+      return;
+    }
+
+    void loadProjects();
+  }, [userId]);
+
+  useEffect(() => {
+    if (!selectedProjectId || !userId) return;
+
+    const key = getProjectCacheKey(selectedProjectId);
+    const cached = tacticalProjectDataCache.get(key);
+
+    if (cached) {
+      setTacticalPlan(cached.tacticalPlan);
+      setChannelScores(cached.channelScores);
+      setChannelTacticalScores(cached.channelTacticalScores);
+      setProjectAudiences(cached.projectAudiences);
+      setLoadingPlan(false);
+
+      if (Date.now() - cached.fetchedAt >= CACHE_TTL_MS) {
+        void loadProjectData(selectedProjectId, { silent: true });
+      }
+      return;
+    }
+
+    void loadProjectData(selectedProjectId);
+  }, [selectedProjectId, userId]);
+
+  const loadProjects = async (options?: { silent?: boolean }) => {
+    if (!userId) return;
+    const cached = tacticalProjectsCache.get(userId);
+    if (!options?.silent && !cached) setLoading(true);
     try {
       const { data, error } = await supabase
         .from("projects")
         .select("id, name, score, status")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setProjects(data || []);
-      if (data && data.length > 0 && !selectedProjectId) {
-        setSelectedProjectId(data[0].id);
+      const nextProjects = data || [];
+      const nextSelectedProjectId = selectedProjectId || (nextProjects[0]?.id ?? null);
+
+      setProjects(nextProjects);
+      if (nextSelectedProjectId && !selectedProjectId) {
+        setSelectedProjectId(nextSelectedProjectId);
       }
+
+      tacticalProjectsCache.set(userId, {
+        projects: nextProjects,
+        selectedProjectId: nextSelectedProjectId,
+        fetchedAt: Date.now(),
+      });
     } catch (err) {
       console.error("Error loading projects:", err);
     } finally {
-      setLoading(false);
+      if (!options?.silent || !cached) setLoading(false);
     }
   };
 
-  const loadProjectAudiences = async () => {
-    if (!user || !selectedProjectId) {
+  const loadProjectAudiences = async (targetProjectId: string = selectedProjectId || "") => {
+    if (!userId || !targetProjectId) {
       setProjectAudiences([]);
-      return;
+      return [];
     }
     try {
       const { data, error } = await (supabase as any)
         .from("audiences")
         .select("id, name, description, industry, company_size, location, keywords")
-        .eq("user_id", user.id)
-        .eq("project_id", selectedProjectId)
+        .eq("user_id", userId)
+        .eq("project_id", targetProjectId)
         .order("name");
 
       if (error) throw error;
-      setProjectAudiences(data || []);
+      const next = data || [];
+      setProjectAudiences(next);
+      return next as ProjectAudience[];
     } catch (err) {
       console.error("Error loading project audiences:", err);
       setProjectAudiences([]);
+      return [];
     }
   };
 
-  const loadTacticalPlan = async () => {
-    if (!user || !selectedProjectId) {
-      setLoadingPlan(false);
-      return;
+  const loadTacticalPlan = async (targetProjectId: string = selectedProjectId || "") => {
+    if (!userId || !targetProjectId) {
+      setTacticalPlan(null);
+      return null;
     }
     try {
       const { data, error } = await (supabase as any)
         .from("tactical_plans")
         .select("*")
-        .eq("project_id", selectedProjectId)
-        .eq("user_id", user.id)
+        .eq("project_id", targetProjectId)
+        .eq("user_id", userId)
         .maybeSingle();
 
       if (error) throw error;
-      setTacticalPlan(data || null);
+      const next = data || null;
+      setTacticalPlan(next);
+      return next as TacticalPlanData | null;
     } catch (err) {
       console.error("Error loading tactical plan:", err);
       setTacticalPlan(null);
-    } finally {
-      setLoadingPlan(false);
+      return null;
     }
   };
 
-  const loadChannelScores = async (): Promise<ChannelScore[]> => {
-    if (!user || !selectedProjectId) return [];
+  const loadChannelScores = async (targetProjectId: string = selectedProjectId || ""): Promise<ChannelScore[]> => {
+    if (!userId || !targetProjectId) return [];
     try {
       const { data, error } = await supabase
         .from("project_channel_scores")
         .select("channel, score, objective, funnel_role, is_recommended, risks")
-        .eq("project_id", selectedProjectId)
-        .eq("user_id", user.id);
+        .eq("project_id", targetProjectId)
+        .eq("user_id", userId);
 
       if (error) throw error;
       const scores = (data as ChannelScore[]) || [];
@@ -229,6 +296,40 @@ export default function TacticalPlan() {
     } catch (err) {
       console.error("Error loading channel scores:", err);
       return [];
+    }
+  };
+
+  const loadProjectData = async (targetProjectId: string, options?: { silent?: boolean }) => {
+    if (!userId || !targetProjectId) return;
+    const key = getProjectCacheKey(targetProjectId);
+    const cached = tacticalProjectDataCache.get(key);
+    if (!options?.silent && !cached) setLoadingPlan(true);
+
+    try {
+      const [plan, scores, audiences] = await Promise.all([
+        loadTacticalPlan(targetProjectId),
+        loadChannelScores(targetProjectId),
+        loadProjectAudiences(targetProjectId),
+      ]);
+
+      const cachedTacticalScores = tacticalProjectDataCache.get(key)?.channelTacticalScores || [];
+      if (cachedTacticalScores.length > 0) {
+        setChannelTacticalScores(cachedTacticalScores);
+      } else {
+        setChannelTacticalScores([]);
+      }
+
+      tacticalProjectDataCache.set(key, {
+        tacticalPlan: plan,
+        channelScores: scores,
+        channelTacticalScores: cachedTacticalScores,
+        projectAudiences: audiences,
+        fetchedAt: Date.now(),
+      });
+
+      void loadChannelTacticalScores(scores, targetProjectId);
+    } finally {
+      if (!options?.silent || !cached) setLoadingPlan(false);
     }
   };
 
@@ -274,15 +375,18 @@ export default function TacticalPlan() {
     return { tactical_score: tactical, coherence_score: coherence, clarity_score: clarity, segmentation_score: segScore };
   };
 
-  const loadChannelTacticalScores = async (stratScores?: ChannelScore[]) => {
-    if (!user || !selectedProjectId) return;
+  const loadChannelTacticalScores = async (
+    stratScores?: ChannelScore[],
+    targetProjectId: string = selectedProjectId || ""
+  ) => {
+    if (!userId || !targetProjectId) return;
     const activeStratScores = stratScores || channelScores;
     try {
       const { data: plan } = await (supabase as any)
         .from("tactical_plans")
         .select("id")
-        .eq("project_id", selectedProjectId)
-        .eq("user_id", user.id)
+        .eq("project_id", targetProjectId)
+        .eq("user_id", userId)
         .maybeSingle();
       if (!plan) return;
 
@@ -290,7 +394,7 @@ export default function TacticalPlan() {
         .from("tactical_channel_plans")
         .select("*")
         .eq("tactical_plan_id", plan.id)
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
 
       if (!chPlans || chPlans.length === 0) return;
 
@@ -298,19 +402,19 @@ export default function TacticalPlan() {
         .from("copy_frameworks")
         .select("channel")
         .eq("tactical_plan_id", plan.id)
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
 
       const { data: allSegs } = await (supabase as any)
         .from("segmentation_plans")
         .select("channel, message_angle, priority")
         .eq("tactical_plan_id", plan.id)
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
 
       const { data: allTests } = await (supabase as any)
         .from("testing_plans")
         .select("channel")
         .eq("tactical_plan_id", plan.id)
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
 
       const computed: ChannelTacticalScore[] = [];
 
@@ -337,6 +441,15 @@ export default function TacticalPlan() {
       }
 
       setChannelTacticalScores(computed);
+      const key = getProjectCacheKey(targetProjectId);
+      const cached = tacticalProjectDataCache.get(key);
+      if (cached) {
+        tacticalProjectDataCache.set(key, {
+          ...cached,
+          channelTacticalScores: computed,
+          fetchedAt: Date.now(),
+        });
+      }
 
       // Update parent plan scores (average of channels)
       const avg = (key: keyof ChannelTacticalScore) =>
@@ -373,7 +486,9 @@ export default function TacticalPlan() {
   };
 
   const refreshScores = () => {
-    loadChannelTacticalScores();
+    if (selectedProjectId) {
+      void loadChannelTacticalScores(undefined, selectedProjectId);
+    }
   };
 
   const createTacticalPlan = async (templateId?: string | null) => {
@@ -402,6 +517,9 @@ export default function TacticalPlan() {
       }
 
       setTacticalPlan(plan);
+      if (selectedProjectId) {
+        tacticalProjectDataCache.delete(getProjectCacheKey(selectedProjectId));
+      }
       toast.success(
         templateId
           ? "Plano tático criado com template aplicado!"
@@ -504,6 +622,10 @@ export default function TacticalPlan() {
       await (supabase as any).from("tactical_plans").delete().eq("id", tacticalPlan.id);
 
       setTacticalPlan(null);
+      setChannelTacticalScores([]);
+      if (selectedProjectId) {
+        tacticalProjectDataCache.delete(getProjectCacheKey(selectedProjectId));
+      }
       toast.success("Plano tático excluído. Escolha um template para recomeçar.");
     } catch (err) {
       console.error("Error deleting tactical plan:", err);
@@ -638,6 +760,17 @@ export default function TacticalPlan() {
         .update({ status: "completed" })
         .eq("id", tacticalPlan.id);
       setTacticalPlan((prev) => prev ? { ...prev, status: "completed" } : prev);
+      if (selectedProjectId) {
+        const key = getProjectCacheKey(selectedProjectId);
+        const cached = tacticalProjectDataCache.get(key);
+        if (cached && cached.tacticalPlan) {
+          tacticalProjectDataCache.set(key, {
+            ...cached,
+            tacticalPlan: { ...cached.tacticalPlan, status: "completed" },
+            fetchedAt: Date.now(),
+          });
+        }
+      }
 
       setActiveTab("playbook");
       toast.success("Plano rodado! Diretrizes de execução geradas.");
@@ -677,6 +810,10 @@ export default function TacticalPlan() {
         .eq("id", tacticalPlan.id);
 
       setTacticalPlan((prev) => prev ? { ...prev, status: "in_progress" } : prev);
+      if (selectedProjectId) {
+        tacticalProjectDataCache.delete(getProjectCacheKey(selectedProjectId));
+        void loadProjectData(selectedProjectId, { silent: true });
+      }
       setActiveTab("overview");
       toast.success(`Template "${template.name}" aplicado com sucesso!`);
     } catch (err) {
