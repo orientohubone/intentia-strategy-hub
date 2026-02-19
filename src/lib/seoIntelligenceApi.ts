@@ -22,6 +22,7 @@ export interface BacklinkAnalysis {
 export interface CompetitorMetrics {
   domain: string;
   url: string;
+  previewImageUrl?: string | null;
   reachable: boolean;
   title: string | null;
   description: string | null;

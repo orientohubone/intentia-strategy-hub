@@ -1,79 +1,58 @@
-# Status de Implementação - Intentia Strategy Hub
+# Status de Implementacao - Intentia Strategy Hub
 
-**Versão:** 4.1.0  
-**Data:** 18/02/2026  
-**Status:** Cards Interativos de IA + Notificações Otimizadas
+**Versao:** 4.2.0  
+**Data:** 19/02/2026  
+**Status:** Monitoramento SEO Inteligente (live + timeline avancada + governanca por plano)
 
-> ⚠️ **Este arquivo foi refatorado.** A documentação completa está em `docs/`.
+## Documentacao Principal
 
-## 📚 Documentação Refatorada
+- `documentacao/SEO_MONITORAMENTO_LIVE.md`: arquitetura tecnica do monitoramento live
+- `documentacao/docs/ARQUITETURA.md`: stack, rotas e componentes atualizados
+- `documentacao/docs/CHANGELOG.md`: historico por release
+- `documentacao/docs/PLANOS_LIMITES.md`: referencia de planos, limites e governanca
 
-| Arquivo | Conteúdo | ~Linhas |
-|---|---|---|
-| [docs/README.md](./docs/README.md) | Índice geral + regras de desenvolvimento | ~40 |
-| [docs/ARQUITETURA.md](./docs/ARQUITETURA.md) | Stack, estrutura de arquivos, rotas, componentes, fluxos | ~220 |
-| [docs/FUNCIONALIDADES.md](./docs/FUNCIONALIDADES.md) | Todas as features implementadas por categoria | ~180 |
-| [docs/DATABASE.md](./docs/DATABASE.md) | Schema SQL, tabelas, RLS, triggers, segurança, Edge Functions | ~110 |
-| [docs/PLANOS_LIMITES.md](./docs/PLANOS_LIMITES.md) | Planos, limites, checkout, dashboard de uso, admin | ~130 |
-| [docs/OPERACIONAL.md](./docs/OPERACIONAL.md) | Etapa operacional: campanhas, métricas, budget, calendário | ~120 |
-| [docs/INTEGRACOES_OAUTH.md](./docs/INTEGRACOES_OAUTH.md) | OAuth flow, sync, Edge Functions, env vars | ~130 |
-| [docs/CHANGELOG.md](./docs/CHANGELOG.md) | Histórico de versões e entregáveis por release | ~180 |
+## Resumo da v4.2.0
 
-## 📋 Resumo da v4.1.0
+### 1. Monitoramento SEO Inteligente
+- Pipeline live com configuracao persistida no Supabase por usuario/projeto.
+- Orquestracao por fila de jobs (`manual`, `scheduled`, `webhook`).
+- Timeline mais robusta: agrupamento por data, deltas e contexto de mudancas.
+- Insights de monitoramento anexados ao snapshot (`monitoringInsights`).
 
-### 🎯 Cards Interativos de IA
-- **AiAnalysisCard.tsx** - Card para análise de projetos
-  - Progresso animado com estágios contextuais
-  - Sugestões rotativas (café, água, e-mails, continuar trabalhando)
-  - Design moderno com gradiente e ícones animados
-  - Auto-redirecionamento ao finalizar
+### 2. Backend e Orquestracao
+- Nova Edge Function: `seo-monitor-orchestrator`.
+- Integracao com `pagespeed`, `seo-serp` e `seo-intelligence`.
+- Persistencia em `seo_analysis_history` + resumo de execucao em `seo_monitoring_jobs`.
+- Suporte a cron interno (`x-cron-secret`) e webhook seguro (`x-webhook-secret`).
 
-- **PerformanceAnalysisCard.tsx** - Card para análise de campanhas
-  - Foco em métricas de performance (ROAS, CPA, CTR)
-  - Sugestões adaptadas para tempo de análise
-  - Preview de KPIs analisados
-  - Estado de conclusão verde
+### 3. Supabase SQL
+- Novo schema: `supabase/sql/01_schema/seo_live_monitoring_schema.sql`
+  - `seo_live_monitoring_configs`
+  - `seo_monitoring_jobs`
+  - RLS + policies + indexes + triggers
+  - publicacao realtime nas tabelas de monitoramento
+- Nova migration: `supabase/sql/04_migrations/add_seo_monitoring_feature_flag.sql`
+  - feature flag `performance_monitoring`
+  - habilitacao por plano em `plan_features`
 
-### 🔔 Sistema de Notificações Otimizado
-- **Deducação por ID** - Previne notificações duplicadas
-- **Sincronização automática** - A cada 5 segundos corrige drift do contador
-- **Links funcionais** - `/projects#project-${id}` e `/operations`
-- **Notificações centralizadas**:
-  - `notifyAiAnalysisCompleted()` - Projects
-  - `notifyPerformanceAnalysisCompleted()` - Operations
+### 4. Produto (site, app e preco)
+- Nova pagina publica: `/monitoramento-seo-inteligente`.
+- Rota protegida de monitoramento: `/seo-monitoring`.
+- Gating por feature flag no menu e em rotas-chave.
+- Pagina de precos atualizada com monitoramento SEO inteligente.
 
-### 🎨 Experiência do Usuário
-- **Transformação da espera** - Cards produtivos durante análises longas
-- **Feedback visual constante** - Progress bars e sugestões dinâmicas
-- **Redução de ansiedade** - Sugestões práticas e countdown
-- **Notificações precisas** - Sem acumulação visual, links diretos
+### 5. Admin e Governanca
+- Painel admin atualizado para visibilidade da feature `performance_monitoring`.
+- Controle de disponibilidade por plano e override por cliente.
+- Arquitetura admin refletindo novas rotas e edge functions.
 
-### 📍 Implementação
-- **Projects.tsx** - Card após cada projeto quando `aiAnalyzing === projectId`
-- **Operations/index.tsx** - Card após cada CampaignRow quando `aiAnalyzing === campaignId`
-- **useNotifications.ts** - Hook otimizado com deduplicação
-- **notificationService.ts** - Serviços centralizados de notificação
+### 6. Central de Ajuda
+- Novos artigos para operacao do monitoramento inteligente.
+- FAQ atualizado com fluxo live, timeline e snapshots.
 
-### 📚 Central de Ajuda Atualizada
-- **Nova categoria "Notificações"** - Sistema completo de alertas
-- **FAQs atualizadas** - Cards interativos, sincronização, links
-- **Documentação de análise por IA** - Fluxo com cards interativos
-- **Guia de uso** - Como aproveitar o tempo de espera
+## Roadmap Pos-v4.2.0
 
----
-
-## 📋 Roadmap
-
-### ✅ Concluído v4.1.0
-- [x] Cards interativos para todos os mecanismos de IA
-- [x] Sistema de notificações otimizado
-- [x] Central de ajuda atualizada
-- [x] Experiência de espera produtiva
-
-### Próximos Passos
-- [ ] Relatórios de performance automatizados
-- [ ] Multi-tenancy avançado (equipes, permissões, workspaces)
-- [ ] Advanced analytics e dashboards customizáveis
-- [ ] Integração com CRMs (HubSpot, Salesforce)
-- [ ] Automação de workflows
-- [ ] White-label para agências
+- Captura visual premium (screenshots reais por concorrente com fallback robusto).
+- Alertas proativos por threshold (queda de ranking, perda de score, mudanca de oferta).
+- Work queue com retry/backoff e priorizacao por criticidade.
+- Feed de mudancas "quase em tempo real" com notificacoes orientadas a impacto.

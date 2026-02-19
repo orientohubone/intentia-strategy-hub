@@ -26,6 +26,7 @@ import {
   Gauge,
   DollarSign,
   MessageCircle,
+  Activity,
 } from "lucide-react";
 import type { HelpCategory, FAQItem, FAQCategoryFilter } from "./helpTypes";
 
@@ -346,6 +347,16 @@ export const helpCategories: HelpCategory[] = [
         title: "Exportação",
         content: "Exporte resultados em PDF, HTML ou JSON. Inclui PageSpeed, SERP e inteligência SEO.",
         difficulty: "Iniciante",
+      },
+      {
+        title: "Monitoramento SEO inteligente",
+        content: "A tela de monitoramento reúne timeline por data, filtros por dispositivo, mudanças detectadas por ciclo e snapshots de concorrentes.",
+        difficulty: "Intermediário",
+      },
+      {
+        title: "Monitoramento live (agendado)",
+        content: "Ao ativar o modo live, o sistema cria ciclos automáticos por projeto e salva snapshots contínuos para análise histórica.",
+        difficulty: "Avançado",
       },
     ],
   },
@@ -849,6 +860,14 @@ export const faqItems: FAQItem[] = [
     category: "analise",
     difficulty: "iniciante",
     icon: <Gauge className="h-4 w-4" />,
+    color: "text-cyan-600",
+  },
+  {
+    question: "Como funciona o Monitoramento SEO Inteligente (live)?",
+    answer: "No módulo de Monitoramento SEO, você pode rodar ciclos manuais ou ativar o live por projeto. Cada ciclo cria um snapshot com SEO, performance, posição de SERP, sinais de mudança e snapshots de concorrentes. A timeline é agrupada por data e permite expandir/recolher grupos, filtrar por dispositivo e exibir apenas ciclos com mudanças relevantes.",
+    category: "analise",
+    difficulty: "intermediario",
+    icon: <Activity className="h-4 w-4" />,
     color: "text-cyan-600",
   },
   {

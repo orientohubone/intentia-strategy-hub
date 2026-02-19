@@ -10,6 +10,7 @@ const menuCategories = [
     items: [
       { name: "Funcionalidades", href: "/#funcionalidades" },
       { name: "Como Funciona", href: "/#como-funciona" },
+      { name: "Monitoramento SEO Inteligente", href: "/monitoramento-seo-inteligente" },
       { name: "Plano Tático", href: "/plano-tatico" },
       { name: "Relatórios", href: "/relatorios" },
       { name: "Comparar", href: "/comparar" },

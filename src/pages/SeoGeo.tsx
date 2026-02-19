@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { SEO } from "@/components/SEO";
@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Switch } from "@/components/ui/switch";
 import {
   Globe,
   Search,
@@ -44,6 +45,7 @@ import {
 } from "lucide-react";
 import {
   fetchPageSpeedInsights,
+  parsePageSpeedApiResponse,
   getScoreColor,
   getScoreBgColor,
   getScoreLabel,
@@ -56,6 +58,7 @@ import {
 import { fetchSerpRanking, type SerpResponse } from "@/lib/seoSerpApi";
 import { fetchSeoIntelligence, type SeoIntelligenceResponse } from "@/lib/seoIntelligenceApi";
 import { exportAsJson, exportAsHtml, exportAsPdf, type SeoAnalysisExportData } from "@/lib/seoExport";
+import { getSeoLiveMonitoringConfig, setSeoLiveMonitoringConfig } from "@/lib/seoLiveMonitoring";
 
 // =====================================================
 // SCORE GAUGE COMPONENT
@@ -173,6 +176,82 @@ function OpportunityItem({ audit }: { audit: { title: string; displayValue?: str
   );
 }
 
+function ensureAbsoluteUrl(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
+function normalizeCompetitorUrls(value: unknown): string[] {
+  if (!value) return [];
+
+  const coerceList = (input: string): string[] =>
+    input
+      .split(/\r?\n|,|;/)
+      .map((item) => ensureAbsoluteUrl(item))
+      .filter(Boolean);
+
+  if (Array.isArray(value)) {
+    return [...new Set(value.map((item) => ensureAbsoluteUrl(String(item))).filter(Boolean))];
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+          return [...new Set(parsed.map((item) => ensureAbsoluteUrl(String(item))).filter(Boolean))];
+        }
+      } catch {
+        // fallback below
+      }
+    }
+    return [...new Set(coerceList(trimmed))];
+  }
+
+  return [];
+}
+
+function getDomainFromUrl(raw: string): string {
+  try {
+    return new URL(ensureAbsoluteUrl(raw)).hostname.replace(/^www\./, "");
+  } catch {
+    return raw.replace(/^https?:\/\//, "").split("/")[0];
+  }
+}
+
+function CompetitorFavicon({ url, domain }: { url: string; domain: string }) {
+  const [srcIndex, setSrcIndex] = useState(0);
+  const sourceDomain = domain || getDomainFromUrl(url);
+  const sources = [
+    `https://www.google.com/s2/favicons?domain=${sourceDomain}&sz=64`,
+    `https://icons.duckduckgo.com/ip3/${sourceDomain}.ico`,
+    `${ensureAbsoluteUrl(url).replace(/\/+$/, "")}/favicon.ico`,
+  ];
+
+  if (srcIndex >= sources.length) {
+    return (
+      <div className="h-6 w-6 rounded-md border border-border bg-muted flex items-center justify-center shrink-0">
+        <span className="text-[10px] font-semibold text-muted-foreground">
+          {sourceDomain.charAt(0).toUpperCase() || "?"}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={sources[srcIndex]}
+      alt={sourceDomain}
+      className="h-6 w-6 rounded-md border border-border bg-muted object-contain shrink-0 p-0.5"
+      onError={() => setSrcIndex((prev) => prev + 1)}
+      loading="lazy"
+    />
+  );
+}
+
 // =====================================================
 // MAIN PAGE
 // =====================================================
@@ -205,6 +284,10 @@ export default function SeoGeo() {
   const [historyItems, setHistoryItems] = useState<any[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [liveMonitoringEnabled, setLiveMonitoringEnabled] = useState(false);
+  const [liveMonitoringIntervalSec, setLiveMonitoringIntervalSec] = useState(300);
+  const [analysisCycleId, setAnalysisCycleId] = useState(0);
+  const [lastAutoSavedCycleId, setLastAutoSavedCycleId] = useState(0);
 
   // Load history for selected project — returns items so callers can auto-restore
   const loadHistory = async (projectId: string): Promise<any[]> => {
@@ -259,8 +342,24 @@ export default function SeoGeo() {
   };
 
   // Restore from history
+  const parseStoredPageSpeed = (raw: any, strategyFromItem?: "mobile" | "desktop"): PageSpeedResult | null => {
+    if (!raw) return null;
+    if (typeof raw.performanceScore === "number" && typeof raw.seoScore === "number") {
+      return raw as PageSpeedResult;
+    }
+    if (raw?.lighthouseResult) {
+      try {
+        return parsePageSpeedApiResponse(raw, strategyFromItem || "mobile");
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+
   const restoreFromHistory = (item: any) => {
-    if (item.pagespeed_result) setResult(item.pagespeed_result);
+    const parsed = parseStoredPageSpeed(item.pagespeed_result, item.strategy);
+    if (parsed) setResult(parsed);
     if (item.serp_data) setSerpData(item.serp_data);
     if (item.intelligence_data) setIntelData(item.intelligence_data);
     setStrategy(item.strategy || "mobile");
@@ -329,7 +428,8 @@ export default function SeoGeo() {
       // Auto-restore the most recent analysis if available
       if (items.length > 0) {
         const latest = items[0];
-        if (latest.pagespeed_result) setResult(latest.pagespeed_result);
+        const parsed = parseStoredPageSpeed(latest.pagespeed_result, latest.strategy);
+        if (parsed) setResult(parsed);
         if (latest.serp_data) setSerpData(latest.serp_data);
         if (latest.intelligence_data) setIntelData(latest.intelligence_data);
         if (latest.strategy) setStrategy(latest.strategy);
@@ -338,10 +438,45 @@ export default function SeoGeo() {
   }, [selectedProjectId]);
 
   const selectedProject = projects.find((p: any) => p.id === selectedProjectId);
+  const competitorUrlsForProject = useMemo(
+    () => normalizeCompetitorUrls(selectedProject?.competitor_urls),
+    [selectedProject?.competitor_urls]
+  );
+
+  useEffect(() => {
+    if (!user?.id || !selectedProjectId) return;
+    void (async () => {
+      const config = await getSeoLiveMonitoringConfig(user.id, selectedProjectId);
+      setLiveMonitoringEnabled(config.enabled);
+      setLiveMonitoringIntervalSec(config.intervalSec);
+    })();
+  }, [user?.id, selectedProjectId]);
+
+  useEffect(() => {
+    if (!liveMonitoringEnabled || analysisCycleId === 0) return;
+    if (analysisCycleId === lastAutoSavedCycleId) return;
+    if (loading || serpLoading || intelLoading) return;
+    if (!result) return;
+
+    void (async () => {
+      await saveToHistory();
+      setLastAutoSavedCycleId(analysisCycleId);
+    })();
+  }, [liveMonitoringEnabled, analysisCycleId, lastAutoSavedCycleId, loading, serpLoading, intelLoading, result, serpData, intelData]);
+
+  useEffect(() => {
+    if (!user?.id || !selectedProjectId || !liveMonitoringEnabled) return;
+    void setSeoLiveMonitoringConfig(user.id, selectedProjectId, {
+      enabled: liveMonitoringEnabled,
+      intervalSec: liveMonitoringIntervalSec,
+      strategy,
+    });
+  }, [user?.id, selectedProjectId, liveMonitoringEnabled, liveMonitoringIntervalSec, strategy]);
 
   const handleAnalyze = async () => {
     const project = projects.find((p: any) => p.id === selectedProjectId);
     if (!project?.url) return;
+    setAnalysisCycleId((prev) => prev + 1);
 
     setLoading(true);
     setError(null);
@@ -374,10 +509,7 @@ export default function SeoGeo() {
     setIntelData(null);
 
     try {
-      // Get competitor URLs from project
-      const competitorUrls: string[] = Array.isArray(project.competitor_urls)
-        ? project.competitor_urls.filter((u: string) => u && u.trim())
-        : [];
+      const competitorUrls = normalizeCompetitorUrls(project.competitor_urls);
 
       // Get user AI keys — use correct column names: api_key_encrypted, is_active
       let aiKeys: { provider: string; apiKey: string; model: string }[] = [];
@@ -470,6 +602,26 @@ export default function SeoGeo() {
     }
   };
 
+  const handleToggleLiveMonitoring = (enabled: boolean) => {
+    setLiveMonitoringEnabled(enabled);
+    void setSeoLiveMonitoringConfig(user?.id, selectedProjectId, {
+      enabled,
+      intervalSec: liveMonitoringIntervalSec,
+      strategy,
+    });
+  };
+
+  const handleChangeLiveInterval = (value: string) => {
+    const intervalSec = Number(value);
+    if (!Number.isFinite(intervalSec) || intervalSec <= 0) return;
+    setLiveMonitoringIntervalSec(intervalSec);
+    void setSeoLiveMonitoringConfig(user?.id, selectedProjectId, {
+      enabled: liveMonitoringEnabled,
+      intervalSec,
+      strategy,
+    });
+  };
+
   return (
     <DashboardLayout>
       <SEO title="SEO & Performance" path="/seo-geo" />
@@ -494,8 +646,8 @@ export default function SeoGeo() {
         {/* Controls */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
-              <div className="flex-1 min-w-0">
+            <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end">
+              <div className="flex-1 min-w-0 lg:min-w-[320px]">
                 <label className="text-sm font-medium text-foreground mb-1.5 block">Projeto</label>
                 <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
                   <SelectTrigger>
@@ -517,7 +669,7 @@ export default function SeoGeo() {
               </div>
 
               {selectedProject?.url && (
-                <p className="text-xs text-muted-foreground flex items-center gap-1 truncate max-w-[200px] pb-2.5 hidden sm:flex">
+                <p className="text-xs text-muted-foreground flex items-center gap-1 truncate max-w-[240px] pb-2.5 hidden xl:flex">
                   <ExternalLink className="h-3 w-3 shrink-0" />
                   <span className="truncate">{selectedProject.url}</span>
                 </p>
@@ -547,10 +699,41 @@ export default function SeoGeo() {
                 </div>
               </div>
 
+              <div className="min-w-[250px] lg:min-w-[280px]">
+                <label className="text-sm font-medium text-foreground mb-1.5 block">Monitoramento Live</label>
+                <div className="flex items-center gap-2">
+                  <div className="h-8 px-3 rounded-md border border-border bg-background flex items-center gap-2">
+                    <Switch
+                      checked={liveMonitoringEnabled}
+                      onCheckedChange={handleToggleLiveMonitoring}
+                      disabled={!selectedProjectId}
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {liveMonitoringEnabled ? "Ativado" : "Desativado"}
+                    </span>
+                  </div>
+                  <Select
+                    value={String(liveMonitoringIntervalSec)}
+                    onValueChange={handleChangeLiveInterval}
+                    disabled={!selectedProjectId}
+                  >
+                    <SelectTrigger className="h-8 w-[120px]">
+                      <SelectValue placeholder="Intervalo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="120">2 min</SelectItem>
+                      <SelectItem value="300">5 min</SelectItem>
+                      <SelectItem value="600">10 min</SelectItem>
+                      <SelectItem value="900">15 min</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <Button
                 onClick={handleAnalyze}
                 disabled={!selectedProjectId || loading}
-                className="gap-2"
+                className="gap-2 shrink-0"
               >
                 {loading ? (
                   <RefreshCw className="h-4 w-4 animate-spin" />
@@ -559,7 +742,21 @@ export default function SeoGeo() {
                 )}
                 {loading ? "Analisando..." : "Analisar SEO & Performance"}
               </Button>
+              <Button
+                variant="outline"
+                className="gap-2 shrink-0"
+                disabled={!selectedProjectId}
+                onClick={() => navigate(`/seo-monitoring?project=${selectedProjectId}`)}
+              >
+                <Activity className="h-4 w-4" />
+                Abrir Monitoramento
+              </Button>
             </div>
+            {selectedProjectId && liveMonitoringEnabled && (
+              <p className="text-xs text-muted-foreground mt-3">
+                Monitoramento ativo: cada ciclo de análise salva automaticamente no histórico e alimenta a tela de monitoramento.
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -577,7 +774,7 @@ export default function SeoGeo() {
                     { key: "pagespeed" as AnalysisStep, label: "Core Web Vitals & Performance", icon: Gauge, loading: loading && !completedSteps.has("pagespeed") },
                     { key: "serp" as AnalysisStep, label: "Ranking no Google (SERP)", icon: Search, loading: serpLoading && !completedSteps.has("serp") },
                     { key: "backlinks" as AnalysisStep, label: "Backlinks & Autoridade", icon: Link2, loading: intelLoading && !completedSteps.has("backlinks") },
-                    { key: "competitors" as AnalysisStep, label: `Monitoramento de Concorrentes${selectedProject?.competitor_urls?.length ? ` (${selectedProject.competitor_urls.filter((u: string) => u?.trim()).length})` : ""}`, icon: Radar, loading: intelLoading && !completedSteps.has("competitors") },
+                    { key: "competitors" as AnalysisStep, label: `Monitoramento de Concorrentes${competitorUrlsForProject.length ? ` (${competitorUrlsForProject.length})` : ""}`, icon: Radar, loading: intelLoading && !completedSteps.has("competitors") },
                     { key: "llm" as AnalysisStep, label: "Visibilidade em LLMs (IA)", icon: Bot, loading: intelLoading && !completedSteps.has("llm") },
                   ].map((step) => {
                     const done = completedSteps.has(step.key);
@@ -1240,8 +1437,9 @@ export default function SeoGeo() {
                             {intelData.competitors.map((comp) => (
                               <div key={comp.domain} className="grid grid-cols-[1.5fr_repeat(5,1fr)] gap-3 py-3 text-xs">
                                 <div>
-                                  <p className="text-sm font-semibold text-foreground flex items-center gap-1">
-                                    {comp.domain}
+                                  <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                    <CompetitorFavicon url={comp.url} domain={comp.domain} />
+                                    <span className="truncate">{comp.domain}</span>
                                     <a href={comp.url} target="_blank" rel="noreferrer">
                                       <ExternalLink className="h-3 w-3 text-muted-foreground" />
                                     </a>
@@ -1369,7 +1567,14 @@ export default function SeoGeo() {
                         <Radar className="h-5 w-5 shrink-0" />
                         <div>
                           <p className="font-medium text-foreground">Monitoramento de Concorrentes</p>
-                          <p className="text-xs mt-0.5">Adicione URLs de concorrentes no projeto em <a href="/projects" className="text-primary hover:underline">Projetos</a> para comparar métricas automaticamente.</p>
+                          {competitorUrlsForProject.length === 0 ? (
+                            <p className="text-xs mt-0.5">Adicione URLs de concorrentes no projeto em <a href="/projects" className="text-primary hover:underline">Projetos</a> para comparar métricas automaticamente.</p>
+                          ) : (
+                            <p className="text-xs mt-0.5">
+                              Há concorrentes cadastrados, mas nenhum retornou dados válidos nesta execução.
+                              Verifique se as URLs estão corretas, acessíveis publicamente e tente novamente.
+                            </p>
+                          )}
                         </div>
                       </div>
                     </CardContent>

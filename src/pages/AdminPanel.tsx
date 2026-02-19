@@ -1029,6 +1029,65 @@ export default function AdminPanel() {
                         </div>
                       </CardContent>
                     </Card>
+
+                    <Card className="bg-card border-border shadow-md">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Activity className="h-4 w-4 text-cyan-500" />
+                          Feature Flag: Monitoramento SEO Inteligente
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                          Controle de acesso ao módulo /seo-monitoring por feature + plano + override por cliente
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {(() => {
+                          const feature = features.find((f) => f.feature_key === "performance_monitoring");
+                          return (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm font-medium">Tela de Monitoramento SEO</p>
+                                  <p className="text-xs text-muted-foreground">performance_monitoring</p>
+                                </div>
+                                <Badge className={`text-xs ${
+                                  feature?.status === "active" ? "bg-green-500/10 text-green-400 border-green-500/20" :
+                                  feature?.status === "development" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                                  feature?.status === "disabled" ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                                  feature?.status === "maintenance" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                                  "bg-gray-500/10 text-gray-400 border-gray-500/20"
+                                }`}>
+                                  {feature?.status === "active" ? "Ativo" :
+                                   feature?.status === "development" ? "Em Desenvolvimento" :
+                                   feature?.status === "disabled" ? "Desativado" :
+                                   feature?.status === "maintenance" ? "Em Manutenção" :
+                                   feature?.status === "deprecated" ? "Descontinuado" :
+                                   feature?.status || "Desconhecido"}
+                                </Badge>
+                              </div>
+
+                              <div className="pt-3 border-t border-border/50">
+                                <p className="text-xs text-muted-foreground mb-3">Status por plano:</p>
+                                <div className="space-y-2">
+                                  {["starter", "professional", "enterprise"].map((plan) => {
+                                    const planFeature = planFeatures.find((pf) => pf.feature_key === "performance_monitoring" && pf.plan === plan);
+                                    const isEnabled = planFeature?.is_enabled ?? false;
+                                    return (
+                                      <div key={plan} className="flex items-center justify-between text-xs">
+                                        <span className="capitalize">{PLAN_CONFIG[plan as keyof typeof PLAN_CONFIG]?.label || plan}</span>
+                                        <Badge className={isEnabled ? "bg-green-500/10 text-green-400 border-green-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"}>
+                                          {isEnabled ? "Ativo" : "Inativo"}
+                                        </Badge>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </CardContent>
+                    </Card>
                   </div>
                 </div>
               </div>
@@ -1037,7 +1096,7 @@ export default function AdminPanel() {
             {/* =====================================================
                 TAB: ARCHITECTURE
                 ===================================================== */}
-            {activeTab === "architecture" && (
+            {activeTab === "status" && (
               <AdminStatusTab />
             )}
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { SEO } from "@/components/SEO";
 import { ProjectCard } from "@/components/ProjectCard";
@@ -6,10 +6,11 @@ import { ChannelCard } from "@/components/ChannelCard";
 import { StatsCard } from "@/components/StatsCard";
 import { ScoreRing } from "@/components/ScoreRing";
 import { Badge } from "@/components/ui/badge";
-import { FolderOpen, Target, BarChart3, Zap, FileText, FileSpreadsheet, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, TrendingUp, ArrowRight, Megaphone, Play, Pause, CheckCircle2, Archive, FileEdit, DollarSign, Globe } from "lucide-react";
+import { FolderOpen, Target, BarChart3, Zap, FileText, FileSpreadsheet, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, TrendingUp, ArrowRight, Megaphone, Play, Pause, CheckCircle2, Archive, FileEdit, DollarSign, Globe, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exportDashboardPdf } from "@/lib/reportGenerator";
 import { exportProjectsCsv } from "@/lib/exportCsv";
+import { cn } from "@/lib/utils";
 import { useTenantData } from "@/hooks/useTenantData";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,6 +81,16 @@ const dashboardStatsCache = new Map<string, { data: DashboardStatsState; timesta
 const dashboardStatsInFlight = new Map<string, Promise<DashboardStatsState>>();
 const dashboardChannelsCache = new Map<string, { data: Record<string, ChannelScore[]>; timestamp: number }>();
 const dashboardChannelsInFlight = new Map<string, Promise<Record<string, ChannelScore[]>>>();
+const DASHBOARD_BLOCKS_STORAGE_KEY_PREFIX = "dashboard:block-order";
+const DASHBOARD_BLOCKS_DEFAULT_ORDER = ["stats", "main", "channels"] as const;
+type DashboardBlockId = typeof DASHBOARD_BLOCKS_DEFAULT_ORDER[number];
+
+const isValidBlockOrder = (order: unknown): order is DashboardBlockId[] => {
+  if (!Array.isArray(order)) return false;
+  if (order.length !== DASHBOARD_BLOCKS_DEFAULT_ORDER.length) return false;
+  const asSet = new Set(order);
+  return DASHBOARD_BLOCKS_DEFAULT_ORDER.every((id) => asSet.has(id));
+};
 
 const formatDate = (iso?: string | null) => {
   if (!iso) return "Sem atualização";
@@ -114,7 +125,65 @@ export default function Dashboard() {
   const [campaignsExpanded, setCampaignsExpanded] = useState(false);
   const [statsLoading, setStatsLoading] = useState(true);
   const [channelsLoading, setChannelsLoading] = useState(true);
+  const [dashboardBlocksOrder, setDashboardBlocksOrder] = useState<DashboardBlockId[]>([
+    ...DASHBOARD_BLOCKS_DEFAULT_ORDER,
+  ]);
+  const [dashboardBlocksLoaded, setDashboardBlocksLoaded] = useState(false);
+  const [draggingBlockId, setDraggingBlockId] = useState<DashboardBlockId | null>(null);
+  const [isDraggingBlock, setIsDraggingBlock] = useState(false);
+  const blockDragStartPos = useRef({ x: 0, y: 0 });
+  const blockDragMovedRef = useRef(false);
   const fullName = (user?.user_metadata?.full_name as string | undefined) || user?.email || "Usuário";
+  const dashboardBlocksStorageKey = `${DASHBOARD_BLOCKS_STORAGE_KEY_PREFIX}:${userId || "guest"}`;
+
+  const moveBlock = useCallback((sourceId: DashboardBlockId, targetId: DashboardBlockId) => {
+    if (sourceId === targetId) return;
+    setDashboardBlocksOrder((prev) => {
+      const sourceIndex = prev.indexOf(sourceId);
+      const targetIndex = prev.indexOf(targetId);
+      if (sourceIndex === -1 || targetIndex === -1) return prev;
+      const next = [...prev];
+      next.splice(sourceIndex, 1);
+      next.splice(targetIndex, 0, sourceId);
+      return next;
+    });
+  }, []);
+
+  const handleBlockMouseDown = (e: React.MouseEvent, blockId: DashboardBlockId) => {
+    setDraggingBlockId(blockId);
+    setIsDraggingBlock(true);
+    blockDragMovedRef.current = false;
+    blockDragStartPos.current = { x: e.clientX, y: e.clientY };
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleBlockMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDraggingBlock || !draggingBlockId) return;
+      const deltaX = e.clientX - blockDragStartPos.current.x;
+      const deltaY = e.clientY - blockDragStartPos.current.y;
+      if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+        blockDragMovedRef.current = true;
+      }
+    },
+    [isDraggingBlock, draggingBlockId]
+  );
+
+  const handleBlockMouseUp = useCallback(() => {
+    setIsDraggingBlock(false);
+    setDraggingBlockId(null);
+    blockDragMovedRef.current = false;
+  }, []);
+
+  const handleBlockHover = useCallback(
+    (targetId: DashboardBlockId) => {
+      if (!isDraggingBlock || !draggingBlockId || !blockDragMovedRef.current) return;
+      if (draggingBlockId === targetId) return;
+      moveBlock(draggingBlockId, targetId);
+    },
+    [isDraggingBlock, draggingBlockId, moveBlock]
+  );
 
   useEffect(() => {
     if (!userId) {
@@ -370,7 +439,60 @@ export default function Dashboard() {
     }
   }, [projects, selectedChannelProjectId]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem(dashboardBlocksStorageKey);
+    if (!stored) {
+      setDashboardBlocksOrder([...DASHBOARD_BLOCKS_DEFAULT_ORDER]);
+      setDashboardBlocksLoaded(true);
+      return;
+    }
+    try {
+      const parsed = JSON.parse(stored);
+      if (isValidBlockOrder(parsed)) {
+        setDashboardBlocksOrder(parsed);
+        setDashboardBlocksLoaded(true);
+        return;
+      }
+    } catch {
+      // no-op
+    }
+    setDashboardBlocksOrder([...DASHBOARD_BLOCKS_DEFAULT_ORDER]);
+    setDashboardBlocksLoaded(true);
+  }, [dashboardBlocksStorageKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!dashboardBlocksLoaded) return;
+    window.localStorage.setItem(dashboardBlocksStorageKey, JSON.stringify(dashboardBlocksOrder));
+  }, [dashboardBlocksOrder, dashboardBlocksStorageKey, dashboardBlocksLoaded]);
+
+  useEffect(() => {
+    if (!isDraggingBlock) return;
+
+    const previousUserSelect = document.body.style.userSelect;
+    document.body.style.userSelect = "none";
+    document.addEventListener("mousemove", handleBlockMouseMove);
+    document.addEventListener("mouseup", handleBlockMouseUp);
+
+    return () => {
+      document.body.style.userSelect = previousUserSelect;
+      document.removeEventListener("mousemove", handleBlockMouseMove);
+      document.removeEventListener("mouseup", handleBlockMouseUp);
+    };
+  }, [isDraggingBlock, handleBlockMouseMove, handleBlockMouseUp]);
+
   const visibleInsights = insightsExpanded ? insights : insights.slice(0, 3);
+  const blockLabels: Record<DashboardBlockId, string> = {
+    stats: "Indicadores",
+    main: "Projetos e Insights",
+    channels: "Visão por Canal",
+  };
+
+  const getBlockOrder = (blockId: DashboardBlockId) => {
+    const idx = dashboardBlocksOrder.indexOf(blockId);
+    return idx === -1 ? DASHBOARD_BLOCKS_DEFAULT_ORDER.indexOf(blockId) : idx;
+  };
 
   return (
     <DashboardLayout>
@@ -393,8 +515,28 @@ export default function Dashboard() {
               </div>
             </div>
 
+            <div className="flex flex-col gap-4 sm:gap-6">
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <section
+              className={cn(
+                "space-y-2 rounded-xl transition-colors",
+                isDraggingBlock && draggingBlockId === "stats" && "opacity-80 ring-2 ring-primary/30"
+              )}
+              style={{ order: getBlockOrder("stats") }}
+              onMouseEnter={() => handleBlockHover("stats")}
+            >
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onMouseDown={(e) => handleBlockMouseDown(e, "stats")}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border/70 bg-background/80 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/40 cursor-grab active:cursor-grabbing"
+                  aria-label={`Reorganizar bloco ${blockLabels.stats}`}
+                >
+                  <GripVertical className="h-3.5 w-3.5" />
+                  {blockLabels.stats}
+                </button>
+              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <StatsCard
                 title="Projetos Ativos"
                 value={projects.length}
@@ -423,10 +565,30 @@ export default function Dashboard() {
                 changeLabel={insightsThisWeek > 0 ? "esta semana" : "nenhum novo"}
                 icon={<Zap className="h-5 w-5 text-primary" />}
               />
-            </div>
+              </div>
+            </section>
 
             {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+            <section
+              className={cn(
+                "space-y-2 rounded-xl transition-colors",
+                isDraggingBlock && draggingBlockId === "main" && "opacity-80 ring-2 ring-primary/30"
+              )}
+              style={{ order: getBlockOrder("main") }}
+              onMouseEnter={() => handleBlockHover("main")}
+            >
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onMouseDown={(e) => handleBlockMouseDown(e, "main")}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border/70 bg-background/80 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/40 cursor-grab active:cursor-grabbing"
+                  aria-label={`Reorganizar bloco ${blockLabels.main}`}
+                >
+                  <GripVertical className="h-3.5 w-3.5" />
+                  {blockLabels.main}
+                </button>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
               {/* Projects Section */}
               <div className="lg:col-span-2 space-y-4">
                 <div className="flex items-center justify-between gap-2">
@@ -725,10 +887,30 @@ export default function Dashboard() {
               </div>
 
               </div>
-            </div>
+              </div>
+            </section>
 
             {/* Channel Strategy Overview */}
-            <div className="space-y-4">
+            <section
+              className={cn(
+                "space-y-2 rounded-xl transition-colors",
+                isDraggingBlock && draggingBlockId === "channels" && "opacity-80 ring-2 ring-primary/30"
+              )}
+              style={{ order: getBlockOrder("channels") }}
+              onMouseEnter={() => handleBlockHover("channels")}
+            >
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onMouseDown={(e) => handleBlockMouseDown(e, "channels")}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border/70 bg-background/80 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/40 cursor-grab active:cursor-grabbing"
+                  aria-label={`Reorganizar bloco ${blockLabels.channels}`}
+                >
+                  <GripVertical className="h-3.5 w-3.5" />
+                  {blockLabels.channels}
+                </button>
+              </div>
+              <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <h2 className="text-base sm:text-lg font-semibold text-foreground truncate">
                   Visão por Canal {channelProject ? `- ${channelProject.name}` : ""}
@@ -780,6 +962,8 @@ export default function Dashboard() {
                   />
                 ))}
               </div>
+              </div>
+            </section>
             </div>
           </div>
     </DashboardLayout>

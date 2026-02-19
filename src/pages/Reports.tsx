@@ -122,19 +122,69 @@ const getScoreColor = (score: number) => {
 
 const toText = (value: unknown, fallback = "N/A") => {
   if (value === null || value === undefined) return fallback;
-  const text = String(value).trim();
+  const toDisplayString = (input: unknown): string => {
+    if (input === null || input === undefined) return "";
+    if (typeof input === "string" || typeof input === "number" || typeof input === "boolean") {
+      return String(input).trim();
+    }
+    if (Array.isArray(input)) {
+      return input.map((item) => toDisplayString(item)).filter(Boolean).join(" | ");
+    }
+    if (typeof input === "object") {
+      const record = input as Record<string, unknown>;
+      const preferredKeys = [
+        "title",
+        "name",
+        "label",
+        "summary",
+        "description",
+        "text",
+        "action",
+        "recommendation",
+        "value",
+      ];
+
+      for (const key of preferredKeys) {
+        const candidate = record[key];
+        const parsed = toDisplayString(candidate);
+        if (parsed) return parsed;
+      }
+
+      try {
+        return JSON.stringify(record);
+      } catch {
+        return "";
+      }
+    }
+    return "";
+  };
+
+  const text = toDisplayString(value);
   return text.length > 0 ? text : fallback;
 };
 
 const toStringArray = (value: unknown): string[] => {
-  if (Array.isArray(value)) return value.map((item) => String(item));
+  if (Array.isArray(value)) {
+    return value.map((item) => toText(item, "")).filter(Boolean);
+  }
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    const candidateKeys = ["recommendations", "recomendacoes", "actions", "next_steps", "items", "list", "points"];
+    for (const key of candidateKeys) {
+      if (record[key] !== undefined) {
+        const nested = toStringArray(record[key]);
+        if (nested.length > 0) return nested;
+      }
+    }
+    return Object.values(record).map((item) => toText(item, "")).filter(Boolean);
+  }
   if (typeof value === "string") {
     const trimmed = value.trim();
     if (!trimmed) return [];
     if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
       try {
         const parsed = JSON.parse(trimmed);
-        if (Array.isArray(parsed)) return parsed.map((item) => String(item));
+        if (Array.isArray(parsed)) return parsed.map((item) => toText(item, "")).filter(Boolean);
       } catch {
         // fallback below
       }
@@ -290,7 +340,7 @@ export default function Reports() {
   }, [userId]);
 
   const loadReports = async (options?: { silent?: boolean }) => {
-    if (!userId) return;
+    if (!userId) return [] as Report[];
     const cached = reportsCache.get(userId);
 
     try {
@@ -621,9 +671,11 @@ export default function Reports() {
       setReports(finalReports);
       reportsCache.set(userId, { reports: finalReports, fetchedAt: Date.now() });
       console.log("Relatórios carregados:", finalReports.length);
+      return finalReports;
     } catch (error) {
       console.error("Erro ao carregar relatórios:", error);
       toast.error("Erro ao carregar relatórios");
+      return [] as Report[];
     } finally {
       if (!options?.silent || !cached) setLoading(false);
     }
@@ -683,6 +735,92 @@ export default function Reports() {
       };
     })
     .filter((project) => project.reports.length > 0);
+
+  const buildConsolidatedReport = (sourceReports: Report[]): Report => {
+    const baseReports = sourceReports.filter((report) => report.type !== "consolidated");
+    const safeBase = baseReports.length > 0 ? baseReports : sourceReports;
+
+    const byTypeCounts = safeBase.reduce((acc, report) => {
+      acc[report.type] = (acc[report.type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const projectMap = safeBase.reduce((acc, report) => {
+      const key = report.projectId || "unknown";
+      if (!acc[key]) {
+        acc[key] = { projectName: report.projectName || "Projeto", count: 0, scoreTotal: 0 };
+      }
+      acc[key].count += 1;
+      acc[key].scoreTotal += report.score || 0;
+      return acc;
+    }, {} as Record<string, { projectName: string; count: number; scoreTotal: number }>);
+
+    const byProject = Object.entries(projectMap)
+      .map(([projectId, data]) => ({
+        projectId,
+        projectName: data.projectName,
+        count: data.count,
+        avgScore: Math.round(data.scoreTotal / Math.max(1, data.count)),
+      }))
+      .sort((a, b) => b.avgScore - a.avgScore);
+
+    const topReports = [...safeBase]
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8)
+      .map((report) => ({
+        title: report.title,
+        projectName: report.projectName,
+        type: report.type,
+        score: report.score,
+        date: report.date,
+      }));
+
+    const timeline = [...safeBase]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 10)
+      .map((report) => ({
+        title: report.title,
+        projectName: report.projectName,
+        type: report.type,
+        date: report.date,
+        score: report.score,
+      }));
+
+    const lowScoreCount = safeBase.filter((report) => report.score < 60).length;
+    const highScoreCount = safeBase.filter((report) => report.score >= 80).length;
+    const recommendations = [
+      lowScoreCount > 0
+        ? `${lowScoreCount} relatório(s) com score abaixo de 60. Priorize plano de ação nesses projetos.`
+        : "Não há relatórios críticos abaixo de 60 no período.",
+      highScoreCount > 0
+        ? `${highScoreCount} relatório(s) com score acima de 80. Escale as estratégias que já performam bem.`
+        : "Ainda não há blocos com score acima de 80 para escala imediata.",
+      "Reavalie semanalmente os projetos com maior volume de insights para acompanhar evolução.",
+    ];
+
+    return {
+      id: `consolidated-${Date.now()}`,
+      title: `Relatório Consolidado - ${new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}`,
+      type: "consolidated",
+      category: "Consolidado",
+      projectName: "Todos os Projetos",
+      projectId: "all",
+      date: new Date().toISOString(),
+      isFavorite: false,
+      format: "pdf",
+      score: Math.round(safeBase.reduce((acc, report) => acc + report.score, 0) / Math.max(1, safeBase.length)),
+      metadata: {
+        total_reports: safeBase.length,
+        projects_analyzed: [...new Set(safeBase.map((report) => report.projectId))].length,
+        analysis_types: [...new Set(safeBase.map((report) => report.type))],
+        by_type_counts: byTypeCounts,
+        by_project: byProject,
+        top_reports: topReports,
+        recent_timeline: timeline,
+        recommendations,
+      },
+    };
+  };
 
   const handleDownload = async (report: Report, format: "pdf" | "json" | "html" = "html") => {
     try {
@@ -760,6 +898,7 @@ export default function Reports() {
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Análise de Projeto - ${report.projectName}</title>
   <style>
     :root{
@@ -875,7 +1014,7 @@ export default function Reports() {
     <h2 class="section-title">Análise Heurística</h2>
     <div class="card">
       <p class="muted">Dados heurísticos detectados, porém em formato não padronizado para visualização resumida.</p>
-      <div class="metadata">${JSON.stringify(heuristic, null, 2)}</div>
+      <div class="metadata">${escapeHtml(JSON.stringify(heuristic, null, 2))}</div>
     </div>
   </div>` : ''}
 
@@ -994,126 +1133,273 @@ export default function Reports() {
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Performance - ${report.campaignName}</title>
   <style>
-    body{font-family:Arial,sans-serif;font-size:11px;line-height:1.4;color:#333;max-width:800px;margin:0 auto;padding:20px}
-    h1{font-size:20px;color:#1f2937;border-bottom:2px solid #e5e7eb;padding-bottom:8px;margin-bottom:16px}
-    h2{font-size:16px;color:#374151;margin-top:24px;margin-bottom:12px}
-    .card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:12px;margin-bottom:12px}
-    .score{font-size:24px;font-weight:700;color:#059669}
-    .metric{display:flex;justify-content:space-between;margin-bottom:8px}
-    .metric-value{font-weight:600}
-    .footer{margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:9px;color:#6b7280;text-align:center}
-    .metadata{background:#f3f4f6;padding:8px;border-radius:4px;font-family:monospace;font-size:10px}
+    :root{--bg:#fcfcfd;--card:#fff;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--primary:#ff5a1f;--primary-soft:#fff1eb;--success:#10b981;--shadow:0 1px 3px rgba(17,24,39,0.08),0 1px 2px rgba(17,24,39,0.06)}
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#fff 0%,var(--bg) 100%);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--text);padding:28px}
+    .container{max-width:980px;margin:0 auto}
+    .hero{background:linear-gradient(135deg,var(--primary-soft) 0%,#fff 100%);border:1px solid #ffd9ca;border-radius:14px;padding:20px 22px;box-shadow:var(--shadow);margin-bottom:18px}
+    .hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .hero h1{margin:0;font-size:24px;line-height:1.2}
+    .hero p{margin:4px 0 0;color:var(--muted);font-size:12px}
+    .score-pill{background:var(--card);border:1px solid #ffd9ca;border-radius:999px;padding:8px 12px;font-weight:700;color:var(--primary);font-size:13px;white-space:nowrap}
+    .summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+    .summary-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+    .summary-card .k{font-size:11px;color:var(--muted);display:block}
+    .summary-card .v{font-size:13px;font-weight:600}
+    .section{margin-top:18px}
+    .section-title{font-size:15px;font-weight:700;margin:0 0 10px;padding-left:10px;border-left:4px solid var(--primary)}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow)}
+    .score{font-size:30px;font-weight:800;color:var(--success)}
+    .metadata{background:#f8fafc;border:1px solid #e2e8f0;padding:8px;border-radius:8px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;white-space:pre-wrap}
+    .footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);text-align:center}
+    @media (max-width:760px){body{padding:16px}.summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
   </style>
 </head>
 <body>
-  <h1>Análise de Performance</h1>
-  <div class="card">
-    <p><strong>Campanha:</strong> ${report.campaignName}</p>
-    <p><strong>Canal:</strong> ${report.channel}</p>
-    <p><strong>Projeto:</strong> ${report.projectName}</p>
-    <p><strong>Data:</strong> ${new Date(report.date).toLocaleDateString('pt-BR')}</p>
-    <p><strong>Score de Performance:</strong> <span class="score">${report.score}/100</span></p>
+  <div class="container">
+    <div class="hero">
+      <div class="hero-top">
+        <div>
+          <h1>Análise de Performance</h1>
+          <p>Visão tática para decisões por canal e campanha</p>
+        </div>
+        <div class="score-pill">Score: ${report.score}/100</div>
+      </div>
+      <div class="summary">
+        <div class="summary-card"><span class="k">Campanha</span><span class="v">${escapeHtml(toText(report.campaignName))}</span></div>
+        <div class="summary-card"><span class="k">Canal</span><span class="v">${escapeHtml(toText(report.channel))}</span></div>
+        <div class="summary-card"><span class="k">Projeto</span><span class="v">${escapeHtml(toText(report.projectName))}</span></div>
+        <div class="summary-card"><span class="k">Data</span><span class="v">${new Date(report.date).toLocaleDateString('pt-BR')}</span></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Diagnóstico</h2>
+      <div class="card">
+        <p>Score de <strong>${report.score}/100</strong> indica ${report.score >= 80 ? 'performance excelente' : report.score >= 60 ? 'performance boa' : 'performance com oportunidade de evolução'}.</p>
+      </div>
+    </div>
+
+    ${report.metadata && Object.keys(report.metadata).length > 0 ? `
+    <div class="section">
+      <h2 class="section-title">Métricas Detalhadas</h2>
+      <div class="card">
+        <div class="metadata">${escapeHtml(JSON.stringify(report.metadata, null, 2))}</div>
+      </div>
+    </div>` : ''}
+
+    <div class="footer">Intentia Strategy Hub &bull; ${new Date().toLocaleDateString('pt-BR')}</div>
   </div>
-
-  ${report.metadata && Object.keys(report.metadata).length > 0 ? `
-  <div class="card">
-    <h2>Métricas Detalhadas</h2>
-    <div class="metadata">${JSON.stringify(report.metadata, null, 2)}</div>
-  </div>` : ''}
-
-  <div class="card">
-    <h2>Insights de Performance</h2>
-    <p>Análise de performance gerada pela plataforma com base nos dados do canal ${report.channel}.</p>
-    <p>Score de ${report.score}/100 indica ${report.score >= 80 ? 'performance excelente' : report.score >= 60 ? 'performance boa' : 'performance precisa melhorar'}.</p>
-  </div>
-
-  <div class="footer">Intentia Strategy Hub &bull; ${new Date().toLocaleDateString('pt-BR')}</div>
 </body>
 </html>`;
       } else if (report.type === "benchmark") {
         const metadata = report.metadata || {};
         const benchmarkStrengths = toStringArray(metadata.strengths);
         const benchmarkWeaknesses = toStringArray(metadata.weaknesses);
+        const benchmarkStrategicInsights = toStringArray(metadata.strategic_insights);
+        const benchmarkRecommendations = toStringArray(metadata.recommendations);
         
         htmlContent = `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Benchmark - ${metadata.competitor_name || 'Concorrente'}</title>
   <style>
-    body{font-family:Arial,sans-serif;font-size:11px;line-height:1.4;color:#333;max-width:800px;margin:0 auto;padding:20px}
-    h1{font-size:20px;color:#1f2937;border-bottom:2px solid #e5e7eb;padding-bottom:8px;margin-bottom:16px}
-    h2{font-size:16px;color:#374151;margin-top:24px;margin-bottom:12px}
-    h3{font-size:14px;color:#4b5563;margin-top:20px;margin-bottom:8px}
-    .card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:12px;margin-bottom:12px}
-    .score{font-size:24px;font-weight:700;color:#7c3aed}
-    .score-item{display:flex;justify-content:space-between;margin-bottom:4px}
-    .score-value{font-weight:600}
+    :root{--bg:#fcfcfd;--card:#fff;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--primary:#ff5a1f;--primary-soft:#fff1eb;--accent:#7c3aed;--shadow:0 1px 3px rgba(17,24,39,0.08),0 1px 2px rgba(17,24,39,0.06)}
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#fff 0%,var(--bg) 100%);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--text);padding:28px}
+    .container{max-width:980px;margin:0 auto}
+    .hero{background:linear-gradient(135deg,var(--primary-soft) 0%,#fff 100%);border:1px solid #ffd9ca;border-radius:14px;padding:20px 22px;box-shadow:var(--shadow);margin-bottom:18px}
+    .hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .hero h1{margin:0;font-size:24px;line-height:1.2}
+    .hero p{margin:4px 0 0;color:var(--muted);font-size:12px}
+    .score-pill{background:var(--card);border:1px solid #ffd9ca;border-radius:999px;padding:8px 12px;font-weight:700;color:var(--primary);font-size:13px;white-space:nowrap}
+    .summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+    .summary-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+    .summary-card .k{font-size:11px;color:var(--muted);display:block}
+    .summary-card .v{font-size:13px;font-weight:600}
+    .section{margin-top:18px}
+    .section-title{font-size:15px;font-weight:700;margin:0 0 10px;padding-left:10px;border-left:4px solid var(--primary)}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow)}
+    .score-item{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+    .score-value{font-weight:700;color:var(--accent)}
     .comparison{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .footer{margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:9px;color:#6b7280;text-align:center}
+    .footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);text-align:center}
+    ul{margin:8px 0 0 18px;padding:0}
+    li{margin:4px 0}
+    @media (max-width:760px){body{padding:16px}.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.comparison{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-  <h1>Benchmark Competitivo</h1>
-  <div class="card">
-    <p><strong>Concorrente:</strong> ${metadata.competitor_name || 'N/A'}</p>
-    <p><strong>URL:</strong> ${metadata.competitor_url || 'N/A'}</p>
-    <p><strong>Nicho:</strong> ${metadata.competitor_niche || 'N/A'}</p>
-    <p><strong>Projeto:</strong> ${report.projectName}</p>
-    <p><strong>Data:</strong> ${new Date(report.date).toLocaleDateString('pt-BR')}</p>
-    <p><strong>Score do Concorrente:</strong> <span class="score">${report.score}/100</span></p>
-  </div>
-
-  <div class="comparison">
-    <div class="card">
-      <h3>Score do Concorrente</h3>
-      <div class="score-item">
-        <span>Overall:</span>
-        <span class="score-value">${metadata.overall_score || 0}/100</span>
+  <div class="container">
+    <div class="hero">
+      <div class="hero-top">
+        <div>
+          <h1>Benchmark Competitivo</h1>
+          <p>Comparativo estratégico com concorrentes diretos</p>
+        </div>
+        <div class="score-pill">Score: ${report.score}/100</div>
       </div>
-      <div class="score-item">
-        <span>Proposta de Valor:</span>
-        <span class="score-value">${metadata.value_proposition_score || 0}/100</span>
-      </div>
-      <div class="score-item">
-        <span>Clareza:</span>
-        <span class="score-value">${metadata.offer_clarity_score || 0}/100</span>
-      </div>
-      <div class="score-item">
-        <span>Jornada:</span>
-        <span class="score-value">${metadata.user_journey_score || 0}/100</span>
+      <div class="summary">
+        <div class="summary-card"><span class="k">Concorrente</span><span class="v">${escapeHtml(toText(metadata.competitor_name))}</span></div>
+        <div class="summary-card"><span class="k">URL</span><span class="v">${escapeHtml(toText(metadata.competitor_url))}</span></div>
+        <div class="summary-card"><span class="k">Nicho</span><span class="v">${escapeHtml(toText(metadata.competitor_niche))}</span></div>
+        <div class="summary-card"><span class="k">Projeto</span><span class="v">${escapeHtml(toText(report.projectName))}</span></div>
       </div>
     </div>
-  </div>
+
+    <div class="section">
+      <h2 class="section-title">Comparativo de Score</h2>
+      <div class="comparison">
+        <div class="card">
+          <div class="score-item"><span>Overall</span><span class="score-value">${metadata.overall_score || 0}/100</span></div>
+          <div class="score-item"><span>Proposta de Valor</span><span class="score-value">${metadata.value_proposition_score || 0}/100</span></div>
+          <div class="score-item"><span>Clareza</span><span class="score-value">${metadata.offer_clarity_score || 0}/100</span></div>
+          <div class="score-item"><span>Jornada</span><span class="score-value">${metadata.user_journey_score || 0}/100</span></div>
+        </div>
+      </div>
+    </div>
 
   ${benchmarkStrengths.length > 0 ? `
-  <div class="card">
-    <h3>Pontos Fortes do Concorrente</h3>
-    <ul>${benchmarkStrengths.map((s) => `<li>${toText(s)}</li>`).join('')}</ul>
-  </div>` : ''}
+  <div class="section"><h2 class="section-title">Pontos Fortes</h2><div class="card"><ul>${benchmarkStrengths.map((s) => `<li>${escapeHtml(toText(s))}</li>`).join('')}</ul></div></div>` : ''}
 
   ${benchmarkWeaknesses.length > 0 ? `
-  <div class="card">
-    <h3>Pontos Fracos do Concorrente</h3>
-    <ul>${benchmarkWeaknesses.map((w) => `<li>${toText(w)}</li>`).join('')}</ul>
-  </div>` : ''}
+  <div class="section"><h2 class="section-title">Pontos Fracos</h2><div class="card"><ul>${benchmarkWeaknesses.map((w) => `<li>${escapeHtml(toText(w))}</li>`).join('')}</ul></div></div>` : ''}
 
-  ${metadata.strategic_insights ? `
-  <div class="card">
-    <h3>Insights Estratégicos</h3>
-    <p>${metadata.strategic_insights}</p>
-  </div>` : ''}
+  ${benchmarkStrategicInsights.length > 0 ? `
+  <div class="section"><h2 class="section-title">Insights Estratégicos</h2><div class="card"><ul>${benchmarkStrategicInsights.map((item) => `<li>${escapeHtml(toText(item))}</li>`).join("")}</ul></div></div>` : ''}
 
-  ${metadata.recommendations ? `
-  <div class="card">
-    <h3>Recomendações</h3>
-    <p>${metadata.recommendations}</p>
-  </div>` : ''}
+  ${benchmarkRecommendations.length > 0 ? `
+  <div class="section"><h2 class="section-title">Recomendações</h2><div class="card"><ul>${benchmarkRecommendations.map((item) => `<li>${escapeHtml(toText(item))}</li>`).join("")}</ul></div></div>` : ''}
 
-  <div class="footer">Intentia Strategy Hub &bull; ${new Date().toLocaleDateString('pt-BR')}</div>
+  <div class="footer">Intentia Strategy Hub &bull; ${new Date().toLocaleDateString('pt-BR')}</div></div>
+</body>
+</html>`;
+      } else if (report.type === "consolidated") {
+        const metadata = (report.metadata || {}) as Record<string, unknown>;
+        const byTypeCounts = (metadata.by_type_counts || {}) as Record<string, number>;
+        const byProject = Array.isArray(metadata.by_project) ? metadata.by_project : [];
+        const topReports = Array.isArray(metadata.top_reports) ? metadata.top_reports : [];
+        const recentTimeline = Array.isArray(metadata.recent_timeline) ? metadata.recent_timeline : [];
+        const consolidatedRecommendations = toStringArray(metadata.recommendations);
+
+        htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${escapeHtml(report.title)}</title>
+  <style>
+    :root{--bg:#fcfcfd;--card:#fff;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--primary:#ff5a1f;--primary-soft:#fff1eb;--success:#10b981;--shadow:0 1px 3px rgba(17,24,39,0.08),0 1px 2px rgba(17,24,39,0.06)}
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#fff 0%,var(--bg) 100%);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--text);padding:24px}
+    .container{max-width:980px;margin:0 auto}
+    .hero{background:linear-gradient(135deg,var(--primary-soft) 0%,#fff 100%);border:1px solid #ffd9ca;border-radius:14px;padding:20px 22px;box-shadow:var(--shadow);margin-bottom:18px}
+    .hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .hero h1{margin:0;font-size:24px;line-height:1.2}
+    .hero p{margin:4px 0 0;color:var(--muted);font-size:12px}
+    .score-pill{background:var(--card);border:1px solid #ffd9ca;border-radius:999px;padding:8px 12px;font-weight:700;color:var(--primary);font-size:13px;white-space:nowrap}
+    .summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+    .summary-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+    .summary-card .k{font-size:11px;color:var(--muted);display:block}
+    .summary-card .v{font-size:13px;font-weight:600}
+    .section{margin-top:18px}
+    .section-title{font-size:15px;font-weight:700;margin:0 0 10px;padding-left:10px;border-left:4px solid var(--primary)}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow)}
+    .score-value{font-weight:700;color:var(--success)}
+    .list{margin:0;padding-left:18px}
+    .list li{margin:4px 0}
+    .meta{font-size:11px;color:var(--muted)}
+    .footer{margin-top:20px;padding-top:12px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);text-align:center}
+    @media (max-width:760px){body{padding:16px}.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <div class="hero-top">
+        <div>
+          <h1>${escapeHtml(report.title)}</h1>
+          <p>Visão consolidada das análises estratégicas da Intentia</p>
+        </div>
+        <div class="score-pill">Score Médio: ${report.score}/100</div>
+      </div>
+      <div class="summary">
+        <div class="summary-card"><span class="k">Relatórios</span><span class="v">${toText(metadata.total_reports, "0")}</span></div>
+        <div class="summary-card"><span class="k">Projetos analisados</span><span class="v">${toText(metadata.projects_analyzed, "0")}</span></div>
+        <div class="summary-card"><span class="k">Tipos de análise</span><span class="v">${toStringArray(metadata.analysis_types).length}</span></div>
+        <div class="summary-card"><span class="k">Data</span><span class="v">${new Date(report.date).toLocaleDateString('pt-BR')}</span></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Distribuição por Tipo</h2>
+      <div class="grid">
+        ${Object.entries(byTypeCounts).map(([type, count]) => `
+        <div class="card">
+          <p><strong>${escapeHtml(type)}</strong></p>
+          <p class="score-value">${count} relatório(s)</p>
+        </div>`).join("") || `<div class="card"><p class="meta">Sem distribuição disponível.</p></div>`}
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Projetos com Melhor Score Médio</h2>
+      <div class="grid">
+        ${byProject.slice(0, 6).map((project) => {
+          const p = project as Record<string, unknown>;
+          return `
+        <div class="card">
+          <p><strong>${escapeHtml(toText(p.projectName))}</strong></p>
+          <p class="meta">${toText(p.count, "0")} relatório(s)</p>
+          <p class="score-value">Score médio: ${toText(p.avgScore, "0")}/100</p>
+        </div>`;
+        }).join("") || `<div class="card"><p class="meta">Sem projetos consolidados.</p></div>`}
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Relatórios Destaque</h2>
+      <div class="card">
+        <ul class="list">
+          ${topReports.map((item) => {
+            const r = item as Record<string, unknown>;
+            return `<li><strong>${escapeHtml(toText(r.title))}</strong> • ${escapeHtml(toText(r.projectName))} • ${escapeHtml(toText(r.type))} • ${toText(r.score, "0")}/100</li>`;
+          }).join("") || "<li>Sem destaques disponíveis.</li>"}
+        </ul>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Linha do Tempo Recente</h2>
+      <div class="card">
+        <ul class="list">
+          ${recentTimeline.map((item) => {
+            const t = item as Record<string, unknown>;
+            return `<li>${new Date(toText(t.date, new Date().toISOString())).toLocaleDateString('pt-BR')} • <strong>${escapeHtml(toText(t.title))}</strong> (${escapeHtml(toText(t.type))})</li>`;
+          }).join("") || "<li>Sem eventos recentes.</li>"}
+        </ul>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Recomendações Estratégicas</h2>
+      <div class="card">
+        <ul class="list">
+          ${consolidatedRecommendations.map((item) => `<li>${escapeHtml(toText(item))}</li>`).join("") || "<li>Sem recomendações consolidadas.</li>"}
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer">Intentia Strategy Hub &bull; ${new Date().toLocaleDateString('pt-BR')}</div>
+  </div>
 </body>
 </html>`;
       } else {
@@ -1123,22 +1409,33 @@ export default function Reports() {
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${report.title}</title>
   <style>
-    body{font-family:Arial,sans-serif;font-size:11px;line-height:1.4;color:#333;max-width:800px;margin:0 auto;padding:20px}
-    h1{font-size:20px;color:#1f2937;border-bottom:2px solid #e5e7eb;padding-bottom:8px;margin-bottom:16px}
-    .card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:12px;margin-bottom:12px}
-    .score{font-size:24px;font-weight:700;color:#059669}
-    .footer{margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:9px;color:#6b7280;text-align:center}
-    .metadata{background:#f3f4f6;padding:8px;border-radius:4px;font-family:monospace;font-size:10px}
+    :root{--bg:#fcfcfd;--card:#fff;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--primary:#ff5a1f;--primary-soft:#fff1eb;--success:#10b981;--shadow:0 1px 3px rgba(17,24,39,0.08),0 1px 2px rgba(17,24,39,0.06)}
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#fff 0%,var(--bg) 100%);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--text);padding:24px}
+    .container{max-width:900px;margin:0 auto}
+    .hero{background:linear-gradient(135deg,var(--primary-soft) 0%,#fff 100%);border:1px solid #ffd9ca;border-radius:14px;padding:18px 20px;box-shadow:var(--shadow);margin-bottom:16px}
+    .hero h1{margin:0;font-size:22px}
+    .hero p{margin:6px 0 0;font-size:12px;color:var(--muted)}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow)}
+    .score{font-size:28px;font-weight:800;color:var(--success)}
+    .metadata{background:#f8fafc;border:1px solid #e2e8f0;padding:8px;border-radius:8px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;white-space:pre-wrap}
+    .footer{margin-top:20px;padding-top:12px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);text-align:center}
+    @media (max-width:760px){body{padding:16px}}
   </style>
 </head>
 <body>
-  <h1>${report.title}</h1>
+  <div class="container">
+  <div class="hero">
+    <h1>${escapeHtml(report.title)}</h1>
+    <p>Relatório gerado automaticamente pela Intentia</p>
+  </div>
   <div class="card">
-    <p><strong>Tipo:</strong> ${report.type}</p>
-    <p><strong>Categoria:</strong> ${report.category}</p>
-    <p><strong>Projeto:</strong> ${report.projectName}</p>
+    <p><strong>Tipo:</strong> ${escapeHtml(report.type)}</p>
+    <p><strong>Categoria:</strong> ${escapeHtml(report.category)}</p>
+    <p><strong>Projeto:</strong> ${escapeHtml(report.projectName)}</p>
     <p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
     <p><strong>Score:</strong> <span class="score">${report.score}/100</span></p>
   </div>
@@ -1146,10 +1443,11 @@ export default function Reports() {
   ${report.metadata ? `
   <div class="card">
     <h2>Metadados</h2>
-    <div class="metadata">${JSON.stringify(report.metadata, null, 2)}</div>
+    <div class="metadata">${escapeHtml(JSON.stringify(report.metadata, null, 2))}</div>
   </div>` : ''}
   
   <div class="footer">Intentia Strategy Hub &bull; ${new Date().toLocaleDateString('pt-BR')}</div>
+  </div>
 </body>
 </html>`;
       }
@@ -1211,6 +1509,24 @@ export default function Reports() {
       const message = error instanceof Error ? error.message : "Falha ao gerar arquivo";
       toast.error(`Erro ao fazer download: ${message}`);
     }
+  };
+
+  const handleGenerateConsolidatedReport = async () => {
+    const sourceReports = reports.length > 0 ? reports : await loadReports({ silent: true });
+
+    if (!sourceReports || sourceReports.length === 0) {
+      toast.error("Não há dados suficientes para gerar o consolidado.");
+      return;
+    }
+
+    const baseReports = sourceReports.filter((report) => report.type !== "consolidated");
+    if (baseReports.length === 0 && sourceReports.length === 0) {
+      toast.error("Não há análises para consolidar.");
+      return;
+    }
+
+    const consolidatedReport = buildConsolidatedReport(sourceReports);
+    await handleDownload(consolidatedReport, "pdf");
   };
 
   const handleToggleFavorite = async (reportId: string) => {
@@ -1318,78 +1634,90 @@ export default function Reports() {
     );
   }
 
+  const totalReports = reports.length;
+  const favoriteReports = reports.filter((report) => report.isFavorite).length;
+  const aiReports = reports.filter(
+    (report) => report.type === "project_analysis" || report.type === "campaign_analysis"
+  ).length;
+  const averageScore =
+    reports.length > 0 ? Math.round(reports.reduce((acc, report) => acc + report.score, 0) / reports.length) : 0;
+
   return (
     <>
       <SEO title="Relatórios" description="Central de relatórios e análises" />
       <DashboardLayout>
         <FeatureGate featureKey="reports" withLayout={false} pageTitle="Relatórios">
-          <div className="space-y-6">
+          <div className="max-w-7xl mx-auto space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">Relatórios</h1>
-                <p className="text-muted-foreground">
-                  Central de relatórios e análises geradas pela plataforma
-                </p>
+            <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/[0.07] to-orange-500/[0.05] p-5 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-foreground">Relatórios</h1>
+                  <p className="text-muted-foreground">
+                    Central de relatórios e análises geradas pela plataforma
+                  </p>
+                </div>
+                <Button className="gap-2 shadow-sm" onClick={handleGenerateConsolidatedReport}>
+                  <Download className="h-4 w-4" />
+                  Gerar Relatório Consolidado
+                </Button>
               </div>
-              <Button className="gap-2" onClick={loadReports}>
-                <Download className="h-4 w-4" />
-                Gerar Relatório Consolidado
-              </Button>
             </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card>
+              <Card className="border-primary/20 bg-primary/[0.03]">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total de Relatórios</CardTitle>
-                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+                    <FileText className="h-4 w-4 text-primary" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{reports.length}</div>
+                  <div className="text-2xl font-bold text-primary">{totalReports}</div>
                   <p className="text-xs text-muted-foreground">Gerados este mês</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-amber-500/20 bg-amber-500/[0.03]">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Favoritos</CardTitle>
-                  <Star className="h-4 w-4 text-muted-foreground" />
+                  <div className="h-8 w-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                    <Star className="h-4 w-4 text-amber-600" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
-                    {reports.filter(r => r.isFavorite).length}
-                  </div>
+                  <div className="text-2xl font-bold text-amber-600">{favoriteReports}</div>
                   <p className="text-xs text-muted-foreground">Relatórios marcados</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-emerald-500/20 bg-emerald-500/[0.03]">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Análises de IA</CardTitle>
-                  <Lightbulb className="h-4 w-4 text-muted-foreground" />
+                  <div className="h-8 w-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                    <Lightbulb className="h-4 w-4 text-emerald-600" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
-                    {reports.filter(r => r.type === "project_analysis" || r.type === "campaign_analysis").length}
-                  </div>
+                  <div className="text-2xl font-bold text-emerald-600">{aiReports}</div>
                   <p className="text-xs text-muted-foreground">Com inteligência artificial</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-blue-500/20 bg-blue-500/[0.03]">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Score Médio</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  <div className="h-8 w-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                    <TrendingUp className="h-4 w-4 text-blue-600" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
-                    {reports.length > 0 ? Math.round(reports.reduce((acc, r) => acc + r.score, 0) / reports.length) : 0}
-                  </div>
+                  <div className="text-2xl font-bold text-blue-600">{averageScore}</div>
                   <p className="text-xs text-muted-foreground">Qualidade geral</p>
                 </CardContent>
               </Card>
             </div>
 
             {/* Filters */}
-            <Card>
+            <Card className="border-border/80 shadow-sm">
               <CardHeader>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex-1">
@@ -1405,7 +1733,7 @@ export default function Reports() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Select value={selectedType} onValueChange={setSelectedType}>
-                      <SelectTrigger className="w-[180px]">
+                      <SelectTrigger className="w-[180px] bg-background">
                         <SelectValue placeholder="Tipo" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1417,7 +1745,7 @@ export default function Reports() {
                       </SelectContent>
                     </Select>
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                      <SelectTrigger className="w-[180px]">
+                      <SelectTrigger className="w-[180px] bg-background">
                         <SelectValue placeholder="Categoria" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1429,7 +1757,7 @@ export default function Reports() {
                       </SelectContent>
                     </Select>
                     <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger className="w-[150px]">
+                      <SelectTrigger className="w-[150px] bg-background">
                         <SelectValue placeholder="Ordenar" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1495,7 +1823,7 @@ export default function Reports() {
                   return (
                     <div key={project.projectId} className="space-y-3">
                       {/* Project Header */}
-                      <Card>
+                      <Card className="border-border/80 shadow-sm">
                         <CardContent className="p-0">
                           <button
                             onClick={() => toggleProject(project.projectId)}
@@ -1580,7 +1908,7 @@ export default function Reports() {
                                     </button>
 
                                     {isCategoryExpanded && categoryReports.map((report) => (
-                                      <Card key={report.id} className="hover:shadow-md transition-shadow">
+                                      <Card key={report.id} className="border-border/80 hover:border-primary/20 hover:shadow-md transition-all">
                                         <CardContent className="p-4">
                                           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                                             <div className="flex-1 space-y-2">
@@ -1609,14 +1937,14 @@ export default function Reports() {
                                                 </div>
                                               </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                              <div className="text-right">
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 w-full lg:w-auto">
+                                              <div className="text-left sm:text-right">
                                                 <div className={`text-2xl font-bold ${getScoreColor(report.score)}`}>
                                                   {report.score}
                                                 </div>
                                                 <p className="text-xs text-muted-foreground">Score</p>
                                               </div>
-                                              <div className="flex items-center gap-1.5">
+                                              <div className="flex flex-wrap items-center gap-1.5">
                                                 <Button
                                                   variant="ghost"
                                                   size="sm"
@@ -1635,7 +1963,7 @@ export default function Reports() {
                                                   variant="outline"
                                                   size="sm"
                                                   onClick={() => handleDownload(report, "pdf")}
-                                                  className="h-8 px-2 text-[10px]"
+                                                  className="h-8 px-2 text-[10px] min-w-[56px]"
                                                 >
                                                   PDF
                                                 </Button>
@@ -1643,7 +1971,7 @@ export default function Reports() {
                                                   variant="outline"
                                                   size="sm"
                                                   onClick={() => handleDownload(report, "json")}
-                                                  className="h-8 px-2 text-[10px]"
+                                                  className="h-8 px-2 text-[10px] min-w-[56px]"
                                                 >
                                                   JSON
                                                 </Button>
@@ -1651,7 +1979,7 @@ export default function Reports() {
                                                   variant="outline"
                                                   size="sm"
                                                   onClick={() => handleDownload(report, "html")}
-                                                  className="h-8 px-2 text-[10px]"
+                                                  className="h-8 px-2 text-[10px] min-w-[56px]"
                                                 >
                                                   HTML
                                                 </Button>

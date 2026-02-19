@@ -464,6 +464,7 @@ function FrontendSection() {
               { path: "/alertas-insights", page: "FeatureInsights", desc: "Feature: Insights" },
               { path: "/dados-estruturados", page: "FeatureDadosEstruturados", desc: "Feature: Dados Estruturados" },
               { path: "/relatorios", page: "FeatureRelatorios", desc: "Feature: Relatorios" },
+              { path: "/monitoramento-seo-inteligente", page: "FeatureSeoMonitoring", desc: "Feature: Monitoramento SEO" },
               { path: "/oauth/callback", page: "OAuthCallback", desc: "Retorno OAuth" },
             ].map((route) => (
               <div key={route.path} className="flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
@@ -494,6 +495,7 @@ function FrontendSection() {
               { path: "/settings", page: "Settings", desc: "Config + API Keys" },
               { path: "/integracoes", page: "Integrations", desc: "OAuth + Sync APIs" },
               { path: "/seo-geo", page: "SeoGeo", desc: "SEO & Performance" },
+              { path: "/seo-monitoring", page: "SeoMonitoring", desc: "Monitoramento SEO Inteligente" },
               { path: "/support", page: "Support", desc: "Suporte ao cliente" },
               { path: "/checkout", page: "Checkout", desc: "Pagamento" },
               { path: "/help", page: "Help", desc: "Centro de ajuda" },
@@ -963,6 +965,100 @@ function DataFlowSection() {
           <FlowNode icon={Eye} label="4. IcpEnrichmentDialog" sublabel="Dialog com fullscreen, perfil, dores, gatilhos, keywords, recomendacoes" color="text-blue-300" bg="bg-blue-500/10" border="border-blue-500/20" />
         </div>
       </FlowBox>
+
+      {/* Strategic Flow Map */}
+      <FlowBox title="Fluxos do Modulo Estrategico" borderColor="border-indigo-500/20" bgColor="bg-indigo-500/5" badge="Estrategico" defaultOpen>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {[
+            {
+              title: "Diagnostico de URL",
+              steps: [
+                "Projeto criado com URL + nicho",
+                "Edge analyze-url roda heuristica",
+                "Score + insights salvos no banco",
+                "Dashboard e relatorios atualizados",
+              ],
+              icon: Globe,
+              color: "text-blue-400",
+              bg: "bg-blue-500/10",
+              border: "border-blue-500/20",
+            },
+            {
+              title: "Benchmark competitivo",
+              steps: [
+                "Concorrentes definidos por projeto",
+                "Comparacao de sinais e posicionamento",
+                "SWOT + gap analysis gerados",
+                "Insights acionaveis para estrategia",
+              ],
+              icon: BarChart3,
+              color: "text-green-400",
+              bg: "bg-green-500/10",
+              border: "border-green-500/20",
+            },
+            {
+              title: "Plano tatico e alertas",
+              steps: [
+                "Plano tatico por canal e objetivo",
+                "Execucao acompanhada no operacional",
+                "Alertas estrategicos de risco/oportunidade",
+                "Ajustes orientados por dados",
+              ],
+              icon: Target,
+              color: "text-amber-400",
+              bg: "bg-amber-500/10",
+              border: "border-amber-500/20",
+            },
+            {
+              title: "Monitoramento SEO inteligente",
+              steps: [
+                "Config live persistida por projeto",
+                "Jobs disparados (manual/cron/webhook)",
+                "Snapshot salvo com monitoringInsights",
+                "Timeline agrupada por data com deltas",
+              ],
+              icon: Activity,
+              color: "text-cyan-400",
+              bg: "bg-cyan-500/10",
+              border: "border-cyan-500/20",
+            },
+          ].map((flow) => (
+            <div key={flow.title} className={`${flow.bg} border ${flow.border} rounded-xl p-3`}>
+              <div className="flex items-center gap-2 mb-2">
+                <flow.icon className={`h-4 w-4 ${flow.color}`} />
+                <p className={`text-[11px] font-semibold ${flow.color}`}>{flow.title}</p>
+              </div>
+              <div className="space-y-1.5">
+                {flow.steps.map((step, idx) => (
+                  <div key={`${flow.title}-${idx}`} className="flex items-start gap-2">
+                    <span className="text-[9px] text-muted-foreground mt-0.5">{idx + 1}.</span>
+                    <p className="text-[10px] text-foreground/85">{step}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </FlowBox>
+
+      {/* Strategic Implementations */}
+      <FlowBox title="Implementacoes Estrategicas Entregues" borderColor="border-emerald-500/20" bgColor="bg-emerald-500/5" badge="Atualizado 19/02/2026">
+        <div className="space-y-2">
+          {[
+            "Persistencia de configuracao live SEO no Supabase (configs por projeto/usuario).",
+            "Orquestracao por fila com seo-monitor-orchestrator (dispatch_due, run_jobs, dispatch_and_run, webhook_enqueue).",
+            "Timeline de monitoramento com agrupamento por data, expand/collapse e deltas de mudanca.",
+            "Feature flag performance_monitoring com controle por plano e visibilidade no Admin.",
+            "Nova pagina publica /monitoramento-seo-inteligente integrada ao site.",
+            "Atualizacao da central de ajuda e matriz de precos com monitoramento SEO inteligente.",
+          ].map((item) => (
+            <div key={item} className="bg-card border border-border rounded-lg px-3 py-2 flex items-start gap-2">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 mt-0.5 flex-shrink-0" />
+              <p className="text-[10px] text-foreground/85">{item}</p>
+            </div>
+          ))}
+        </div>
+      </FlowBox>
     </div>
   );
 }
@@ -1074,7 +1170,7 @@ function FeatureFlagsSection() {
             { label: "Insights & Alertas", icon: Lightbulb, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", count: 6, tip: "Scores por canal, insights estrategicos, alertas, publicos-alvo, notificacoes e dark mode" },
             { label: "Configuracoes", icon: Settings, color: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/20", count: 2, tip: "Backup de dados e chat de suporte" },
             { label: "Integracoes", icon: Plug, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", count: 5, tip: "Google Ads, Meta Ads, LinkedIn Ads, TikTok Ads e integracoes de marketing" },
-            { label: "SEO & Performance", icon: Gauge, color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20", count: 4, tip: "SEO Analysis, Performance Monitoring, AI Performance Analysis e SEO Geolocalizacao" },
+            { label: "SEO & Performance", icon: Gauge, color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20", count: 5, tip: "SEO Analysis, Performance Monitoring, AI Performance Analysis, SEO Geolocalizacao e Monitoramento SEO Inteligente" },
           ].map((cat) => (
             <InfoTip key={cat.label} tip={cat.tip}>
               <div className={`${cat.bg} border ${cat.border} rounded-xl p-3 text-center cursor-help`}>
@@ -1121,6 +1217,28 @@ function EdgeFunctionsSection() {
               color: "text-purple-400",
               bg: "bg-purple-500/10",
               border: "border-purple-500/20",
+            },
+            {
+              name: "seo-monitor-orchestrator",
+              desc: "Orquestra monitoramento SEO live: dispatch de jobs, execução de ciclos e atualização de timeline",
+              trigger: "Manual, scheduler (cron) ou webhook",
+              input: "action + project context",
+              output: "Jobs processados + snapshot em seo_analysis_history",
+              auth: "JWT ou INTERNAL_CRON_SECRET",
+              color: "text-cyan-400",
+              bg: "bg-cyan-500/10",
+              border: "border-cyan-500/20",
+            },
+            {
+              name: "seo-intelligence",
+              desc: "Coleta sinais de concorrência, backlinks, visibilidade LLM e snapshots para monitoramento inteligente",
+              trigger: "Invocado pelo SEO Geo e pelo orchestrator",
+              input: "url + competitorUrls + aiKeys",
+              output: "intelligence_data (concorrentes + monitoring insights)",
+              auth: "JWT / service role",
+              color: "text-sky-400",
+              bg: "bg-sky-500/10",
+              border: "border-sky-500/20",
             },
             {
               name: "collect-uptime",

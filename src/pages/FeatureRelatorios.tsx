@@ -3,6 +3,7 @@ import { SEO, buildBreadcrumb } from "@/components/SEO";
 import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
 import { BackToHomeButton } from "@/components/BackToHomeButton";
+import { BrowserMockup } from "@/components/BrowserMockup";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -93,6 +94,30 @@ export default function FeatureRelatorios() {
               Ver Planos
             </Button>
           </div>
+        </div>
+      </section>
+
+      {/* Product Preview */}
+      <section className="pb-10 sm:pb-14">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-5 text-center">
+            <p className="text-xs font-semibold tracking-wide text-primary uppercase">Preview do produto</p>
+            <h2 className="mt-2 text-2xl sm:text-3xl font-bold text-foreground">Tela real da central de relatorios</h2>
+          </div>
+          <BrowserMockup url="https://app.intentia.com.br/relatorios" className="max-w-4xl mx-auto">
+            <img
+              src="/relatorios-inteligentes.png"
+              alt="Tela da central de relatorios com cards, filtros e organizacao por projeto"
+              className="w-full h-auto max-h-[460px] object-cover object-top block"
+              loading="lazy"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (!target.src.endsWith("/dashboard-intentia.png")) {
+                  target.src = "/dashboard-intentia.png";
+                }
+              }}
+            />
+          </BrowserMockup>
         </div>
       </section>
 

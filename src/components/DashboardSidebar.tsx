@@ -14,6 +14,7 @@ import {
   Megaphone,
   Plug,
   Globe,
+  Activity,
   FileText,
   LogOut, 
   Settings, 
@@ -25,6 +26,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { supabase } from "@/integrations/supabase/client";
 
 interface NavItem {
@@ -32,6 +34,7 @@ interface NavItem {
   label: string;
   href: string;
   active?: boolean;
+  featureKey?: string;
 }
 
 interface NavSection {
@@ -50,7 +53,8 @@ const navSections: NavSection[] = [
       { icon: BarChart3, label: "Benchmark", href: "/benchmark" },
       { icon: Lightbulb, label: "Insights", href: "/insights" },
       { icon: FileText, label: "Relatórios", href: "/reports" },
-      { icon: Globe, label: "SEO & Performance", href: "/seo-geo" },
+      { icon: Globe, label: "SEO & Performance", href: "/seo-geo", featureKey: "seo_analysis" },
+      { icon: Activity, label: "Monitoramento SEO", href: "/seo-monitoring", featureKey: "performance_monitoring" },
     ],
   },
   {
@@ -100,6 +104,7 @@ export function DashboardSidebar({ mobileOpen = false, onMobileClose }: Dashboar
   const [loading, setLoading] = useState(true);
   const location = useLocation();
   const { user } = useAuth();
+  const { isFeatureAvailable } = useFeatureFlags();
   const userId = user?.id;
 
   useEffect(() => {
@@ -287,6 +292,9 @@ export function DashboardSidebar({ mobileOpen = false, onMobileClose }: Dashboar
               {(collapsed || isOpen) && (
                 <div className="space-y-0.5">
                   {section.items.map((item) => {
+                    if (item.featureKey && !isFeatureAvailable(item.featureKey)) {
+                      return null;
+                    }
                     const isActive = location.pathname === item.href;
                     return (
                       <Link

@@ -6,6 +6,14 @@
 
 ---
 
+## Referencia de Monitoramento Live
+
+Para arquitetura, schema, jobs/scheduler/webhook e operacao do monitoramento SEO live, consulte:
+
+- `documentacao/SEO_MONITORAMENTO_LIVE.md`
+
+---
+
 ## 1. Arquitetura SEO
 
 ### 1.1 Componente Central: `src/components/SEO.tsx`

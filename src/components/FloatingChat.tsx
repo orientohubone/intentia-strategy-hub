@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+﻿import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -52,10 +52,13 @@ export function FloatingChat() {
 
   // Funções de arrastar para o botão
   const handleButtonMouseDown = (e: React.MouseEvent) => {
-    if (open) return; // Não permite arrastar quando o chat está aberto
-    
-    setIsDragging(true);
     dragMovedRef.current = false;
+    if (open) {
+      setIsDragging(false);
+      return; // Não permite arrastar quando o chat está aberto
+    }
+
+    setIsDragging(true);
     dragStartPos.current = { x: e.clientX, y: e.clientY };
     elementStartPos.current = { x: buttonPosition.x, y: buttonPosition.y };
     e.preventDefault();
@@ -89,10 +92,11 @@ export function FloatingChat() {
   }, []);
 
   const handleButtonClick = () => {
-    if (dragMovedRef.current) {
+    if (!open && dragMovedRef.current) {
       dragMovedRef.current = false;
       return;
     }
+    setIsDragging(false);
     setOpen(!open);
   };
 
@@ -306,35 +310,42 @@ export function FloatingChat() {
   const userAvatarUrl = user?.user_metadata?.avatar_url || '';
   const userInitial = userName.charAt(0).toUpperCase();
   const panelWidth = Math.min(384, viewportSize.width - (VIEWPORT_PADDING * 2));
+  const availableAbove = Math.max(0, buttonPosition.y - VIEWPORT_PADDING - PANEL_GAP);
+  const availableBelow = Math.max(
+    0,
+    viewportSize.height - (buttonPosition.y + BUTTON_SIZE) - VIEWPORT_PADDING - PANEL_GAP
+  );
+  const canFitAboveFull = availableAbove >= PANEL_HEIGHT;
+  const canFitBelowFull = availableBelow >= PANEL_HEIGHT;
+  const shouldPlaceAbove =
+    canFitAboveFull || (!canFitBelowFull && availableAbove >= availableBelow);
+  const selectedSpace = shouldPlaceAbove ? availableAbove : availableBelow;
+  const panelHeightForLayout = Math.max(0, Math.min(PANEL_HEIGHT, selectedSpace));
   const centeredLeft = buttonPosition.x + (BUTTON_SIZE / 2) - (panelWidth / 2);
   const clampedLeft = Math.max(
     VIEWPORT_PADDING,
     Math.min(centeredLeft, viewportSize.width - panelWidth - VIEWPORT_PADDING)
   );
-  const preferredTop = buttonPosition.y - PANEL_HEIGHT - PANEL_GAP;
-  const fallbackTop = buttonPosition.y + BUTTON_SIZE + PANEL_GAP;
-  const rawTop = preferredTop >= VIEWPORT_PADDING ? preferredTop : fallbackTop;
-  const clampedTop = Math.max(
-    VIEWPORT_PADDING,
-    Math.min(rawTop, viewportSize.height - PANEL_HEIGHT - VIEWPORT_PADDING)
-  );
+  const clampedTop = shouldPlaceAbove
+    ? buttonPosition.y - panelHeightForLayout - PANEL_GAP
+    : buttonPosition.y + BUTTON_SIZE + PANEL_GAP;
   const floatingPanelStyle = {
     left: `${clampedLeft}px`,
     top: `${clampedTop}px`,
     width: `${panelWidth}px`,
-    height: `${PANEL_HEIGHT}px`,
-    maxHeight: `calc(100vh - ${VIEWPORT_PADDING * 2}px)`,
+    height: `${panelHeightForLayout}px`,
+    maxHeight: `${panelHeightForLayout}px`,
   } as const;
 
   if (!user) return null;
 
-  // ─── Upgrade Gate (Starter) ───
+  // --- Upgrade Gate (Starter) ---
   if (!isPro) {
     return (
       <>
         {/* Botão flutuante com lock - agora arrastável */}
         <button
-          className={`fixed z-50 h-14 w-14 rounded-full bg-primary shadow-lg shadow-primary/30 flex items-center justify-center text-white hover:scale-105 transition-transform ${
+          className={`fixed z-[60] h-14 w-14 rounded-full bg-primary shadow-lg shadow-primary/30 flex items-center justify-center text-white hover:scale-105 transition-transform ${
             isDragging ? 'cursor-grabbing' : 'cursor-grab'
           }`}
           style={{
@@ -352,7 +363,7 @@ export function FloatingChat() {
         {/* Upgrade panel */}
         {open && (
           <div
-            className="fixed z-50 bg-card border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200"
+            className="fixed z-50 bg-card border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200 flex flex-col"
             style={floatingPanelStyle}
           >
             <div className="bg-gradient-to-r from-primary to-orange-500 p-6 text-white text-center">
@@ -364,7 +375,7 @@ export function FloatingChat() {
                 Converse em tempo real com nosso suporte
               </p>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-4 overflow-y-auto">
               <div className="space-y-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <CheckCheck className="h-4 w-4 text-primary" />
@@ -406,14 +417,14 @@ export function FloatingChat() {
     );
   }
 
-  // ─── Chat Panel (Professional+) ───
+  // --- Chat Panel (Professional+) ---
   const dateGroups = groupByDate();
 
   return (
     <>
       {/* Botão flutuante - agora arrastável */}
       <button
-        className={`fixed z-50 h-14 w-14 rounded-full bg-primary shadow-lg shadow-primary/30 flex items-center justify-center text-white hover:scale-105 transition-transform ${
+        className={`fixed z-[60] h-14 w-14 rounded-full bg-primary shadow-lg shadow-primary/30 flex items-center justify-center text-white hover:scale-105 transition-transform ${
           isDragging ? 'cursor-grabbing' : 'cursor-grab'
         }`}
         style={{
@@ -592,4 +603,7 @@ export function FloatingChat() {
     </>
   );
 }
+
+
+
 

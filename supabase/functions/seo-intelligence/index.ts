@@ -130,6 +130,8 @@ async function analyzeBacklinks(url: string, html: string): Promise<BacklinkAnal
 interface CompetitorMetrics {
   domain: string;
   url: string;
+  screenshotUrl: string | null;
+  previewImageUrl: string | null;
   reachable: boolean;
   title: string | null;
   description: string | null;
@@ -142,29 +144,106 @@ interface CompetitorMetrics {
   socialProfiles: string[];
   ctaCount: number;
   imageCount: number;
+  priceSignals: {
+    mentions: number;
+    min: number | null;
+    max: number | null;
+    currency: string | null;
+  };
+  designSignals: {
+    headingCount: number;
+    sectionCount: number;
+    buttonCount: number;
+  };
+}
+
+function ensureAbsoluteUrl(raw: string): string {
+  const trimmed = raw?.trim?.() ?? "";
+  if (!trimmed) return "";
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
+function extractDomain(raw: string): string {
+  try {
+    return new URL(ensureAbsoluteUrl(raw)).hostname.replace(/^www\./, "");
+  } catch {
+    return (raw || "")
+      .replace(/^https?:\/\//i, "")
+      .split("/")[0]
+      .replace(/^www\./, "")
+      .trim();
+  }
+}
+
+function normalizeCompetitorUrls(value: unknown): string[] {
+  if (!value) return [];
+
+  if (Array.isArray(value)) {
+    return [...new Set(value.map((item) => ensureAbsoluteUrl(String(item))).filter(Boolean))];
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    const split = trimmed
+      .split(/\r?\n|,|;/)
+      .map((item) => ensureAbsoluteUrl(item))
+      .filter(Boolean);
+    return [...new Set(split)];
+  }
+
+  return [];
+}
+
+function toAbsoluteUrl(baseUrl: string, candidate: string): string | null {
+  const raw = (candidate || "").trim();
+  if (!raw) return null;
+  try {
+    return new URL(raw, baseUrl).toString();
+  } catch {
+    return null;
+  }
 }
 
 async function analyzeCompetitor(competitorUrl: string): Promise<CompetitorMetrics> {
-  const domain = new URL(competitorUrl).hostname.replace(/^www\./, "");
+  const normalizedUrl = ensureAbsoluteUrl(competitorUrl);
+  const domain = extractDomain(normalizedUrl);
   const base: CompetitorMetrics = {
     domain,
-    url: competitorUrl,
+    url: normalizedUrl,
+    screenshotUrl: normalizedUrl
+      ? `https://s.wordpress.com/mshots/v1/${encodeURIComponent(normalizedUrl)}?w=1200`
+      : null,
+    previewImageUrl: null,
     reachable: false,
     title: null,
     description: null,
     h1Count: 0,
     wordCount: 0,
     externalLinkCount: 0,
-    hasHttps: competitorUrl.startsWith("https"),
+    hasHttps: normalizedUrl.startsWith("https"),
     hasStructuredData: false,
     hasSitemap: false,
     socialProfiles: [],
     ctaCount: 0,
     imageCount: 0,
+    priceSignals: {
+      mentions: 0,
+      min: null,
+      max: null,
+      currency: null,
+    },
+    designSignals: {
+      headingCount: 0,
+      sectionCount: 0,
+      buttonCount: 0,
+    },
   };
 
+  if (!normalizedUrl || !domain) return base;
+
   try {
-    const resp = await fetch(competitorUrl, {
+    const resp = await fetch(normalizedUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; IntentiaBot/1.0)",
         "Accept": "text/html",
@@ -186,6 +265,17 @@ async function analyzeCompetitor(competitorUrl: string): Promise<CompetitorMetri
     const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)/i)
       || html.match(/<meta[^>]*content=["']([^"']*?)["'][^>]*name=["']description["']/i);
     base.description = descMatch ? descMatch[1].trim().slice(0, 300) : null;
+
+    // Visual preview from page itself (preferred over external screenshot providers)
+    const ogImageMatch =
+      html.match(/<meta[^>]*(?:property|name)=["']og:image["'][^>]*content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*(?:property|name)=["']og:image["']/i);
+    const twitterImageMatch =
+      html.match(/<meta[^>]*(?:property|name)=["']twitter:image(?::src)?["'][^>]*content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*(?:property|name)=["']twitter:image(?::src)?["']/i);
+    const firstImgMatch = html.match(/<img[^>]*src=["']([^"']+)["'][^>]*>/i);
+    const candidatePreview = ogImageMatch?.[1] || twitterImageMatch?.[1] || firstImgMatch?.[1] || "";
+    base.previewImageUrl = toAbsoluteUrl(normalizedUrl, candidatePreview);
 
     // H1
     base.h1Count = (html.match(/<h1[^>]*>/gi) || []).length;
@@ -224,9 +314,33 @@ async function analyzeCompetitor(competitorUrl: string): Promise<CompetitorMetri
     // Images
     base.imageCount = (html.match(/<img[^>]+>/gi) || []).length;
 
+    // Price signals (simple heuristics)
+    const priceRegex = /(R\$\s?\d{1,3}(?:\.\d{3})*(?:,\d{2})?|\$\s?\d+(?:\.\d{2})?|\d+(?:,\d{2})?\s?(?:reais|usd|d[oó]lares))/gi;
+    const priceMatches = html.match(priceRegex) || [];
+    const normalizedPrices = priceMatches
+      .map((token) => {
+        const onlyNumber = token.replace(/[^\d,\.]/g, "").replace(/\.(?=\d{3}(?:\D|$))/g, "").replace(",", ".");
+        const parsed = Number(onlyNumber);
+        return Number.isFinite(parsed) ? parsed : null;
+      })
+      .filter((n): n is number => n !== null);
+    base.priceSignals = {
+      mentions: priceMatches.length,
+      min: normalizedPrices.length ? Math.min(...normalizedPrices) : null,
+      max: normalizedPrices.length ? Math.max(...normalizedPrices) : null,
+      currency: /R\$/i.test(priceMatches.join(" ")) ? "BRL" : /\$/i.test(priceMatches.join(" ")) ? "USD" : null,
+    };
+
+    // Design signals (proxy heuristics)
+    base.designSignals = {
+      headingCount: (html.match(/<h[1-6][^>]*>/gi) || []).length,
+      sectionCount: (html.match(/<section[^>]*>/gi) || []).length,
+      buttonCount: (html.match(/<button[^>]*>/gi) || []).length + (html.match(/class=["'][^"']*(?:btn|button|cta)[^"']*["']/gi) || []).length,
+    };
+
     // Sitemap
     try {
-      const sitemapResp = await fetch(`${new URL(competitorUrl).origin}/sitemap.xml`, {
+      const sitemapResp = await fetch(`${new URL(normalizedUrl).origin}/sitemap.xml`, {
         signal: AbortSignal.timeout(3000),
       });
       base.hasSitemap = sitemapResp.ok;
@@ -371,10 +485,12 @@ serve(async (req) => {
       console.log(`[seo-intelligence] Backlinks: ${backlinks.externalLinkCount} external, ${backlinks.uniqueReferringDomains.length} domains`);
     }
 
+    const normalizedCompetitorUrls = normalizeCompetitorUrls(competitorUrls).slice(0, 5);
+
     // 3. Competitor monitoring (parallel)
     const competitors: CompetitorMetrics[] = [];
-    if (competitorUrls && Array.isArray(competitorUrls) && competitorUrls.length > 0) {
-      const competitorPromises = competitorUrls.slice(0, 5).map((cu: string) => analyzeCompetitor(cu));
+    if (normalizedCompetitorUrls.length > 0) {
+      const competitorPromises = normalizedCompetitorUrls.map((cu: string) => analyzeCompetitor(cu));
       const results = await Promise.allSettled(competitorPromises);
       for (const r of results) {
         if (r.status === "fulfilled") competitors.push(r.value);
@@ -388,9 +504,9 @@ serve(async (req) => {
     console.log(`[seo-intelligence] aiKeys received: ${JSON.stringify(aiKeys?.map((k: any) => ({ provider: k?.provider, model: k?.model, hasKey: !!k?.apiKey })))}`);
     console.log(`[seo-intelligence] brandName=${brandName}, niche=${niche}`);
     if (aiKeys && Array.isArray(aiKeys) && aiKeys.length > 0 && brandName && niche) {
-      const competitorDomains = (competitorUrls || []).map((cu: string) => {
-        try { return new URL(cu).hostname; } catch { return cu; }
-      });
+      const competitorDomains = normalizedCompetitorUrls
+        .map((cu: string) => extractDomain(cu))
+        .filter(Boolean);
 
       for (const key of aiKeys.slice(0, 2)) {
         if (!key.provider || !key.apiKey || !key.model) {

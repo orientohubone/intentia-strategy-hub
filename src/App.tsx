@@ -33,6 +33,7 @@ import Help from "./pages/Help";
 import Support from "./pages/Support";
 import Integrations from "./pages/Integrations";
 import SeoGeo from "./pages/SeoGeo";
+import SeoMonitoring from "./pages/SeoMonitoring";
 import Checkout from "./pages/Checkout";
 import Subscribe from "./pages/Subscribe";
 import OAuthCallback from "./pages/OAuthCallback";
@@ -52,6 +53,7 @@ import FeatureInsights from "./pages/FeatureInsights";
 import FeatureDadosEstruturados from "./pages/FeatureDadosEstruturados";
 import FeatureGestaoCampanhas from "./pages/FeatureGestaCampanhas";
 import FeatureGestaoBudget from "./pages/FeatureGestaoBudget";
+import FeatureSeoMonitoring from "./pages/FeatureSeoMonitoring";
 import AdminLogin from "./pages/AdminLogin";
 import AdminPanel from "./pages/AdminPanel";
 import StatusRssFallback from "./pages/StatusRssFallback";
@@ -104,6 +106,7 @@ const App = () => (
           <Route path="/dados-estruturados" element={<ForceLightMode><FeatureDadosEstruturados /></ForceLightMode>} />
           <Route path="/gestao-campanhas" element={<ForceLightMode><FeatureGestaoCampanhas /></ForceLightMode>} />
           <Route path="/gestao-budget" element={<ForceLightMode><FeatureGestaoBudget /></ForceLightMode>} />
+          <Route path="/monitoramento-seo-inteligente" element={<ForceLightMode><FeatureSeoMonitoring /></ForceLightMode>} />
           <Route path="/relatorios" element={<ForceLightMode><FeatureRelatorios /></ForceLightMode>} />
           <Route path="/verify-test" element={<ForceLightMode><VerifyTest /></ForceLightMode>} />
           <Route path="/verify-success" element={<ForceLightMode><VerifySuccess /></ForceLightMode>} />
@@ -234,7 +237,19 @@ const App = () => (
             path="/seo-geo" 
             element={
               <ProtectedRoute>
-                <SeoGeo />
+                <FeatureGate featureKey="seo_analysis">
+                  <SeoGeo />
+                </FeatureGate>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/seo-monitoring" 
+            element={
+              <ProtectedRoute>
+                <FeatureGate featureKey="performance_monitoring">
+                  <SeoMonitoring />
+                </FeatureGate>
               </ProtectedRoute>
             } 
           />

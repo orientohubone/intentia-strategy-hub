@@ -110,14 +110,14 @@ export async function fetchPageSpeedInsights(
     throw new Error(data.error);
   }
 
-  return parsePageSpeedResponse(data, strategy);
+  return parsePageSpeedApiResponse(data, strategy);
 }
 
 // =====================================================
 // PARSE RESPONSE
 // =====================================================
 
-function parsePageSpeedResponse(json: any, strategy: "mobile" | "desktop"): PageSpeedResult {
+export function parsePageSpeedApiResponse(json: any, strategy: "mobile" | "desktop"): PageSpeedResult {
   const lighthouse = json.lighthouseResult;
   const audits = lighthouse?.audits || {};
   const categories = lighthouse?.categories || {};

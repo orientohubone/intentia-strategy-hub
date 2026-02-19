@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+﻿import { useCallback, useEffect, useRef, useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { SEO } from "@/components/SEO";
 import { OnboardingChecklist } from "@/components/OnboardingChecklist";
@@ -21,11 +21,13 @@ import {
   Sparkles,
   Clock,
   Bell,
+  GripVertical,
 } from "lucide-react";
 import { useTenantData } from "@/hooks/useTenantData";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 type QuickAction = {
   icon: React.ElementType;
@@ -124,6 +126,16 @@ const homeStatsCache = new Map<string, { data: HomeStatsCache; timestamp: number
 const homeStatsInFlight = new Map<string, Promise<HomeStatsCache>>();
 const homeActivityCache = new Map<string, { data: RecentActivity[]; timestamp: number }>();
 const homeActivityInFlight = new Map<string, Promise<RecentActivity[]>>();
+const HOME_BLOCKS_STORAGE_KEY_PREFIX = "home:block-order";
+const HOME_BLOCKS_DEFAULT_ORDER = ["checklist", "quick", "activity"] as const;
+type HomeBlockId = typeof HOME_BLOCKS_DEFAULT_ORDER[number];
+
+const isValidHomeBlockOrder = (order: unknown): order is HomeBlockId[] => {
+  if (!Array.isArray(order)) return false;
+  if (order.length !== HOME_BLOCKS_DEFAULT_ORDER.length) return false;
+  const asSet = new Set(order);
+  return HOME_BLOCKS_DEFAULT_ORDER.every((id) => asSet.has(id));
+};
 
 export default function Home() {
   const { user } = useAuth();
@@ -139,14 +151,72 @@ export default function Home() {
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [notificationsCount, setNotificationsCount] = useState(0);
   const [activityLoading, setActivityLoading] = useState(true);
+  const [homeBlocksOrder, setHomeBlocksOrder] = useState<HomeBlockId[]>([
+    ...HOME_BLOCKS_DEFAULT_ORDER,
+  ]);
+  const [homeBlocksLoaded, setHomeBlocksLoaded] = useState(false);
+  const [draggingBlockId, setDraggingBlockId] = useState<HomeBlockId | null>(null);
+  const [isDraggingBlock, setIsDraggingBlock] = useState(false);
+  const blockDragStartPos = useRef({ x: 0, y: 0 });
+  const blockDragMovedRef = useRef(false);
 
   const fullName = (user?.user_metadata?.full_name as string | undefined) || user?.email || "Usuário";
   const hasAvatar = !!(user?.user_metadata?.avatar_url);
   const isNextStepsLoading = loading || statsLoading;
+  const homeBlocksStorageKey = `${HOME_BLOCKS_STORAGE_KEY_PREFIX}:${userId || "guest"}`;
 
   const averageScore = projects.length > 0
     ? Math.round(projects.reduce((sum, p) => sum + p.score, 0) / projects.length)
     : 0;
+
+  const moveBlock = useCallback((sourceId: HomeBlockId, targetId: HomeBlockId) => {
+    if (sourceId === targetId) return;
+    setHomeBlocksOrder((prev) => {
+      const sourceIndex = prev.indexOf(sourceId);
+      const targetIndex = prev.indexOf(targetId);
+      if (sourceIndex === -1 || targetIndex === -1) return prev;
+      const next = [...prev];
+      next.splice(sourceIndex, 1);
+      next.splice(targetIndex, 0, sourceId);
+      return next;
+    });
+  }, []);
+
+  const handleBlockMouseDown = (e: React.MouseEvent, blockId: HomeBlockId) => {
+    setDraggingBlockId(blockId);
+    setIsDraggingBlock(true);
+    blockDragMovedRef.current = false;
+    blockDragStartPos.current = { x: e.clientX, y: e.clientY };
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleBlockMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDraggingBlock || !draggingBlockId) return;
+      const deltaX = e.clientX - blockDragStartPos.current.x;
+      const deltaY = e.clientY - blockDragStartPos.current.y;
+      if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+        blockDragMovedRef.current = true;
+      }
+    },
+    [isDraggingBlock, draggingBlockId]
+  );
+
+  const handleBlockMouseUp = useCallback(() => {
+    setIsDraggingBlock(false);
+    setDraggingBlockId(null);
+    blockDragMovedRef.current = false;
+  }, []);
+
+  const handleBlockHover = useCallback(
+    (targetId: HomeBlockId) => {
+      if (!isDraggingBlock || !draggingBlockId || !blockDragMovedRef.current) return;
+      if (draggingBlockId === targetId) return;
+      moveBlock(draggingBlockId, targetId);
+    },
+    [isDraggingBlock, draggingBlockId, moveBlock]
+  );
 
   useEffect(() => {
     if (!userId) {
@@ -298,6 +368,49 @@ export default function Home() {
     };
   }, [userId]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem(homeBlocksStorageKey);
+    if (!stored) {
+      setHomeBlocksOrder([...HOME_BLOCKS_DEFAULT_ORDER]);
+      setHomeBlocksLoaded(true);
+      return;
+    }
+    try {
+      const parsed = JSON.parse(stored);
+      if (isValidHomeBlockOrder(parsed)) {
+        setHomeBlocksOrder(parsed);
+        setHomeBlocksLoaded(true);
+        return;
+      }
+    } catch {
+      // no-op
+    }
+    setHomeBlocksOrder([...HOME_BLOCKS_DEFAULT_ORDER]);
+    setHomeBlocksLoaded(true);
+  }, [homeBlocksStorageKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!homeBlocksLoaded) return;
+    window.localStorage.setItem(homeBlocksStorageKey, JSON.stringify(homeBlocksOrder));
+  }, [homeBlocksOrder, homeBlocksStorageKey, homeBlocksLoaded]);
+
+  useEffect(() => {
+    if (!isDraggingBlock) return;
+
+    const previousUserSelect = document.body.style.userSelect;
+    document.body.style.userSelect = "none";
+    document.addEventListener("mousemove", handleBlockMouseMove);
+    document.addEventListener("mouseup", handleBlockMouseUp);
+
+    return () => {
+      document.body.style.userSelect = previousUserSelect;
+      document.removeEventListener("mousemove", handleBlockMouseMove);
+      document.removeEventListener("mouseup", handleBlockMouseUp);
+    };
+  }, [isDraggingBlock, handleBlockMouseMove, handleBlockMouseUp]);
+
   const formatRelativeTime = (iso: string) => {
     const diff = Date.now() - new Date(iso).getTime();
     const mins = Math.floor(diff / 60000);
@@ -327,6 +440,17 @@ export default function Home() {
       case "campaign": return "text-red-500 bg-red-500/10";
       case "benchmark": return "text-emerald-500 bg-emerald-500/10";
     }
+  };
+
+  const blockLabels: Record<HomeBlockId, string> = {
+    checklist: "Checklist",
+    quick: "Resumo e Atalhos",
+    activity: "Atividade e Próximos Passos",
+  };
+
+  const getBlockOrder = (blockId: HomeBlockId) => {
+    const idx = homeBlocksOrder.indexOf(blockId);
+    return idx === -1 ? HOME_BLOCKS_DEFAULT_ORDER.indexOf(blockId) : idx;
   };
 
   return (
@@ -363,33 +487,73 @@ export default function Home() {
           </div>
         </div>
 
+        <div className="flex flex-col gap-4 sm:gap-6">
         {/* Onboarding Checklist */}
-        {(loading || statsLoading) ? (
-          <div className="flex gap-3 overflow-hidden">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="flex-shrink-0 w-[140px] sm:w-[160px] rounded-xl border border-border p-3 sm:p-4 animate-pulse">
-                <div className="w-10 h-10 rounded-xl bg-muted mb-3" />
-                <div className="h-3 w-20 bg-muted rounded mb-2" />
-                <div className="h-2 w-full bg-muted rounded mb-1" />
-                <div className="h-2 w-2/3 bg-muted rounded" />
-              </div>
-            ))}
+        <section
+          className={cn(
+            "space-y-2 rounded-xl transition-colors",
+            isDraggingBlock && draggingBlockId === "checklist" && "opacity-80 ring-2 ring-primary/30"
+          )}
+          style={{ order: getBlockOrder("checklist") }}
+          onMouseEnter={() => handleBlockHover("checklist")}
+        >
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onMouseDown={(e) => handleBlockMouseDown(e, "checklist")}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border/70 bg-background/80 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/40 cursor-grab active:cursor-grabbing"
+              aria-label={`Reorganizar bloco ${blockLabels.checklist}`}
+            >
+              <GripVertical className="h-3.5 w-3.5" />
+              {blockLabels.checklist}
+            </button>
           </div>
-        ) : (
-          <OnboardingChecklist
-            data={{
-              projectsCount: projects.length,
-              hasAnalysis: projects.some((p) => p.status === "completed"),
-              hasAiKey,
-              benchmarksCount,
-              audiencesCount,
-              hasAvatar,
-            }}
-          />
-        )}
+          {(loading || statsLoading) ? (
+            <div className="flex gap-3 overflow-hidden">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="flex-shrink-0 w-[140px] sm:w-[160px] rounded-xl border border-border p-3 sm:p-4 animate-pulse">
+                  <div className="w-10 h-10 rounded-xl bg-muted mb-3" />
+                  <div className="h-3 w-20 bg-muted rounded mb-2" />
+                  <div className="h-2 w-full bg-muted rounded mb-1" />
+                  <div className="h-2 w-2/3 bg-muted rounded" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <OnboardingChecklist
+              data={{
+                projectsCount: projects.length,
+                hasAnalysis: projects.some((p) => p.status === "completed"),
+                hasAiKey,
+                benchmarksCount,
+                audiencesCount,
+                hasAvatar,
+              }}
+            />
+          )}
+        </section>
 
         {/* Quick Stats + Quick Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+        <section
+          className={cn(
+            "space-y-2 rounded-xl transition-colors",
+            isDraggingBlock && draggingBlockId === "quick" && "opacity-80 ring-2 ring-primary/30"
+          )}
+          style={{ order: getBlockOrder("quick") }}
+          onMouseEnter={() => handleBlockHover("quick")}
+        >
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onMouseDown={(e) => handleBlockMouseDown(e, "quick")}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border/70 bg-background/80 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/40 cursor-grab active:cursor-grabbing"
+              aria-label={`Reorganizar bloco ${blockLabels.quick}`}
+            >
+              <GripVertical className="h-3.5 w-3.5" />
+              {blockLabels.quick}
+            </button>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
 
           {/* Quick Stats */}
           <div className="lg:col-span-1 space-y-4">
@@ -439,10 +603,30 @@ export default function Home() {
               ))}
             </div>
           </div>
-        </div>
+          </div>
+        </section>
 
         {/* Recent Activity + Tips */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+        <section
+          className={cn(
+            "space-y-2 rounded-xl transition-colors",
+            isDraggingBlock && draggingBlockId === "activity" && "opacity-80 ring-2 ring-primary/30"
+          )}
+          style={{ order: getBlockOrder("activity") }}
+          onMouseEnter={() => handleBlockHover("activity")}
+        >
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onMouseDown={(e) => handleBlockMouseDown(e, "activity")}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border/70 bg-background/80 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/40 cursor-grab active:cursor-grabbing"
+              aria-label={`Reorganizar bloco ${blockLabels.activity}`}
+            >
+              <GripVertical className="h-3.5 w-3.5" />
+              {blockLabels.activity}
+            </button>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
 
           {/* Recent Activity */}
           <div className="space-y-3">
@@ -592,10 +776,13 @@ export default function Home() {
               </div>
             </div>
           </div>
+          </div>
+        </section>
         </div>
       </div>
     </DashboardLayout>
   );
 }
+
 
 
