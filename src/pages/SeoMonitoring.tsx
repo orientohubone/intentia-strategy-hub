@@ -120,29 +120,49 @@ export default function SeoMonitoring() {
         });
       setRunStage("processing");
 
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
-      if (!token) throw new Error("Sessao expirada. Faca login novamente.");
+      let orchestratorError: string | null = null;
 
-      const functionsBaseUrl = String(import.meta.env.VITE_SUPABASE_URL || "").replace(
-        ".supabase.co",
-        ".functions.supabase.co",
-      );
-      if (!functionsBaseUrl) throw new Error("VITE_SUPABASE_URL nao configurada.");
-
-      const response = await fetch(`${functionsBaseUrl}/seo-monitor-orchestrator`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({ action: "run_jobs", limit: 5 }),
+      // Prefer SDK invocation (same auth/session handling as the rest of the app)
+      const invokeResult = await (supabase as any).functions.invoke("seo-monitor-orchestrator", {
+        body: { action: "run_jobs", limit: 5 },
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error || `Erro ao executar monitoramento (${response.status})`);
+      if (invokeResult?.error) {
+        orchestratorError =
+          invokeResult.error?.message ||
+          invokeResult.error?.context?.error ||
+          "Falha ao invocar orquestrador";
+      }
+
+      // Fallback to direct HTTP invoke for edge cases where SDK invocation fails.
+      if (orchestratorError) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        if (!token) throw new Error("Sessao expirada. Faca login novamente.");
+
+        const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL || "");
+        if (!supabaseUrl) throw new Error("VITE_SUPABASE_URL nao configurada.");
+
+        const response = await fetch(`${supabaseUrl}/functions/v1/seo-monitor-orchestrator`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ action: "run_jobs", limit: 5 }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          if (response.status === 546) {
+            throw new Error(
+              errorData?.error ||
+                "Erro 546 no monitoramento. A funcao Edge pode estar indisponivel temporariamente; tente novamente em alguns minutos.",
+            );
+          }
+          throw new Error(errorData?.error || `Erro ao executar monitoramento (${response.status})`);
+        }
       }
 
       setRunStage("refreshing");
@@ -237,7 +257,7 @@ export default function SeoMonitoring() {
     setTimelineGroupsExpanded((prev) => {
       const next: Record<string, boolean> = {};
       timelineGroupedItems.forEach((group, index) => {
-        next[group.day] = prev[group.day] ?? index === 0;
+        next[group.day] = prev[group.day] ?? false;
       });
       return next;
     });
@@ -315,11 +335,11 @@ export default function SeoMonitoring() {
 
         <Card>
           <CardContent className="pt-6">
-            <div className="flex flex-col lg:flex-row lg:items-end gap-3">
-              <div className="flex-1">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+              <div className="min-w-0 lg:col-span-5">
                 <label className="text-sm font-medium text-foreground mb-1.5 block">Projeto</label>
                 <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Selecione um projeto..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -330,23 +350,23 @@ export default function SeoMonitoring() {
                 </Select>
               </div>
 
-              <div>
+              <div className="lg:col-span-3">
                 <label className="text-sm font-medium text-foreground mb-1.5 block">Dispositivo</label>
-                <div className="flex gap-1 bg-muted rounded-lg p-1">
-                  <Button size="sm" variant={strategy === "mobile" ? "default" : "ghost"} className="h-8 gap-1.5" onClick={() => setStrategy("mobile")}>
+                <div className="flex gap-1 bg-muted rounded-lg p-1 w-full">
+                  <Button size="sm" variant={strategy === "mobile" ? "default" : "ghost"} className="h-8 gap-1.5 flex-1" onClick={() => setStrategy("mobile")}>
                     <Smartphone className="h-3.5 w-3.5" />
                     Mobile
                   </Button>
-                  <Button size="sm" variant={strategy === "desktop" ? "default" : "ghost"} className="h-8 gap-1.5" onClick={() => setStrategy("desktop")}>
+                  <Button size="sm" variant={strategy === "desktop" ? "default" : "ghost"} className="h-8 gap-1.5 flex-1" onClick={() => setStrategy("desktop")}>
                     <Monitor className="h-3.5 w-3.5" />
                     Desktop
                   </Button>
                 </div>
               </div>
 
-              <div>
+              <div className="lg:col-span-3">
                 <label className="text-sm font-medium text-foreground mb-1.5 block">Monitoramento Live</label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Switch
                     checked={liveEnabled}
                     disabled={!selectedProjectId}
@@ -364,7 +384,7 @@ export default function SeoMonitoring() {
                       saveLiveConfig(liveEnabled, next);
                     }}
                   >
-                    <SelectTrigger className="h-8 w-[120px]">
+                    <SelectTrigger className="h-8 w-full sm:w-[120px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -377,7 +397,7 @@ export default function SeoMonitoring() {
                 </div>
               </div>
 
-              <Button className="gap-2" disabled={!selectedProjectId || running} onClick={runMonitoringNow}>
+              <Button className="gap-2 w-full lg:w-auto lg:col-span-1 lg:self-end" disabled={!selectedProjectId || running} onClick={runMonitoringNow}>
                 {running ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                 {running ? "Monitorando..." : "Rodar Agora"}
               </Button>
@@ -430,16 +450,16 @@ export default function SeoMonitoring() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 mb-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 mb-4">
               <div className="text-xs text-muted-foreground">
                 Exibindo {timelineVisibleItems.length} de {timelineFilteredItems.length} snapshots
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Select
                   value={timelineStrategyFilter}
                   onValueChange={(value: "all" | "mobile" | "desktop") => setTimelineStrategyFilter(value)}
                 >
-                  <SelectTrigger className="h-8 w-[130px]">
+                  <SelectTrigger className="h-8 w-full sm:w-[130px]">
                     <SelectValue placeholder="Dispositivo" />
                   </SelectTrigger>
                   <SelectContent>
@@ -448,14 +468,14 @@ export default function SeoMonitoring() {
                     <SelectItem value="desktop">Desktop</SelectItem>
                   </SelectContent>
                 </Select>
-                <div className="h-8 px-2 rounded-md border border-border bg-muted/30 flex items-center gap-2">
+                <div className="h-8 w-full sm:w-auto px-2 rounded-md border border-border bg-muted/30 flex items-center gap-2">
                   <Switch checked={timelineOnlyChanges} onCheckedChange={setTimelineOnlyChanges} />
                   <span className="text-xs text-muted-foreground whitespace-nowrap">So mudancas</span>
                 </div>
-                <Button variant="outline" size="sm" className="h-8 px-2" onClick={() => setAllTimelineGroups(true)}>
+                <Button variant="outline" size="sm" className="h-8 px-2 w-full sm:w-auto" onClick={() => setAllTimelineGroups(true)}>
                   Expandir tudo
                 </Button>
-                <Button variant="outline" size="sm" className="h-8 px-2" onClick={() => setAllTimelineGroups(false)}>
+                <Button variant="outline" size="sm" className="h-8 px-2 w-full sm:w-auto" onClick={() => setAllTimelineGroups(false)}>
                   Recolher tudo
                 </Button>
               </div>
@@ -472,10 +492,10 @@ export default function SeoMonitoring() {
                     <button
                       type="button"
                       onClick={() => toggleTimelineGroup(group.day)}
-                      className="w-full flex items-center justify-between mb-2 px-2 py-1.5 rounded-md bg-muted/20 border border-border/60 hover:bg-muted/30 transition-colors"
+                      className="w-full flex items-center justify-between gap-2 mb-2 px-2 py-1.5 rounded-md bg-muted/20 border border-border/60 hover:bg-muted/30 transition-colors"
                     >
-                      <p className="text-sm font-semibold text-foreground tracking-wide">{group.day}</p>
-                      <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-foreground tracking-wide min-w-0 truncate">{group.day}</p>
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         <Badge variant="outline">{group.items.length} registros</Badge>
                         <ChevronDown
                           className={`h-4 w-4 text-muted-foreground transition-transform ${timelineGroupsExpanded[group.day] ? "rotate-180" : ""}`}
@@ -497,10 +517,10 @@ export default function SeoMonitoring() {
                             <button
                               type="button"
                               onClick={() => toggleTimelineItem(item.id)}
-                              className="w-full px-3 py-3 text-left flex items-center justify-between gap-3 hover:bg-muted/20 transition-colors"
+                              className="w-full px-3 py-3 text-left flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-muted/20 transition-colors"
                             >
-                              <div>
-                                <p className="text-sm font-semibold text-foreground">
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold text-foreground break-words">
                                   {new Date(item.analyzed_at).toLocaleString("pt-BR")}
                                 </p>
                                 <div className="flex items-center flex-wrap gap-2 mt-1 text-xs">
@@ -511,7 +531,7 @@ export default function SeoMonitoring() {
                                   {hasChanges && <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30">{changes.length} mudancas</Badge>}
                                 </div>
                               </div>
-                              <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                              <div className="text-xs text-muted-foreground flex items-center gap-1.5 self-start sm:self-auto flex-wrap">
                                 <Radar className="h-3.5 w-3.5" />
                                 {Array.isArray(item.intelligence_data?.competitors)
                                   ? `${item.intelligence_data.competitors.length} concorrentes`
