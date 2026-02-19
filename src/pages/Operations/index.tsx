@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { FeatureGate } from "@/components/FeatureGate";
 import { SEO } from "@/components/SEO";
-import { Megaphone, Plus, FolderOpen, ChevronDown, DollarSign, CalendarDays, AlertTriangle, GitCompareArrows } from "lucide-react";
+import { Megaphone, Plus, FolderOpen, ChevronDown, DollarSign, CalendarDays, AlertTriangle, GitCompareArrows, MonitorUp } from "lucide-react";
 import {
   CHANNEL_LABELS,
   type CampaignChannel,
@@ -27,6 +28,8 @@ import TacticalVsRealComparison from "./components/TacticalVsRealComparison";
 import { Button } from "@/components/ui/button";
 
 export default function Operations() {
+  const navigate = useNavigate();
+
   const {
     user,
     projects,
@@ -211,11 +214,11 @@ export default function Operations() {
                   <div key={group.projectId} className="space-y-3">
                   <div className="bg-card border rounded-lg overflow-hidden">
                     {/* Group Header */}
-                    <button
-                      onClick={() => toggleGroup(group.projectId)}
-                      className="w-full flex items-center justify-between p-3 sm:p-4 hover:bg-accent/50 transition-colors text-left"
-                    >
-                      <div className="flex items-center gap-3">
+                    <div className="w-full flex items-center justify-between p-3 sm:p-4 hover:bg-accent/50 transition-colors text-left">
+                      <button
+                        onClick={() => toggleGroup(group.projectId)}
+                        className="flex items-center gap-3 text-left min-w-0"
+                      >
                         <FolderOpen className="h-5 w-5 text-primary flex-shrink-0" />
                         <div>
                           <h3 className="font-semibold text-sm sm:text-base">{group.projectName}</h3>
@@ -225,9 +228,26 @@ export default function Operations() {
                             {totalBudget > 0 && ` · ${formatCurrency(totalBudget)}`}
                           </p>
                         </div>
+                      </button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 gap-1.5 text-xs"
+                          onClick={() => navigate(`/operations/live-dashboard?projectId=${group.projectId}`)}
+                        >
+                          <MonitorUp className="h-3.5 w-3.5" />
+                          Dashboard
+                        </Button>
+                        <button
+                          onClick={() => toggleGroup(group.projectId)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-accent"
+                          aria-label={isExpanded ? "Recolher projeto" : "Expandir projeto"}
+                        >
+                          <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                        </button>
                       </div>
-                      <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                    </button>
+                    </div>
 
                     {/* Group Content — sub-grouped by channel */}
                     {isExpanded && (() => {
@@ -267,7 +287,11 @@ export default function Operations() {
                               {/* Campaigns for this channel */}
                               {isChannelExpanded(group.projectId, channel) && (
                               <div className="divide-y">
-                                {items.map((campaign) => (
+                                {items.map((campaign) => {
+                                  const currentEditingMetricId =
+                                    metricsFormCampaignId === campaign.id ? editingMetricId : null;
+
+                                  return (
                                   <div key={campaign.id}>
                                     <CampaignRow
                                       campaign={campaign}
@@ -287,7 +311,7 @@ export default function Operations() {
                                           metricsLoading={metricsEntriesLoading[campaign.id] || false}
                                           metricsFormCampaignId={metricsFormCampaignId === campaign.id ? campaign.id : null}
                                           metricsFormDraft={metricsFormDrafts[campaign.id]}
-                                          editingMetricId={editingMetricId?.[campaign.id] || null}
+                                          editingMetricId={currentEditingMetricId}
                                           canAiKeys={canAiKeys}
                                           canAiPerformance={canAiPerformance}
                                           hasAiKeys={hasAiKeys}
@@ -320,7 +344,7 @@ export default function Operations() {
                                       />
                                     )}
                                   </div>
-                                ))}
+                                )})}
                               </div>
                               )}
                             </div>

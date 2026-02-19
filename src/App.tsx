@@ -27,6 +27,7 @@ import Settings from "./pages/Settings";
 import TacticalPlan from "./pages/TacticalPlan";
 import Alerts from "./pages/Alerts";
 import Operations from "./pages/Operations";
+import OperationsLiveDashboard from "./pages/Operations/LiveDashboard";
 import Reports from "./pages/Reports";
 import FeatureRelatorios from "./pages/FeatureRelatorios";
 import Help from "./pages/Help";
@@ -199,6 +200,7 @@ const App = () => (
               </ProtectedRoute>
             } 
           />
+          <Route path="/operations/live-dashboard" element={<OperationsLiveDashboard />} />
           <Route 
             path="/reports" 
             element={
