@@ -101,18 +101,28 @@ export default function OperationsLiveDashboard() {
   const { user, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get("projectId");
+  const viewId = searchParams.get("viewId");
 
   const [campaigns, setCampaigns] = useState<CampaignRow[]>([]);
   const [summariesByCampaign, setSummariesByCampaign] = useState<Record<string, MetricsSummaryRow>>({});
   const [latestMetricsByCampaign, setLatestMetricsByCampaign] = useState<Record<string, CampaignMetrics>>({});
   const [allocations, setAllocations] = useState<BudgetAllocationRow[]>([]);
+  const [monthlyActuals, setMonthlyActuals] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
-  const [isLive, setIsLive] = useState(false);
+
+  // Auto-start live mode if in public view (TV mode)
+  const [isLive, setIsLive] = useState(() => !!searchParams.get("viewId"));
+
   const [isFullscreen, setIsFullscreen] = useState<boolean>(() => !!document.fullscreenElement);
+  const [activeViewers, setActiveViewers] = useState(0);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
   const loadDashboard = useCallback(async (silent = false) => {
-    if (!user) {
+    const targetUserId = user?.id || viewId;
+    console.log("loadDashboard called. User:", user?.id, "ViewId:", viewId, "Silent:", silent);
+
+    if (!targetUserId) {
+      console.log("No user context for live dashboard.");
       setCampaigns([]);
       setSummariesByCampaign({});
       setLatestMetricsByCampaign({});
@@ -122,10 +132,37 @@ export default function OperationsLiveDashboard() {
 
     if (!silent) setLoading(true);
     try {
+      // PROXY MODE via EDGE FUNCTION (TV/Public View without Login)
+      if (!user && viewId) {
+        console.log("Fetching live data via Edge Function (PROXY)... Target:", viewId);
+        const { data, error } = await supabase.functions.invoke("view-live", {
+          body: { targetUserId: viewId },
+        });
+
+        console.log("Edge Function Response:", { data, error });
+
+        if (error) throw new Error(error.message || "Erro na edge function");
+        if (!data) throw new Error("Nenhum dado retornado");
+
+        // Map response to local state structure
+        setCampaigns(data.campaigns || []);
+        setSummariesByCampaign(data.summariesByCampaign || {});
+        setLatestMetricsByCampaign(data.latestMetricsByCampaign || {});
+        setAllocations(data.allocations || []);
+        setMonthlyActuals(data.monthlyActuals || {});
+
+        setLastUpdatedAt(new Date());
+        return;
+      }
+
+      // DIRECT QUERY MODE (Authenticated User)
+      // Only runs if user is logged in (normal flow)
+      const currentUserId = user?.id || viewId; // Fallback just in case logic slips, but primarily user.id here
+
       let campaignsQuery = (supabase as any)
         .from("campaigns")
         .select("id,name,channel,status,project_id,budget_total,budget_spent,projects!inner(name)")
-        .eq("user_id", user.id)
+        .eq("user_id", currentUserId)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false });
 
@@ -152,7 +189,7 @@ export default function OperationsLiveDashboard() {
         const { data: summariesData, error: summariesError } = await (supabase as any)
           .from("v_campaign_metrics_summary")
           .select("campaign_id,total_entries,total_impressions,total_clicks,total_conversions,total_leads,total_cost,total_revenue,total_sessions,avg_ctr,avg_cpc,avg_cpa,calc_roas")
-          .eq("user_id", user.id)
+          .eq("user_id", currentUserId)
           .in("campaign_id", campaignIds);
         if (summariesError) throw summariesError;
         (summariesData || []).forEach((summary: MetricsSummaryRow) => {
@@ -166,7 +203,7 @@ export default function OperationsLiveDashboard() {
         const { data: latestMetricsData, error: latestMetricsError } = await (supabase as any)
           .from("campaign_metrics")
           .select("id,campaign_id,user_id,period_start,period_end,impressions,clicks,ctr,cpc,cpm,conversions,cpa,roas,cost,revenue,reach,frequency,video_views,vtr,leads,cpl,quality_score,avg_position,search_impression_share,engagement_rate,sessions,first_visits,leads_month,mql_rate,sql_rate,clients_web,revenue_web,avg_ticket,google_ads_cost,cac_month,cost_per_conversion,ltv,cac_ltv_ratio,cac_ltv_benchmark,roi_accumulated,roi_period_months,notes,source,custom_metrics,created_at")
-          .eq("user_id", user.id)
+          .eq("user_id", currentUserId)
           .in("campaign_id", campaignIds)
           .order("period_end", { ascending: false })
           .order("created_at", { ascending: false });
@@ -181,10 +218,30 @@ export default function OperationsLiveDashboard() {
       }
       setLatestMetricsByCampaign(latestMap);
 
+      // Buscando métricas históricas para evolucao mensal (Real)
+      const { data: historyMetricsData, error: historyMetricsError } = await (supabase as any)
+        .from("campaign_metrics")
+        .select("cost, period_end, created_at")
+        .eq("user_id", currentUserId)
+        .in("campaign_id", campaignIds)
+        .not("period_end", "is", null);
+
+      if (historyMetricsError) throw historyMetricsError;
+
+      const calculatedMonthlyActuals: Record<string, number> = {};
+      (historyMetricsData || []).forEach((metric: any) => {
+        const dateStr = metric.period_end || metric.created_at;
+        if (!dateStr) return;
+        const date = new Date(dateStr);
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+        calculatedMonthlyActuals[key] = (calculatedMonthlyActuals[key] || 0) + (Number(metric.cost) || 0);
+      });
+      setMonthlyActuals(calculatedMonthlyActuals);
+
       let budgetQuery = (supabase as any)
         .from("budget_allocations")
         .select("id,month,year,planned_budget,actual_spent,channel")
-        .eq("user_id", user.id)
+        .eq("user_id", currentUserId)
         .order("year", { ascending: false })
         .order("month", { ascending: false });
       if (projectId) budgetQuery = budgetQuery.eq("project_id", projectId);
@@ -200,31 +257,52 @@ export default function OperationsLiveDashboard() {
         channel: row.channel,
       })));
 
+      // Fetch Active Viewers (Wider window)
+      // Fetch Active Viewers (Wider window)
+      if (user) {
+        // Widen window to 10 minutes to be extremely safe about timezones
+        const timeWindow = new Date(Date.now() - 600 * 1000).toISOString();
+
+        const { data: viewersData, error: viewersError } = await (supabase as any)
+          .from("live_dashboard_access_logs")
+          .select("viewer_ip")
+          .eq("user_id", user.id)
+          .gte("created_at", timeWindow);
+
+        if (!viewersError && viewersData) {
+          // Count unique IPs to avoid inflating count on page refreshes
+          const uniqueIPs = new Set(viewersData.map((v: any) => v.viewer_ip)).size;
+          setActiveViewers(uniqueIPs);
+        }
+      }
+
       setLastUpdatedAt(new Date());
     } catch (error: any) {
       console.error("Error loading live dashboard:", error);
-      toast.error("Erro ao carregar dashboard operacional");
+      toast.error(error.message || "Erro ao carregar dashboard (TV Mode/Direct)");
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [projectId, user]);
+  }, [projectId, user, viewId]);
 
   useEffect(() => {
     void loadDashboard();
   }, [loadDashboard]);
 
   useEffect(() => {
-    if (!isLive || !user) return;
+    if (!isLive) return;
+    if (!user && !viewId) return;
+
     const interval = window.setInterval(() => void loadDashboard(true), 15000);
     return () => window.clearInterval(interval);
-  }, [isLive, loadDashboard, user]);
+  }, [isLive, loadDashboard, user, viewId]);
 
   useEffect(() => {
-    if (!authLoading && !user && isLive) {
+    if (!authLoading && !user && isLive && !viewId) {
       setIsLive(false);
       toast.warning("Transmissão pausada: faça login para continuar.");
     }
-  }, [authLoading, isLive, user]);
+  }, [authLoading, isLive, user, viewId]);
 
   useEffect(() => {
     const onFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -248,19 +326,51 @@ export default function OperationsLiveDashboard() {
     let sessions = 0;
     campaigns.forEach((campaign) => {
       const summary = summariesByCampaign[campaign.id];
+      const latest = latestMetricsByCampaign[campaign.id];
+
       budgetTotal += campaign.budget_total || 0;
-      mediaCost += summary?.total_cost || 0;
-      revenue += summary?.total_revenue || 0;
-      conversions += summary?.total_conversions || 0;
-      impressions += summary?.total_impressions || 0;
-      clicks += summary?.total_clicks || 0;
-      leads += summary?.total_leads || 0;
-      sessions += summary?.total_sessions || 0;
+
+      // Sum basic aggregates
+      mediaCost += summary?.total_cost || latest?.cost || latest?.google_ads_cost || 0;
+      impressions += summary?.total_impressions || latest?.impressions || 0;
+      clicks += summary?.total_clicks || latest?.clicks || 0;
+      sessions += summary?.total_sessions || latest?.sessions || 0;
+
+      // Revenue & Conversions & Leads prioritization logic
+      // For Google/Performance campaigns, we prefer specific 'web' metrics from latest snapshot if available
+      // otherwise fallback to summary aggregates, then generic latest metrics.
+
+      let campRevenue = 0;
+      let campConversions = 0;
+      let campLeads = 0;
+
+      if (campaign.channel === 'google' && latest) {
+        campRevenue = latest.revenue_web || latest.revenue || summary?.total_revenue || 0;
+        campConversions = latest.clients_web || latest.conversions || summary?.total_conversions || 0;
+        campLeads = latest.leads_month || latest.leads || summary?.total_leads || 0;
+      } else {
+        // Standard fallback for other channels
+        campRevenue = summary?.total_revenue || latest?.revenue || 0;
+        campConversions = summary?.total_conversions || latest?.conversions || 0;
+        campLeads = summary?.total_leads || latest?.leads || 0;
+      }
+
+      revenue += campRevenue;
+      conversions += campConversions;
+      leads += campLeads;
     });
+
     const cac = conversions > 0 ? mediaCost / conversions : 0;
     const avgTicket = conversions > 0 ? revenue / conversions : 0;
-    const ltv = avgTicket * 3;
+
+    // LTV Estimate: if we have avgTicket, assume 6 months retention if no better data
+    const ltv = avgTicket > 0 ? avgTicket * 6 : 0;
+
     const cacLtvRatio = cac > 0 ? ltv / cac : 0;
+
+    // Payback Months: CAC / (Ticket - CostPerClient~AssumedZeroCOGS) -> CAC / Ticket
+    const paybackMonths = avgTicket > 0 ? cac / avgTicket : 0;
+
     return {
       budgetTotal,
       mediaCost,
@@ -280,18 +390,22 @@ export default function OperationsLiveDashboard() {
       leadsToSales: leads > 0 ? (conversions / leads) * 100 : 0,
       paybackMonths: avgTicket > 0 ? cac / avgTicket : 0,
     };
-  }, [campaigns, summariesByCampaign]);
+  }, [campaigns, summariesByCampaign, latestMetricsByCampaign]);
 
   const currentMonthBudget = useMemo(() => {
     const now = new Date();
     const month = now.getMonth() + 1;
     const year = now.getFullYear();
+    const key = `${year}-${String(month).padStart(2, "0")}`;
     const rows = allocations.filter((item) => item.month === month && item.year === year);
     const planned = rows.reduce((sum, item) => sum + item.planned_budget, 0);
-    const actual = rows.reduce((sum, item) => sum + item.actual_spent, 0);
+    // Use allocation actuals if present, otherwise fallback to calculated metrics
+    const allocationActual = rows.reduce((sum, item) => sum + item.actual_spent, 0);
+    const calculatedActual = monthlyActuals[key] || 0;
+    const actual = allocationActual > 0 ? allocationActual : calculatedActual;
     const pacing = planned > 0 ? (actual / planned) * 100 : 0;
     return { planned, actual, pacing };
-  }, [allocations]);
+  }, [allocations, monthlyActuals]);
 
   const byChannel = useMemo(() => {
     return CHANNEL_ORDER.map((channel) => {
@@ -310,19 +424,41 @@ export default function OperationsLiveDashboard() {
 
   const budgetHistory = useMemo(() => {
     const grouped = new Map<string, { key: string; label: string; planned: number; actual: number; order: number }>();
+
+    // Add allocations (Planned)
     allocations.forEach((a) => {
       const key = `${a.year}-${String(a.month).padStart(2, "0")}`;
       const label = `${String(a.month).padStart(2, "0")}/${String(a.year).slice(-2)}`;
       const order = a.year * 100 + a.month;
       const current = grouped.get(key) || { key, label, planned: 0, actual: 0, order };
       current.planned += a.planned_budget;
-      current.actual += a.actual_spent;
+      current.actual += a.actual_spent; // Sum actuals from allocations first
       grouped.set(key, current);
     });
-    return [...grouped.values()].sort((a, b) => a.order - b.order).slice(-12);
-  }, [allocations]);
 
-  const shareUrl = `${window.location.origin}/operations/live-dashboard${projectId ? `?projectId=${projectId}` : ""}`;
+    // Merge calculated actuals if allocation actuals are missing
+    Object.entries(monthlyActuals).forEach(([key, cost]) => {
+      if (cost <= 0) return;
+      const [year, month] = key.split("-").map(Number);
+      const label = `${String(month).padStart(2, "0")}/${String(year).slice(-2)}`;
+      const order = year * 100 + month;
+      const current = grouped.get(key) || { key, label, planned: 0, actual: 0, order };
+
+      // Only override if allocation actual is 0 (or trust calculated explicitly)
+      // Here we prioritize calculated if allocation is 0
+      if (current.actual === 0) {
+        current.actual = cost;
+      }
+      grouped.set(key, current);
+    });
+
+    return [...grouped.values()].sort((a, b) => a.order - b.order).slice(-12);
+  }, [allocations, monthlyActuals]);
+
+  const shareUrl = `${window.location.origin}/operations/live-dashboard?${new URLSearchParams({
+    ...(projectId ? { projectId } : {}),
+    ...(user ? { viewId: user.id } : {}), // Adiciona viewId para permitir visualizacao publica se RLS permitir
+  }).toString()}`;
 
   const handleToggleFullscreen = async () => {
     try {
@@ -364,19 +500,32 @@ export default function OperationsLiveDashboard() {
             <div className="flex items-center gap-2 flex-wrap">
               <Link to="/operations"><Button variant="outline" size="sm" className="gap-1.5"><ArrowLeft className="h-4 w-4" />Voltar</Button></Link>
               <Badge variant="secondary" className="text-xs">{projectName}</Badge>
-              {isLive && user ? <Badge className="gap-1.5 bg-red-600 text-white hover:bg-red-600"><Radio className="h-3.5 w-3.5" />AO VIVO</Badge> : <Badge variant="outline" className="gap-1.5 text-xs"><PauseCircle className="h-3.5 w-3.5" />Transmissão pausada</Badge>}
+              {isLive && (user || viewId) ? (
+                <Badge className="gap-1.5 bg-red-600 text-white hover:bg-red-600 animate-pulse">
+                  <Radio className="h-3.5 w-3.5" /> AO VIVO
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="gap-1.5 text-xs">
+                  <PauseCircle className="h-3.5 w-3.5" /> Transmissão pausada
+                </Badge>
+              )}
+              {user && (
+                <Badge variant="outline" className={`gap-1.5 text-xs ${activeViewers > 0 ? "text-blue-500 border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-900" : "text-slate-500"}`}>
+                  <Eye className="h-3.5 w-3.5" /> {activeViewers} visualizando
+                </Badge>
+              )}
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <Button variant="outline" size="sm" className="gap-1.5" onClick={() => void loadDashboard()}><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />Atualizar</Button>
               <Button variant="outline" size="sm" className="gap-1.5" onClick={handleCopyShareUrl}><Copy className="h-4 w-4" />Copiar link</Button>
               <Button variant="outline" size="sm" className="gap-1.5" onClick={handleToggleFullscreen}>{isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}{isFullscreen ? "Sair tela cheia" : "Tela cheia"}</Button>
-              <Button size="sm" className="gap-1.5" onClick={() => user && setIsLive((prev) => !prev)} disabled={!user}>{isLive ? <PauseCircle className="h-4 w-4" /> : <PlayCircle className="h-4 w-4" />}{isLive ? "Parar transmissão" : "Transmitir ao vivo"}</Button>
+              <Button size="sm" className="gap-1.5" onClick={() => (user || viewId) && setIsLive((prev) => !prev)} disabled={!user && !viewId}>{isLive ? <PauseCircle className="h-4 w-4" /> : <PlayCircle className="h-4 w-4" />}{isLive ? "Parar transmissão" : "Transmitir ao vivo"}</Button>
               <ThemeToggle />
             </div>
           </CardContent>
         </Card>
 
-        {!user && (
+        {!user && !viewId && (
           <Card className="border-red-300 bg-red-50 dark:bg-red-950/20">
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
@@ -390,7 +539,7 @@ export default function OperationsLiveDashboard() {
           </Card>
         )}
 
-        <SectionTitle title="Vendas (Operação)" colorClass="text-blue-500" />
+        <SectionTitle title="Vendas & Operação" colorClass="text-blue-500" />
         <div className="grid grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7 gap-3">
           <TopCard icon={Megaphone} title="Campanhas" value={String(campaigns.length)} helper="Total ativas/pausadas" />
           <TopCard icon={Eye} title="Impressões" value={formatNumber(totals.impressions)} helper={`CTR geral ${formatPercent(totals.ctr)}`} />
@@ -406,14 +555,16 @@ export default function OperationsLiveDashboard() {
           <TopCard icon={BarChart3} title="Leads Gerados" value={formatNumber(totals.leads)} helper={`Via ${formatNumber(totals.sessions)} sessões`} />
           <TopCard icon={DollarSign} title="Ticket Médio" value={formatCurrency(totals.avgTicket)} helper="Receita / conversões" />
           <TopCard icon={CircleGauge} title="CAC" value={formatCurrency(totals.cac)} helper="Custo por cliente" />
-          <TopCard icon={Coins} title="LTV (12M est.)" value={formatCurrency(totals.ltv)} helper="Lifetime estimado" />
+          <TopCard icon={Users} title="Clientes Web" value={formatNumber(totals.conversions)} helper="Vendas site" />
         </div>
 
         <SectionTitle title="Funil de Conversão" colorClass="text-amber-500" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <TopCard icon={Filter} title="TC Sessões -> Leads" value={formatPercent(totals.sessionsToLeads)} helper="MQLs no período" />
-          <TopCard icon={Target} title="TC Leads -> Vendas" value={formatPercent(totals.leadsToSales)} helper="SQLs no período" />
-          <TopCard icon={Clock3} title="Payback (ROI)" value={`${totals.paybackMonths.toFixed(1)} meses`} helper="Tempo para recuperar CAC" />
+        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3">
+          <TopCard icon={Filter} title="Taxa MQL" value={formatPercent(totals.sessionsToLeads)} helper="Sessões -> Leads" />
+          <TopCard icon={Target} title="Taxa SQL" value={formatPercent(totals.leadsToSales)} helper="Leads -> Vendas" />
+          <TopCard icon={Clock3} title="Payback (ROI)" value={`${totals.paybackMonths.toFixed(1)} meses`} helper="Tempo recuperação" />
+          <TopCard icon={Coins} title="LTV (12M est.)" value={formatCurrency(totals.ltv)} helper="Lifetime estimado" />
+          <TopCard icon={Activity} title="ROI Atual" value={`${(totals.roas * 100).toFixed(1)}%`} helper="Retorno direto" />
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
@@ -613,6 +764,27 @@ export default function OperationsLiveDashboard() {
           Última atualização: {lastUpdatedAt ? lastUpdatedAt.toLocaleTimeString("pt-BR") : "-"}
           {isLive && user && " • atualização automática a cada 15 segundos"}
         </div>
+
+        <div className="mt-8 border-t border-slate-700/30 pt-4">
+          <details className="text-xs text-muted-foreground">
+            <summary className="cursor-pointer hover:text-primary">Debug Dados Brutos (Clique para expandir)</summary>
+            {user && (
+              <div className="mt-2 p-4 bg-slate-950 text-slate-300 rounded overflow-auto max-h-96 font-mono text-[10px]">
+                <p className="font-bold text-emerald-400 mb-2">Exemplo Campanha Google (Latest Metrics):</p>
+                <pre>{JSON.stringify(Object.values(latestMetricsByCampaign).find(m => {
+                  const camp = campaigns.find(c => c.id === m.campaign_id);
+                  return camp?.channel === 'google';
+                }) || "Nenhuma métrica google encontrada no latestMap", null, 2)}</pre>
+
+                <p className="font-bold text-blue-400 mt-4 mb-2">Totals Object:</p>
+                <pre>{JSON.stringify(totals, null, 2)}</pre>
+
+                <p className="font-bold text-amber-400 mt-4 mb-2">Summaries Map (ids):</p>
+                <pre>{JSON.stringify(Object.keys(summariesByCampaign), null, 2)}</pre>
+              </div>
+            )}
+          </details>
+        </div>
       </div>
     </div>
   );
@@ -676,24 +848,80 @@ function buildCampaignMetricCards(
   ];
 
   if (channel === "google") {
+    // Helper para pegar valor: tenta do metric (periodo atual), senao do summary (acumulado)
+    const getVal = (mVal: number | undefined, sVal: number | undefined) => (mVal && mVal > 0 ? mVal : sVal || 0);
+
+    const sessions = getVal(metric.sessions, summary?.total_sessions) || 1;
+    const leads = getVal(metric.leads_month || metric.leads, summary?.total_leads);
+    const conversions = getVal(metric.clients_web || metric.conversions, summary?.total_conversions);
+    const revenue = getVal(metric.revenue_web || metric.revenue, summary?.total_revenue);
+    const cost = getVal(metric.google_ads_cost || metric.cost, summary?.total_cost);
+
+    /* 
+      Cálculos de Taxas:
+      Prioridade 1: Valor já calculado no metric (se > 0)
+      Prioridade 2: Calcular usando dados do metric (se bases > 0)
+      Prioridade 3: Calcular usando dados acumulados do summary
+    */
+
+    // MQL Rate (Leads / Sessões)
+    const mqlRate = (metric.mql_rate && metric.mql_rate > 0)
+      ? metric.mql_rate
+      : (sessions > 0 ? (leads / sessions) * 100 : 0);
+
+    // SQL Rate (Conv / Leads)
+    const sqlRate = (metric.sql_rate && metric.sql_rate > 0)
+      ? metric.sql_rate
+      : (leads > 0 ? (conversions / leads) * 100 : 0);
+
+    // Ticket Médio
+    const avgTicket = (metric.avg_ticket && metric.avg_ticket > 0)
+      ? metric.avg_ticket
+      : (conversions > 0 ? revenue / conversions : 0);
+
+    // CAC Mensal (Custo / Conv) - ou Geral
+    const cacVal = (metric.cac_month && metric.cac_month > 0)
+      ? metric.cac_month
+      : (conversions > 0 ? cost / conversions : 0);
+
+    // LTV
+    const ltv = (metric.ltv && metric.ltv > 0)
+      ? metric.ltv
+      : (avgTicket * 6); // Estimativa padrão
+
+    // CAC:LTV Ratio
+    const cacLtvRatio = (metric.cac_ltv_ratio && metric.cac_ltv_ratio > 0)
+      ? metric.cac_ltv_ratio
+      : (cacVal > 0 ? ltv / cacVal : 0);
+
+    // Payback (ROI Period)
+    const paybackMonths = (metric.roi_period_months && metric.roi_period_months > 0)
+      ? metric.roi_period_months
+      : (avgTicket > 0 ? cacVal / avgTicket : 0);
+
+    // ROI Acumulado
+    const roiAccumulated = (metric.roi_accumulated && metric.roi_accumulated > 0)
+      ? metric.roi_accumulated
+      : (cost > 0 ? ((revenue - cost) / cost) * 100 : 0);
+
     return [
       ...common,
-      { label: "Sessões", value: formatNumber(metric.sessions) },
-      { label: "1ª Visita", value: formatNumber(metric.first_visits) },
-      { label: "Leads/Mês", value: formatNumber(metric.leads_month) },
-      { label: "Taxa MQL", value: formatPercent(metric.mql_rate) },
-      { label: "Taxa SQL", value: formatPercent(metric.sql_rate) },
-      { label: "Clientes Web", value: formatNumber(metric.clients_web) },
-      { label: "Receita Web", value: formatCurrency(metric.revenue_web) },
-      { label: "Ticket Médio", value: formatCurrency(metric.avg_ticket) },
-      { label: "Custo Google Ads", value: formatCurrency(metric.google_ads_cost) },
-      { label: "CAC/Mês", value: formatCurrency(metric.cac_month) },
-      { label: "Custo/Conversão", value: formatCurrency(metric.cost_per_conversion) },
-      { label: "LTV", value: formatCurrency(metric.ltv) },
-      { label: "CAC:LTV", value: `${(metric.cac_ltv_ratio || 0).toFixed(2)}x` },
-      { label: "Benchmark CAC:LTV", value: `${(metric.cac_ltv_benchmark || 0).toFixed(2)}x` },
-      { label: "ROI Acumulado", value: formatPercent(metric.roi_accumulated) },
-      { label: "Período ROI", value: `${metric.roi_period_months || 0} meses` },
+      { label: "Sessões", value: formatNumber(sessions) },
+      { label: "1ª Visita", value: formatNumber(metric.first_visits || 0) },
+      { label: "Leads", value: formatNumber(leads) },
+      { label: "Taxa Usuário → MQL", value: formatPercent(mqlRate) },
+      { label: "Taxa Lead → SQL", value: formatPercent(sqlRate) },
+      { label: "Clientes Web", value: formatNumber(conversions) },
+      { label: "Receita Web", value: formatCurrency(revenue) },
+      { label: "Ticket Médio", value: formatCurrency(avgTicket) },
+      { label: "Custo Google Ads", value: formatCurrency(cost) },
+      { label: "CAC", value: formatCurrency(cacVal) },
+      { label: "Custo/Conversão", value: formatCurrency(metric.cost_per_conversion || (conversions > 0 ? cost / conversions : 0)) },
+      { label: "LTV Estimado", value: formatCurrency(ltv) },
+      { label: "Relação CAC:LTV", value: `${cacLtvRatio.toFixed(2)}x` },
+      { label: "Benchmark CAC:LTV", value: `${(metric.cac_ltv_benchmark || 3).toFixed(2)}x` }, // default 3x benchmark
+      { label: "ROI Acumulado", value: formatPercent(roiAccumulated) },
+      { label: "Payback (ROI)", value: `${paybackMonths.toFixed(1)} meses` },
       { label: "Índice de Qualidade", value: (metric.quality_score || 0).toFixed(2) },
       { label: "Posição Média", value: (metric.avg_position || 0).toFixed(2) },
       { label: "Impression Share", value: formatPercent(metric.search_impression_share) },
@@ -703,7 +931,7 @@ function buildCampaignMetricCards(
   if (channel === "meta") {
     return [
       ...common,
-      { label: "Alcance", value: formatNumber(metric.reach) },
+      { label: "Alcance", value: formatNumber(metric.reach || 0) },
       { label: "Frequência", value: (metric.frequency || 0).toFixed(2) },
     ];
   }
@@ -711,17 +939,17 @@ function buildCampaignMetricCards(
   if (channel === "linkedin") {
     return [
       ...common,
-      { label: "Leads", value: formatNumber(metric.leads) },
-      { label: "CPL", value: formatCurrency(metric.cpl) },
-      { label: "Engagement Rate", value: formatPercent(metric.engagement_rate) },
+      { label: "Leads", value: formatNumber(metric.leads || summary?.total_leads || 0) },
+      { label: "CPL", value: formatCurrency(metric.cpl || summary?.avg_cpa || 0) },
+      { label: "Engagement Rate", value: formatPercent(metric.engagement_rate || 0) },
     ];
   }
 
   if (channel === "tiktok") {
     return [
       ...common,
-      { label: "Video Views", value: formatNumber(metric.video_views) },
-      { label: "VTR", value: formatPercent(metric.vtr) },
+      { label: "Video Views", value: formatNumber(metric.video_views || 0) },
+      { label: "VTR", value: formatPercent(metric.vtr || 0) },
     ];
   }
 
@@ -732,15 +960,17 @@ function MetricCard({ icon: Icon, label, value, helper }: { icon?: React.Element
   const visual = getMetricVisual(label, Icon);
 
   return (
-    <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3">
-      <p className="text-[11px] uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-        <span className={`inline-flex items-center justify-center h-5 w-5 rounded-md ${visual.bgClass}`}>
-          <visual.Icon className={`h-3.5 w-3.5 ${visual.iconClass}`} />
-        </span>
-        {label}
-      </p>
-      <p className="text-xl font-bold leading-none mt-2">{value}</p>
-      {helper ? <p className="text-xs text-muted-foreground mt-2">{helper}</p> : null}
+    <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3 flex flex-col justify-between h-full min-h-[100px]">
+      <div>
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 mb-2">
+          <span className={`inline-flex items-center justify-center h-5 w-5 rounded-md ${visual.bgClass}`}>
+            <visual.Icon className={`h-3.5 w-3.5 ${visual.iconClass}`} />
+          </span>
+          <span className="truncate" title={label}>{label}</span>
+        </p>
+        <p className="text-xl font-bold leading-none tracking-tight">{value}</p>
+      </div>
+      {helper ? <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-slate-200 dark:border-slate-800">{helper}</p> : null}
     </div>
   );
 }
@@ -752,7 +982,8 @@ function getMetricVisual(label: string, explicitIcon?: React.ElementType): { Ico
 
   const key = label.toLowerCase();
 
-  if (key.includes("receita") || key.includes("roas") || key.includes("roi")) {
+  // Mapeamento visual aprimorado
+  if (key.includes("receita") || key.includes("roas") || key.includes("roi") || key.includes("ltv")) {
     return { Icon: TrendingUp, bgClass: "bg-emerald-500/15", iconClass: "text-emerald-500" };
   }
   if (key.includes("custo") || key.includes("cpc") || key.includes("cpm") || key.includes("cpa") || key.includes("cac") || key.includes("cpl")) {
@@ -809,20 +1040,24 @@ function SummaryRow({ label, value, valueClass = "" }: { label: string; value: s
 }
 
 function BudgetLineChart({ data }: { data: { key: string; label: string; planned: number; actual: number; order: number }[] }) {
-  if (data.length < 2) return <div className="text-sm text-muted-foreground py-6 text-center">Sem histórico mensal suficiente.</div>;
+  if (data.length === 0) return <div className="text-sm text-muted-foreground py-6 text-center">Sem histórico mensal.</div>;
+
+  // Tratamento para array pequeno (1 item): duplica para desenhar linha reta
+  const plotData = data.length === 1 ? [data[0], data[0]] : data;
+
   const width = 900;
   const height = 200;
   const padding = 24;
-  const maxValue = Math.max(...data.map((d) => Math.max(d.planned, d.actual)), 1);
-  const toX = (i: number) => padding + (i * (width - padding * 2)) / (data.length - 1);
+  const maxValue = Math.max(...plotData.map((d) => Math.max(d.planned, d.actual)), 1);
+  const toX = (i: number) => padding + (i * (width - padding * 2)) / (plotData.length - 1);
   const toY = (v: number) => height - padding - (v / maxValue) * (height - padding * 2);
   const buildPath = (values: number[]) => values.map((v, i) => `${i === 0 ? "M" : "L"} ${toX(i)} ${toY(v)}`).join(" ");
   return (
     <div className="space-y-2">
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-48">
         <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="currentColor" className="text-border" />
-        <path d={buildPath(data.map((d) => d.planned))} fill="none" stroke="currentColor" className="text-primary" strokeWidth="2.5" />
-        <path d={buildPath(data.map((d) => d.actual))} fill="none" stroke="currentColor" className="text-emerald-500" strokeWidth="2.5" />
+        <path d={buildPath(plotData.map((d) => d.planned))} fill="none" stroke="currentColor" className="text-primary" strokeWidth="2.5" />
+        <path d={buildPath(plotData.map((d) => d.actual))} fill="none" stroke="currentColor" className="text-emerald-500" strokeWidth="2.5" />
       </svg>
       <div className="grid grid-cols-6 md:grid-cols-12 gap-1 text-[10px] text-muted-foreground">
         {data.map((d) => <div key={d.key} className="text-center">{d.label}</div>)}
@@ -834,4 +1069,3 @@ function BudgetLineChart({ data }: { data: { key: string; label: string; planned
     </div>
   );
 }
-
