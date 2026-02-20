@@ -121,6 +121,7 @@ export interface MetricFieldConfig {
   label: string;
   suffix?: string;
   prefix?: string;
+  placeholder?: string;
   type: "integer" | "decimal" | "currency" | "percent";
 }
 
@@ -151,7 +152,8 @@ export const CHANNEL_SPECIFIC_METRICS: Record<CampaignChannel, MetricFieldConfig
     { key: "cac_month", label: "CAC/Mês", prefix: "R$", type: "currency" },
     { key: "cost_per_conversion", label: "Custo por Conversão", prefix: "R$", type: "currency" },
     { key: "ltv", label: "LTV", prefix: "R$", type: "currency" },
-    { key: "cac_ltv_ratio", label: "Relação CAC:LTV", suffix: "x", type: "decimal" },
+    { key: "ltv_duration_months", label: "Duração média do LTV", suffix: "meses", placeholder: "12 meses", type: "integer" },
+    { key: "cac_ltv_ratio", label: "Relação CAC:LTV", suffix: "x", placeholder: "1:3", type: "decimal" },
     { key: "cac_ltv_benchmark", label: "Benchmark CAC:LTV", suffix: "x", type: "decimal" },
     { key: "roi_accumulated", label: "ROI Acumulado", suffix: "%", type: "percent" },
     { key: "roi_period_months", label: "Período ROI (meses)", type: "integer" },
