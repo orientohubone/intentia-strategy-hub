@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
+  Activity,
   MessageCircle, 
   Send, 
   X, 
@@ -11,8 +12,12 @@ import {
   Minimize2,
   CheckCheck,
   ChevronDown,
+  ChevronLeft,
   Crown,
-  Play
+  Play,
+  Plus,
+  History,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenantData } from "@/hooks/useTenantData";
@@ -25,13 +30,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { TiaGuidedSection } from "@/components/floating-chat/TiaGuidedSection";
 import { TiaAskSection } from "@/components/floating-chat/TiaAskSection";
-import type { AssistantStep, StepHelp, TiaMessage } from "@/components/floating-chat/types";
+import type { AssistantStep, StepHelp, TiaMessage, TiaConversation } from "@/components/floating-chat/types";
 
 export function FloatingChat() {
   const BUTTON_SIZE = 56;
   const PANEL_GAP = 12;
   const PANEL_HEIGHT = 500;
   const VIEWPORT_PADDING = 8;
+  const TAB_HEIGHT = 28;
 
   const TIA_STEP_ORDER = [
     "onboarding-account",
@@ -444,24 +450,29 @@ export function FloatingChat() {
   const userAvatarUrl = user?.user_metadata?.avatar_url || '';
   const userInitial = userName.charAt(0).toUpperCase();
   const panelWidth = Math.min(384, viewportSize.width - (VIEWPORT_PADDING * 2));
+  const totalNeeded = PANEL_HEIGHT + TAB_HEIGHT;
   const availableAbove = Math.max(0, buttonPosition.y - VIEWPORT_PADDING - PANEL_GAP);
   const availableBelow = Math.max(
     0,
     viewportSize.height - (buttonPosition.y + BUTTON_SIZE) - VIEWPORT_PADDING - PANEL_GAP
   );
-  const canFitAboveFull = availableAbove >= PANEL_HEIGHT;
-  const canFitBelowFull = availableBelow >= PANEL_HEIGHT;
+  const canFitAboveFull = availableAbove >= totalNeeded;
+  const canFitBelowFull = availableBelow >= totalNeeded;
   const shouldPlaceAbove =
     canFitAboveFull || (!canFitBelowFull && availableAbove >= availableBelow);
   const selectedSpace = shouldPlaceAbove ? availableAbove : availableBelow;
-  const panelHeightForLayout = Math.max(0, Math.min(PANEL_HEIGHT, selectedSpace));
-  const centeredLeft = buttonPosition.x + (BUTTON_SIZE / 2) - (panelWidth / 2);
+  const panelHeightForLayout = Math.max(0, Math.min(PANEL_HEIGHT, selectedSpace - TAB_HEIGHT));
+  const buttonCenterX = buttonPosition.x + BUTTON_SIZE / 2;
+  const isButtonOnRight = buttonCenterX > viewportSize.width / 2;
+  const alignedLeft = isButtonOnRight
+    ? buttonPosition.x + BUTTON_SIZE - panelWidth   // borda direita alinhada
+    : buttonPosition.x;                              // borda esquerda alinhada
   const clampedLeft = Math.max(
     VIEWPORT_PADDING,
-    Math.min(centeredLeft, viewportSize.width - panelWidth - VIEWPORT_PADDING)
+    Math.min(alignedLeft, viewportSize.width - panelWidth - VIEWPORT_PADDING)
   );
   const clampedTop = shouldPlaceAbove
-    ? buttonPosition.y - panelHeightForLayout - PANEL_GAP
+    ? buttonPosition.y - panelHeightForLayout - TAB_HEIGHT - PANEL_GAP
     : buttonPosition.y + BUTTON_SIZE + PANEL_GAP;
   const floatingPanelStyle = {
     left: `${clampedLeft}px`,
@@ -474,14 +485,149 @@ export function FloatingChat() {
   if (!user) return null;
 
   // --- Tia (Starter) — assistente guiada com conteúdo da central/FAQs ---
+  const TIA_CONVERSATIONS_KEY = "intentia_tia_conversations";
+  const TIA_ACTIVE_CONV_KEY = "intentia_tia_active_conv";
+  const TIA_MODE_KEY = "intentia_tia_mode";
+  const TIA_WELCOME: TiaMessage = { role: "assistant", content: "Oi! 👋 Sou a **Tia**, sua assistente na Intentia.\n\nPode me perguntar sobre seus **projetos**, **campanhas**, **insights** ou qualquer coisa da plataforma!" };
+
+  const generateConvId = () => `conv_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+  const deriveTitle = (msgs: TiaMessage[]): string => {
+    const firstUser = msgs.find(m => m.role === "user");
+    if (firstUser) {
+      const text = firstUser.content.trim();
+      return text.length > 50 ? text.slice(0, 47) + "…" : text;
+    }
+    return "Nova conversa";
+  };
+
+  const loadConversations = (): TiaConversation[] => {
+    try {
+      const raw = localStorage.getItem(TIA_CONVERSATIONS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as TiaConversation[];
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch { /* ignore */ }
+    // Migrate from old single-conversation format
+    try {
+      const oldRaw = localStorage.getItem("intentia_tia_history");
+      if (oldRaw) {
+        const oldMsgs = JSON.parse(oldRaw) as TiaMessage[];
+        if (Array.isArray(oldMsgs) && oldMsgs.length > 0) {
+          const now = new Date().toISOString();
+          const migrated: TiaConversation = {
+            id: generateConvId(),
+            title: deriveTitle(oldMsgs),
+            messages: oldMsgs,
+            createdAt: now,
+            updatedAt: now,
+          };
+          localStorage.removeItem("intentia_tia_history");
+          return [migrated];
+        }
+      }
+    } catch { /* ignore */ }
+    return [];
+  };
+
+  const loadActiveConvId = (): string | null => {
+    try {
+      return localStorage.getItem(TIA_ACTIVE_CONV_KEY);
+    } catch { /* ignore */ }
+    return null;
+  };
+
+  const loadStoredMode = (): "guided" | "ask" | "live" => {
+    try {
+      const raw = localStorage.getItem(TIA_MODE_KEY);
+      if (raw === "guided" || raw === "ask" || raw === "live") return raw;
+    } catch { /* ignore */ }
+    return "guided";
+  };
+
   const [tiaStep, setTiaStep] = useState<string>("onboarding-account");
-  const [tiaMessages, setTiaMessages] = useState<TiaMessage[]>([
-    { role: "assistant", content: "Oi! Sou a Tia. Pode perguntar sobre seus projetos, análises ou próximos passos." },
-  ]);
-  const [tiaGreeted, setTiaGreeted] = useState(false);
+  const [tiaConversations, setTiaConversations] = useState<TiaConversation[]>(loadConversations);
+  const [activeConvId, setActiveConvId] = useState<string | null>(loadActiveConvId);
   const [tiaInput, setTiaInput] = useState("");
   const [tiaLoading, setTiaLoading] = useState(false);
-  const [tiaMode, setTiaMode] = useState<"guided" | "ask">("guided");
+  const [tiaMode, setTiaMode] = useState<"guided" | "ask" | "live">(loadStoredMode);
+  const [showConvList, setShowConvList] = useState(false);
+
+  // Derive active conversation and messages
+  const activeConv = tiaConversations.find(c => c.id === activeConvId) ?? null;
+  const tiaMessages: TiaMessage[] = activeConv?.messages ?? [TIA_WELCOME];
+
+  // Set messages for the active conversation
+  const setTiaMessages = (msgs: TiaMessage[]) => {
+    if (!activeConvId) {
+      // Create a new conversation on first message
+      const now = new Date().toISOString();
+      const newConv: TiaConversation = {
+        id: generateConvId(),
+        title: deriveTitle(msgs),
+        messages: msgs,
+        createdAt: now,
+        updatedAt: now,
+      };
+      setTiaConversations(prev => [newConv, ...prev]);
+      setActiveConvId(newConv.id);
+    } else {
+      setTiaConversations(prev =>
+        prev.map(c =>
+          c.id === activeConvId
+            ? { ...c, messages: msgs, title: deriveTitle(msgs), updatedAt: new Date().toISOString() }
+            : c
+        )
+      );
+    }
+  };
+
+  // Start a new conversation
+  const startNewConversation = () => {
+    setActiveConvId(null);
+    setShowConvList(false);
+    setTiaInput("");
+  };
+
+  // Resume a conversation
+  const resumeConversation = (convId: string) => {
+    setActiveConvId(convId);
+    setShowConvList(false);
+  };
+
+  // Delete a conversation
+  const deleteConversation = (convId: string) => {
+    setTiaConversations(prev => prev.filter(c => c.id !== convId));
+    if (activeConvId === convId) {
+      setActiveConvId(null);
+    }
+  };
+
+  // Persist conversations to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(TIA_CONVERSATIONS_KEY, JSON.stringify(tiaConversations));
+    } catch { /* quota exceeded — silently ignore */ }
+  }, [tiaConversations]);
+
+  // Persist active conversation id
+  useEffect(() => {
+    try {
+      if (activeConvId) {
+        localStorage.setItem(TIA_ACTIVE_CONV_KEY, activeConvId);
+      } else {
+        localStorage.removeItem(TIA_ACTIVE_CONV_KEY);
+      }
+    } catch { /* ignore */ }
+  }, [activeConvId]);
+
+  // Persist active mode
+  useEffect(() => {
+    try {
+      localStorage.setItem(TIA_MODE_KEY, tiaMode);
+    } catch { /* ignore */ }
+  }, [tiaMode]);
   const currentStep = TIA_GUIDE_STEPS[tiaStep] ?? TIA_GUIDE_STEPS["onboarding-account"];
   const predictedStep = currentStep.next ? TIA_GUIDE_STEPS[currentStep.next] : null;
   const stepHelp = getHelpForStep(tiaStep);
@@ -567,30 +713,12 @@ export function FloatingChat() {
     try {
       const payload = await callAssistantIA(nextMessages);
       if (payload) {
-        const displayName = (user as any)?.user_metadata?.full_name || user?.email || "você";
-        const email = user?.email ?? payload.user?.email ?? "";
-        const answer = payload.answer || "Contexto carregado. Pergunte algo específico e trago os dados.";
-        const question = userMsg.content;
-
-        const normalized = question.trim().toLowerCase();
-        const isGreeting = /^(oi|olá|ola|bom dia|boa tarde|boa noite|hey|hello|hi)\b/.test(normalized);
-
-        const greeting = `Olá, ${displayName} (${email}). Estou dentro da sua realidade agora, junto com você todos os dias.`;
-        const answerText = isGreeting ? "Tudo bem! Pode me pedir qualquer dado do seu tenant." : `Sobre sua pergunta: “${question}”: ${answer}`;
-
-        const assistantReplies = tiaGreeted
-          ? [{ role: "assistant" as const, content: answerText }]
-          : [
-              { role: "assistant" as const, content: greeting },
-              ...(isGreeting ? [] : [{ role: "assistant" as const, content: answerText }]),
-            ];
-
-        setTiaMessages([...nextMessages, ...assistantReplies]);
-        if (!tiaGreeted) setTiaGreeted(true);
+        const answer = payload.answer || "Desculpe, não consegui processar sua pergunta. Tente novamente!";
+        setTiaMessages([...nextMessages, { role: "assistant" as const, content: answer }]);
       }
     } catch (err) {
       console.error(err);
-      toast.error("Falha ao enviar mensagem");
+      setTiaMessages([...nextMessages, { role: "assistant" as const, content: "Ops, ocorreu um erro ao processar sua mensagem. Tente novamente em instantes." }]);
     } finally {
       setTiaLoading(false);
     }
@@ -626,45 +754,131 @@ export function FloatingChat() {
         {/* Painel Tia */}
         {open && (
           <div
-            className="fixed z-50 bg-card border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200 flex flex-col"
-            style={floatingPanelStyle}
+            className="fixed z-50 animate-in slide-in-from-bottom-4 fade-in duration-200"
+            style={{
+              left: floatingPanelStyle.left,
+              top: floatingPanelStyle.top,
+              width: floatingPanelStyle.width,
+            }}
           >
-            <div className="bg-gradient-to-r from-primary to-orange-500 p-5 text-white">
-              <div className="flex items-center gap-3">
-                <div className="h-11 w-11 rounded-full bg-white/20 flex items-center justify-center">
-                  <MessageCircle className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs uppercase tracking-[0.08em] text-white/70 font-semibold">Tia · Assistente</p>
-                  <h3 className="font-bold text-lg leading-tight">{currentStep.title}</h3>
-                  {/* tags ocultadas conforme solicitado */}
+            {/* Top tab — aba acoplada com logo Tia + curvas de acoplamento */}
+            <style>{`
+              .tia-tab-row {
+                display: flex;
+                align-items: flex-end;
+                justify-content: center;
+              }
+              .tia-tab-ear {
+                width: 12px;
+                height: 12px;
+                flex-shrink: 0;
+              }
+              .tia-tab-ear--left {
+                background: radial-gradient(circle at 0% 0%, transparent 12px, #0b0d11 12px);
+              }
+              .tia-tab-ear--right {
+                background: radial-gradient(circle at 100% 0%, transparent 12px, #0b0d11 12px);
+              }
+              .tia-tab {
+                background: #0b0d11;
+                border-radius: 12px 12px 0 0;
+              }
+            `}</style>
+            <div className="tia-tab-row">
+              <div className="tia-tab-ear tia-tab-ear--left" />
+              <div className="tia-tab flex items-center gap-2 px-5 py-1.5">
+                <img src="/tia-branco-ponto-laranja.svg" alt="Tia" className="h-4 w-auto" />
+                <div className="flex items-center gap-1">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[9px] text-white/50 font-medium">Online</span>
                 </div>
               </div>
-              {predictedStep && (
-                <p className="text-xs text-white/80 mt-2">Próxima dúvida sugerida: {predictedStep.title}</p>
-              )}
+              <div className="tia-tab-ear tia-tab-ear--right" />
+            </div>
 
-              <div className="mt-3 inline-flex rounded-full border border-white/30 bg-white/10 p-1 text-[11px] font-medium">
-                <button
-                  className={`px-3 py-1 rounded-full transition-colors ${
-                    tiaMode === "guided" ? "bg-white text-primary" : "text-white/80 hover:text-white"
-                  }`}
-                  onClick={() => setTiaMode("guided")}
-                >
-                  Assistente guiada
-                </button>
-                <button
-                  className={`px-3 py-1 rounded-full transition-colors ${
-                    tiaMode === "ask" ? "bg-white text-primary" : "text-white/80 hover:text-white"
-                  }`}
-                  onClick={() => setTiaMode("ask")}
-                >
-                  Falar com a Tia
-                </button>
+            {/* Main panel */}
+            <div
+              className="bg-card border rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+              style={{
+                height: floatingPanelStyle.height,
+                maxHeight: floatingPanelStyle.maxHeight,
+              }}
+            >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-primary to-orange-500 px-4 pt-3 pb-3 text-white shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="min-w-0">
+                  <h3 className="font-bold text-base leading-tight">
+                    {tiaMode === "guided" ? currentStep.title : tiaMode === "ask" ? "Falar com a Tia" : "Chat ao Vivo"}
+                  </h3>
+                </div>
+              </div>
+
+              {/* Toggle tabs + actions */}
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <div className="inline-flex rounded-full border border-white/30 bg-white/10 p-0.5 text-[10px] font-medium">
+                  <button
+                    className={`px-2.5 py-1 rounded-full transition-colors ${
+                      tiaMode === "guided" ? "bg-white text-primary" : "text-white/80 hover:text-white"
+                    }`}
+                    onClick={() => { setTiaMode("guided"); setShowConvList(false); }}
+                  >
+                    Guiada
+                  </button>
+                  <button
+                    className={`px-2.5 py-1 rounded-full transition-colors flex items-center justify-center ${
+                      tiaMode === "ask" ? "text-white" : "text-white/80 hover:text-white"
+                    }`}
+                    style={tiaMode === "ask" ? { backgroundColor: '#0b0d11' } : undefined}
+                    onClick={() => { setTiaMode("ask"); setShowConvList(false); }}
+                  >
+                    <img src="/tia-branco-ponto-laranja.svg" alt="Tia" className="h-3 w-auto" />
+                  </button>
+                  <button
+                    className={`px-2.5 py-1 rounded-full transition-colors flex items-center gap-1 ${
+                      tiaMode === "live" ? "bg-white text-primary" : "text-white/80 hover:text-white"
+                    }`}
+                    onClick={() => { setTiaMode("live"); setShowConvList(false); }}
+                  >
+                    <Activity className="h-3 w-3" />
+                    Chat ao Vivo
+                  </button>
+                </div>
+
+                {/* Conversation actions — only in ask mode */}
+                {tiaMode === "ask" && (
+                  <div className="flex items-center gap-0.5">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => setShowConvList(!showConvList)}
+                          className={`h-7 w-7 rounded-full flex items-center justify-center transition-colors ${
+                            showConvList ? "bg-white text-primary" : "hover:bg-white/20 text-white/80"
+                          }`}
+                        >
+                          <History className="h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-[10px] border-primary">Conversas anteriores</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={startNewConversation}
+                          className="h-7 w-7 rounded-full hover:bg-white/20 flex items-center justify-center text-white/80 transition-colors"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-[10px] border-primary">Nova conversa</TooltipContent>
+                    </Tooltip>
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="p-4 space-y-3 overflow-y-auto">
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {tiaMode === "guided" && (
                 <TiaGuidedSection
                   currentStep={currentStep}
@@ -680,7 +894,105 @@ export function FloatingChat() {
                 />
               )}
 
-              {tiaMode === "ask" && (
+              {tiaMode === "ask" && showConvList && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <button
+                      onClick={() => setShowConvList(false)}
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                      Voltar
+                    </button>
+                    <span className="text-[10px] text-muted-foreground font-medium">
+                      {tiaConversations.length} conversa{tiaConversations.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+
+                  {/* New conversation button */}
+                  <button
+                    onClick={startNewConversation}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border-2 border-dashed border-primary/30 hover:border-primary/60 hover:bg-primary/5 transition-colors text-left group"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                      <Plus className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-primary">Nova conversa</p>
+                      <p className="text-[10px] text-muted-foreground">Iniciar uma conversa do zero</p>
+                    </div>
+                  </button>
+
+                  {/* Conversation list */}
+                  {tiaConversations.length === 0 ? (
+                    <div className="text-center py-6">
+                      <History className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
+                      <p className="text-xs text-muted-foreground">Nenhuma conversa salva ainda.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      {tiaConversations.map((conv) => {
+                        const isActive = conv.id === activeConvId;
+                        const msgCount = conv.messages.filter(m => m.role === "user").length;
+                        const lastMsg = conv.messages[conv.messages.length - 1];
+                        const preview = lastMsg
+                          ? (lastMsg.content.length > 60 ? lastMsg.content.slice(0, 57) + "…" : lastMsg.content)
+                          : "";
+                        const timeAgo = (() => {
+                          const diff = Date.now() - new Date(conv.updatedAt).getTime();
+                          const mins = Math.floor(diff / 60000);
+                          if (mins < 1) return "agora";
+                          if (mins < 60) return `${mins}min`;
+                          const hrs = Math.floor(mins / 60);
+                          if (hrs < 24) return `${hrs}h`;
+                          const days = Math.floor(hrs / 24);
+                          return `${days}d`;
+                        })();
+
+                        return (
+                          <div
+                            key={conv.id}
+                            className={`group flex items-start gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer transition-colors ${
+                              isActive
+                                ? "bg-primary/10 border border-primary/20"
+                                : "hover:bg-muted/60 border border-transparent"
+                            }`}
+                            onClick={() => resumeConversation(conv.id)}
+                          >
+                            <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
+                              isActive ? "bg-primary text-white" : "bg-muted"
+                            }`}>
+                              <MessageCircle className="h-3.5 w-3.5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-1">
+                                <p className={`text-xs font-medium truncate ${isActive ? "text-primary" : "text-foreground"}`}>
+                                  {conv.title}
+                                </p>
+                                <span className="text-[9px] text-muted-foreground shrink-0">{timeAgo}</span>
+                              </div>
+                              <p className="text-[10px] text-muted-foreground truncate mt-0.5">{preview}</p>
+                              <div className="flex items-center justify-between mt-1">
+                                <span className="text-[9px] text-muted-foreground">
+                                  {msgCount} msg{msgCount !== 1 ? "s" : ""}
+                                </span>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); deleteConversation(conv.id); }}
+                                  className="opacity-0 group-hover:opacity-100 h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {tiaMode === "ask" && !showConvList && (
                 <TiaAskSection
                   messages={tiaMessages}
                   input={tiaInput}
@@ -690,29 +1002,87 @@ export function FloatingChat() {
                 />
               )}
 
-              <div className="text-[11px] text-muted-foreground">
-                Precisa falar com alguém? Abra um chamado em <button onClick={() => { setOpen(false); navigate('/support'); }} className="text-primary hover:underline">Suporte</button>.
-              </div>
-
-              <div className="bg-muted/60 border border-border rounded-xl p-3 space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-foreground">Chat ao vivo</span>
-                  <Badge className="text-[10px] px-2.5 py-0.5 bg-primary/10 text-primary border border-primary/50 shadow-sm shadow-primary/10 hover:bg-primary hover:text-primary-foreground transition-colors">Pro</Badge>
+              {tiaMode === "live" && (
+                <div className="flex flex-col items-center justify-center text-center px-4 py-6 gap-4">
+                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Crown className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <h4 className="font-semibold text-sm text-foreground">Chat ao Vivo com Especialistas</h4>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Converse em tempo real com nosso time de marketing. Disponível no plano <span className="font-semibold text-primary">Professional</span>.
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Plano atual: <span className="font-semibold text-primary">{tenantContext.plan}</span>
+                    </p>
+                  </div>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => { setOpen(false); navigate('/checkout?plan=professional'); }}
+                  >
+                    <Crown className="h-3.5 w-3.5 mr-1.5" />
+                    Fazer upgrade
+                  </Button>
+                  <p className="text-[10px] text-muted-foreground">
+                    Ou abra um chamado em{" "}
+                    <button onClick={() => { setOpen(false); navigate('/support'); }} className="text-primary hover:underline">
+                      Suporte
+                    </button>
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground leading-snug">
-                  Desbloqueie chat em tempo real com especialistas. Plano atual: <span className="font-semibold text-primary">{tenantContext.plan}</span>
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-xs"
-                  onClick={() => { setOpen(false); navigate('/checkout?plan=professional'); }}
-                >
-                  <Crown className="h-3.5 w-3.5 mr-1.5" />
-                  Fazer upgrade para Professional
-                </Button>
-              </div>
+              )}
             </div>
+
+            {/* Sticky input — only for ask mode, hidden when showing conv list */}
+            {tiaMode === "ask" && !showConvList && (
+              <div className="border-t bg-card shrink-0">
+                {/* Contextual conversation indicator */}
+                {activeConv && tiaConversations.length > 1 && (
+                  <div className="px-3 pt-2 pb-0">
+                    <button
+                      onClick={() => setShowConvList(true)}
+                      className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      <MessageCircle className="h-3 w-3" />
+                      <span className="truncate max-w-[180px]">{activeConv.title}</span>
+                      <span className="text-muted-foreground/50">·</span>
+                      <span>{tiaConversations.length} conversas</span>
+                    </button>
+                  </div>
+                )}
+                <div className="px-3 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={tiaInput}
+                      onChange={(e) => setTiaInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          sendTiaMessage();
+                        }
+                      }}
+                      placeholder={activeConvId ? "Continue a conversa…" : "Inicie uma nova conversa…"}
+                      className="h-9 text-xs flex-1"
+                      disabled={tiaLoading}
+                    />
+                    <Button
+                      size="icon"
+                      className="h-9 w-9 shrink-0 rounded-full"
+                      onClick={sendTiaMessage}
+                      disabled={tiaLoading || !tiaInput.trim()}
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  {tiaLoading && (
+                    <p className="text-[10px] text-primary animate-pulse mt-1">Tia está digitando…</p>
+                  )}
+                </div>
+              </div>
+            )}
+            </div>{/* /Main panel */}
           </div>
         )}
       </>

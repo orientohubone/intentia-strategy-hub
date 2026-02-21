@@ -15,3 +15,11 @@ export type StepHelp = {
 };
 
 export type TiaMessage = { role: "user" | "assistant"; content: string };
+
+export type TiaConversation = {
+  id: string;
+  title: string;
+  messages: TiaMessage[];
+  createdAt: string;
+  updatedAt: string;
+};
