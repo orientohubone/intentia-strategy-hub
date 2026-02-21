@@ -101,8 +101,9 @@ export default function Auth() {
     setLoading(true);
 
     try {
+      const redirectUrl = `${window.location.origin}/auth`;
       const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
-        redirectTo: `${window.location.origin}/auth`,
+        redirectTo: redirectUrl,
       });
 
       if (error) throw error;
@@ -110,7 +111,8 @@ export default function Auth() {
       toast.success("Email de redefinição enviado! Verifique sua caixa de entrada.");
       setMode("signin");
     } catch (error: any) {
-      toast.error(error.message || "Erro ao enviar email de redefinição");
+      console.error("resetPasswordForEmail", error);
+      toast.error(error?.message || "Erro ao enviar email de redefinição");
     } finally {
       setLoading(false);
     }

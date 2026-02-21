@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -116,6 +116,12 @@ export default function OperationsLiveDashboard() {
   const [isFullscreen, setIsFullscreen] = useState<boolean>(() => !!document.fullscreenElement);
   const [activeViewers, setActiveViewers] = useState(0);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+  const liveChannelRef = useRef<any>(null);
+
+  const channelId = useMemo(() => {
+    const target = user?.id || viewId;
+    return target ? `live-dashboard-${target}` : null;
+  }, [user?.id, viewId]);
 
   const loadDashboard = useCallback(async (silent = false) => {
     const targetUserId = user?.id || viewId;
@@ -296,6 +302,29 @@ export default function OperationsLiveDashboard() {
     const interval = window.setInterval(() => void loadDashboard(true), 15000);
     return () => window.clearInterval(interval);
   }, [isLive, loadDashboard, user, viewId]);
+
+  // Realtime canal para sincronizar play/pause entre dono e viewers
+  useEffect(() => {
+    if (!channelId) return;
+
+    const channel = supabase.channel(channelId, { config: { broadcast: { ack: true } } });
+    liveChannelRef.current = channel;
+
+    channel.on('broadcast', { event: 'live_toggle' }, (payload) => {
+      if (typeof payload?.payload?.isLive === 'boolean') {
+        setIsLive(payload.payload.isLive);
+      }
+    }).subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        // noop
+      }
+    });
+
+    return () => {
+      channel.unsubscribe();
+      liveChannelRef.current = null;
+    };
+  }, [channelId]);
 
   useEffect(() => {
     if (!authLoading && !user && isLive && !viewId) {
@@ -478,6 +507,20 @@ export default function OperationsLiveDashboard() {
     }
   };
 
+  const handleToggleLive = () => {
+    setIsLive((prev) => {
+      const next = !prev;
+      if (liveChannelRef.current) {
+        liveChannelRef.current.send({
+          type: 'broadcast',
+          event: 'live_toggle',
+          payload: { isLive: next },
+        });
+      }
+      return next;
+    });
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen grid place-items-center bg-background">
@@ -519,7 +562,17 @@ export default function OperationsLiveDashboard() {
               <Button variant="outline" size="sm" className="gap-1.5" onClick={() => void loadDashboard()}><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />Atualizar</Button>
               <Button variant="outline" size="sm" className="gap-1.5" onClick={handleCopyShareUrl}><Copy className="h-4 w-4" />Copiar link</Button>
               <Button variant="outline" size="sm" className="gap-1.5" onClick={handleToggleFullscreen}>{isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}{isFullscreen ? "Sair tela cheia" : "Tela cheia"}</Button>
-              <Button size="sm" className="gap-1.5" onClick={() => (user || viewId) && setIsLive((prev) => !prev)} disabled={!user && !viewId}>{isLive ? <PauseCircle className="h-4 w-4" /> : <PlayCircle className="h-4 w-4" />}{isLive ? "Parar transmissão" : "Transmitir ao vivo"}</Button>
+              {user && (
+                <Button
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={handleToggleLive}
+                  disabled={!user}
+                >
+                  {isLive ? <PauseCircle className="h-4 w-4" /> : <PlayCircle className="h-4 w-4" />}
+                  {isLive ? "Parar transmissão" : "Transmitir ao vivo"}
+                </Button>
+              )}
               <ThemeToggle />
             </div>
           </CardContent>
