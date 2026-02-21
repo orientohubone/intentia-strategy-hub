@@ -10,9 +10,9 @@ import {
   Maximize2, 
   Minimize2,
   CheckCheck,
-  Lock,
+  ChevronDown,
   Crown,
-  ChevronDown
+  Play
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +20,8 @@ import { useTenantData } from "@/hooks/useTenantData";
 import { SupportTicketMessage } from "@/lib/supportTypes";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { helpCategories, faqItems } from "@/components/help";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function FloatingChat() {
   const BUTTON_SIZE = 56;
@@ -27,9 +29,146 @@ export function FloatingChat() {
   const PANEL_HEIGHT = 500;
   const VIEWPORT_PADDING = 8;
 
+  type AssistantStep = {
+    key: string;
+    title: string;
+    summary: string;
+    tips: string[];
+    resources: { label: string; href: string }[];
+    next?: string;
+  };
+
+  const TIA_STEP_ORDER = [
+    "onboarding-account",
+    "first-project",
+    "connect-integrations",
+    "ai-setup",
+    "next-steps",
+  ] as const;
+
+  const TIA_HELP_FOCUS_MAP: Record<string, string> = {
+    "onboarding-account": "getting-started",
+    "first-project": "getting-started",
+    "connect-integrations": "integrations",
+    "ai-setup": "ai-analysis",
+    "next-steps": "benchmark",
+  };
+
+  const SUGGESTION_FOCUS_MAP: Record<string, string> = {
+    "Criando sua conta": "getting-started:criando-sua-conta",
+    "Primeiro projeto": "getting-started:primeiro-projeto",
+    "Dashboard": "getting-started:dashboard",
+  };
+
+  const TIA_HELP_MAP: Record<string, { categories: string[]; faqCategories: string[] }> = {
+    "onboarding-account": { categories: ["getting-started", "settings"], faqCategories: ["planos", "configuracoes"] },
+    "first-project": { categories: ["getting-started", "url-analysis"], faqCategories: ["analise", "planos"] },
+    "connect-integrations": { categories: ["integrations"], faqCategories: ["integracoes", "operacoes"] },
+    "ai-setup": { categories: ["ai-analysis"], faqCategories: ["ia", "analise"] },
+    "next-steps": { categories: ["benchmark", "operations", "budget"], faqCategories: ["benchmark", "operacoes", "exports"] },
+  };
+
+  const getHelpForStep = (step: string) => {
+    const map = TIA_HELP_MAP[step] ?? TIA_HELP_MAP["onboarding-account"];
+    const articles = helpCategories
+      .filter((cat) => map.categories.includes(cat.id))
+      .flatMap((cat) => cat.articles.map((a) => ({ ...a, categoryTitle: cat.title })))
+      .slice(0, 3);
+
+    const faqs = faqItems
+      .filter((faq) => map.faqCategories.includes(faq.category))
+      .slice(0, 3);
+
+    return { articles, faqs };
+  };
+
+  const TIA_GUIDE_STEPS: Record<string, AssistantStep> = {
+    "onboarding-account": {
+      key: "onboarding-account",
+      title: "Criando sua conta",
+      summary: "Configure seu perfil, empresa e plano para começar a medir resultados.",
+      tips: [
+        "Complete nome e empresa para personalizar os dashboards",
+        "Defina o plano e limite inicial de análises",
+        "Salve suas credenciais de acesso com segurança"
+      ],
+      resources: [
+        { label: "Central de ajuda", href: "/help" },
+        { label: "Configurações", href: "/settings" },
+      ],
+      next: "first-project",
+    },
+    "first-project": {
+      key: "first-project",
+      title: "Primeiro projeto",
+      summary: "Cadastre a URL principal, nicho e concorrentes para gerar insights.",
+      tips: [
+        "Informe concorrentes para enriquecer o benchmark",
+        "Revise o status do projeto após a análise",
+        "Use os insights iniciais para planejar ações rápidas"
+      ],
+      resources: [
+        { label: "Projetos", href: "/projects" },
+        { label: "Insights", href: "/insights" },
+      ],
+      next: "connect-integrations",
+    },
+    "connect-integrations": {
+      key: "connect-integrations",
+      title: "Integrações e dados",
+      summary: "Conecte contas de mídia para sincronizar métricas automaticamente.",
+      tips: [
+        "Google/Meta/LinkedIn/TikTok alimentam Operações e Budget",
+        "Defina frequência de sync conforme volume de campanhas",
+        "Tokens ficam isolados por conta e podem ser revogados"
+      ],
+      resources: [
+        { label: "Integrações", href: "/integracoes" },
+        { label: "Operações", href: "/operations" },
+      ],
+      next: "ai-setup",
+    },
+    "ai-setup": {
+      key: "ai-setup",
+      title: "IA e análises táticas",
+      summary: "Configure chaves de IA e use diagnósticos para priorizar ações.",
+      tips: [
+        "Cadastre Gemini/Claude em Configurações > IA",
+        "Rode o diagnóstico heurístico antes da IA",
+        "Use insights de canal para ajustar budget e criativos"
+      ],
+      resources: [
+        { label: "Configurar IA", href: "/settings" },
+        { label: "Score de Canal", href: "/score-canal" },
+      ],
+      next: "next-steps",
+    },
+    "next-steps": {
+      key: "next-steps",
+      title: "Próximos passos",
+      summary: "Planeje o roadmap: benchmarks, alertas e relatórios.",
+      tips: [
+        "Use alertas para evitar investimentos prematuros",
+        "Revise benchmarks para achar gaps",
+        "Programe relatórios e dashboards recorrentes"
+      ],
+      resources: [
+        { label: "Alertas", href: "/alertas" },
+        { label: "Benchmark", href: "/benchmark" },
+      ],
+    },
+  };
+
   const { user } = useAuth();
   const { tenantSettings } = useTenantData();
   const navigate = useNavigate();
+
+  const tenantIdForAI = tenantSettings?.user_id || (tenantSettings as any)?.id || user?.id || "";
+  const tenantContext = {
+    tenantId: tenantIdForAI,
+    plan: tenantSettings?.plan ?? "starter",
+    email: user?.email ?? "",
+  };
 
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -133,7 +272,7 @@ export function FloatingChat() {
   const loadActiveTicket = useCallback(async () => {
     if (!user) return;
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("support_tickets")
         .select("id")
         .in("status", ["aberto", "em_analise", "em_andamento", "aguardando_cliente"])
@@ -170,7 +309,7 @@ export function FloatingChat() {
   const countUnread = useCallback(async () => {
     if (!activeTicketId || open) return;
     try {
-      const { count, error } = await supabase
+      const { count, error } = await (supabase as any)
         .from("support_ticket_messages")
         .select("*", { count: "exact", head: true })
         .eq("ticket_id", activeTicketId)
@@ -235,7 +374,7 @@ export function FloatingChat() {
     if (open && activeTicketId) {
       setUnreadCount(0);
       // Mark admin messages as read
-      supabase
+      (supabase as any)
         .from("support_ticket_messages")
         .update({ read_at: new Date().toISOString() })
         .eq("ticket_id", activeTicketId)
@@ -251,7 +390,7 @@ export function FloatingChat() {
 
     setSending(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("support_ticket_messages")
         .insert({
           ticket_id: activeTicketId,
@@ -339,11 +478,38 @@ export function FloatingChat() {
 
   if (!user) return null;
 
-  // --- Upgrade Gate (Starter) ---
+  // --- Tia (Starter) — assistente guiada com conteúdo da central/FAQs ---
+  const [tiaStep, setTiaStep] = useState<string>("onboarding-account");
+  const currentStep = TIA_GUIDE_STEPS[tiaStep] ?? TIA_GUIDE_STEPS["onboarding-account"];
+  const predictedStep = currentStep.next ? TIA_GUIDE_STEPS[currentStep.next] : null;
+  const stepHelp = getHelpForStep(tiaStep);
+  const stepIndex = TIA_STEP_ORDER.indexOf(tiaStep as typeof TIA_STEP_ORDER[number]);
+  const hasPrev = stepIndex > 0;
+  const hasNext = stepIndex >= 0 && stepIndex < TIA_STEP_ORDER.length - 1;
+
+  const goPrevStep = () => {
+    if (!hasPrev) return;
+    const prev = TIA_STEP_ORDER[stepIndex - 1];
+    setTiaStep(prev);
+  };
+
+  const goNextStep = () => {
+    if (!hasNext) return;
+    const nxt = TIA_STEP_ORDER[stepIndex + 1];
+    setTiaStep(nxt);
+  };
+
+  const openHelpFocused = (target?: string, suggestionTitle?: string) => {
+    const focusFromSuggestion = suggestionTitle ? SUGGESTION_FOCUS_MAP[suggestionTitle] : undefined;
+    const focus = focusFromSuggestion ?? (target ? TIA_HELP_FOCUS_MAP[target] ?? target : undefined);
+    const url = focus ? `/help?focus=${encodeURIComponent(focus)}` : "/help";
+    navigate(url);
+  };
+
   if (!isPro) {
     return (
       <>
-        {/* Botão flutuante com lock - agora arrastável */}
+        {/* Botão flutuante */}
         <button
           className={`fixed z-[60] h-14 w-14 rounded-full bg-primary shadow-lg shadow-primary/30 flex items-center justify-center text-white hover:scale-105 transition-transform ${
             isDragging ? 'cursor-grabbing' : 'cursor-grab'
@@ -357,59 +523,199 @@ export function FloatingChat() {
           onMouseDown={handleButtonMouseDown}
           onClick={handleButtonClick}
         >
-          {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+          {open ? <ChevronDown className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
         </button>
 
-        {/* Upgrade panel */}
+        {/* Painel Tia */}
         {open && (
           <div
             className="fixed z-50 bg-card border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200 flex flex-col"
             style={floatingPanelStyle}
           >
-            <div className="bg-gradient-to-r from-primary to-orange-500 p-6 text-white text-center">
-              <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-3">
-                <Lock className="h-7 w-7" />
+            <div className="bg-gradient-to-r from-primary to-orange-500 p-5 text-white">
+              <div className="flex items-center gap-3">
+                <div className="h-11 w-11 rounded-full bg-white/20 flex items-center justify-center">
+                  <MessageCircle className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs uppercase tracking-[0.08em] text-white/70 font-semibold">Tia · Assistente</p>
+                  <h3 className="font-bold text-lg leading-tight">{currentStep.title}</h3>
+                </div>
               </div>
-              <h3 className="font-bold text-lg">Chat ao Vivo</h3>
-              <p className="text-sm text-white/80 mt-1">
-                Converse em tempo real com nosso suporte
-              </p>
+              {predictedStep && (
+                <p className="text-xs text-white/80 mt-2">Próxima dúvida sugerida: {predictedStep.title}</p>
+              )}
             </div>
-            <div className="p-5 space-y-4 overflow-y-auto">
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <CheckCheck className="h-4 w-4 text-primary" />
-                  <span>Respostas em tempo real</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCheck className="h-4 w-4 text-primary" />
-                  <span>Histórico de conversas</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCheck className="h-4 w-4 text-primary" />
-                  <span>Suporte prioritário</span>
-                </div>
+
+            <div className="p-4 space-y-3 overflow-y-auto">
+              <p className="text-sm text-foreground leading-relaxed">{currentStep.summary}</p>
+
+              <div className="space-y-2">
+                {currentStep.tips.map((tip) => (
+                  <div key={tip} className="flex items-start gap-2 text-sm text-foreground">
+                    <CheckCheck className="h-4 w-4 text-primary mt-0.5" />
+                    <span className="leading-snug">{tip}</span>
+                  </div>
+                ))}
               </div>
-              <div className="bg-muted/50 rounded-lg p-3 text-center">
-                <p className="text-xs text-muted-foreground mb-1">Disponível a partir do</p>
-                <div className="flex items-center justify-center gap-1.5">
-                  <Crown className="h-4 w-4 text-primary" />
-                  <span className="font-semibold text-sm">Plano Professional</span>
+
+              {currentStep.resources.length > 0 && (
+                <div className="bg-muted/50 border border-border rounded-xl p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.08em]">Recursos rápidos</p>
+                    <div className="flex items-center gap-1.5">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            disabled={!hasPrev}
+                            onClick={goPrevStep}
+                            className="h-7 w-7 rounded-full border border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:border-primary/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <ChevronDown className="h-4 w-4 rotate-90 mx-auto" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="center" className="text-xs border border-primary/50 shadow-lg shadow-primary/10">
+                          Passo anterior
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            disabled={!hasNext}
+                            onClick={goNextStep}
+                            className="h-7 w-7 rounded-full border border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:border-primary/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <ChevronDown className="h-4 w-4 -rotate-90 mx-auto" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="center" className="text-xs border border-primary/50 shadow-lg shadow-primary/10">
+                          Próximo passo
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {currentStep.resources.map((res) => (
+                      <Button
+                        key={res.href}
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={() => navigate(res.href)}
+                      >
+                        {res.label}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
+              )}
+
+              <div className="flex items-center justify-between gap-3 pt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => setTiaStep("onboarding-account")}
+                >
+                  Reiniciar fluxo
+                </Button>
+                <Button
+                  size="sm"
+                  className="text-xs"
+                  onClick={goNextStep}
+                  disabled={!hasNext}
+                >
+                  {hasNext && currentStep.next ? `Próxima: ${TIA_GUIDE_STEPS[currentStep.next].title}` : 'Concluído'}
+                </Button>
               </div>
-              <Button 
-                className="w-full" 
-                onClick={() => {
-                  setOpen(false);
-                  navigate('/checkout?plan=professional');
-                }}
-              >
-                <Crown className="h-4 w-4 mr-2" />
-                Fazer Upgrade
-              </Button>
-              <p className="text-[11px] text-center text-muted-foreground">
-                Você ainda pode abrir chamados em <button onClick={() => { setOpen(false); navigate('/support'); }} className="text-primary hover:underline">Suporte</button>
-              </p>
+
+              {(stepHelp.articles.length > 0 || stepHelp.faqs.length > 0) && (
+                <div className="bg-muted/30 border border-border rounded-xl p-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.08em]">Sugestões da Central</p>
+                    <Button variant="ghost" size="sm" className="h-7 text-[11px] px-2" onClick={() => navigate('/help')}>
+                      Ver mais
+                    </Button>
+                  </div>
+                  {stepHelp.articles.length > 0 && (
+                    <div className="space-y-2">
+                      {stepHelp.articles.map((a, idx) => (
+                        <div key={`${a.title}-${idx}`} className="p-2.5 rounded-lg bg-card/70 border border-border/60">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-medium text-foreground">{a.title}</p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-[11px] px-2 text-primary hover:text-primary-foreground hover:bg-primary/80"
+                              onClick={() => {
+                                setOpen(false);
+                                openHelpFocused(currentStep.key, a.title);
+                              }}
+                            >
+                              <Play className="h-3.5 w-3.5 mr-1" />
+                              Aprender
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground leading-snug">{a.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {stepHelp.faqs.length > 0 && (
+                    <div className="space-y-2">
+                      {stepHelp.faqs.map((f, idx) => (
+                        <div key={`${f.question}-${idx}`} className="p-2.5 rounded-lg bg-card/70 border border-border/60">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-medium text-foreground">{f.question}</p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-[11px] px-2 text-primary hover:text-primary-foreground hover:bg-primary/80"
+                              onClick={() => {
+                                setOpen(false);
+                                openHelpFocused(currentStep.key, f.question);
+                              }}
+                            >
+                              <Play className="h-3.5 w-3.5 mr-1" />
+                              Aprender
+                            </Button>
+                          </div>
+                          {f.answerInline ? (
+                            <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground leading-snug">
+                              {f.answerInline}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-muted-foreground leading-snug">{f.answer}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="text-[11px] text-muted-foreground">
+                Precisa falar com alguém? Abra um chamado em <button onClick={() => { setOpen(false); navigate('/support'); }} className="text-primary hover:underline">Suporte</button>.
+              </div>
+
+              <div className="bg-muted/60 border border-border rounded-xl p-3 space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-foreground">Chat ao vivo</span>
+                  <Badge className="text-[10px] px-2.5 py-0.5 bg-primary/10 text-primary border border-primary/50 shadow-sm shadow-primary/10 hover:bg-primary hover:text-primary-foreground transition-colors">Pro</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground leading-snug">
+                  Desbloqueie chat em tempo real com especialistas. Plano atual: <span className="font-semibold text-primary">{tenantContext.plan}</span>
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs"
+                  onClick={() => { setOpen(false); navigate('/checkout?plan=professional'); }}
+                >
+                  <Crown className="h-3.5 w-3.5 mr-1.5" />
+                  Fazer upgrade para Professional
+                </Button>
+              </div>
             </div>
           </div>
         )}

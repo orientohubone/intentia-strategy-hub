@@ -6,6 +6,7 @@ interface FAQCardProps {
   item: {
     question: string;
     answer: string;
+    answerInline?: React.ReactNode;
     category: string;
     difficulty: string;
     icon: React.ReactNode;
@@ -69,9 +70,15 @@ export function FAQCard({
           {/* Answer */}
           {isExpanded && (
             <div className="mt-3 p-3 rounded-lg bg-muted/30 border">
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {item.answer}
-              </p>
+              {item.answerInline ? (
+                <div className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground leading-relaxed">
+                  {item.answerInline}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {item.answer}
+                </p>
+              )}
             </div>
           )}
         </div>

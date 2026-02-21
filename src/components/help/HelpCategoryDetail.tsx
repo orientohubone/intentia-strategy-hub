@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { YouTubeEmbed } from "./YouTubeEmbed";
@@ -7,10 +7,34 @@ import type { HelpCategory } from "./helpTypes";
 interface HelpCategoryDetailProps {
   category: HelpCategory;
   getDifficultyColor: (difficulty: string) => string;
+  focusArticleSlug?: string | null;
 }
 
-export function HelpCategoryDetail({ category, getDifficultyColor }: HelpCategoryDetailProps) {
+const slugify = (text: string) =>
+  text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+
+export function HelpCategoryDetail({ category, getDifficultyColor, focusArticleSlug }: HelpCategoryDetailProps) {
   const [expandedArticle, setExpandedArticle] = useState<number | null>(null);
+  const focusRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!focusArticleSlug) return;
+    const idx = category.articles.findIndex((article) => slugify(article.title) === focusArticleSlug);
+    if (idx >= 0) {
+      setExpandedArticle(idx);
+    }
+  }, [category, focusArticleSlug]);
+
+  useEffect(() => {
+    if (focusRef.current) {
+      focusRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [expandedArticle]);
 
   return (
     <Card className="mb-4">
@@ -53,10 +77,15 @@ export function HelpCategoryDetail({ category, getDifficultyColor }: HelpCategor
           {category.articles.map((article, index) => (
             <button
               key={index}
+              ref={
+                focusArticleSlug && slugify(article.title) === focusArticleSlug
+                  ? focusRef
+                  : undefined
+              }
               onClick={() => setExpandedArticle(expandedArticle === index ? null : index)}
               className={`text-left p-2.5 sm:p-3 rounded-xl border transition-all ${
                 expandedArticle === index
-                  ? "border-foreground/20 bg-muted/40"
+                  ? "border-primary/60 bg-primary/10 shadow-sm shadow-primary/10 text-primary"
                   : "border-border bg-card hover:bg-muted/40 hover:border-muted-foreground/20"
               }`}
             >

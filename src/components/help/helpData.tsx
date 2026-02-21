@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Search,
   HelpCircle,
@@ -27,6 +28,9 @@ import {
   DollarSign,
   MessageCircle,
   Activity,
+  ArrowRight,
+  Inbox,
+  CheckCheck,
 } from "lucide-react";
 import type { HelpCategory, FAQItem, FAQCategoryFilter } from "./helpTypes";
 
@@ -107,11 +111,6 @@ export const helpCategories: HelpCategory[] = [
         title: "Executando análise",
         content: "Selecione modelo, clique em 'Analisar com IA'. Card interativo aparece com progresso e sugestões (café, água, e-mails). Gera resumo, SWOT, recomendações e plano de ação.",
         difficulty: "Iniciante",
-      },
-      {
-        title: "Modelos disponíveis",
-        content: "Gemini: 2.0 Flash, 3 Flash/Pro. Claude: Sonnet 4, 3.7, Haiku 3.5/3, Opus 3.",
-        difficulty: "Intermediário",
       },
     ],
   },
@@ -624,7 +623,7 @@ export const helpCategories: HelpCategory[] = [
 export const faqItems: FAQItem[] = [
   {
     question: "Como funciona a análise heurística de URL?",
-    answer: "Ao inserir uma URL, o sistema faz fetch do HTML da página e analisa automaticamente 6 dimensões: Proposta de Valor, Clareza, Jornada do Usuário, SEO, Conversão e Conteúdo. Cada dimensão recebe um score de 0 a 100, e o Score Estratégico geral é a média ponderada. Insights são gerados automaticamente com alertas, oportunidades e melhorias.",
+    answer: "Fetch do HTML e análise automática de 6 dimensões com score 0-100 + insights gerados na hora.",
     category: "analise",
     difficulty: "iniciante",
     icon: <Target className="h-4 w-4" />,
@@ -632,7 +631,7 @@ export const faqItems: FAQItem[] = [
   },
   {
     question: "Preciso pagar para usar a análise por IA?",
-    answer: "A funcionalidade de IA é gratuita na plataforma. Você configura sua própria API key do Google Gemini ou Anthropic Claude em Configurações → Integrações de IA, e paga diretamente ao provider pelo consumo de tokens. Cada análise custa centavos.",
+    answer: "Plataforma grátis; você usa sua API key (Gemini/Claude) e paga consumo direto ao provedor.",
     category: "ia",
     difficulty: "iniciante",
     icon: <Sparkles className="h-4 w-4" />,
@@ -640,7 +639,7 @@ export const faqItems: FAQItem[] = [
   },
   {
     question: "Quais modelos de IA são suportados?",
-    answer: "Google Gemini: Gemini 3 Flash Preview, Gemini 2.5 Flash, Gemini 2.5 Pro Preview e Gemini 2.0 Flash. Anthropic Claude: Claude Sonnet 4, Claude Sonnet 3.7, Claude Haiku 3.5, Claude Haiku 3 e Claude Opus 3. Você escolhe o modelo no seletor antes de cada análise.",
+    answer: "Gemini (2.0/2.5/3 Flash/Pro) e Claude (Sonnet, Haiku, Opus). Selecione antes de rodar a IA.",
     category: "ia",
     difficulty: "intermediario",
     icon: <Sparkles className="h-4 w-4" />,
@@ -648,7 +647,7 @@ export const faqItems: FAQItem[] = [
   },
   {
     question: "Como funciona o benchmark competitivo?",
-    answer: "Você adiciona URLs de concorrentes e o sistema gera uma análise SWOT automática com scores comparativos, gap analysis e tags. Opcionalmente, enriqueça com IA para obter vantagens/desvantagens detalhadas, gaps estratégicos e plano de ação.",
+    answer: "Adicione concorrentes e receba SWOT + scores comparativos; IA opcional enriquece gaps e plano de ação.",
     category: "benchmark",
     difficulty: "intermediario",
     icon: <BarChart3 className="h-4 w-4" />,
@@ -656,7 +655,7 @@ export const faqItems: FAQItem[] = [
   },
   {
     question: "Quais formatos de exportação estão disponíveis?",
-    answer: "Relatórios PDF consolidados por projeto, exportação por seção em PDF, dados tabulares em CSV (projetos, insights, benchmarks, audiences, channels), e resultados de IA em JSON, Markdown, HTML estilizado ou PDF.",
+    answer: "PDF, CSV e JSON/Markdown/HTML das análises e dados tabulares por projeto ou seção.",
     category: "exports",
     difficulty: "iniciante",
     icon: <Download className="h-4 w-4" />,
@@ -664,7 +663,7 @@ export const faqItems: FAQItem[] = [
   },
   {
     question: "Quais planos estão disponíveis?",
-    answer: "Starter (gratuito): 5 análises de URL por mês, score básico por canal. Professional (R$ 147/mês): análises ilimitadas, IA, benchmark com IA, relatórios PDF/CSV, insights e alertas. Enterprise (personalizado): tudo do Professional + API access, SLA dedicado, consultoria estratégica e treinamento.",
+    answer: "Starter — grátis | Professional — R$147/mês | Enterprise — personalizado",
     category: "planos",
     difficulty: "iniciante",
     icon: <DollarSign className="h-4 w-4" />,
@@ -672,7 +671,7 @@ export const faqItems: FAQItem[] = [
   },
   {
     question: "Posso usar a plataforma no modo escuro?",
-    answer: "Sim! Alterne entre tema claro e escuro pelo ícone de sol/lua no header do dashboard. O tema é salvo automaticamente. As páginas públicas (landing, preços, etc.) sempre usam tema claro para consistência da marca.",
+    answer: "Sim. Clique no ícone sol/lua no header. Páginas públicas ficam sempre claras.",
     category: "configuracoes",
     difficulty: "iniciante",
     icon: <Moon className="h-4 w-4" />,
@@ -680,7 +679,7 @@ export const faqItems: FAQItem[] = [
   },
   {
     question: "Meus dados estão seguros?",
-    answer: "Sim. Implementamos múltiplas camadas de segurança: Row Level Security (RLS) em todas as 16+ tabelas, audit log automático em 13+ tabelas, backups automáticos antes de exclusões, soft delete com recuperação em 30 dias, rate limiting por plano, proteção contra escalação de privilégios e mascaramento de dados sensíveis. API keys são isoladas por usuário e nunca expostas em logs ou exportações. Saiba mais na página de Segurança.",
+    answer: "RLS em todas as tabelas, audit log, backups, soft delete, rate limiting e keys isoladas por usuário.",
     category: "seguranca",
     difficulty: "intermediario",
     icon: <Shield className="h-4 w-4" />,
@@ -688,7 +687,25 @@ export const faqItems: FAQItem[] = [
   },
   {
     question: "Como recebo notificações?",
-    answer: "Notificações são enviadas em tempo real via Supabase Subscriptions. Você recebe alertas quando análises por IA são concluídas, com links diretos para os resultados. Acesse pelo ícone de sino no header.",
+    answer: "Fluxo: evento/aviso → push em tempo real → sino → dropdown → marcar como lida.",
+    answerInline: (
+      <>
+        <Zap className="h-4 w-4 text-primary" />
+        <span>Evento/Análise</span>
+        <ArrowRight className="h-4 w-4 text-primary" />
+        <Activity className="h-4 w-4 text-primary" />
+        <span>Push em tempo real</span>
+        <ArrowRight className="h-4 w-4 text-primary" />
+        <Bell className="h-4 w-4 text-primary" />
+        <span>Sino</span>
+        <ArrowRight className="h-4 w-4 text-primary" />
+        <Inbox className="h-4 w-4 text-primary" />
+        <span>Dropdown</span>
+        <ArrowRight className="h-4 w-4 text-primary" />
+        <CheckCheck className="h-4 w-4 text-primary" />
+        <span>Marcar como lida</span>
+      </>
+    ),
     category: "configuracoes",
     difficulty: "iniciante",
     icon: <Bell className="h-4 w-4" />,
@@ -712,7 +729,7 @@ export const faqItems: FAQItem[] = [
   },
   {
     question: "O que é o Plano Tático e como funciona?",
-    answer: "O Plano Tático é a camada que transforma decisões estratégicas em estruturas de campanha executáveis. Para cada canal (Google, Meta, LinkedIn, TikTok), você define tipo de campanha, funil, lances, grupos de anúncios, frameworks de copy, segmentação e plano de testes. Use templates pré-preenchidos por nicho B2B para começar rapidamente.",
+    answer: "Plano Tático converte estratégia em campanhas por canal (tipo, funil, lances, copy, segmentação, testes) com templates B2B.",
     category: "tatico",
     difficulty: "intermediario",
     icon: <Crosshair className="h-4 w-4" />,
@@ -720,7 +737,7 @@ export const faqItems: FAQItem[] = [
   },
   {
     question: "Quais templates táticos estão disponíveis?",
-    answer: "6 templates validados por nicho: SaaS B2B, Consultoria & Serviços, E-commerce & Indústria B2B, Educação Corporativa, Fintech & Financeiro e Saúde Corporativa. Cada template inclui dados pré-preenchidos para os 4 canais, frameworks de copy, segmentação e planos de teste.",
+    answer: "6 templates B2B (SaaS, Consultoria, E-commerce/Indústria, Educação, Fintech, Saúde) pré-preenchidos por canal.",
     category: "tatico",
     difficulty: "iniciante",
     icon: <Crosshair className="h-4 w-4" />,
@@ -728,7 +745,7 @@ export const faqItems: FAQItem[] = [
   },
   {
     question: "Como os públicos-alvo se conectam ao plano tático?",
-    answer: "Públicos-alvo vinculados a um projeto são automaticamente disponibilizados no Plano Tático. Na seção de Segmentação de cada canal, botões de importação rápida permitem adicionar públicos com um clique, pré-preenchendo nome, critérios de targeting (indústria, porte, localização, keywords) e descrição. Isso garante alinhamento entre a estratégia de audiência e a execução tática.",
+    answer: "Públicos vinculados ao projeto aparecem no Plano Tático; importe com 1 clique e já traz targeting preenchido.",
     category: "tatico",
     difficulty: "intermediario",
     icon: <Users className="h-4 w-4" />,

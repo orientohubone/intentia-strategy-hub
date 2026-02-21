@@ -19,6 +19,7 @@ export interface HelpCategory {
 export interface FAQItem {
   question: string;
   answer: string;
+  answerInline?: ReactNode;
   category: string;
   difficulty: string;
   icon: ReactNode;

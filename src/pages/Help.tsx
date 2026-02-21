@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { SEO } from "@/components/SEO";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import {
   HelpFAQSection,
   HelpContactSection,
 } from "@/components/help";
+import { useSearchParams } from "react-router-dom";
 
 const getDifficultyColor = (difficulty: string) => {
   switch (difficulty) {
@@ -35,6 +36,20 @@ export default function Help() {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [categoriesExpanded, setCategoriesExpanded] = useState(true);
+  const [focusArticleSlug, setFocusArticleSlug] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+
+  const focusParam = searchParams.get("focus");
+
+  useEffect(() => {
+    if (!focusParam) return;
+    const [categoryId, articleSlug] = focusParam.split(":");
+    if (categoryId) {
+      setExpandedCategory(categoryId);
+      setCategoriesExpanded(true);
+    }
+    setFocusArticleSlug(articleSlug || null);
+  }, [focusParam]);
 
   const filteredCategories = helpCategories
     .map((category) => ({
@@ -105,6 +120,7 @@ export default function Help() {
           <HelpCategoryDetail
             category={selectedCategory}
             getDifficultyColor={getDifficultyColor}
+            focusArticleSlug={focusArticleSlug}
           />
         )}
 

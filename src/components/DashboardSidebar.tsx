@@ -13,6 +13,7 @@ import {
   ShieldAlert,
   Megaphone,
   Plug,
+  Sparkles,
   Globe,
   Activity,
   FileText,
@@ -69,6 +70,7 @@ const navSections: NavSection[] = [
     items: [
       { icon: Megaphone, label: "Operações", href: "/operations" },
       { icon: Plug, label: "Integrações", href: "/integracoes" },
+      { icon: Sparkles, label: "Loja de Apps", href: "/apps" },
     ],
   },
 ];

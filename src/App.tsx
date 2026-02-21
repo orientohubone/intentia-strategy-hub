@@ -55,6 +55,7 @@ import FeatureDadosEstruturados from "./pages/FeatureDadosEstruturados";
 import FeatureGestaoCampanhas from "./pages/FeatureGestaCampanhas";
 import FeatureGestaoBudget from "./pages/FeatureGestaoBudget";
 import FeatureSeoMonitoring from "./pages/FeatureSeoMonitoring";
+import AppStore from "./pages/AppStore";
 import AdminLogin from "./pages/AdminLogin";
 import AdminPanel from "./pages/AdminPanel";
 import StatusRssFallback from "./pages/StatusRssFallback";
@@ -232,6 +233,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Integrations />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/apps" 
+            element={
+              <ProtectedRoute>
+                <AppStore />
               </ProtectedRoute>
             } 
           />
