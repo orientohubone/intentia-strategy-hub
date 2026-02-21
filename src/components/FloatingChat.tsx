@@ -14,7 +14,6 @@ import {
   Crown,
   Play
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenantData } from "@/hooks/useTenantData";
 import { SupportTicketMessage } from "@/lib/supportTypes";
@@ -22,21 +21,17 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { helpCategories, faqItems } from "@/components/help";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { TiaGuidedSection } from "@/components/floating-chat/TiaGuidedSection";
+import { TiaAskSection } from "@/components/floating-chat/TiaAskSection";
+import type { AssistantStep, StepHelp, TiaMessage } from "@/components/floating-chat/types";
 
 export function FloatingChat() {
   const BUTTON_SIZE = 56;
   const PANEL_GAP = 12;
   const PANEL_HEIGHT = 500;
   const VIEWPORT_PADDING = 8;
-
-  type AssistantStep = {
-    key: string;
-    title: string;
-    summary: string;
-    tips: string[];
-    resources: { label: string; href: string }[];
-    next?: string;
-  };
 
   const TIA_STEP_ORDER = [
     "onboarding-account",
@@ -68,10 +63,10 @@ export function FloatingChat() {
     "next-steps": { categories: ["benchmark", "operations", "budget"], faqCategories: ["benchmark", "operacoes", "exports"] },
   };
 
-  const getHelpForStep = (step: string) => {
+  const getHelpForStep = (step: string): StepHelp => {
     const map = TIA_HELP_MAP[step] ?? TIA_HELP_MAP["onboarding-account"];
     const articles = helpCategories
-      .filter((cat) => map.categories.includes(cat.id))
+      .filter((c) => map.categories.includes(c.id))
       .flatMap((cat) => cat.articles.map((a) => ({ ...a, categoryTitle: cat.title })))
       .slice(0, 3);
 
@@ -163,7 +158,7 @@ export function FloatingChat() {
   const { tenantSettings } = useTenantData();
   const navigate = useNavigate();
 
-  const tenantIdForAI = tenantSettings?.user_id || (tenantSettings as any)?.id || user?.id || "";
+  const tenantIdForAI = (tenantSettings as any)?.id || tenantSettings?.user_id || user?.id || "";
   const tenantContext = {
     tenantId: tenantIdForAI,
     plan: tenantSettings?.plan ?? "starter",
@@ -480,6 +475,13 @@ export function FloatingChat() {
 
   // --- Tia (Starter) — assistente guiada com conteúdo da central/FAQs ---
   const [tiaStep, setTiaStep] = useState<string>("onboarding-account");
+  const [tiaMessages, setTiaMessages] = useState<TiaMessage[]>([
+    { role: "assistant", content: "Oi! Sou a Tia. Pode perguntar sobre seus projetos, análises ou próximos passos." },
+  ]);
+  const [tiaGreeted, setTiaGreeted] = useState(false);
+  const [tiaInput, setTiaInput] = useState("");
+  const [tiaLoading, setTiaLoading] = useState(false);
+  const [tiaMode, setTiaMode] = useState<"guided" | "ask">("guided");
   const currentStep = TIA_GUIDE_STEPS[tiaStep] ?? TIA_GUIDE_STEPS["onboarding-account"];
   const predictedStep = currentStep.next ? TIA_GUIDE_STEPS[currentStep.next] : null;
   const stepHelp = getHelpForStep(tiaStep);
@@ -497,6 +499,101 @@ export function FloatingChat() {
     if (!hasNext) return;
     const nxt = TIA_STEP_ORDER[stepIndex + 1];
     setTiaStep(nxt);
+  };
+ 
+  const FUNCTION_SLUG = "assistant-ia";
+
+  const callAssistantIA = async (messages: { role: "user" | "assistant" | "system"; content: string }[]) => {
+    if (!tenantContext.tenantId) {
+      toast.error("Tenant não identificado para IA");
+      return null;
+    }
+
+    // Sempre pega sessão atual; se ausente, tenta refresh.
+    const sessionRes = await supabase.auth.getSession();
+    let accessToken = sessionRes.data.session?.access_token;
+    if (!accessToken) {
+      const refreshed = await supabase.auth.refreshSession();
+      accessToken = refreshed.data.session?.access_token;
+    }
+
+    if (!accessToken) {
+      toast.error("Sessão expirada. Faça login novamente.");
+      return null;
+    }
+
+    // Usa invoke sem headers manuais (supabase-js envia o token atual)
+    const invokeOnce = async () =>
+      supabase.functions.invoke(FUNCTION_SLUG, {
+        body: {
+          messages,
+          tenantContext: {
+            tenantId: tenantContext.tenantId,
+            plan: tenantContext.plan,
+            email: user?.email ?? tenantContext.email,
+          },
+        },
+      });
+
+    let { data, error } = await invokeOnce();
+
+    // Se erro for 401, tenta refresh e reenvia uma vez
+    if (error && (error as any)?.status === 401) {
+      const refreshed = await supabase.auth.refreshSession();
+      accessToken = refreshed.data.session?.access_token;
+      if (!accessToken) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        return null;
+      }
+      ({ data, error } = await invokeOnce());
+    }
+
+    if (error) {
+      console.error("assistant-ia invoke error", error);
+      toast.error(`Erro ao acionar assistente IA${(error as any)?.status ? ` (${(error as any).status})` : ""}`);
+      return null;
+    }
+
+    return data;
+  };
+
+  const sendTiaMessage = async () => {
+    if (!tiaInput.trim() || tiaLoading) return;
+    const userMsg = { role: "user" as const, content: tiaInput.trim() };
+    const nextMessages = [...tiaMessages, userMsg];
+    setTiaMessages(nextMessages);
+    setTiaInput("");
+    setTiaLoading(true);
+    try {
+      const payload = await callAssistantIA(nextMessages);
+      if (payload) {
+        const displayName = (user as any)?.user_metadata?.full_name || user?.email || "você";
+        const email = user?.email ?? payload.user?.email ?? "";
+        const answer = payload.answer || "Contexto carregado. Pergunte algo específico e trago os dados.";
+        const question = userMsg.content;
+
+        const normalized = question.trim().toLowerCase();
+        const isGreeting = /^(oi|olá|ola|bom dia|boa tarde|boa noite|hey|hello|hi)\b/.test(normalized);
+
+        const greeting = `Olá, ${displayName} (${email}). Estou dentro da sua realidade agora, junto com você todos os dias.`;
+        const answerText = isGreeting ? "Tudo bem! Pode me pedir qualquer dado do seu tenant." : `Sobre sua pergunta: “${question}”: ${answer}`;
+
+        const assistantReplies = tiaGreeted
+          ? [{ role: "assistant" as const, content: answerText }]
+          : [
+              { role: "assistant" as const, content: greeting },
+              ...(isGreeting ? [] : [{ role: "assistant" as const, content: answerText }]),
+            ];
+
+        setTiaMessages([...nextMessages, ...assistantReplies]);
+        if (!tiaGreeted) setTiaGreeted(true);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Falha ao enviar mensagem");
+    } finally {
+      setTiaLoading(false);
+    }
   };
 
   const openHelpFocused = (target?: string, suggestionTitle?: string) => {
@@ -540,158 +637,57 @@ export function FloatingChat() {
                 <div className="min-w-0">
                   <p className="text-xs uppercase tracking-[0.08em] text-white/70 font-semibold">Tia · Assistente</p>
                   <h3 className="font-bold text-lg leading-tight">{currentStep.title}</h3>
+                  {/* tags ocultadas conforme solicitado */}
                 </div>
               </div>
               {predictedStep && (
                 <p className="text-xs text-white/80 mt-2">Próxima dúvida sugerida: {predictedStep.title}</p>
               )}
+
+              <div className="mt-3 inline-flex rounded-full border border-white/30 bg-white/10 p-1 text-[11px] font-medium">
+                <button
+                  className={`px-3 py-1 rounded-full transition-colors ${
+                    tiaMode === "guided" ? "bg-white text-primary" : "text-white/80 hover:text-white"
+                  }`}
+                  onClick={() => setTiaMode("guided")}
+                >
+                  Assistente guiada
+                </button>
+                <button
+                  className={`px-3 py-1 rounded-full transition-colors ${
+                    tiaMode === "ask" ? "bg-white text-primary" : "text-white/80 hover:text-white"
+                  }`}
+                  onClick={() => setTiaMode("ask")}
+                >
+                  Falar com a Tia
+                </button>
+              </div>
             </div>
 
             <div className="p-4 space-y-3 overflow-y-auto">
-              <p className="text-sm text-foreground leading-relaxed">{currentStep.summary}</p>
-
-              <div className="space-y-2">
-                {currentStep.tips.map((tip) => (
-                  <div key={tip} className="flex items-start gap-2 text-sm text-foreground">
-                    <CheckCheck className="h-4 w-4 text-primary mt-0.5" />
-                    <span className="leading-snug">{tip}</span>
-                  </div>
-                ))}
-              </div>
-
-              {currentStep.resources.length > 0 && (
-                <div className="bg-muted/50 border border-border rounded-xl p-3 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.08em]">Recursos rápidos</p>
-                    <div className="flex items-center gap-1.5">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            disabled={!hasPrev}
-                            onClick={goPrevStep}
-                            className="h-7 w-7 rounded-full border border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:border-primary/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <ChevronDown className="h-4 w-4 rotate-90 mx-auto" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" align="center" className="text-xs border border-primary/50 shadow-lg shadow-primary/10">
-                          Passo anterior
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            disabled={!hasNext}
-                            onClick={goNextStep}
-                            className="h-7 w-7 rounded-full border border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:border-primary/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <ChevronDown className="h-4 w-4 -rotate-90 mx-auto" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" align="center" className="text-xs border border-primary/50 shadow-lg shadow-primary/10">
-                          Próximo passo
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {currentStep.resources.map((res) => (
-                      <Button
-                        key={res.href}
-                        variant="outline"
-                        size="sm"
-                        className="h-8 text-xs"
-                        onClick={() => navigate(res.href)}
-                      >
-                        {res.label}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
+              {tiaMode === "guided" && (
+                <TiaGuidedSection
+                  currentStep={currentStep}
+                  predictedStep={predictedStep}
+                  hasPrev={hasPrev}
+                  hasNext={hasNext}
+                  onPrev={goPrevStep}
+                  onNext={goNextStep}
+                  onReset={() => setTiaStep("onboarding-account")}
+                  onNavigate={navigate}
+                  openHelpFocused={openHelpFocused}
+                  stepHelp={stepHelp}
+                />
               )}
 
-              <div className="flex items-center justify-between gap-3 pt-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => setTiaStep("onboarding-account")}
-                >
-                  Reiniciar fluxo
-                </Button>
-                <Button
-                  size="sm"
-                  className="text-xs"
-                  onClick={goNextStep}
-                  disabled={!hasNext}
-                >
-                  {hasNext && currentStep.next ? `Próxima: ${TIA_GUIDE_STEPS[currentStep.next].title}` : 'Concluído'}
-                </Button>
-              </div>
-
-              {(stepHelp.articles.length > 0 || stepHelp.faqs.length > 0) && (
-                <div className="bg-muted/30 border border-border rounded-xl p-3 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.08em]">Sugestões da Central</p>
-                    <Button variant="ghost" size="sm" className="h-7 text-[11px] px-2" onClick={() => navigate('/help')}>
-                      Ver mais
-                    </Button>
-                  </div>
-                  {stepHelp.articles.length > 0 && (
-                    <div className="space-y-2">
-                      {stepHelp.articles.map((a, idx) => (
-                        <div key={`${a.title}-${idx}`} className="p-2.5 rounded-lg bg-card/70 border border-border/60">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm font-medium text-foreground">{a.title}</p>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 text-[11px] px-2 text-primary hover:text-primary-foreground hover:bg-primary/80"
-                              onClick={() => {
-                                setOpen(false);
-                                openHelpFocused(currentStep.key, a.title);
-                              }}
-                            >
-                              <Play className="h-3.5 w-3.5 mr-1" />
-                              Aprender
-                            </Button>
-                          </div>
-                          <p className="text-xs text-muted-foreground leading-snug">{a.content}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {stepHelp.faqs.length > 0 && (
-                    <div className="space-y-2">
-                      {stepHelp.faqs.map((f, idx) => (
-                        <div key={`${f.question}-${idx}`} className="p-2.5 rounded-lg bg-card/70 border border-border/60">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm font-medium text-foreground">{f.question}</p>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 text-[11px] px-2 text-primary hover:text-primary-foreground hover:bg-primary/80"
-                              onClick={() => {
-                                setOpen(false);
-                                openHelpFocused(currentStep.key, f.question);
-                              }}
-                            >
-                              <Play className="h-3.5 w-3.5 mr-1" />
-                              Aprender
-                            </Button>
-                          </div>
-                          {f.answerInline ? (
-                            <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground leading-snug">
-                              {f.answerInline}
-                            </div>
-                          ) : (
-                            <p className="text-xs text-muted-foreground leading-snug">{f.answer}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+              {tiaMode === "ask" && (
+                <TiaAskSection
+                  messages={tiaMessages}
+                  input={tiaInput}
+                  loading={tiaLoading}
+                  onChange={setTiaInput}
+                  onSend={sendTiaMessage}
+                />
               )}
 
               <div className="text-[11px] text-muted-foreground">
