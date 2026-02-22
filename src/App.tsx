@@ -59,6 +59,7 @@ import AppStore from "./pages/AppStore";
 import AdminLogin from "./pages/AdminLogin";
 import AdminPanel from "./pages/AdminPanel";
 import StatusRssFallback from "./pages/StatusRssFallback";
+import TiaPage from "./pages/Tia";
 import Changelog from "./pages/Changelog";
 import VerifyTest from "./pages/VerifyTest";
 import VerifySuccess from "./pages/VerifySuccess";
@@ -110,6 +111,7 @@ const App = () => (
           <Route path="/gestao-budget" element={<ForceLightMode><FeatureGestaoBudget /></ForceLightMode>} />
           <Route path="/monitoramento-seo-inteligente" element={<ForceLightMode><FeatureSeoMonitoring /></ForceLightMode>} />
           <Route path="/relatorios" element={<ForceLightMode><FeatureRelatorios /></ForceLightMode>} />
+          <Route path="/tia" element={<TiaPage />} />
           <Route path="/verify-test" element={<ForceLightMode><VerifyTest /></ForceLightMode>} />
           <Route path="/verify-success" element={<ForceLightMode><VerifySuccess /></ForceLightMode>} />
           <Route path="/create-meta-user" element={<ForceLightMode><CreateMetaUser /></ForceLightMode>} />

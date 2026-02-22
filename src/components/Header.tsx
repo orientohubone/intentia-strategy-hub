@@ -14,6 +14,7 @@ const menuCategories = [
       { name: "Plano Tático", href: "/plano-tatico" },
       { name: "Relatórios", href: "/relatorios" },
       { name: "Comparar", href: "/comparar" },
+      { name: "Tia — Assistente IA", href: "/tia" },
       { name: "Preços", href: "/precos" },
     ]
   },

@@ -13,6 +13,7 @@ const footerGroups: FooterGroup[] = [
       { label: "Plano Tatico", href: "/plano-tatico" },
       { label: "Relatorios", href: "/relatorios" },
       { label: "Comparar", href: "/comparar" },
+      { label: "Tia — Assistente IA", href: "/tia" },
       { label: "Precos", href: "/precos" },
     ],
   },
