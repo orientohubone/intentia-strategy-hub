@@ -22,6 +22,7 @@ import {
   Target,
   DollarSign,
   Calendar,
+  GitCompareArrows,
   Sparkles,
 } from "lucide-react";
 import {
@@ -35,6 +36,8 @@ import {
 import type { PerformanceAiResult } from "@/lib/aiAnalyzer";
 import type { Campaign } from "../types";
 
+type ReallocateHighlight = { type: "source" | "target" } | null;
+
 interface CampaignRowProps {
   campaign: Campaign;
   isExpanded: boolean;
@@ -44,6 +47,8 @@ interface CampaignRowProps {
   onShowAiDialog: (id: string) => void;
   onEdit: (campaign: Campaign) => void;
   onDelete: (id: string) => void;
+  onReallocate?: (campaign: Campaign, remainingBudget: number) => void;
+  highlight?: ReallocateHighlight;
   children?: React.ReactNode;
 }
 
@@ -80,12 +85,15 @@ export function CampaignRow({
   onShowAiDialog,
   onEdit,
   onDelete,
+  onReallocate,
+  highlight,
   children,
 }: CampaignRowProps) {
   const statusActions = getStatusActions(campaign);
   const budgetPacing = campaign.budget_total > 0
     ? Math.round((campaign.budget_spent / campaign.budget_total) * 100)
     : 0;
+  const remainingBudget = Math.max(0, (campaign.budget_total || 0) - (campaign.budget_spent || 0));
 
   return (
     <div className="p-3 sm:p-4 hover:bg-accent/30 transition-colors">
@@ -118,6 +126,16 @@ export function CampaignRow({
                   </span>
                 )}
               </span>
+            )}
+            {highlight?.type === "source" && (
+              <Badge variant="outline" className="text-[10px] text-amber-600 bg-amber-500/10 border-amber-500/40">
+                Saldo reaproveitado
+              </Badge>
+            )}
+            {highlight?.type === "target" && (
+              <Badge variant="outline" className="text-[10px] text-emerald-700 bg-emerald-500/10 border-emerald-500/40 animate-pulse">
+                Reforço recebido
+              </Badge>
             )}
             {(campaign.start_date || campaign.end_date) && (
               <span className="flex items-center gap-1">
@@ -156,6 +174,17 @@ export function CampaignRow({
               <Icon className="h-4 w-4" />
             </Button>
           ))}
+          {onReallocate && campaign.status === "completed" && remainingBudget > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-amber-600"
+              title="Reaproveitar saldo desta campanha"
+              onClick={() => onReallocate(campaign, remainingBudget)}
+            >
+              <GitCompareArrows className="h-4 w-4" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"

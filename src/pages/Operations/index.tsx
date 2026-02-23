@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { FeatureGate } from "@/components/FeatureGate";
@@ -8,6 +8,7 @@ import {
   CHANNEL_LABELS,
   type CampaignChannel,
 } from "@/lib/operationalTypes";
+import { supabase } from "@/integrations/supabase/client";
 
 import { useCampaigns } from "./hooks/useCampaigns";
 import { useCampaignMetrics } from "./hooks/useCampaignMetrics";
@@ -26,6 +27,8 @@ import CampaignCalendarManager from "./components/CampaignCalendarManager";
 import PerformanceAlerts from "./components/PerformanceAlerts";
 import TacticalVsRealComparison from "./components/TacticalVsRealComparison";
 import { Button } from "@/components/ui/button";
+import { CampaignReallocateDialog, type CampaignLite } from "./components/CampaignReallocateDialog";
+import { toast } from "sonner";
 
 export default function Operations() {
   const navigate = useNavigate();
@@ -117,6 +120,49 @@ export default function Operations() {
 
   // Tool cards accordion: only one open per project, key = "projectId::toolName"
   const [openToolCard, setOpenToolCard] = useState<string | null>(null);
+  const [highlightMap, setHighlightMap] = useState<Record<string, "source" | "target">>({});
+  const [reallocModal, setReallocModal] = useState<{
+    open: boolean;
+    source: CampaignLite | null;
+    targets: CampaignLite[];
+    amount: string;
+    targetId: string;
+  }>({ open: false, source: null, targets: [], amount: "", targetId: "" });
+
+  const now = useMemo(() => new Date(), []);
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+
+  // Planned budget por projeto (mês/ano atuais) vindo de budget_allocations
+  const [projectBudgets, setProjectBudgets] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const loadProjectBudgets = async () => {
+      if (!user?.id) {
+        setProjectBudgets({});
+        return;
+      }
+      const { data, error } = await (supabase as any)
+        .from("budget_allocations")
+        .select("project_id, planned_budget")
+        .eq("user_id", user.id)
+        .eq("month", currentMonth)
+        .eq("year", currentYear);
+      if (error) {
+        console.error("Erro ao carregar budgets do projeto:", error);
+        return;
+      }
+      const grouped: Record<string, number> = {};
+      (data || []).forEach((row: any) => {
+        const pid = row.project_id;
+        const planned = Number(row.planned_budget) || 0;
+        grouped[pid] = (grouped[pid] || 0) + planned;
+      });
+      setProjectBudgets(grouped);
+    };
+
+    void loadProjectBudgets();
+  }, [user?.id, currentMonth, currentYear]);
 
   const toggleToolCard = (projectId: string, tool: string) => {
     const key = `${projectId}::${tool}`;
@@ -206,6 +252,7 @@ export default function Operations() {
                 const isExpanded = expandedGroups.has(group.projectId);
                 const activeCount = group.campaigns.filter((c) => c.status === "active").length;
                 const totalBudget = group.campaigns.reduce((sum, c) => sum + (c.budget_total || 0), 0);
+                const plannedBudget = projectBudgets[group.projectId];
 
                 const formatCurrency = (value: number) =>
                   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -225,7 +272,7 @@ export default function Operations() {
                           <p className="text-xs text-muted-foreground">
                             {group.campaigns.length} campanha{group.campaigns.length !== 1 ? "s" : ""}
                             {activeCount > 0 && ` · ${activeCount} ativa${activeCount !== 1 ? "s" : ""}`}
-                            {totalBudget > 0 && ` · ${formatCurrency(totalBudget)}`}
+                            {(plannedBudget ?? totalBudget) > 0 && ` · ${formatCurrency(plannedBudget ?? totalBudget)}`}
                           </p>
                         </div>
                       </button>
@@ -291,6 +338,39 @@ export default function Operations() {
                                   const currentEditingMetricId =
                                     metricsFormCampaignId === campaign.id ? editingMetricId : null;
 
+                                  const handleReallocate = (sourceCampaign: any, remainingBudget: number) => {
+                                    const targets: CampaignLite[] = items
+                                      .filter(
+                                        (c) =>
+                                          c.id !== sourceCampaign.id &&
+                                          c.status === "active" &&
+                                          c.budget_total > 0 &&
+                                          (c.budget_spent / c.budget_total) * 100 >= 100
+                                      )
+                                      .map((c) => ({
+                                        id: c.id,
+                                        name: c.name,
+                                        channel: c.channel,
+                                        project_id: c.project_id,
+                                        budget_total: c.budget_total,
+                                        budget_spent: c.budget_spent,
+                                      }));
+
+                                    setReallocModal({
+                                      open: true,
+                                      source: {
+                                        id: sourceCampaign.id,
+                                        name: sourceCampaign.name,
+                                        channel: sourceCampaign.channel,
+                                        project_id: sourceCampaign.project_id,
+                                        budget_total: sourceCampaign.budget_total,
+                                        budget_spent: sourceCampaign.budget_spent,
+                                      },
+                                      targets,
+                                      amount: remainingBudget.toFixed(2),
+                                      targetId: targets.length > 0 ? targets[0]?.id : "",
+                                    });
+                                  };
                                   return (
                                   <div key={campaign.id}>
                                     <CampaignRow
@@ -302,6 +382,8 @@ export default function Operations() {
                                       onShowAiDialog={setAiDialogCampaignId}
                                       onEdit={handleEdit}
                                       onDelete={handleDelete}
+                                      onReallocate={handleReallocate}
+                                      highlight={highlightMap[campaign.id] ? { type: highlightMap[campaign.id] } : null}
                                     >
                                       {expandedCampaigns.has(campaign.id) && (
                                         <CampaignExpandedMetrics
@@ -503,6 +585,26 @@ export default function Operations() {
           channel={CHANNEL_LABELS[campaigns.find((c) => c.id === aiDialogCampaignId)?.channel || "google"] || ""}
         />
       )}
+
+      <CampaignReallocateDialog
+        userId={user?.id}
+        open={reallocModal.open}
+        source={reallocModal.source}
+        targets={reallocModal.targets}
+        amount={reallocModal.amount}
+        targetId={reallocModal.targetId}
+        month={currentMonth}
+        year={currentYear}
+        onChange={(patch) => setReallocModal((prev) => ({ ...prev, ...patch }))}
+        onClose={() => setReallocModal({ open: false, source: null, targets: [], amount: "", targetId: "" })}
+        onSuccess={(sourceId, targetId) => {
+          setHighlightMap({ [sourceId]: "source", [targetId]: "target" });
+          setTimeout(() => setHighlightMap({}), 4000);
+          loadCampaigns();
+          loadStats();
+        }}
+      />
+
     </DashboardLayout>
     </FeatureGate>
   );

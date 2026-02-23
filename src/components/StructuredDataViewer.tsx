@@ -409,9 +409,17 @@ function SiteDataPanel({
       {/* HTML Snapshot Section */}
       {htmlSnapshot && (
         <div className="border border-border/50 rounded-lg overflow-hidden">
-          <button
+          <div
+            role="button"
+            tabIndex={0}
             className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors text-left"
             onClick={() => setShowHtml(!showHtml)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setShowHtml((prev) => !prev);
+              }
+            }}
           >
             <div className="flex items-center gap-2">
               <FileCode className="h-4 w-4 text-emerald-500" />
@@ -453,7 +461,7 @@ function SiteDataPanel({
                 <Eye className="h-4 w-4 text-muted-foreground" />
               )}
             </div>
-          </button>
+          </div>
           {showHtml && (
             <div className="border-t border-border/50">
               <pre className="p-3 text-[11px] font-mono text-muted-foreground bg-muted/30 overflow-x-auto max-h-[400px] overflow-y-auto whitespace-pre-wrap break-words leading-relaxed">

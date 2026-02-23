@@ -101,22 +101,44 @@ export function useCampaigns() {
   const loadStats = async (options?: { silent?: boolean }) => {
     if (!userId) return;
     try {
-      const { data, error } = await (supabase as any)
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+
+      // Base counts from view
+      const { data: viewStats, error: viewError } = await (supabase as any)
         .from("v_operational_stats")
         .select("*")
         .eq("user_id", userId)
         .single();
+      if (viewError && viewError.code !== "PGRST116") throw viewError;
 
-      if (error && error.code !== "PGRST116") throw error;
-      const nextStats = data || {
+      // Current month budget totals from aggregated view (single source of truth)
+      const { data: budgetStats, error: budgetError } = await (supabase as any)
+        .from("v_budget_stats_monthly")
+        .select("total_planned, total_spent")
+        .eq("user_id", userId)
+        .eq("month", currentMonth)
+        .eq("year", currentYear)
+        .single();
+      if (budgetError && budgetError.code !== "PGRST116") throw budgetError;
+
+      const totals = {
+        planned: Number(budgetStats?.total_planned) || 0,
+        spent: Number(budgetStats?.total_spent) || 0,
+      };
+
+      const nextStats = {
         total_campaigns: 0,
         active_campaigns: 0,
         paused_campaigns: 0,
         completed_campaigns: 0,
         draft_campaigns: 0,
-        total_budget: 0,
-        total_spent: 0,
-      };
+        ...(viewStats || {}),
+        total_budget: totals.planned,
+        total_spent: totals.spent,
+      } as OperationalStats;
+
       setStats(nextStats);
       updateCache(campaigns, nextStats);
     } catch (error: any) {

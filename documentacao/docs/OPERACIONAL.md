@@ -61,6 +61,23 @@
   - Breakdown por canal com barras individuais
   - Meses anteriores colapsáveis com exclusão
   - Botão "Sincronizar" (RPC sync_all_budgets)
+- **Fonte única p/ indicadores:**
+  - View `v_budget_stats_monthly` (soma `planned_budget` e `actual_spent` de `budget_allocations` por user/mês/ano)
+  - `OperationsStats` lê `total_budget`/`total_spent` desta view (mês atual) via `useCampaigns.loadStats`
+  - Índice `idx_budget_allocations_user_month_year` para filtros por mês/ano
+- **Reaproveitamento de saldo:** dialog de transferência só move `budget_spent` entre campanhas (ajuste de pacing). Não altera `planned_budget` nem cria/atualiza linhas em `budget_allocations`.
+
+### Fluxo de dados (Budget)
+- Tabela `budget_allocations` (planejado/spent por canal, mês/ano)
+- View `v_budget_stats_monthly` agrega por user/mês/ano → expõe `total_planned`, `total_spent`
+- Frontend (`useCampaigns.loadStats`) consome a view → passa para `OperationsStats` (cards Budget Total/Investido)
+- `BudgetManagement` continua a mostrar breakdown por canal/mês usando `budget_allocations`
+
+### Troubleshooting rápido (Budget)
+- **Valores zerados nos cards:** confirmar linha na `v_budget_stats_monthly` para `user_id`, mês/ano atuais; se não houver, inserir/atualizar em `budget_allocations`.
+- **Spent defasado:** rodar RPC `sync_all_budgets(p_user_id)`; verificar trigger `sync_budget_actual_spent` se estiver usando métricas reais.
+- **Pacing estranho:** checar se `planned_budget` está em moeda correta e se `actual_spent` não está nulo (usar `0` como default).
+- **Reaproveitamento alterou valores?** Não deve mudar `planned_budget` nem gestão de budget; apenas soma/subtrai `budget_spent` entre campanhas concluídas/pausadas (origem) e estouradas (destino). Se `planned_budget` variar, revisar ajustes manuais ou scripts externos.
 
 ## Fase 7: Calendário de Campanhas (v3.7)
 
