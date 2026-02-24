@@ -163,6 +163,25 @@ Usuário clica "Conectar"
 
 ---
 
+## Resposta para App Review (/auth/adwords)
+
+**Como usamos o escopo**
+- Conectar a conta Google Ads do usuário para importar campanhas, grupos e anúncios, incluindo métricas (impressões, cliques, conversões, custo, CPA/ROAS) e dados de orçamento/estado.
+- Uso estritamente para leitura e gerenciamento necessário à sincronização: não criamos nem alteramos campanhas automaticamente sem ação do usuário; o foco é consolidar dados e gerar recomendações.
+- Tokens são armazenados por usuário em `ad_integrations` (isolados por user_id) e usados apenas para sincronização e dashboards.
+
+**Valor para a pessoa usuária**
+- Visualiza desempenho Google Ads ao lado de outros canais (Meta, LinkedIn, etc.), com alertas e recomendações táticas.
+- Recebe plano de comunicação e sugestões de budget/criativos baseados em resultados reais, reduzindo retrabalho de exportar relatórios.
+- Decide investimentos com base em KPIs (CTR, CPC, CPA, ROAS) atualizados e consolidados.
+
+**Por que é necessário**
+- Sem `/auth/adwords` não é possível obter campanhas/métricas, inviabilizando dashboards, alertas e recomendações multicanal.
+- A permissão permite ler custos e conversões para calcular KPIs e sugerir otimizações; o uso é restrito ao próprio anunciante conectado.
+- Dados são usados de forma agregada, sem reidentificação ou compartilhamento de PII.
+
+---
+
 ## Solução de Problemas
 
 ### "OAuth not configured for google_ads"
