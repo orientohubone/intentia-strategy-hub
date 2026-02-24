@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { AI_MODEL_LABELS } from "@/lib/aiModels";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,8 @@ import {
   Maximize2,
   Minimize2,
   Target,
+  Download,
+  FileText,
 } from "lucide-react";
 import type { IcpEnrichmentResult } from "@/lib/icpEnricher";
 
@@ -38,6 +41,34 @@ export function IcpEnrichmentDialog({
   onOpenChange,
 }: IcpEnrichmentDialogProps) {
   const [fullscreen, setFullscreen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportPdf = async () => {
+    if (!enrichment) return;
+    
+    setIsExporting(true);
+    try {
+      await exportIcpToPdf(audienceName, enrichment);
+      toast.success("PDF exportado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao exportar PDF:", error);
+      toast.error("Erro ao exportar PDF");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportHtml = () => {
+    if (!enrichment) return;
+    
+    try {
+      exportIcpToHtml(audienceName, enrichment);
+      toast.success("HTML exportado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao exportar HTML:", error);
+      toast.error("Erro ao exportar HTML");
+    }
+  };
 
   if (!enrichment) return null;
   const e = enrichment;
@@ -69,9 +100,36 @@ export function IcpEnrichmentDialog({
                 </div>
                 <DialogTitle className="text-base truncate">ICP Refinado — {audienceName}</DialogTitle>
               </div>
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
-                {(AI_MODEL_LABELS as any)[e.model] || e.model}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 gap-1 text-xs"
+                  onClick={handleExportHtml}
+                  title="Exportar como HTML"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">HTML</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 gap-1 text-xs"
+                  onClick={handleExportPdf}
+                  disabled={isExporting}
+                  title="Exportar como PDF"
+                >
+                  {isExporting ? (
+                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5" />
+                  )}
+                  <span className="hidden sm:inline">PDF</span>
+                </Button>
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
+                  {(AI_MODEL_LABELS as any)[e.model] || e.model}
+                </Badge>
+              </div>
             </div>
           </DialogHeader>
         </div>

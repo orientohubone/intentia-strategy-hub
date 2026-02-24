@@ -8,17 +8,18 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenantData } from "@/hooks/useTenantData";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Users, Target, TrendingUp, Globe, FileSpreadsheet, FolderOpen, ChevronDown, ChevronsDownUp, ChevronsUpDown, BarChart3, Sparkles, Brain } from "lucide-react";
+import { Users, Target, TrendingUp, Globe, FileSpreadsheet, FolderOpen, ChevronDown, ChevronsDownUp, ChevronsUpDown, BarChart3, Sparkles, Brain, PenSquare, Rows } from "lucide-react";
 import { IcpEnrichmentDialog } from "@/components/IcpEnrichmentDialog";
+import { EditorialDialog } from "@/components/audience/EditorialDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { exportAudiencesCsv } from "@/lib/exportCsv";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { getUserActiveKeys } from "@/lib/aiAnalyzer";
 import { getModelsForProvider } from "@/lib/aiModels";
-import { runIcpEnrichment, type IcpEnrichmentResult } from "@/lib/icpEnricher";
+import { runIcpEnrichment, type IcpEnrichmentResult, generateEditorialLine, generateProjectEditorialPlan, type EditorialLine } from "@/lib/icpEnricher";
 import { notifyAudienceCreated, notifyIcpEnriched } from "@/lib/notificationService";
+import { supabase } from "@/integrations/supabase/client";
 
 type Audience = {
   id: string;
@@ -30,6 +31,8 @@ type Audience = {
   keywords: string[];
   project_id?: string;
   project_name?: string;
+  project_url?: string;
+  project_niche?: string;
   created_at: string;
   icp_enrichment?: IcpEnrichmentResult;
   icp_enriched_at?: string;
@@ -71,6 +74,106 @@ export default function Audiences() {
     });
   };
 
+  const fetchProjectContext = async (projectId: string) => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) return null;
+      const resp = await fetch("/api/project-context", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ project_id: projectId }),
+      });
+      const json = await resp.json().catch(() => null);
+      if (!resp.ok || json?.error) {
+        console.warn("[project-context]", json?.error || resp.statusText);
+        return null;
+      }
+      return {
+        id: json.project.id,
+        name: json.project.name,
+        niche: json.project.niche,
+        url: json.project.url,
+        solutionContext: json.project.solution_context,
+      } as { id: string; name?: string; niche?: string; url?: string; solutionContext?: string };
+    } catch (err) {
+      console.warn("[project-context] fetch error", err);
+      return null;
+    }
+  };
+
+  const handleGenerateEditorial = async (audience: Audience) => {
+    if (!user) return;
+    if (!audience.icp_enrichment) {
+      toast.error("Refine o ICP antes de gerar a linha editorial.");
+      return;
+    }
+    setEditorialLoadingId(audience.id);
+    try {
+      const [provider, model] = selectedAiModel.split("::");
+      const projectInfo = audience.project_id
+        ? (await fetchProjectContext(audience.project_id)) || projects.find((p) => p.id === audience.project_id)
+        : undefined;
+      const result = await generateEditorialLine(
+        user.id,
+        audience.id,
+        audience.icp_enrichment,
+        projectInfo || { name: audience.project_name, niche: audience.project_niche, url: audience.project_url },
+        provider as "google_gemini" | "anthropic_claude",
+        model
+      );
+      const normalized = result.map((line) => ({ ...line, audienceName: audience.name }));
+      setEditorialContent(normalized);
+      setProjectEditorialContent(null);
+      setEditorialDialogOpen(true);
+    } catch (err: any) {
+      console.error("Erro ao gerar linha editorial:", err);
+      toast.error(err?.message || "Erro ao gerar linha editorial");
+    } finally {
+      setEditorialLoadingId(null);
+    }
+  };
+
+  const handleGenerateProjectEditorial = async () => {
+    if (!user) return;
+    const grouped = groupedByProject;
+    const expanded = Array.from(expandedGroups);
+    // pega grupos visíveis ou todos se nenhum expandido
+    const targetGroups = expanded.length > 0 ? grouped.filter(g => expanded.includes(g.groupKey)) : grouped;
+    const audiencesWithIcp = targetGroups.flatMap(g => g.audiences.filter(a => a.icp_enrichment));
+    if (audiencesWithIcp.length === 0) {
+      toast.error("Nenhum ICP refinado para gerar linha editorial deste projeto.");
+      return;
+    }
+    setProjectEditorialLoading(true);
+    try {
+      const [provider, model] = selectedAiModel.split("::");
+      const projectName = targetGroups[0]?.projectName || "Projeto";
+      const projectInfo = targetGroups[0]?.audiences[0]?.project_id
+        ? (await fetchProjectContext(targetGroups[0].audiences[0].project_id)) || projects.find((p) => p.id === targetGroups[0].audiences[0].project_id)
+        : undefined;
+      const result = await generateProjectEditorialPlan(
+        user.id,
+        projectName,
+        audiencesWithIcp.map(a => ({ id: a.id, name: a.name, icp: a.icp_enrichment! })),
+        projectInfo || { name: projectName, niche: targetGroups[0]?.audiences[0]?.project_niche, url: targetGroups[0]?.audiences[0]?.project_url },
+        provider as "google_gemini" | "anthropic_claude",
+        model
+      );
+      setProjectEditorialContent(result);
+      setEditorialContent(null);
+      setEditorialDialogOpen(true);
+    } catch (err: any) {
+      console.error("Erro ao gerar linha editorial do projeto:", err);
+      toast.error(err?.message || "Erro ao gerar linha editorial do projeto");
+    } finally {
+      setProjectEditorialLoading(false);
+    }
+  };
+
   // AI ICP Enrichment state
   const { isFeatureAvailable } = useFeatureFlags();
   const canAiKeys = isFeatureAvailable("ai_keys");
@@ -80,6 +183,11 @@ export default function Audiences() {
   const [enrichingId, setEnrichingId] = useState<string | null>(null);
   const [selectedEnrichmentAudience, setSelectedEnrichmentAudience] = useState<Audience | null>(null);
   const [enrichmentDialogOpen, setEnrichmentDialogOpen] = useState(false);
+  const [editorialDialogOpen, setEditorialDialogOpen] = useState(false);
+  const [editorialContent, setEditorialContent] = useState<EditorialLine[] | null>(null);
+  const [projectEditorialContent, setProjectEditorialContent] = useState<EditorialLine[] | null>(null);
+  const [editorialLoadingId, setEditorialLoadingId] = useState<string | null>(null);
+  const [projectEditorialLoading, setProjectEditorialLoading] = useState(false);
 
   // Load AI keys
   useEffect(() => {
@@ -182,7 +290,7 @@ export default function Audiences() {
         .from("audiences")
         .select(`
           *,
-          projects!inner(name)
+          projects!inner(name, url, niche)
         `)
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
@@ -191,6 +299,8 @@ export default function Audiences() {
       const mapped = (data || []).map((item: any) => ({
         ...item,
         project_name: item.projects?.name,
+        project_url: item.projects?.url,
+        project_niche: item.projects?.niche,
       }));
       setAudiences(mapped);
       audiencesCache.set(userId, { audiences: mapped, fetchedAt: Date.now() });
@@ -324,6 +434,14 @@ export default function Audiences() {
                   <Button size="sm" variant="outline" className="gap-1" onClick={() => exportAudiencesCsv(audiences.map(a => ({ name: a.name, description: a.description, industry: a.industry, company_size: a.company_size, location: a.location, keywords: a.keywords, project_name: a.project_name, created_at: a.created_at })))}>
                     <FileSpreadsheet className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">CSV</span>
+                  </Button>
+                  <Button size="sm" className="gap-1" variant="secondary" onClick={handleGenerateProjectEditorial} disabled={projectEditorialLoading}>
+                    {projectEditorialLoading ? (
+                      <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                    ) : (
+                      <Rows className="h-3.5 w-3.5" />
+                    )}
+                    <span className="hidden sm:inline">Plano de comunicação do projeto</span>
                   </Button>
                   </>
                 )}
@@ -618,7 +736,25 @@ export default function Audiences() {
                             </div>
                           )}
 
-                          <div className="flex justify-end pt-2 border-t border-border">
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border">
+                            <div className="flex items-center gap-2">
+                              {audience.icp_enrichment && (
+                                <Button
+                                  size="sm"
+                                  className="h-8 gap-1 text-xs"
+                                  variant="secondary"
+                                  onClick={(e) => { e.stopPropagation(); handleGenerateEditorial(audience); }}
+                                  disabled={editorialLoadingId === audience.id}
+                                >
+                                  {editorialLoadingId === audience.id ? (
+                                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                                  ) : (
+                                    <PenSquare className="h-3.5 w-3.5" />
+                                  )}
+                                  Plano de comunicação
+                                </Button>
+                              )}
+                            </div>
                             <Button size="sm" variant="outline" onClick={() => startEdit(audience)}>
                               Editar
                             </Button>
@@ -632,15 +768,21 @@ export default function Audiences() {
             })}
           </div>
 
-      <IcpEnrichmentDialog
-        audienceName={selectedEnrichmentAudience?.name || ""}
-        enrichment={selectedEnrichmentAudience?.icp_enrichment || null}
-        open={enrichmentDialogOpen}
-        onOpenChange={setEnrichmentDialogOpen}
-      />
-    </DashboardLayout>
-    </FeatureGate>
-  );
+          <IcpEnrichmentDialog
+            audienceName={selectedEnrichmentAudience?.name || ""}
+            enrichment={selectedEnrichmentAudience?.icp_enrichment || null}
+            open={enrichmentDialogOpen}
+            onOpenChange={setEnrichmentDialogOpen}
+          />
+          <EditorialDialog
+            title={projectEditorialContent ? "Linha editorial do projeto" : "Linha editorial do público"}
+            lines={projectEditorialContent || editorialContent || []}
+            open={editorialDialogOpen}
+            onOpenChange={setEditorialDialogOpen}
+          />
+        </DashboardLayout>
+      </FeatureGate>
+    );
 }
 
 

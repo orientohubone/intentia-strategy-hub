@@ -158,7 +158,7 @@ export default function Integrations() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        toast.error("SessÃ£o expirada. FaÃ§a login novamente.");
+        toast.error("Sessão expirada. Faça login novamente.");
         setConnectingProvider(null);
         return;
       }
@@ -181,7 +181,7 @@ export default function Integrations() {
       }
 
       if (!data?.url) {
-        throw new Error(data?.error || "URL de autorizaÃ§Ã£o nÃ£o retornada");
+        throw new Error(data?.error || "URL de autorização não retornada");
       }
 
       // Redirect to provider's OAuth page
@@ -230,7 +230,7 @@ export default function Integrations() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        toast.error("SessÃ£o expirada. FaÃ§a login novamente.");
+        toast.error("Sessão expirada. Faça login novamente.");
         return;
       }
 
@@ -255,16 +255,16 @@ export default function Integrations() {
       }
 
       if (!response.ok) {
-        const errMsg = typeof result?.error === "string" ? result.error : "Falha na sincronizaÃ§Ã£o";
+        const errMsg = typeof result?.error === "string" ? result.error : "Falha na sincronização";
         throw new Error(errMsg.length > 150 ? errMsg.substring(0, 150) + "..." : errMsg);
       }
 
-      const msg = `SincronizaÃ§Ã£o concluÃ­da: ${result.records_fetched || 0} registros importados`;
+      const msg = `Sincronização concluída: ${result.records_fetched || 0} registros importados`;
       toast.success(msg);
       await loadIntegrations();
     } catch (err: any) {
       const cleanMsg = (err.message || "Erro desconhecido").substring(0, 150);
-      toast.error(`Erro na sincronizaÃ§Ã£o: ${cleanMsg}`);
+      toast.error(`Erro na sincronização: ${cleanMsg}`);
     } finally {
       setSyncingProvider(null);
     }
@@ -281,7 +281,7 @@ export default function Integrations() {
         .eq("id", integration.id);
 
       if (error) throw error;
-      toast.success("FrequÃªncia de sincronizaÃ§Ã£o atualizada.");
+      toast.success("Frequência de sincronização atualizada.");
       await loadIntegrations();
     } catch (err: any) {
       toast.error(`Erro: ${err.message}`);
@@ -299,7 +299,7 @@ export default function Integrations() {
         .eq("id", integration.id);
 
       if (error) throw error;
-      toast.success(`IntegraÃ§Ã£o ${PROVIDER_CONFIGS[provider].name} removida.`);
+      toast.success(`Integração ${PROVIDER_CONFIGS[provider].name} removida.`);
       setDetailProvider(null);
       await loadIntegrations();
     } catch (err: any) {
@@ -337,11 +337,11 @@ export default function Integrations() {
     <FeatureGate
       featureKey="integrations"
       withLayout
-      pageTitle="IntegraÃ§Ãµes"
+      pageTitle="Integrações"
       blockWhileLoading
     >
       <DashboardLayout>
-        <SEO title="IntegraÃ§Ãµes" path="/integracoes" noindex />
+        <SEO title="Integrações" path="/integracoes" noindex />
 
         <div className="space-y-4 sm:space-y-6">
         {/* Header */}
@@ -351,9 +351,9 @@ export default function Integrations() {
               <Plug className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold">IntegraÃ§Ãµes</h1>
+              <h1 className="text-xl sm:text-2xl font-bold">Integrações</h1>
               <p className="text-sm text-muted-foreground">
-                Conecte suas contas de mÃ­dia para importar dados automaticamente
+                Conecte suas contas de mídia para importar dados automaticamente
               </p>
             </div>
           </div>
@@ -379,15 +379,15 @@ export default function Integrations() {
         <div className="flex items-start gap-3 p-3 sm:p-4 rounded-xl border border-primary/20 bg-primary/5">
           <Info className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
           <div className="text-sm text-foreground">
-            <p className="font-medium mb-1">Conecte suas contas de anÃºncios</p>
+            <p className="font-medium mb-1">Conecte suas contas de anúncios</p>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Vincule suas contas de mÃ­dia para importar campanhas, mÃ©tricas e dados de performance automaticamente.
-              Seus tokens sÃ£o armazenados de forma segura e isolados por conta.
+              Vincule suas contas de mídia para importar campanhas, métricas e dados de performance automaticamente.
+              Seus tokens são armazenados de forma segura e isolados por conta.
             </p>
           </div>
         </div>
 
-        {/* Provider Cards â€” Grid 2x2 */}
+        {/* Provider Cards — Grid 2x2 */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -439,7 +439,7 @@ export default function Integrations() {
                           </p>
                           {integration.last_sync_at && (
                             <p className="text-green-600 dark:text-green-400">
-                              Ãšltima sync: {formatLastSync(integration.last_sync_at)}
+                              Última sync: {formatLastSync(integration.last_sync_at)}
                             </p>
                           )}
                         </div>
@@ -479,7 +479,7 @@ export default function Integrations() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Desconectar {config.name}?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Isso removerÃ¡ o acesso Ã  conta de anÃºncios. Dados jÃ¡ importados serÃ£o mantidos.
+                                Isso removerá o acesso à conta de anúncios. Dados já importados serão mantidos.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -504,7 +504,7 @@ export default function Integrations() {
                         <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />
                         <div className="text-xs">
                           <p className="font-medium text-red-700 dark:text-red-300">
-                            {isExpired ? "Token expirado" : "Erro na conexÃ£o"}
+                            {isExpired ? "Token expirado" : "Erro na conexão"}
                           </p>
                           <p className="text-red-600 dark:text-red-400 line-clamp-1">
                             {integration.error_message || "Reconecte para restaurar o acesso."}
@@ -574,9 +574,9 @@ export default function Integrations() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               { step: "1", title: "Conectar", desc: "Clique no card da plataforma desejada e autorize o acesso via OAuth." },
-              { step: "2", title: "Configurar", desc: "Defina a frequÃªncia de sincronizaÃ§Ã£o e mapeie contas aos projetos." },
-              { step: "3", title: "Sincronizar", desc: "Os dados sÃ£o importados automaticamente conforme a frequÃªncia definida." },
-              { step: "4", title: "Analisar", desc: "MÃ©tricas alimentam OperaÃ§Ãµes, Budget, Alertas e Benchmark automaticamente." },
+              { step: "2", title: "Configurar", desc: "Defina a frequência de sincronização e mapeie contas aos projetos." },
+              { step: "3", title: "Sincronizar", desc: "Os dados são importados automaticamente conforme a frequência definida." },
+              { step: "4", title: "Analisar", desc: "Métricas alimentam Operações, Budget, Alertas e Benchmark automaticamente." },
             ].map((item) => (
               <div key={item.step} className="flex gap-3">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -605,7 +605,7 @@ export default function Integrations() {
                   {config.name}
                 </DialogTitle>
                 <DialogDescription>
-                  Detalhes e configuraÃ§Ã£o da integraÃ§Ã£o
+                  Detalhes e configuração da integração
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
@@ -630,7 +630,7 @@ export default function Integrations() {
                       )}
                       {integration.last_sync_at && (
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Ãšltima sync</span>
+                          <span className="text-muted-foreground">Última sync</span>
                           <span>{formatLastSync(integration.last_sync_at)}</span>
                         </div>
                       )}
@@ -654,10 +654,10 @@ export default function Integrations() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <History className="h-5 w-5" />
-              HistÃ³rico de SincronizaÃ§Ã£o
+              Histórico de Sincronização
             </DialogTitle>
             <DialogDescription>
-              Ãšltimas 20 sincronizaÃ§Ãµes realizadas
+              Últimas 20 sincronizações realizadas
             </DialogDescription>
           </DialogHeader>
 
@@ -668,7 +668,7 @@ export default function Integrations() {
               </div>
             ) : dialogLogs.length === 0 ? (
               <div className="text-center py-10 text-sm text-muted-foreground">
-                Nenhum registro de sincronizaÃ§Ã£o encontrado.
+                Nenhum registro de sincronização encontrado.
               </div>
             ) : (
               dialogLogs.map((log) => {

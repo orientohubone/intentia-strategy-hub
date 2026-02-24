@@ -49,6 +49,7 @@
 ### 6. Central de Ajuda
 - Novos artigos para operacao do monitoramento inteligente.
 - FAQ atualizado com fluxo live, timeline e snapshots.
+- Campo "Contexto da solução" em Projetos e plano de comunicação usando contexto + URL + ICP.
 
 ## Roadmap Pos-v4.2.0
 

@@ -9,6 +9,7 @@ export interface Project {
   niche: string;
   url: string;
   competitor_urls: string[];
+  solution_context?: string | null;
   score: number;
   status: 'pending' | 'analyzing' | 'completed';
   heuristic_analysis?: any;

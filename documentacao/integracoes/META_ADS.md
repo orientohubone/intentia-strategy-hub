@@ -208,3 +208,23 @@ O Meta retorna conversões no array `actions` com `action_type`. O sync busca:
 - [App Review Guide](https://developers.facebook.com/docs/app-review)
 - [Rate Limiting](https://developers.facebook.com/docs/graph-api/overview/rate-limiting)
 - [Permissions Reference](https://developers.facebook.com/docs/permissions/reference)
+
+---
+
+## Resposta para App Review (Acesso padrão ao gerenciamento de anúncios / ads_read ou ads_management)
+
+**Como usamos a permissão/recurso**
+- O app conecta contas de anúncios Meta de um usuário (anunciantes/autônomos/PMEs) para importar métricas de campanhas, conjuntos de anúncios e anúncios.
+- Usamos `ads_read` (ou `ads_management`, caso exigido) estritamente para leitura de dados de performance e insights agregados, nunca para criar/editar campanhas pelo app.
+- As leituras alimentam dashboards e planos táticos dentro da plataforma Intentia: consolidação de custos, impressões, cliques, CTR, CPA/ROAS e aprendizado de criativos.
+- Os dados são usados para gerar recomendações agregadas (sem PII) e orientar decisões de investimento entre canais (Google/Meta/LinkedIn/TikTok), evitando gastos ineficientes.
+
+**Valor para a pessoa usuário**
+- Visualiza, em um só lugar, o desempenho das campanhas Meta junto com outros canais, com alertas de oportunidades/risco.
+- Recebe plano de comunicação e recomendações táticas baseados em resultados reais (dados agregados), otimizando ROI e tempo.
+- Reduz esforço manual de exportar/conciliar relatórios de múltiplas contas/canais.
+
+**Por que é necessário**
+- Sem `ads_read`/`ads_management`, o app não consegue importar métricas de campanhas/ads e não entrega análises cruzadas nem alertas.
+- A permissão é essencial para calcular KPIs (CTR, CPC, CPA, ROAS) e gerar recomendações de budget e criativos.
+- Todo uso é de leitura e para análises agregadas/anônimas; não reidentificamos dados nem compartilhamos PII.

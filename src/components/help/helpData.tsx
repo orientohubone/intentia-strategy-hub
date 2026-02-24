@@ -67,6 +67,11 @@ export const helpCategories: HelpCategory[] = [
         content: "Atualize nome, email, empresa, cargo e foto. Alterne tema claro/escuro.",
         difficulty: "Iniciante",
       },
+      {
+        title: "Contexto da solução + Plano de comunicação",
+        content: "Projetos → Contexto da solução: descreva produto/funcionalidades. Salve. Em Públicos-Alvo, gere o Plano de comunicação (por público ou projeto) para usar esse contexto + URL + ICP refinado.",
+        difficulty: "Iniciante",
+      },
     ],
   },
   {

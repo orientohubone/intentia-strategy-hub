@@ -15,6 +15,77 @@ export interface IcpEnrichmentInput {
   keywords: string[];
 }
 
+type ProjectContext = {
+  name?: string;
+  niche?: string;
+  url?: string;
+  solutionContext?: string;
+};
+
+function buildEditorialPrompt(audienceName: string, icp: IcpEnrichmentResult, project?: ProjectContext): string {
+  const siteContext = project?.url
+    ? `Site oficial: ${project.url}\nUse a proposta de valor, serviços e linguagem do site para alinhar o tom e exemplos. Se houver menção a "vendasimples" ou nome do projeto, mantenha coerência com essa oferta. NÃO invente recursos, planos ou garantias que não estejam alinhados ao site.`
+    : "Site não informado. Use somente o ICP e mantenha o tom B2B brasileiro.";
+  const projectContext = `Projeto/Produto: ${project?.name || "(sem nome)"}\nNicho/Produto: ${project?.niche || "(sem nicho informado)"}`;
+  const solutionContext = project?.solutionContext
+    ? `Contexto da solução (use como fonte principal de tom e proposta de valor): ${project.solutionContext}`
+    : "Contexto da solução não fornecido.";
+
+  return `Você é um estrategista de conteúdo B2B. Crie um plano de comunicação com 6 a 10 blocos (posts), para o público "${audienceName}", usando fielmente as DORES PRINCIPAIS e GATILHOS DE COMPRA do ICP refinado e alinhando com o site do projeto.
+
+${projectContext}
+${siteContext}
+${solutionContext}
+
+ICP (resumo): ${icp.refinedDescription}
+Dores (use explicitamente): ${icp.idealProfile.painPoints.join(", ")}
+Gatilhos (use explicitamente): ${icp.idealProfile.buyingTriggers.join(", ")}
+Recomendações: ${icp.recommendations.join(" | ")}
+Keywords: ${icp.suggestedKeywords.join(", ")}
+
+Regras:
+- Cada bloco deve citar pelo menos uma dor e um gatilho correspondente.
+- Reforço da mensagem deve conectar dor → gatilho → solução.
+- CTA único e claro, coerente com a dor/gatilho citado.
+- Legenda completa (2-4 frases) pronta para uso.
+- Se o projeto/produto for "vendasimples" (ou nome do projeto), mantenha o tom, proposta de valor e diferenciais condizentes com o site.
+- Use o nicho, a URL do projeto e o contexto da solução para contextualizar exemplos e CTA; não cite soluções genéricas que contradizem o site.
+- Estruture como um minicalendário (ex.: Bloco 1..10) mantendo coesão entre os blocos.
+
+Retorne APENAS JSON válido no formato:
+{
+  "lines": [
+    {"headline": "...", "message": "...", "cta": "...", "caption": "..."}
+  ]
+}`;
+}
+
+function buildProjectEditorialPrompt(projectName: string, items: { name: string; icp: IcpEnrichmentResult }[], project?: ProjectContext): string {
+  const blocks = items
+    .map((i, idx) => `### Público ${idx + 1}: ${i.name}
+ICP: ${i.icp.refinedDescription}
+Dores: ${i.icp.idealProfile.painPoints.join(", ")}
+Gatilhos: ${i.icp.idealProfile.buyingTriggers.join(", ")}`)
+    .join("\n\n");
+
+  return `Você é um estrategista de conteúdo B2B. Gere um plano de comunicação (1-2 blocos por público, total 6-10 blocos) para o projeto "${projectName}".
+
+Site oficial: ${project?.url || "não informado"}
+Nicho/Produto: ${project?.niche || "(sem nicho informado)"}
+Contexto da solução: ${project?.solutionContext || "não fornecido"}
+Se o nome do projeto ou domínio remeter a "vendasimples", mantenha aderência à proposta de valor do site (tom, ofertas, benefícios).
+
+Use dores, gatilhos e contexto de cada ICP abaixo:
+${blocks}
+
+Retorne APENAS JSON válido com um array "lines":
+{
+  "lines": [
+    { "audienceName": "nome", "headline": "...", "message": "...", "cta": "...", "caption": "..." }
+  ]
+}`;
+}
+
 export interface IcpEnrichmentResult {
   refinedDescription: string;
   idealProfile: {
@@ -34,6 +105,14 @@ export interface IcpEnrichmentResult {
   provider: string;
   model: string;
   enrichedAt: string;
+}
+
+export interface EditorialLine {
+  headline: string;
+  message: string;
+  cta: string;
+  caption: string;
+  audienceName?: string;
 }
 
 // =====================================================
@@ -220,6 +299,42 @@ function parseIcpResponse(
   };
 }
 
+function parseEditorialResponse(text: string): EditorialLine[] {
+  let cleaned = text.trim();
+  if (cleaned.startsWith("```json")) cleaned = cleaned.slice(7);
+  if (cleaned.startsWith("```")) cleaned = cleaned.slice(3);
+  if (cleaned.endsWith("```")) cleaned = cleaned.slice(0, -3);
+  cleaned = cleaned.trim();
+
+  const parsed = JSON.parse(cleaned);
+  const lines = Array.isArray(parsed.lines) ? parsed.lines : Array.isArray(parsed) ? parsed : [];
+  return lines.map((l: any) => ({
+    headline: l.headline || "",
+    message: l.message || "",
+    cta: l.cta || "",
+    caption: l.caption || "",
+    audienceName: l.audienceName || l.audience || undefined,
+  }));
+}
+
+function parseProjectEditorialResponse(text: string): EditorialLine[] {
+  let cleaned = text.trim();
+  if (cleaned.startsWith("```json")) cleaned = cleaned.slice(7);
+  if (cleaned.startsWith("```")) cleaned = cleaned.slice(3);
+  if (cleaned.endsWith("```")) cleaned = cleaned.slice(0, -3);
+  cleaned = cleaned.trim();
+
+  const parsed = JSON.parse(cleaned);
+  const lines = Array.isArray(parsed.lines) ? parsed.lines : [];
+  return lines.map((l: any) => ({
+    audienceName: l.audienceName || l.audience || undefined,
+    headline: l.headline || "",
+    message: l.message || "",
+    cta: l.cta || "",
+    caption: l.caption || "",
+  }));
+}
+
 // =====================================================
 // MAIN: RUN ICP ENRICHMENT
 // =====================================================
@@ -284,4 +399,78 @@ export async function runIcpEnrichment(
     .eq("user_id", userId);
 
   return result;
+}
+
+export async function generateEditorialLine(
+  userId: string,
+  audienceId: string,
+  icp: IcpEnrichmentResult,
+  project?: ProjectContext,
+  overrideProvider?: "google_gemini" | "anthropic_claude",
+  overrideModel?: string
+): Promise<EditorialLine[]> {
+  const allKeys = await getUserActiveKeys(userId);
+  let apiKeyEntry: UserApiKey | null = null;
+
+  if (overrideProvider) {
+    apiKeyEntry = allKeys.find((k) => k.provider === overrideProvider) || null;
+  } else {
+    apiKeyEntry = allKeys[0] || null;
+  }
+
+  if (!apiKeyEntry) {
+    throw new Error("Nenhuma API key ativa encontrada. Configure em Configurações → Integrações de IA.");
+  }
+
+  const modelToUse = overrideModel || apiKeyEntry.preferred_model;
+  const prompt = buildEditorialPrompt(audienceId, icp, project);
+
+  let responseText: string;
+  if (apiKeyEntry.provider === "google_gemini") {
+    responseText = await callGeminiApi(apiKeyEntry.api_key_encrypted, modelToUse, prompt);
+  } else if (apiKeyEntry.provider === "anthropic_claude") {
+    responseText = await callClaudeApi(apiKeyEntry.api_key_encrypted, modelToUse, prompt);
+  } else {
+    throw new Error(`Provider não suportado: ${apiKeyEntry.provider}`);
+  }
+
+  return parseEditorialResponse(responseText);
+}
+
+export async function generateProjectEditorialPlan(
+  userId: string,
+  projectName: string,
+  audiences: { id: string; name: string; icp: IcpEnrichmentResult }[],
+  project?: ProjectContext,
+  overrideProvider?: "google_gemini" | "anthropic_claude",
+  overrideModel?: string
+): Promise<EditorialLine[]> {
+  if (audiences.length === 0) return [];
+
+  const allKeys = await getUserActiveKeys(userId);
+  let apiKeyEntry: UserApiKey | null = null;
+
+  if (overrideProvider) {
+    apiKeyEntry = allKeys.find((k) => k.provider === overrideProvider) || null;
+  } else {
+    apiKeyEntry = allKeys[0] || null;
+  }
+
+  if (!apiKeyEntry) {
+    throw new Error("Nenhuma API key ativa encontrada. Configure em Configurações → Integrações de IA.");
+  }
+
+  const modelToUse = overrideModel || apiKeyEntry.preferred_model;
+  const prompt = buildProjectEditorialPrompt(projectName, audiences.map((a) => ({ name: a.name, icp: a.icp })), project);
+
+  let responseText: string;
+  if (apiKeyEntry.provider === "google_gemini") {
+    responseText = await callGeminiApi(apiKeyEntry.api_key_encrypted, modelToUse, prompt);
+  } else if (apiKeyEntry.provider === "anthropic_claude") {
+    responseText = await callClaudeApi(apiKeyEntry.api_key_encrypted, modelToUse, prompt);
+  } else {
+    throw new Error(`Provider não suportado: ${apiKeyEntry.provider}`);
+  }
+
+  return parseProjectEditorialResponse(responseText);
 }

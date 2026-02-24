@@ -121,6 +121,7 @@ export default function Projects() {
     niche: "",
     url: "",
     competitorUrls: "" as string,
+    solutionContext: "",
     status: "pending" as "pending" | "analyzing" | "completed",
   });
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -288,6 +289,7 @@ export default function Projects() {
           niche: projectNiche,
           url: urlToAnalyze,
           competitor_urls: competitorUrls,
+          solution_context: formState.solutionContext,
           status: shouldAnalyze ? "analyzing" : formState.status,
           last_update: new Date().toISOString(),
         });
@@ -299,16 +301,16 @@ export default function Projects() {
           niche: projectNiche,
           url: urlToAnalyze,
           competitor_urls: competitorUrls,
+          solution_context: formState.solutionContext,
           score: 0,
           status: shouldAnalyze ? "analyzing" : "pending",
           last_update: new Date().toISOString(),
         });
         projectId = result.id;
         toast.success(shouldAnalyze ? "Projeto criado! Iniciando análise..." : "Projeto criado! Análise heurística indisponível no momento.");
-      if (!editingId && user) notifyProjectCreated(user.id, projectName);
+        if (!editingId && user) notifyProjectCreated(user.id, projectName);
       }
-
-      setFormState({ name: "", niche: "", url: "", competitorUrls: "", status: "pending" });
+      setFormState({ name: "", niche: "", url: "", competitorUrls: "", solutionContext: "", status: "pending" });
       setEditingId(null);
 
       // Run URL analysis in background (only if feature is available)
@@ -392,7 +394,8 @@ export default function Projects() {
       niche: project.niche,
       url: project.url,
       competitorUrls: (project.competitor_urls || []).join("\n"),
-      status: project.status,
+      solutionContext: (project as any).solution_context || "",
+      status: project.status as any,
     });
   };
 
@@ -639,6 +642,16 @@ export default function Projects() {
                     required
                   />
                 </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="solutionContext">Contexto da solução</Label>
+                  <textarea
+                    id="solutionContext"
+                    className="w-full min-h-[90px] rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    placeholder="Descreva o produto/solução, funcionalidades, diferenciais e proposta de valor. Isso será usado na linha editorial."
+                    value={formState.solutionContext}
+                    onChange={(e) => setFormState((prev) => ({ ...prev, solutionContext: e.target.value }))}
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="url">URL do Projeto</Label>
                   <Input
@@ -708,7 +721,7 @@ export default function Projects() {
                 {editingId && (
                   <Button type="button" variant="outline" disabled={analyzing} onClick={() => {
                     setEditingId(null);
-                    setFormState({ name: "", niche: "", url: "", competitorUrls: "", status: "pending" });
+                    setFormState({ name: "", niche: "", url: "", competitorUrls: "", solutionContext: "", status: "pending" });
                   }}>
                     Cancelar
                   </Button>
