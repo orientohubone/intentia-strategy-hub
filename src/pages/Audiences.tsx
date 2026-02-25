@@ -13,6 +13,7 @@ import { Users, Target, TrendingUp, Globe, FileSpreadsheet, FolderOpen, ChevronD
 import { IcpEnrichmentDialog } from "@/components/IcpEnrichmentDialog";
 import { EditorialDialog } from "@/components/audience/EditorialDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { exportAudiencesCsv } from "@/lib/exportCsv";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { getUserActiveKeys } from "@/lib/aiAnalyzer";
@@ -340,7 +341,7 @@ export default function Audiences() {
           .update(payload)
           .eq("id", editingId)
           .eq("user_id", userId);
-        
+
         if (error) throw error;
         toast.success("Público-alvo atualizado com sucesso!");
       } else {
@@ -348,7 +349,7 @@ export default function Audiences() {
         const { error } = await (supabase as any)
           .from("audiences")
           .insert({ ...payload, user_id: user.id });
-        
+
         if (error) throw error;
         toast.success("Público-alvo criado com sucesso!");
         if (user) notifyAudienceCreated(user.id, formData.name.trim());
@@ -413,17 +414,17 @@ export default function Audiences() {
 
   return (
     <FeatureGate featureKey="audiences" withLayout={false} pageTitle="Públicos-Alvo">
-    <DashboardLayout>
-      <SEO title="Públicos-Alvo" noindex />
-          <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-foreground">Públicos-Alvo</h1>
-                <p className="text-sm text-muted-foreground">Gerencie seus públicos-alvo estratégicos.</p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {audiences.length > 0 && (
-                  <>
+      <DashboardLayout>
+        <SEO title="Públicos-Alvo" noindex />
+        <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Públicos-Alvo</h1>
+              <p className="text-sm text-muted-foreground">Gerencie seus públicos-alvo estratégicos.</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {audiences.length > 0 && (
+                <>
                   <Button size="sm" variant="outline" className="gap-1" title="Expandir todos" onClick={() => setExpandedGroups(new Set(groupedByProject.map(g => g.groupKey)))}>
                     <ChevronsUpDown className="h-3.5 w-3.5" />
                   </Button>
@@ -443,346 +444,396 @@ export default function Audiences() {
                     )}
                     <span className="hidden sm:inline">Plano de comunicação do projeto</span>
                   </Button>
-                  </>
-                )}
-                <Button size="sm" onClick={() => setShowCreateForm(true)}>
-                  <Users className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Novo Público</span>
-                </Button>
-              </div>
+                </>
+              )}
+              <Button size="sm" onClick={() => setShowCreateForm(true)}>
+                <Users className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Novo Público</span>
+              </Button>
             </div>
-
-            <Input
-              placeholder="Buscar públicos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-md"
-            />
-
-            {showCreateForm && (
-              <div className="border border-border rounded-lg bg-card p-4 sm:p-6 space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">
-                  {editingId ? "Editar Público-Alvo" : "Novo Público-Alvo"}
-                </h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="project">Projeto (opcional)</Label>
-                      <select
-                        id="project"
-                        value={formData.project_id}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, project_id: e.target.value }))}
-                        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                      >
-                        <option value="">Selecione um projeto</option>
-                        {projects.map((project) => (
-                          <option key={project.id} value={project.id}>
-                            {project.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Nome do Público</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="industry">Indústria</Label>
-                      <Input
-                        id="industry"
-                        value={formData.industry}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, industry: e.target.value }))}
-                        placeholder="Ex: Tecnologia, Saúde, Financeiro"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="company_size">Porte da Empresa</Label>
-                      <select
-                        id="company_size"
-                        value={formData.company_size}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, company_size: e.target.value }))}
-                        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                      >
-                        <option value="">Selecione...</option>
-                        <option value="startup">Startup</option>
-                        <option value="small">Pequena</option>
-                        <option value="medium">Média</option>
-                        <option value="large">Grande</option>
-                        <option value="enterprise">Enterprise</option>
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="location">Localização</Label>
-                      <Input
-                        id="location"
-                        value={formData.location}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, location: e.target.value }))}
-                        placeholder="Ex: Brasil, São Paulo, Remoto"
-                      />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="description">Descrição</Label>
-                      <Input
-                        id="description"
-                        value={formData.description}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="keywords">Palavras-chave (separadas por vírgula)</Label>
-                      <Input
-                        id="keywords"
-                        value={formData.keywords}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, keywords: e.target.value }))}
-                        placeholder="B2B, SaaS, decisores, tecnologia"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Button type="submit">{editingId ? "Salvar" : "Criar Público"}</Button>
-                    <Button type="button" variant="outline" onClick={resetForm}>
-                      Cancelar
-                    </Button>
-                    {tenantSettings && (() => {
-                      const used = audiences.length;
-                      const limit = (tenantSettings as any).max_audiences ?? 5;
-                      const isUnlimited = limit < 0;
-                      const remaining = isUnlimited ? Infinity : limit - used;
-                      const atLimit = !isUnlimited && remaining <= 0;
-                      const nearLimit = !isUnlimited && remaining > 0 && remaining <= 2;
-                      return (
-                        <div className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border ${
-                          atLimit
-                            ? "bg-red-500/10 border-red-500/20 text-red-500"
-                            : nearLimit
-                              ? "bg-amber-500/10 border-amber-500/20 text-amber-500"
-                              : "bg-muted/50 border-border text-muted-foreground"
-                        }`}>
-                          <BarChart3 className="h-3.5 w-3.5 flex-shrink-0" />
-                          <span className="font-medium">
-                            {isUnlimited
-                              ? `${used} públicos`
-                              : `${used}/${limit} públicos`}
-                          </span>
-                          {atLimit && <span className="text-[10px]">• Limite atingido</span>}
-                          {nearLimit && <span className="text-[10px]">• {remaining} restante{remaining > 1 ? "s" : ""}</span>}
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {loading && (
-              <div className="space-y-4">
-                {[1, 2].map((i) => (
-                  <div key={i} className="border border-border rounded-lg bg-card p-4 space-y-3 animate-pulse">
-                    <div className="flex items-center justify-between">
-                      <div className="h-5 w-44 bg-muted rounded" />
-                      <div className="h-5 w-16 bg-muted rounded-full" />
-                    </div>
-                    <div className="h-3 w-64 bg-muted rounded" />
-                    <div className="flex gap-2">
-                      <div className="h-5 w-20 bg-muted rounded-full" />
-                      <div className="h-5 w-20 bg-muted rounded-full" />
-                      <div className="h-5 w-20 bg-muted rounded-full" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {!loading && filteredAudiences.length === 0 && (
-              <div className="flex flex-col items-center text-center py-12 px-4 rounded-xl border border-dashed border-border bg-muted/30">
-                <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-1">Defina seu público-alvo ideal</h3>
-                <p className="text-sm text-muted-foreground max-w-md">Use o botão <strong>Novo Público</strong> acima para criar perfis de audiência B2B com indústria, porte, localização e keywords. Eles alimentam automaticamente seu plano tático.</p>
-              </div>
-            )}
-
-            {/* Grouped by project */}
-            {!loading && groupedByProject.map((group) => {
-              const isGroupExpanded = expandedGroups.has(group.groupKey);
-              return (
-                <div key={group.groupKey} className="space-y-3">
-                  {/* Project header — clickable to expand/collapse */}
-                  <div className="flex items-center gap-2.5 sm:gap-3">
-                    <button
-                      onClick={() => toggleGroup(group.groupKey)}
-                      className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0 text-left group"
-                    >
-                      <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        <FolderOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${!isGroupExpanded ? "-rotate-90" : ""}`} />
-                          <h2 className="text-sm sm:text-base font-semibold text-foreground truncate group-hover:text-primary transition-colors">{group.projectName}</h2>
-                        </div>
-                        <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 flex-wrap ml-[22px]">
-                          <span className="text-[10px] sm:text-xs text-muted-foreground">{group.audiences.length} público{group.audiences.length !== 1 ? "s" : ""}</span>
-                        </div>
-                      </div>
-                    </button>
-                  </div>
-
-                  {/* Audience cards grid — only visible when expanded */}
-                  {isGroupExpanded && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                      {group.audiences.map((audience) => (
-                        <div key={audience.id} className="border border-border rounded-lg bg-card p-4 sm:p-6 space-y-3 sm:space-y-4">
-                          <div className="flex items-start gap-2 sm:gap-3 mb-2">
-                            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                              <Target className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-foreground text-sm sm:text-base truncate">{audience.name}</h3>
-                              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{audience.description}</p>
-                            </div>
-                          </div>
-
-                          <div className="space-y-1.5 sm:space-y-2">
-                            {audience.industry && (
-                              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                                <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
-                                <span className="text-xs sm:text-sm text-muted-foreground">Indústria:</span>
-                                <Badge variant="secondary" className="text-xs">{audience.industry}</Badge>
-                              </div>
-                            )}
-                            
-                            {audience.company_size && (
-                              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                                <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
-                                <span className="text-xs sm:text-sm text-muted-foreground">Porte:</span>
-                                <Badge variant="secondary" className={`text-xs ${sizeConfig[audience.company_size as keyof typeof sizeConfig]?.color}`}>
-                                  {sizeConfig[audience.company_size as keyof typeof sizeConfig]?.label}
-                                </Badge>
-                              </div>
-                            )}
-                            
-                            {audience.location && (
-                              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                                <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
-                                <span className="text-xs sm:text-sm text-muted-foreground">Local:</span>
-                                <Badge variant="secondary" className="text-xs">{audience.location}</Badge>
-                              </div>
-                            )}
-                          </div>
-
-                          {audience.keywords.length > 0 && (
-                            <div className="space-y-2">
-                              <p className="text-sm font-medium text-foreground">Palavras-chave:</p>
-                              <div className="flex flex-wrap gap-1">
-                                {audience.keywords.map((keyword, index) => (
-                                  <Badge key={index} variant="outline" className="text-xs">
-                                    {keyword}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* AI Enrichment Button + Results */}
-                          {canAiKeys && hasAiKeys && (
-                            <div className="pt-2 border-t border-border space-y-3">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <Select
-                                  value={selectedAiModel}
-                                  onValueChange={setSelectedAiModel}
-                                  disabled={enrichingId === audience.id}
-                                >
-                                  <SelectTrigger className="h-7 w-[150px] text-[11px] border-primary/30 bg-primary/5">
-                                    <SelectValue placeholder="Modelo IA" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {availableAiModels.map((m) => (
-                                      <SelectItem key={`${m.provider}::${m.model}`} value={`${m.provider}::${m.model}`} className="text-xs">
-                                        {m.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <Button
-                                  size="sm"
-                                  className="h-7 gap-1.5 text-xs bg-primary hover:bg-primary/90"
-                                  disabled={enrichingId === audience.id}
-                                  onClick={(e) => { e.stopPropagation(); handleEnrichIcp(audience); }}
-                                >
-                                  {enrichingId === audience.id ? (
-                                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                                  ) : (
-                                    <Sparkles className="h-3.5 w-3.5" />
-                                  )}
-                                  {enrichingId === audience.id ? "Refinando..." : audience.icp_enrichment ? "Refinar novamente" : "Refinar ICP com IA"}
-                                </Button>
-                                {audience.icp_enrichment && (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-7 gap-1 text-xs text-primary"
-                                    onClick={(e) => { e.stopPropagation(); setSelectedEnrichmentAudience(audience); setEnrichmentDialogOpen(true); }}
-                                  >
-                                    <Brain className="h-3.5 w-3.5" />
-                                    Ver ICP Refinado
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border">
-                            <div className="flex items-center gap-2">
-                              {audience.icp_enrichment && (
-                                <Button
-                                  size="sm"
-                                  className="h-8 gap-1 text-xs"
-                                  variant="secondary"
-                                  onClick={(e) => { e.stopPropagation(); handleGenerateEditorial(audience); }}
-                                  disabled={editorialLoadingId === audience.id}
-                                >
-                                  {editorialLoadingId === audience.id ? (
-                                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                                  ) : (
-                                    <PenSquare className="h-3.5 w-3.5" />
-                                  )}
-                                  Plano de comunicação
-                                </Button>
-                              )}
-                            </div>
-                            <Button size="sm" variant="outline" onClick={() => startEdit(audience)}>
-                              Editar
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
           </div>
 
-          <IcpEnrichmentDialog
-            audienceName={selectedEnrichmentAudience?.name || ""}
-            enrichment={selectedEnrichmentAudience?.icp_enrichment || null}
-            open={enrichmentDialogOpen}
-            onOpenChange={setEnrichmentDialogOpen}
+          <Input
+            placeholder="Buscar públicos..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-md"
           />
-          <EditorialDialog
-            title={projectEditorialContent ? "Linha editorial do projeto" : "Linha editorial do público"}
-            lines={projectEditorialContent || editorialContent || []}
-            open={editorialDialogOpen}
-            onOpenChange={setEditorialDialogOpen}
-          />
-        </DashboardLayout>
-      </FeatureGate>
-    );
+
+          {showCreateForm && (
+            <div className="border border-border rounded-lg bg-card p-4 sm:p-6 space-y-4">
+              <h3 className="text-lg font-semibold text-foreground">
+                {editingId ? "Editar Público-Alvo" : "Novo Público-Alvo"}
+              </h3>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="project">Projeto (opcional)</Label>
+                    <select
+                      id="project"
+                      value={formData.project_id}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, project_id: e.target.value }))}
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    >
+                      <option value="">Selecione um projeto</option>
+                      {projects.map((project) => (
+                        <option key={project.id} value={project.id}>
+                          {project.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nome do Público</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="industry">Indústria</Label>
+                    <Input
+                      id="industry"
+                      value={formData.industry}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, industry: e.target.value }))}
+                      placeholder="Ex: Tecnologia, Saúde, Financeiro"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="company_size">Porte da Empresa</Label>
+                    <select
+                      id="company_size"
+                      value={formData.company_size}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, company_size: e.target.value }))}
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="startup">Startup</option>
+                      <option value="small">Pequena</option>
+                      <option value="medium">Média</option>
+                      <option value="large">Grande</option>
+                      <option value="enterprise">Enterprise</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Localização</Label>
+                    <Input
+                      id="location"
+                      value={formData.location}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, location: e.target.value }))}
+                      placeholder="Ex: Brasil, São Paulo, Remoto"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="description">Descrição</Label>
+                    <Input
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="keywords">Palavras-chave (separadas por vírgula)</Label>
+                    <Input
+                      id="keywords"
+                      value={formData.keywords}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, keywords: e.target.value }))}
+                      placeholder="B2B, SaaS, decisores, tecnologia"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button type="submit">{editingId ? "Salvar" : "Criar Público"}</Button>
+                  <Button type="button" variant="outline" onClick={resetForm}>
+                    Cancelar
+                  </Button>
+                  {tenantSettings && (() => {
+                    const used = audiences.length;
+                    const limit = (tenantSettings as any).max_audiences ?? 5;
+                    const isUnlimited = limit < 0;
+                    const remaining = isUnlimited ? Infinity : limit - used;
+                    const atLimit = !isUnlimited && remaining <= 0;
+                    const nearLimit = !isUnlimited && remaining > 0 && remaining <= 2;
+                    return (
+                      <div className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border ${atLimit
+                        ? "bg-red-500/10 border-red-500/20 text-red-500"
+                        : nearLimit
+                          ? "bg-amber-500/10 border-amber-500/20 text-amber-500"
+                          : "bg-muted/50 border-border text-muted-foreground"
+                        }`}>
+                        <BarChart3 className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="font-medium">
+                          {isUnlimited
+                            ? `${used} públicos`
+                            : `${used}/${limit} públicos`}
+                        </span>
+                        {atLimit && <span className="text-[10px]">• Limite atingido</span>}
+                        {nearLimit && <span className="text-[10px]">• {remaining} restante{remaining > 1 ? "s" : ""}</span>}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </form>
+            </div>
+          )}
+
+          {loading && (
+            <div className="space-y-4">
+              {[1, 2].map((i) => (
+                <div key={i} className="border border-border rounded-lg bg-card p-4 space-y-3 animate-pulse">
+                  <div className="flex items-center justify-between">
+                    <div className="h-5 w-44 bg-muted rounded" />
+                    <div className="h-5 w-16 bg-muted rounded-full" />
+                  </div>
+                  <div className="h-3 w-64 bg-muted rounded" />
+                  <div className="flex gap-2">
+                    <div className="h-5 w-20 bg-muted rounded-full" />
+                    <div className="h-5 w-20 bg-muted rounded-full" />
+                    <div className="h-5 w-20 bg-muted rounded-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {!loading && filteredAudiences.length === 0 && (
+            <div className="flex flex-col items-center text-center py-12 px-4 rounded-xl border border-dashed border-border bg-muted/30">
+              <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-1">Defina seu público-alvo ideal</h3>
+              <p className="text-sm text-muted-foreground max-w-md">Use o botão <strong>Novo Público</strong> acima para criar perfis de audiência B2B com indústria, porte, localização e keywords. Eles alimentam automaticamente seu plano tático.</p>
+            </div>
+          )}
+
+          {/* Grouped by project */}
+          {!loading && groupedByProject.map((group) => {
+            const isGroupExpanded = expandedGroups.has(group.groupKey);
+            return (
+              <div key={group.groupKey} className="space-y-3">
+                {/* Project header — clickable to expand/collapse */}
+                <div className="flex items-center gap-2.5 sm:gap-3">
+                  <button
+                    onClick={() => toggleGroup(group.groupKey)}
+                    className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0 text-left group"
+                  >
+                    <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <FolderOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${!isGroupExpanded ? "-rotate-90" : ""}`} />
+                        <h2 className="text-sm sm:text-base font-semibold text-foreground truncate group-hover:text-primary transition-colors">{group.projectName}</h2>
+                      </div>
+                      <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 flex-wrap ml-[22px]">
+                        <span className="text-[10px] sm:text-xs text-muted-foreground">{group.audiences.length} público{group.audiences.length !== 1 ? "s" : ""}</span>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Audience cards grid — only visible when expanded */}
+                {isGroupExpanded && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {group.audiences.map((audience) => (
+                      <div key={audience.id} className="border border-border rounded-lg bg-card p-4 sm:p-6 space-y-3 sm:space-y-4">
+                        <div className="flex items-start gap-2 sm:gap-3 mb-2">
+                          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <Target className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-foreground text-sm sm:text-base truncate">{audience.name}</h3>
+                            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{audience.description}</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5 sm:space-y-2">
+                          {audience.industry && (
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                              <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                              <span className="text-xs sm:text-sm text-muted-foreground">Indústria:</span>
+                              <Badge variant="secondary" className="text-xs">{audience.industry}</Badge>
+                            </div>
+                          )}
+
+                          {audience.company_size && (
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                              <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                              <span className="text-xs sm:text-sm text-muted-foreground">Porte:</span>
+                              <Badge variant="secondary" className={`text-xs ${sizeConfig[audience.company_size as keyof typeof sizeConfig]?.color}`}>
+                                {sizeConfig[audience.company_size as keyof typeof sizeConfig]?.label}
+                              </Badge>
+                            </div>
+                          )}
+
+                          {audience.location && (
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                              <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                              <span className="text-xs sm:text-sm text-muted-foreground">Local:</span>
+                              <Badge variant="secondary" className="text-xs">{audience.location}</Badge>
+                            </div>
+                          )}
+                        </div>
+
+                        {audience.keywords.length > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium text-foreground">Palavras-chave:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {audience.keywords.map((keyword, index) => (
+                                <Badge key={index} variant="outline" className="text-xs">
+                                  {keyword}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Estratégia de Conteúdo / Pipeline */}
+                        {canAiKeys && hasAiKeys && (
+                          <div className="mt-4 pt-4 border-t border-border">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Sparkles className="h-4 w-4 text-primary" />
+                              <h4 className="text-sm font-semibold text-foreground">Estratégia & Planejamento</h4>
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                              {/* Step 1: Expand ICP */}
+                              <div className="flex flex-col gap-3 p-3 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 transition-colors">
+                                <div className="flex items-center gap-3">
+                                  <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${audience.icp_enrichment ? "bg-emerald-500/10 text-emerald-500" : "bg-primary/10 text-primary"}`}>
+                                    <Brain className="h-4 w-4" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium text-foreground">1. Refinar ICP com IA</p>
+                                    <p className="text-xs text-muted-foreground">{audience.icp_enrichment ? "ICP enriquecido e documentado" : "Analisar mercado e expandir perfil"}</p>
+                                  </div>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  {!audience.icp_enrichment && (
+                                    <Select
+                                      value={selectedAiModel}
+                                      onValueChange={setSelectedAiModel}
+                                      disabled={enrichingId === audience.id}
+                                    >
+                                      <SelectTrigger className="h-8 w-[120px] text-xs">
+                                        <SelectValue placeholder="Modelo IA" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {availableAiModels.map((m) => (
+                                          <SelectItem key={`${m.provider}::${m.model}`} value={`${m.provider}::${m.model}`} className="text-xs">
+                                            {m.label}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  )}
+                                  <Button
+                                    size="sm"
+                                    variant={audience.icp_enrichment ? "outline" : "default"}
+                                    className="h-8 text-xs flex-1 min-w-[120px]"
+                                    disabled={enrichingId === audience.id}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (audience.icp_enrichment) {
+                                        setSelectedEnrichmentAudience(audience);
+                                        setEnrichmentDialogOpen(true);
+                                      } else {
+                                        handleEnrichIcp(audience);
+                                      }
+                                    }}
+                                  >
+                                    {enrichingId === audience.id ? (
+                                      <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                    ) : audience.icp_enrichment ? (
+                                      "Visualizar ICP"
+                                    ) : (
+                                      "Gerar Refinamento"
+                                    )}
+                                  </Button>
+                                  {audience.icp_enrichment && (
+                                    <TooltipProvider delayDuration={0}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                            disabled={enrichingId === audience.id}
+                                            onClick={(e) => { e.stopPropagation(); handleEnrichIcp(audience); }}
+                                          >
+                                            {enrichingId === audience.id ? (
+                                              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                                            ) : (
+                                              <Sparkles className="h-3.5 w-3.5" />
+                                            )}
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" className="text-xs bg-popover text-popover-foreground border-primary/50 shadow-lg shadow-primary/10">
+                                          Refinar novamente
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Step 2: Content Plan */}
+                              <div className={`flex flex-col gap-3 p-3 rounded-lg border transition-colors ${audience.icp_enrichment ? "border-border bg-muted/20 hover:bg-muted/40" : "border-border/50 bg-card opacity-60"}`}>
+                                <div className="flex items-center gap-3">
+                                  <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${audience.icp_enrichment ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                                    <PenSquare className="h-4 w-4" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium text-foreground">2. Plano de Comunicação</p>
+                                    <p className="text-xs text-muted-foreground">Gerar linha editorial tática</p>
+                                  </div>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  className="h-8 text-xs w-full"
+                                  variant="secondary"
+                                  onClick={(e) => { e.stopPropagation(); handleGenerateEditorial(audience); }}
+                                  disabled={!audience.icp_enrichment || editorialLoadingId === audience.id}
+                                >
+                                  {editorialLoadingId === audience.id ? (
+                                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent mr-1.5" />
+                                  ) : null}
+                                  Gerar Plano
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex justify-end pt-2">
+                          <Button size="sm" variant="ghost" className="h-8 text-xs text-muted-foreground hover:text-foreground" onClick={() => startEdit(audience)}>
+                            Editar Público
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <IcpEnrichmentDialog
+          audienceName={selectedEnrichmentAudience?.name || ""}
+          enrichment={selectedEnrichmentAudience?.icp_enrichment || null}
+          open={enrichmentDialogOpen}
+          onOpenChange={setEnrichmentDialogOpen}
+        />
+        <EditorialDialog
+          title={projectEditorialContent ? "Linha editorial do projeto" : "Linha editorial do público"}
+          lines={projectEditorialContent || editorialContent || []}
+          open={editorialDialogOpen}
+          onOpenChange={setEditorialDialogOpen}
+        />
+      </DashboardLayout>
+    </FeatureGate>
+  );
 }
 
 

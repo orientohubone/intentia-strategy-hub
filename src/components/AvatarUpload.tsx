@@ -12,11 +12,11 @@ interface AvatarUploadProps {
   size?: "sm" | "md" | "lg";
 }
 
-export function AvatarUpload({ 
-  currentAvatar, 
-  fullName, 
-  onAvatarChange, 
-  size = "md" 
+export function AvatarUpload({
+  currentAvatar,
+  fullName,
+  onAvatarChange,
+  size = "md"
 }: AvatarUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
@@ -24,7 +24,7 @@ export function AvatarUpload({
 
   const sizeClasses = {
     sm: "h-16 w-16",
-    md: "h-20 w-20", 
+    md: "h-20 w-20",
     lg: "h-24 w-24"
   };
 
@@ -64,7 +64,7 @@ export function AvatarUpload({
 
   const uploadImage = async (file: File) => {
     setUploading(true);
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
@@ -98,7 +98,7 @@ export function AvatarUpload({
 
       onAvatarChange(publicUrl);
       toast.success('Foto de perfil atualizada com sucesso!');
-      
+
     } catch (error: any) {
       console.error('Upload error:', error);
       toast.error('Erro ao fazer upload da foto: ' + error.message);
@@ -119,7 +119,7 @@ export function AvatarUpload({
       onAvatarChange('');
       setPreview(null);
       toast.success('Foto de perfil removida!');
-      
+
     } catch (error: any) {
       toast.error('Erro ao remover foto: ' + error.message);
     }
@@ -140,9 +140,9 @@ export function AvatarUpload({
             {initials}
           </AvatarFallback>
         </Avatar>
-        
+
         {/* Upload overlay */}
-        <div 
+        <div
           className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
           onClick={handleClick}
         >
@@ -153,19 +153,6 @@ export function AvatarUpload({
           )}
         </div>
 
-        {/* Remove button */}
-        {displayAvatar && !uploading && (
-          <Button
-            size="icon"
-            className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive hover:bg-destructive/90"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleRemoveAvatar();
-            }}
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        )}
       </div>
 
       <input
@@ -177,18 +164,30 @@ export function AvatarUpload({
         disabled={uploading}
       />
 
-      <div className="text-center">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleClick}
-          disabled={uploading}
-          className="gap-2"
-        >
-          <Upload className="h-4 w-4" />
-          {uploading ? 'Enviando...' : 'Alterar Foto'}
-        </Button>
-        <p className="text-xs text-muted-foreground mt-2">
+      <div className="flex flex-col items-center gap-2">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClick}
+            disabled={uploading}
+            className="h-8 text-xs gap-1.5"
+          >
+            <Upload className="h-3.5 w-3.5" />
+            {uploading ? 'Enviando...' : 'Alterar Foto'}
+          </Button>
+          {displayAvatar && !uploading && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 px-2"
+              onClick={handleRemoveAvatar}
+            >
+              Remover
+            </Button>
+          )}
+        </div>
+        <p className="text-[10px] sm:text-xs text-muted-foreground">
           JPG, PNG ou GIF • Máx. 5MB
         </p>
       </div>

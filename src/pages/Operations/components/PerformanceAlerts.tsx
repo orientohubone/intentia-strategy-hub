@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   CheckCircle2,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   type CampaignChannel,
   type CampaignStatus,
@@ -158,13 +159,21 @@ export default function PerformanceAlerts({ campaigns, metricsSummaries }: Props
           )}
         </button>
         <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => setShowRulesDialog(true)}
-            className="p-1 rounded-full hover:bg-muted transition-colors"
-            title="Como funcionam os alertas?"
-          >
-            <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
-          </button>
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setShowRulesDialog(true)}
+                  className="p-1 rounded-full hover:bg-muted transition-colors"
+                >
+                  <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs bg-popover text-popover-foreground border-primary/50 shadow-lg shadow-primary/10">
+                Como funcionam os alertas?
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           {hasAlerts && (
             <button onClick={() => setExpanded(!expanded)}>
               <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`} />
@@ -314,7 +323,7 @@ export default function PerformanceAlerts({ campaigns, metricsSummaries }: Props
       )}
       {/* Rules Info Dialog */}
       <Dialog open={showRulesDialog} onOpenChange={setShowRulesDialog}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto overflow-x-hidden sidebar-scroll">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <Zap className="h-5 w-5 text-amber-500" />
@@ -398,11 +407,10 @@ export default function PerformanceAlerts({ campaigns, metricsSummaries }: Props
                         <td className="px-2.5 py-1.5 font-medium text-foreground">{r.rule}</td>
                         <td className="px-2.5 py-1.5 text-muted-foreground">{r.condition}</td>
                         <td className="px-2.5 py-1.5 text-center">
-                          <Badge className={`text-[9px] px-1.5 py-0 ${
-                            r.level === "critical" ? "bg-red-100 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800"
-                            : r.level === "warning" ? "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800"
-                            : "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800"
-                          }`}>
+                          <Badge className={`text-[9px] px-1.5 py-0 ${r.level === "critical" ? "bg-red-100 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800"
+                              : r.level === "warning" ? "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800"
+                                : "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800"
+                            }`}>
                             {r.level === "critical" ? "Crítico" : r.level === "warning" ? "Atenção" : "Info"}
                           </Badge>
                         </td>

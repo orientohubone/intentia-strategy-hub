@@ -45,7 +45,7 @@ export function IcpEnrichmentDialog({
 
   const handleExportPdf = async () => {
     if (!enrichment) return;
-    
+
     setIsExporting(true);
     try {
       await exportIcpToPdf(audienceName, enrichment);
@@ -60,7 +60,7 @@ export function IcpEnrichmentDialog({
 
   const handleExportHtml = () => {
     if (!enrichment) return;
-    
+
     try {
       exportIcpToHtml(audienceName, enrichment);
       toast.success("HTML exportado com sucesso!");
@@ -76,9 +76,9 @@ export function IcpEnrichmentDialog({
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) setFullscreen(false); onOpenChange(v); }}>
       <DialogContent className={cn(
-        "overflow-y-auto p-0 transition-all duration-200",
+        "overflow-y-auto overflow-x-hidden p-0 transition-all duration-200 sidebar-scroll",
         fullscreen
-          ? "max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] rounded-none"
+          ? "max-w-[100vw] w-full h-[100vh] max-h-[100vh] rounded-none"
           : "max-w-2xl max-h-[85vh]"
       )}>
         {/* Header */}

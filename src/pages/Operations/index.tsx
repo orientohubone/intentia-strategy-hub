@@ -516,6 +516,7 @@ export default function Operations() {
                               userId={user.id}
                               projectId={group.projectId}
                               projectName={group.projectName}
+                              campaigns={group.campaigns}
                               onSync={() => { loadStats(); loadCampaigns(); }}
                             />
                           </div>

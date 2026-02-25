@@ -111,28 +111,42 @@ export default function CampaignCalendarManager({ userId, projectId, projectName
   const endingSoonCount = campaigns.filter((c) => c.ending_soon).length;
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+    <Collapsible
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      className="rounded-xl border border-primary/20 bg-card overflow-hidden shadow-sm transition-all hover:border-primary/40 data-[state=open]:border-primary/50 data-[state=open]:shadow-md"
+    >
       <CollapsibleTrigger asChild>
-        <button className="flex items-center justify-between w-full text-left group">
-          <div className="flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-primary" />
-            <h4 className="text-sm font-semibold text-foreground">Calendário de Campanhas</h4>
-            {campaignsWithDates.length > 0 && !isOpen && (
-              <span className="text-[10px] text-muted-foreground">
-                ({campaignsWithDates.length} campanha{campaignsWithDates.length !== 1 ? "s" : ""})
-              </span>
-            )}
-            {endingSoonCount > 0 && !isOpen && (
-              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
-                {endingSoonCount} encerrando em breve
-              </span>
-            )}
+        <button className="flex items-center justify-between w-full text-left p-4 sm:p-5 group bg-gradient-to-r from-card to-primary/5 hover:to-primary/10 transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+              <CalendarDays className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-foreground">Calendário de Campanhas</h4>
+              {(!isOpen && (campaignsWithDates.length > 0 || endingSoonCount > 0)) && (
+                <div className="flex items-center gap-2 mt-1">
+                  {campaignsWithDates.length > 0 && (
+                    <span className="text-[11px] text-muted-foreground">
+                      {campaignsWithDates.length} campanha{campaignsWithDates.length !== 1 ? "s" : ""} agendada{campaignsWithDates.length !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                  {endingSoonCount > 0 && (
+                    <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium">
+                      {endingSoonCount} encerrando em breve
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+          <div className="p-2 rounded-full hover:bg-muted transition-colors">
+            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+          </div>
         </button>
       </CollapsibleTrigger>
 
-      <CollapsibleContent className="mt-3 space-y-3">
+      <CollapsibleContent className="p-4 sm:p-5 border-t border-primary/10 bg-card/50 space-y-4">
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -145,22 +159,20 @@ export default function CampaignCalendarManager({ userId, projectId, projectName
               <div className="flex items-center rounded-lg border border-border overflow-hidden">
                 <button
                   onClick={() => setViewMode("calendar")}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs transition-colors ${
-                    viewMode === "calendar"
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs transition-colors ${viewMode === "calendar"
                       ? "bg-primary text-primary-foreground"
                       : "bg-background text-muted-foreground hover:text-foreground"
-                  }`}
+                    }`}
                 >
                   <CalendarDays className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Calendário</span>
                 </button>
                 <button
                   onClick={() => setViewMode("timeline")}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs transition-colors ${
-                    viewMode === "timeline"
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs transition-colors ${viewMode === "timeline"
                       ? "bg-primary text-primary-foreground"
                       : "bg-background text-muted-foreground hover:text-foreground"
-                  }`}
+                    }`}
                 >
                   <GanttChart className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Timeline</span>

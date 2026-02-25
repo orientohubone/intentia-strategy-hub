@@ -19,7 +19,7 @@ interface EditorialDialogProps {
 export function EditorialDialog({ title, lines, open, onOpenChange }: EditorialDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-5xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-5xl max-h-[85vh] overflow-y-auto overflow-x-hidden sidebar-scroll">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">

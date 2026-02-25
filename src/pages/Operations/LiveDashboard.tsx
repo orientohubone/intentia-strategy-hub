@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import {
   Activity,
   Archive,
@@ -353,14 +353,21 @@ export default function OperationsLiveDashboard() {
     let clicks = 0;
     let leads = 0;
     let sessions = 0;
+
+    let manualLtv = 0;
+    let manualAvgTicket = 0;
+
     campaigns.forEach((campaign) => {
       const summary = summariesByCampaign[campaign.id];
       const latest = latestMetricsByCampaign[campaign.id];
 
+      if (latest?.ltv && latest.ltv > manualLtv) manualLtv = latest.ltv;
+      if (latest?.avg_ticket && latest.avg_ticket > manualAvgTicket) manualAvgTicket = latest.avg_ticket;
+
       budgetTotal += campaign.budget_total || 0;
 
       // Sum basic aggregates
-      mediaCost += summary?.total_cost || latest?.cost || latest?.google_ads_cost || 0;
+      mediaCost += campaign.budget_spent || summary?.total_cost || latest?.cost || latest?.google_ads_cost || 0;
       impressions += summary?.total_impressions || latest?.impressions || 0;
       clicks += summary?.total_clicks || latest?.clicks || 0;
       sessions += summary?.total_sessions || latest?.sessions || 0;
@@ -390,14 +397,14 @@ export default function OperationsLiveDashboard() {
     });
 
     const cac = conversions > 0 ? mediaCost / conversions : 0;
-    const avgTicket = conversions > 0 ? revenue / conversions : 0;
+    const avgTicket = manualAvgTicket > 0 ? manualAvgTicket : (conversions > 0 ? revenue / conversions : 0);
 
-    // LTV Estimate: if we have avgTicket, assume 6 months retention if no better data
-    const ltv = avgTicket > 0 ? avgTicket * 6 : 0;
+    // LTV Estimate: usa manual se setado, senao ticket * 6
+    const ltv = manualLtv > 0 ? manualLtv : (avgTicket > 0 ? avgTicket * 6 : 0);
 
-    const cacLtvRatio = cac > 0 ? ltv / cac : 0;
+    const cacLtvRatio = cac > 0 && ltv > 0 ? ltv / cac : 0;
 
-    // Payback Months: CAC / (Ticket - CostPerClient~AssumedZeroCOGS) -> CAC / Ticket
+    // Payback (ROI Period)
     const paybackMonths = avgTicket > 0 ? cac / avgTicket : 0;
 
     return {
@@ -425,22 +432,21 @@ export default function OperationsLiveDashboard() {
     const now = new Date();
     const month = now.getMonth() + 1;
     const year = now.getFullYear();
-    const key = `${year}-${String(month).padStart(2, "0")}`;
     const rows = allocations.filter((item) => item.month === month && item.year === year);
     const planned = rows.reduce((sum, item) => sum + item.planned_budget, 0);
-    // Use allocation actuals if present, otherwise fallback to calculated metrics
-    const allocationActual = rows.reduce((sum, item) => sum + item.actual_spent, 0);
-    const calculatedActual = monthlyActuals[key] || 0;
-    const actual = allocationActual > 0 ? allocationActual : calculatedActual;
+
+    // Na dashboard, a visão ao vivo do atual mês bate sempre com as campanhas (saldo em tempo real)
+    const actual = campaigns.reduce((sum, item) => sum + item.budget_spent, 0);
+
     const pacing = planned > 0 ? (actual / planned) * 100 : 0;
     return { planned, actual, pacing };
-  }, [allocations, monthlyActuals]);
+  }, [allocations, campaigns]);
 
   const byChannel = useMemo(() => {
     return CHANNEL_ORDER.map((channel) => {
       const rows = campaigns.filter((campaign) => campaign.channel === channel);
       const budget = rows.reduce((sum, row) => sum + row.budget_total, 0);
-      const cost = rows.reduce((sum, row) => sum + (summariesByCampaign[row.id]?.total_cost || 0), 0);
+      const cost = rows.reduce((sum, row) => sum + row.budget_spent, 0);
       return {
         channel,
         campaigns: rows.length,
@@ -451,38 +457,7 @@ export default function OperationsLiveDashboard() {
     }).filter((item) => item.campaigns > 0);
   }, [campaigns, summariesByCampaign]);
 
-  const budgetHistory = useMemo(() => {
-    const grouped = new Map<string, { key: string; label: string; planned: number; actual: number; order: number }>();
 
-    // Add allocations (Planned)
-    allocations.forEach((a) => {
-      const key = `${a.year}-${String(a.month).padStart(2, "0")}`;
-      const label = `${String(a.month).padStart(2, "0")}/${String(a.year).slice(-2)}`;
-      const order = a.year * 100 + a.month;
-      const current = grouped.get(key) || { key, label, planned: 0, actual: 0, order };
-      current.planned += a.planned_budget;
-      current.actual += a.actual_spent; // Sum actuals from allocations first
-      grouped.set(key, current);
-    });
-
-    // Merge calculated actuals if allocation actuals are missing
-    Object.entries(monthlyActuals).forEach(([key, cost]) => {
-      if (cost <= 0) return;
-      const [year, month] = key.split("-").map(Number);
-      const label = `${String(month).padStart(2, "0")}/${String(year).slice(-2)}`;
-      const order = year * 100 + month;
-      const current = grouped.get(key) || { key, label, planned: 0, actual: 0, order };
-
-      // Only override if allocation actual is 0 (or trust calculated explicitly)
-      // Here we prioritize calculated if allocation is 0
-      if (current.actual === 0) {
-        current.actual = cost;
-      }
-      grouped.set(key, current);
-    });
-
-    return [...grouped.values()].sort((a, b) => a.order - b.order).slice(-12);
-  }, [allocations, monthlyActuals]);
 
   const shareUrl = `${window.location.origin}/operations/live-dashboard?${new URLSearchParams({
     ...(projectId ? { projectId } : {}),
@@ -648,12 +623,7 @@ export default function OperationsLiveDashboard() {
           </Card>
         </div>
 
-        <Card className="border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90">
-          <CardContent className="pt-4">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">Evolução mensal (Budget Real x Planejado)</p>
-            <BudgetLineChart data={budgetHistory} />
-          </CardContent>
-        </Card>
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
           {byChannel.map((channel) => (
@@ -680,8 +650,8 @@ export default function OperationsLiveDashboard() {
           {campaigns.map((campaign) => {
             const summary = summariesByCampaign[campaign.id];
             const latestMetric = latestMetricsByCampaign[campaign.id];
-            const budgetPacing = campaign.budget_total > 0 ? ((summary?.total_cost || 0) / campaign.budget_total) * 100 : 0;
-            const metricCards = buildCampaignMetricCards(campaign.channel, latestMetric, summary);
+            const budgetPacing = campaign.budget_total > 0 ? ((campaign.budget_spent || 0) / campaign.budget_total) * 100 : 0;
+            const metricCards = buildCampaignMetricCards(campaign, latestMetric, summary);
             return (
               <Card key={campaign.id} className="border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90">
                 <CardHeader className="pb-3">
@@ -754,20 +724,14 @@ export default function OperationsLiveDashboard() {
                   </TableHead>
                   <TableHead className="text-right">
                     <span className="inline-flex items-center gap-1.5 justify-end">
+                      <Wallet className="h-3.5 w-3.5 text-blue-500" />
+                      Planejado
+                    </span>
+                  </TableHead>
+                  <TableHead className="text-right">
+                    <span className="inline-flex items-center gap-1.5 justify-end">
                       <DollarSign className="h-3.5 w-3.5 text-amber-500" />
-                      Custo
-                    </span>
-                  </TableHead>
-                  <TableHead className="text-right">
-                    <span className="inline-flex items-center gap-1.5 justify-end">
-                      <WalletCards className="h-3.5 w-3.5 text-emerald-500" />
-                      Receita
-                    </span>
-                  </TableHead>
-                  <TableHead className="text-right">
-                    <span className="inline-flex items-center gap-1.5 justify-end">
-                      <TrendingUp className="h-3.5 w-3.5 text-primary" />
-                      ROAS
+                      Investido
                     </span>
                   </TableHead>
                 </TableRow>
@@ -801,13 +765,23 @@ export default function OperationsLiveDashboard() {
                           {CAMPAIGN_STATUS_LABELS[campaign.status]}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right">{formatCurrency(summary?.total_cost || 0)}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(summary?.total_revenue || 0)}</TableCell>
-                      <TableCell className="text-right">{(summary?.calc_roas || 0).toFixed(2)}x</TableCell>
+                      <TableCell className="text-right">{formatCurrency(campaign.budget_total || 0)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(campaign.budget_spent || 0)}</TableCell>
                     </TableRow>
                   );
                 })}
               </TableBody>
+              <TableFooter>
+                <TableRow className="bg-slate-50/50 dark:bg-slate-900/50">
+                  <TableCell colSpan={3} className="text-right font-medium">Total Geral:</TableCell>
+                  <TableCell className="text-right font-bold text-blue-600 dark:text-blue-400">
+                    {formatCurrency(campaigns.reduce((sum, c) => sum + (c.budget_total || 0), 0))}
+                  </TableCell>
+                  <TableCell className="text-right font-bold text-amber-600 dark:text-amber-500">
+                    {formatCurrency(campaigns.reduce((sum, c) => sum + (c.budget_spent || 0), 0))}
+                  </TableCell>
+                </TableRow>
+              </TableFooter>
             </Table>
           </CardContent>
         </Card>
@@ -871,17 +845,19 @@ type DashboardMetricCardItem = {
 };
 
 function buildCampaignMetricCards(
-  channel: CampaignChannel,
+  campaign: CampaignRow,
   metric: CampaignMetrics | undefined,
   summary: MetricsSummaryRow | undefined
 ): DashboardMetricCardItem[] {
+  const channel = campaign.channel;
+  const baseCost = campaign.budget_spent || summary?.total_cost || 0;
   if (!metric) {
     return [
       { icon: Eye, label: "Impressões", value: formatNumber(summary?.total_impressions || 0) },
       { icon: MousePointerClick, label: "Cliques", value: formatNumber(summary?.total_clicks || 0), helper: `CTR ${formatPercent(summary?.avg_ctr || 0)}` },
       { icon: Target, label: "Conversões", value: formatNumber(summary?.total_conversions || 0) },
       { icon: BarChart3, label: "Leads", value: formatNumber(summary?.total_leads || 0) },
-      { label: "Custo Total", value: formatCurrency(summary?.total_cost || 0) },
+      { label: "Custo Total", value: formatCurrency(baseCost) },
       { label: "Receita", value: formatCurrency(summary?.total_revenue || 0), helper: `ROAS ${(summary?.calc_roas || 0).toFixed(2)}x` },
       { label: "Sessões", value: formatNumber(summary?.total_sessions || 0) },
       { label: "CPA", value: formatCurrency(summary?.avg_cpa || 0) },
@@ -895,7 +871,7 @@ function buildCampaignMetricCards(
     { label: "CPM", value: formatCurrency(metric.cpm) },
     { icon: Target, label: "Conversões", value: formatNumber(metric.conversions) },
     { label: "CPA", value: formatCurrency(metric.cpa) },
-    { label: "Custo Total", value: formatCurrency(metric.cost) },
+    { label: "Custo Total", value: formatCurrency(campaign.budget_spent || metric.cost || 0) },
     { label: "Receita", value: formatCurrency(metric.revenue) },
     { label: "ROAS", value: `${(metric.roas || 0).toFixed(2)}x` },
   ];
@@ -908,7 +884,7 @@ function buildCampaignMetricCards(
     const leads = getVal(metric.leads_month || metric.leads, summary?.total_leads);
     const conversions = getVal(metric.clients_web || metric.conversions, summary?.total_conversions);
     const revenue = getVal(metric.revenue_web || metric.revenue, summary?.total_revenue);
-    const cost = getVal(metric.google_ads_cost || metric.cost, summary?.total_cost);
+    const cost = campaign.budget_spent || getVal(metric.google_ads_cost || metric.cost, summary?.total_cost);
 
     /* 
       Cálculos de Taxas:
@@ -1092,33 +1068,3 @@ function SummaryRow({ label, value, valueClass = "" }: { label: string; value: s
   );
 }
 
-function BudgetLineChart({ data }: { data: { key: string; label: string; planned: number; actual: number; order: number }[] }) {
-  if (data.length === 0) return <div className="text-sm text-muted-foreground py-6 text-center">Sem histórico mensal.</div>;
-
-  // Tratamento para array pequeno (1 item): duplica para desenhar linha reta
-  const plotData = data.length === 1 ? [data[0], data[0]] : data;
-
-  const width = 900;
-  const height = 200;
-  const padding = 24;
-  const maxValue = Math.max(...plotData.map((d) => Math.max(d.planned, d.actual)), 1);
-  const toX = (i: number) => padding + (i * (width - padding * 2)) / (plotData.length - 1);
-  const toY = (v: number) => height - padding - (v / maxValue) * (height - padding * 2);
-  const buildPath = (values: number[]) => values.map((v, i) => `${i === 0 ? "M" : "L"} ${toX(i)} ${toY(v)}`).join(" ");
-  return (
-    <div className="space-y-2">
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-48">
-        <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="currentColor" className="text-border" />
-        <path d={buildPath(plotData.map((d) => d.planned))} fill="none" stroke="currentColor" className="text-primary" strokeWidth="2.5" />
-        <path d={buildPath(plotData.map((d) => d.actual))} fill="none" stroke="currentColor" className="text-emerald-500" strokeWidth="2.5" />
-      </svg>
-      <div className="grid grid-cols-6 md:grid-cols-12 gap-1 text-[10px] text-muted-foreground">
-        {data.map((d) => <div key={d.key} className="text-center">{d.label}</div>)}
-      </div>
-      <div className="flex items-center gap-4 text-xs">
-        <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-primary" /> Planejado</span>
-        <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Real</span>
-      </div>
-    </div>
-  );
-}

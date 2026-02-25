@@ -61,92 +61,101 @@ export default function CampaignCalendar({ campaigns, filterChannel = "all", fil
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={prevMonth}>
+      <div className="flex items-center justify-between bg-card p-3 rounded-xl border border-border shadow-sm">
+        <div className="flex items-center gap-1.5">
+          <Button variant="outline" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-colors" onClick={prevMonth}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <h4 className="text-sm font-semibold text-foreground min-w-[140px] text-center">
-            {MONTH_LABELS[month + 1]} {year}
-          </h4>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={nextMonth}>
+          <Button variant="outline" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-colors" onClick={nextMonth}>
             <ChevronRight className="h-4 w-4" />
           </Button>
+          <div className="h-8 flex items-center px-4 rounded-md bg-primary/10 ml-1 sm:ml-2">
+            <h4 className="text-sm font-bold text-primary capitalize tracking-wide">
+              {MONTH_LABELS[month + 1]} <span className="text-primary/70">{year}</span>
+            </h4>
+          </div>
         </div>
-        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={goToday}>
+        <Button variant="default" size="sm" className="h-8 text-xs font-semibold shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground transition-colors" onClick={goToday}>
           Hoje
         </Button>
       </div>
 
-      {/* Weekday headers */}
-      <div className="grid grid-cols-7 gap-px">
-        {WEEKDAY_LABELS.map((d) => (
-          <div key={d} className="text-center text-[10px] font-medium text-muted-foreground py-1">
-            {d}
-          </div>
-        ))}
-      </div>
+      <div className="rounded-xl border border-border shadow-sm overflow-hidden bg-card">
+        {/* Weekday headers */}
+        <div className="grid grid-cols-7 border-b border-border bg-muted/40">
+          {WEEKDAY_LABELS.map((d) => (
+            <div key={d} className="text-center text-[11px] font-bold text-muted-foreground py-2 border-r border-border last:border-r-0 uppercase tracking-widest">
+              {d.substring(0, 3)}
+            </div>
+          ))}
+        </div>
 
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden">
-        {grid.map((date, i) => {
-          if (!date) {
-            return <div key={`empty-${i}`} className="bg-muted/30 min-h-[72px] sm:min-h-[80px]" />;
-          }
+        {/* Calendar grid */}
+        <div className="grid grid-cols-7 bg-muted/20">
+          {grid.map((date, i) => {
+            if (!date) {
+              return <div key={`empty-${i}`} className="bg-muted/10 min-h-[90px] sm:min-h-[110px] border-r border-b border-border" />;
+            }
 
-          const isToday = isSameDay(date, today);
-          const dayCampaigns = getCampaignsForDate(date);
+            const isToday = isSameDay(date, today);
+            const dayCampaigns = getCampaignsForDate(date);
 
-          return (
-            <div
-              key={date.toISOString()}
-              className={`bg-background min-h-[72px] sm:min-h-[80px] p-1 relative ${
-                isToday ? "ring-1 ring-primary ring-inset" : ""
-              }`}
-            >
-              <span className={`text-[10px] sm:text-xs font-medium ${
-                isToday ? "text-primary font-bold" : "text-foreground/70"
-              }`}>
-                {date.getDate()}
-              </span>
+            return (
+              <div
+                key={date.toISOString()}
+                className={`min-h-[90px] sm:min-h-[110px] p-1.5 sm:p-2 relative border-r border-b border-border transition-colors hover:bg-muted/30 group ${isToday ? "bg-primary/5 shadow-[inset_0_0_0_1px_rgba(var(--primary),0.3)] z-10" : "bg-card"
+                  }`}
+              >
+                <div className="flex justify-between items-start mb-1.5">
+                  <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold transition-colors ${isToday ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground group-hover:text-foreground"
+                    }`}>
+                    {date.getDate()}
+                  </span>
+                </div>
 
-              <div className="mt-0.5 space-y-0.5 overflow-hidden">
-                {dayCampaigns.slice(0, 3).map((c) => {
-                  const colors = CHANNEL_BAR_COLORS[c.channel];
-                  const isStart = isRangeStart(date, c.start_date);
-                  const isEnd = isRangeEnd(date, c.end_date);
+                <div className="space-y-1 overflow-hidden">
+                  {dayCampaigns.slice(0, 3).map((c) => {
+                    const colors = CHANNEL_BAR_COLORS[c.channel];
+                    const isStart = isRangeStart(date, c.start_date);
+                    const isEnd = isRangeEnd(date, c.end_date);
 
-                  return (
-                    <button
-                      key={c.id}
-                      onClick={() => setSelectedCampaign(selectedCampaign?.id === c.id ? null : c)}
-                      className={`w-full text-left text-[9px] sm:text-[10px] leading-tight px-1 py-0.5 border-l-2 truncate cursor-pointer transition-colors hover:opacity-80 ${colors.bg} ${colors.border} ${colors.text} ${
-                        isStart ? "rounded-l" : ""
-                      } ${isEnd ? "rounded-r" : ""} ${
-                        selectedCampaign?.id === c.id ? "ring-1 ring-primary" : ""
-                      }`}
-                      title={`${c.campaign_name} (${CHANNEL_LABELS[c.channel]})`}
-                    >
-                      {isStart ? c.campaign_name : ""}
-                    </button>
-                  );
-                })}
-                {dayCampaigns.length > 3 && (
-                  <span className="text-[9px] text-muted-foreground pl-1">+{dayCampaigns.length - 3}</span>
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => setSelectedCampaign(selectedCampaign?.id === c.id ? null : c)}
+                        className={`w-full text-left text-[9px] sm:text-[10px] font-medium leading-tight px-1.5 py-0.5 border-l-[3px] truncate cursor-pointer transition-all hover:brightness-95 ${colors.bg} ${colors.border} ${colors.text} ${isStart ? "rounded-l-md" : ""
+                          } ${isEnd ? "rounded-r-md" : ""} ${selectedCampaign?.id === c.id ? "ring-1 ring-primary shadow-sm scale-[1.02]" : "hover:scale-[1.01]"
+                          }`}
+                        title={`${c.campaign_name} (${CHANNEL_LABELS[c.channel]})`}
+                      >
+                        {isStart ? c.campaign_name : "\u00A0"}
+                      </button>
+                    );
+                  })}
+                  {dayCampaigns.length > 3 && (
+                    <div className="text-[9px] font-medium text-muted-foreground pl-1.5 py-0.5 border-l-2 border-transparent">
+                      +{dayCampaigns.length - 3} mais
+                    </div>
+                  )}
+                </div>
+
+                {/* Ending soon indicator */}
+                {dayCampaigns.some((c) => c.ending_soon && isRangeEnd(date, c.end_date)) && !isToday && (
+                  <div className="absolute top-1.5 right-1.5">
+                    <AlertTriangle className="h-3 w-3 text-amber-500/80 animate-pulse" />
+                  </div>
+                )}
+                {dayCampaigns.some((c) => c.ending_soon && isRangeEnd(date, c.end_date)) && isToday && (
+                  <div className="absolute top-1 right-8">
+                    <AlertTriangle className="h-3 w-3 text-amber-500 animate-pulse" />
+                  </div>
                 )}
               </div>
-
-              {/* Ending soon indicator */}
-              {dayCampaigns.some((c) => c.ending_soon && isRangeEnd(date, c.end_date)) && (
-                <div className="absolute top-0.5 right-0.5">
-                  <AlertTriangle className="h-2.5 w-2.5 text-amber-500" />
-                </div>
-              )}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       {/* Legend */}
@@ -165,7 +174,7 @@ export default function CampaignCalendar({ campaigns, filterChannel = "all", fil
 
       {/* Selected campaign detail */}
       {selectedCampaign && (
-        <div className="rounded-xl border border-border bg-card p-3 sm:p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="rounded-xl border border-primary/30 bg-card p-4 sm:p-5 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 shadow-md">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
@@ -182,7 +191,7 @@ export default function CampaignCalendar({ campaigns, filterChannel = "all", fil
                 <p className="text-xs text-muted-foreground mt-1 truncate">{selectedCampaign.objective}</p>
               )}
             </div>
-            <Button variant="ghost" size="sm" className="h-6 text-[10px] shrink-0" onClick={() => setSelectedCampaign(null)}>
+            <Button variant="ghost" size="sm" className="h-7 text-[10px] shrink-0 text-muted-foreground hover:bg-muted" onClick={() => setSelectedCampaign(null)}>
               Fechar
             </Button>
           </div>
