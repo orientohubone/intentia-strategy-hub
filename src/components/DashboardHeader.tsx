@@ -38,19 +38,19 @@ export function DashboardHeader({ onMenuToggle }: DashboardHeaderProps) {
         {/* Search — hidden on mobile */}
         <div className="relative max-w-md flex-1 hidden sm:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Buscar projetos, públicos..." 
+          <Input
+            placeholder="Buscar projetos, públicos..."
             className="pl-10 bg-background"
           />
         </div>
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4">
-        <Button variant="hero" size="sm" className="gap-2" onClick={() => navigate("/projects")}> 
+        <Button variant="hero" size="sm" className="gap-2" onClick={() => navigate("/projects?new=1")}>
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline">Novo Projeto</span>
         </Button>
-        
+
         <NotificationsDropdown />
         <ThemeToggle />
 

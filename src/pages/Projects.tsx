@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { SEO } from "@/components/SEO";
@@ -48,6 +49,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   FileSearch,
   Sparkles,
@@ -70,6 +72,9 @@ import {
   ChevronsUpDown,
   ShieldAlert,
   BarChart3,
+  Plus,
+  Target,
+  Search,
 } from "lucide-react";
 
 type Insight = {
@@ -109,6 +114,9 @@ export default function Projects() {
     refetch,
   } = useTenantData();
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [channelScores, setChannelScores] = useState<Record<string, ChannelScore[]>>({});
   const [insights, setInsights] = useState<Record<string, Insight[]>>({});
@@ -137,6 +145,15 @@ export default function Projects() {
   const SECTION_KEYS = ["heuristic", "ai", "overview", "channels", "insights"] as const;
   type SectionKey = typeof SECTION_KEYS[number];
   const [collapsedSections, setCollapsedSections] = useState<Record<string, Set<SectionKey>>>({});
+
+  // Auto open dialog if "new=1" is in URL
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      setIsDialogOpen(true);
+      // Optional: Remove query param so it doesn't reopen on refresh
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams]);
 
   const isSectionCollapsed = (projectId: string, section: SectionKey) =>
     collapsedSections[projectId]?.has(section) ?? false;
@@ -250,7 +267,7 @@ export default function Projects() {
 
   const handleProjectSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    
+
     // Validações básicas
     if (!formState.name.trim()) {
       toast.error("Nome do projeto é obrigatório");
@@ -268,7 +285,7 @@ export default function Projects() {
       toast.error("URL deve começar com http:// ou https://");
       return;
     }
-    
+
     // Parse competitor URLs
     const competitorUrls = formState.competitorUrls
       .split("\n")
@@ -312,6 +329,7 @@ export default function Projects() {
       }
       setFormState({ name: "", niche: "", url: "", competitorUrls: "", solutionContext: "", status: "pending" });
       setEditingId(null);
+      setIsDialogOpen(false);
 
       // Run URL analysis in background (only if feature is available)
       if (user && shouldAnalyze) {
@@ -397,6 +415,7 @@ export default function Projects() {
       solutionContext: (project as any).solution_context || "",
       status: project.status as any,
     });
+    setIsDialogOpen(true);
   };
 
   const handleChannelSave = async (projectId: string) => {
@@ -551,16 +570,16 @@ export default function Projects() {
         .from("insights")
         .update(editingInsight)
         .eq("id", insightId);
-      
+
       if (error) throw error;
-      
+
       setInsights((prev) => ({
         ...prev,
         [projectId]: (prev[projectId] || []).map((item) =>
           item.id === insightId ? { ...item, ...editingInsight } : item
         ),
       }));
-      
+
       setEditingInsightId(null);
       setEditingInsight({});
       toast.success("Insight atualizado com sucesso!");
@@ -616,13 +635,28 @@ export default function Projects() {
   return (
     <DashboardLayout>
       <SEO title="Projetos" noindex />
-          <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Projetos</h1>
-              <p className="text-sm text-muted-foreground">Gerencie seus projetos e análises.</p>
-            </div>
+      <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Projetos</h1>
+            <p className="text-sm text-muted-foreground">Gerencie seus projetos e análises.</p>
+          </div>
+          <Button size="sm" className="gap-2" onClick={() => setIsDialogOpen(true)}>
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Novo Projeto</span>
+            <span className="sm:hidden">Novo</span>
+          </Button>
+        </div>
 
-            <form onSubmit={handleProjectSubmit} className="grid gap-4 p-4 border border-border rounded-lg bg-card">
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden sidebar-scroll">
+            <DialogHeader>
+              <DialogTitle>{editingId ? "Editar Projeto" : "Novo Projeto"}</DialogTitle>
+              <DialogDescription>
+                {editingId ? "Atualize as informações do seu projeto." : "Preencha os dados do projeto para receber seu diagnóstico heurístico e score de mídia."}
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleProjectSubmit} className="grid gap-4 mt-2">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nome do Projeto</Label>
@@ -722,6 +756,7 @@ export default function Projects() {
                   <Button type="button" variant="outline" disabled={analyzing} onClick={() => {
                     setEditingId(null);
                     setFormState({ name: "", niche: "", url: "", competitorUrls: "", solutionContext: "", status: "pending" });
+                    setIsDialogOpen(false);
                   }}>
                     Cancelar
                   </Button>
@@ -742,13 +777,12 @@ export default function Projects() {
 
                   const worst = projAtLimit || aAtLimit ? "limit" : projNear || aNear ? "near" : "ok";
                   return (
-                    <div className={`flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-md border ${
-                      worst === "limit"
-                        ? "bg-red-500/10 border-red-500/20 text-red-500"
-                        : worst === "near"
-                          ? "bg-amber-500/10 border-amber-500/20 text-amber-500"
-                          : "bg-muted/50 border-border text-muted-foreground"
-                    }`}>
+                    <div className={`flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-md border ${worst === "limit"
+                      ? "bg-red-500/10 border-red-500/20 text-red-500"
+                      : worst === "near"
+                        ? "bg-amber-500/10 border-amber-500/20 text-amber-500"
+                        : "bg-muted/50 border-border text-muted-foreground"
+                      }`}>
                       <BarChart3 className="h-3.5 w-3.5 flex-shrink-0" />
                       <span className="font-medium">
                         {projUnlimited ? `${projCount} proj` : `${projCount}/${maxProj} proj`}
@@ -763,84 +797,150 @@ export default function Projects() {
                 })()}
               </div>
             </form>
+          </DialogContent>
+        </Dialog>
 
-            {/* Analysis Progress Tracker */}
-            <AnalysisProgressTracker
-              isAnalyzing={analyzing}
-              competitorCount={competitorTotal}
-              currentCompetitor={currentCompetitorIndex}
-              isComplete={analysisComplete}
-            />
+        {/* Analysis Progress Tracker */}
+        <AnalysisProgressTracker
+          isAnalyzing={analyzing}
+          competitorCount={competitorTotal}
+          currentCompetitor={currentCompetitorIndex}
+          isComplete={analysisComplete}
+        />
 
-            {loading && (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="border border-border rounded-lg bg-card p-4 space-y-4 animate-pulse">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-2">
-                        <div className="h-5 w-48 bg-muted rounded" />
-                        <div className="h-3 w-32 bg-muted rounded" />
-                      </div>
-                      <div className="h-8 w-20 bg-muted rounded" />
-                    </div>
-                    <div className="flex gap-3">
-                      <div className="h-6 w-24 bg-muted rounded-full" />
-                      <div className="h-6 w-24 bg-muted rounded-full" />
-                      <div className="h-6 w-24 bg-muted rounded-full" />
-                    </div>
+        {loading && (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="border border-border rounded-lg bg-card p-4 space-y-4 animate-pulse">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <div className="h-5 w-48 bg-muted rounded" />
+                    <div className="h-3 w-32 bg-muted rounded" />
                   </div>
-                ))}
+                  <div className="h-8 w-20 bg-muted rounded" />
+                </div>
+                <div className="flex gap-3">
+                  <div className="h-6 w-24 bg-muted rounded-full" />
+                  <div className="h-6 w-24 bg-muted rounded-full" />
+                  <div className="h-6 w-24 bg-muted rounded-full" />
+                </div>
               </div>
-            )}
-            {!loading && projectList.length === 0 && (
-              <div className="flex flex-col items-center text-center py-12 px-4 rounded-xl border border-dashed border-border bg-muted/30">
-                <FolderOpen className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-1">Crie seu primeiro projeto</h3>
-                <p className="text-sm text-muted-foreground max-w-md">Preencha os campos acima com a URL do seu negócio e receba um diagnóstico estratégico completo com scores, insights e recomendações por canal.</p>
+            ))}
+          </div>
+        )}
+        {!loading && projectList.length === 0 && (
+          <div className="flex flex-col items-center text-center py-12 px-4 rounded-xl border border-dashed border-border bg-muted/30">
+            <FolderOpen className="h-12 w-12 text-muted-foreground/30 mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-1">Crie seu primeiro projeto</h3>
+            <p className="text-sm text-muted-foreground max-w-md mb-4">Primeiro passo para seu diagnóstico estratégico completo com scores, insights e recomendações por canal.</p>
+            <Button variant="hero" onClick={() => setIsDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Criar Primeiro Projeto
+            </Button>
+          </div>
+        )}
+
+        {!loading && projectList.length > 0 && (
+          <div className="space-y-4">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+              <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg shrink-0">
+                    <FolderOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Projetos</p>
+                    <p className="text-lg sm:text-xl font-bold text-foreground">{projectList.length}</p>
+                  </div>
+                </div>
               </div>
-            )}
+              <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 sm:p-2 bg-green-500/10 rounded-lg shrink-0">
+                    <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Score Médio</p>
+                    <p className="text-lg sm:text-xl font-bold text-foreground">
+                      {projectList.length > 0 ? Math.round(projectList.reduce((acc, p) => acc + p.score, 0) / projectList.length) : 0}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 sm:p-2 bg-blue-500/10 rounded-lg shrink-0">
+                    <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Melhor Score</p>
+                    <p className="text-lg sm:text-xl font-bold text-foreground">
+                      {projectList.length > 0 ? Math.max(...projectList.map(p => p.score)) : 0}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 sm:p-2 bg-yellow-500/10 rounded-lg shrink-0">
+                    <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Insights</p>
+                    <p className="text-lg sm:text-xl font-bold text-foreground">
+                      {Object.values(insights).reduce((acc, arr) => acc + arr.length, 0)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-            <div className="space-y-4">
-              {projectList.map((project) => {
-                const isActive = activeProjectId === project.id;
-                const scores = channelScores[project.id] || channelList.map((channel) => ({ channel, score: 0 } as ChannelScore));
-                const projectInsights = insights[project.id] || [];
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome, URL ou nicho..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
-                return (
-                  <React.Fragment key={project.id}>
-                    <div id={`project-${project.id}`} className="border border-border rounded-lg bg-card p-4 space-y-4">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                      <div>
-                        <h2 className="text-lg font-semibold text-foreground">{project.name}</h2>
-                        <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
-                          <span>{project.niche} •</span>
-                          <span className="truncate max-w-[140px] sm:max-w-[200px] md:max-w-[300px]">{project.url}</span>
-                          <TooltipProvider delayDuration={300}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  className="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-muted transition-colors disabled:opacity-50"
-                                  onClick={() => handleReanalyze(project.id)}
-                                  disabled={analyzing || !canAnalyze}
-                                >
-                                  <RefreshCw className={`h-3 w-3 ${analyzing ? "animate-spin" : ""}`} />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top">
-                                <p>Reanalisar URL</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button size="sm" variant="outline" onClick={() => setActiveProjectId(isActive ? null : project.id)}>
-                          <FolderOpen className="h-3.5 w-3.5 mr-1.5" />
-                          {isActive ? "Fechar" : "Gerenciar"}
-                        </Button>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {projectList.filter(p => !searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.url.toLowerCase().includes(searchTerm.toLowerCase()) || p.niche.toLowerCase().includes(searchTerm.toLowerCase())).map((project) => {
+            const isActive = activeProjectId === project.id;
+            const scores = channelScores[project.id] || channelList.map((channel) => ({ channel, score: 0 } as ChannelScore));
+            const projectInsights = insights[project.id] || [];
+
+            return (
+              <React.Fragment key={project.id}>
+                <div id={`project-${project.id}`} className="border border-border rounded-xl bg-card p-4 sm:p-5 flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex justify-between items-start gap-2">
+                      <h2 className="text-lg font-semibold text-foreground line-clamp-1">{project.name}</h2>
+                      <div className="flex gap-1 shrink-0">
+                        <TooltipProvider delayDuration={300}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-muted transition-colors disabled:opacity-50"
+                                onClick={() => handleReanalyze(project.id)}
+                                disabled={analyzing || !canAnalyze}
+                              >
+                                <RefreshCw className={`h-3 w-3 ${analyzing ? "animate-spin" : ""}`} />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <p>Reanalisar URL</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button size="icon" variant="ghost" className="h-8 w-8">
+                            <Button size="icon" variant="ghost" className="h-7 w-7">
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -891,8 +991,47 @@ export default function Projects() {
                         </DropdownMenu>
                       </div>
                     </div>
+                    <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground flex-wrap">
+                      <Badge variant="secondary" className="text-[10px] font-medium">{project.niche}</Badge>
+                      <span className="truncate max-w-full text-xs opacity-80" title={project.url}>{project.url}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <div className="bg-muted/40 rounded-lg p-2 flex flex-col">
+                        <span className="text-[10px] text-muted-foreground uppercase opacity-80">Score</span>
+                        <span className={`text-lg font-bold ${project.score >= 70 ? "text-green-600" : project.score >= 50 ? "text-yellow-600" : "text-red-500"}`}>{project.score}</span>
+                      </div>
+                      <div className="bg-muted/40 rounded-lg p-2 flex flex-col">
+                        <span className="text-[10px] text-muted-foreground uppercase opacity-80">Status</span>
+                        <span className="text-sm font-semibold capitalize mt-auto">{project.status === "completed" ? "Concluído" : "Pendente"}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <Button size="sm" className="w-full flex justify-center items-center gap-1.5 mt-2" variant="outline" onClick={() => setActiveProjectId(project.id)}>
+                      <FolderOpen className="h-3.5 w-3.5" />
+                      Visualizar & Gerenciar
+                    </Button>
+                  </div>
+                </div>
 
-                    {isActive && (
+                {/* Project Detail Dialog overlays the space instead of expanding inline */}
+                <Dialog open={isActive} onOpenChange={(open) => { if (!open) setActiveProjectId(null); }}>
+                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden sidebar-scroll">
+                    <div className="space-y-6 pt-2">
+                      <DialogHeader>
+                        <DialogTitle className="text-xl flex items-center gap-2">
+                          <span className="line-clamp-1">{project.name}</span>
+                          <Badge variant={project.score >= 70 ? "default" : project.score >= 50 ? "secondary" : "destructive"} className="shrink-0 text-xs">
+                            Score: {project.score}
+                          </Badge>
+                        </DialogTitle>
+                        <DialogDescription className="flex items-center gap-2 text-xs truncate">
+                          <span>{project.niche}</span> • <span>{project.url}</span>
+                        </DialogDescription>
+                      </DialogHeader>
+                      {/* Removed old manage button row */}
+
+
                       <div className="space-y-6">
                         {/* Collapse / Expand All */}
                         <div className="flex items-center justify-end gap-2">
@@ -1008,171 +1147,171 @@ export default function Projects() {
                               </div>
 
                               {!isSectionCollapsed(project.id, "heuristic") && (<>
-                              {/* Score Grid */}
-                              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                                {scoreItems.map((item) => {
-                                  const Icon = item.icon;
-                                  return (
-                                    <div key={item.label} className="bg-muted/50 rounded-lg p-3 text-center space-y-1">
-                                      <Icon className={`h-4 w-4 mx-auto ${item.color}`} />
-                                      <p className={`text-xl font-bold ${getScoreColor(item.value)}`}>{item.value}</p>
-                                      <p className="text-[10px] text-muted-foreground leading-tight">{item.label}</p>
-                                      <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
-                                        <div className={`h-full rounded-full ${getScoreBg(item.value)}`} style={{ width: `${item.value}%` }} />
+                                {/* Score Grid */}
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                                  {scoreItems.map((item) => {
+                                    const Icon = item.icon;
+                                    return (
+                                      <div key={item.label} className="bg-muted/50 rounded-lg p-3 text-center space-y-1">
+                                        <Icon className={`h-4 w-4 mx-auto ${item.color}`} />
+                                        <p className={`text-xl font-bold ${getScoreColor(item.value)}`}>{item.value}</p>
+                                        <p className="text-[10px] text-muted-foreground leading-tight">{item.label}</p>
+                                        <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                                          <div className={`h-full rounded-full ${getScoreBg(item.value)}`} style={{ width: `${item.value}%` }} />
+                                        </div>
                                       </div>
+                                    );
+                                  })}
+                                </div>
+
+                                {/* Technical & Content Summary */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+                                    <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                                      <Shield className="h-3.5 w-3.5" /> Técnico
+                                    </p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      <Badge variant={ha.technical.hasHttps ? "default" : "destructive"} className="text-[10px]">
+                                        {ha.technical.hasHttps ? "✓ HTTPS" : "✗ Sem HTTPS"}
+                                      </Badge>
+                                      <Badge variant={ha.technical.hasViewport ? "default" : "destructive"} className="text-[10px]">
+                                        {ha.technical.hasViewport ? "✓ Mobile" : "✗ Sem viewport"}
+                                      </Badge>
+                                      <Badge variant={ha.technical.hasAnalytics ? "default" : "secondary"} className="text-[10px]">
+                                        {ha.technical.hasAnalytics ? "✓ Analytics" : "✗ Sem analytics"}
+                                      </Badge>
+                                      <Badge variant={ha.technical.hasStructuredData ? "default" : "secondary"} className="text-[10px]">
+                                        {ha.technical.hasStructuredData ? "✓ Schema" : "✗ Sem schema"}
+                                      </Badge>
+                                      <Badge variant="outline" className="text-[10px]">
+                                        ⏱ {ha.technical.loadTimeEstimate}
+                                      </Badge>
                                     </div>
+                                  </div>
+                                  <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+                                    <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                                      <FileText className="h-3.5 w-3.5" /> Conteúdo
+                                    </p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      <Badge variant="outline" className="text-[10px]">
+                                        {ha.content.wordCount} palavras
+                                      </Badge>
+                                      <Badge variant="outline" className="text-[10px]">
+                                        {ha.content.ctaCount} CTAs
+                                      </Badge>
+                                      <Badge variant="outline" className="text-[10px]">
+                                        {ha.content.formCount} formulários
+                                      </Badge>
+                                      <Badge variant="outline" className="text-[10px]">
+                                        {ha.content.imageCount} imagens
+                                      </Badge>
+                                      {ha.content.hasVideo && <Badge className="text-[10px]">✓ Vídeo</Badge>}
+                                      {ha.content.hasSocialProof && <Badge className="text-[10px]">✓ Prova social</Badge>}
+                                      {ha.content.hasPricing && <Badge className="text-[10px]">✓ Preços</Badge>}
+                                      {ha.content.hasFAQ && <Badge className="text-[10px]">✓ FAQ</Badge>}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Meta Info */}
+                                {(ha.meta.title || ha.meta.description) && (
+                                  <div className="bg-muted/30 rounded-lg p-3 space-y-1">
+                                    {ha.meta.title && (
+                                      <p className="text-xs"><span className="font-medium text-foreground">Título:</span> <span className="text-muted-foreground">{ha.meta.title}</span></p>
+                                    )}
+                                    {ha.meta.description && (
+                                      <p className="text-xs"><span className="font-medium text-foreground">Descrição:</span> <span className="text-muted-foreground">{ha.meta.description.substring(0, 160)}</span></p>
+                                    )}
+                                    {ha.content.h1.length > 0 && (
+                                      <p className="text-xs"><span className="font-medium text-foreground">H1:</span> <span className="text-muted-foreground">{ha.content.h1[0]}</span></p>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Structured Data & HTML Snapshot (unified: principal + competitors) */}
+                                {(() => {
+                                  // Build structured data from Edge Function response, DB columns, or synthesize from meta
+                                  const sd = ha.structuredData || (project as any).structured_data;
+                                  const hs = ha.htmlSnapshot || (project as any).html_snapshot;
+                                  // If no structured data from Edge Function, synthesize OG from existing meta
+                                  const fallbackSd = !sd && ha.meta ? {
+                                    jsonLd: [],
+                                    microdata: [],
+                                    openGraph: Object.fromEntries(
+                                      [
+                                        ha.meta.ogTitle && ["og:title", ha.meta.ogTitle],
+                                        ha.meta.ogDescription && ["og:description", ha.meta.ogDescription],
+                                        ha.meta.ogImage && ["og:image", ha.meta.ogImage],
+                                        ha.meta.language && ["og:locale", ha.meta.language],
+                                      ].filter(Boolean) as [string, string][]
+                                    ),
+                                    twitterCard: {},
+                                  } : null;
+                                  const finalSd = sd || fallbackSd;
+                                  const compSd = competitorSdMap[project.id] || [];
+                                  return (
+                                    <>
+                                      <StructuredDataViewer
+                                        structuredData={finalSd}
+                                        htmlSnapshot={hs}
+                                        htmlSnapshotAt={(project as any).html_snapshot_at}
+                                        competitors={compSd}
+                                        projectName={project.name}
+                                      />
+                                      <StructuredDataGenerator
+                                        projectStructuredData={finalSd}
+                                        projectMeta={ha.meta}
+                                        projectUrl={project.url}
+                                        projectName={project.name}
+                                        projectNiche={project.niche}
+                                        competitors={compSd}
+                                      />
+                                    </>
                                   );
-                                })}
-                              </div>
+                                })()}
 
-                              {/* Technical & Content Summary */}
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div className="bg-muted/30 rounded-lg p-3 space-y-2">
-                                  <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                                    <Shield className="h-3.5 w-3.5" /> Técnico
-                                  </p>
-                                  <div className="flex flex-wrap gap-1.5">
-                                    <Badge variant={ha.technical.hasHttps ? "default" : "destructive"} className="text-[10px]">
-                                      {ha.technical.hasHttps ? "✓ HTTPS" : "✗ Sem HTTPS"}
-                                    </Badge>
-                                    <Badge variant={ha.technical.hasViewport ? "default" : "destructive"} className="text-[10px]">
-                                      {ha.technical.hasViewport ? "✓ Mobile" : "✗ Sem viewport"}
-                                    </Badge>
-                                    <Badge variant={ha.technical.hasAnalytics ? "default" : "secondary"} className="text-[10px]">
-                                      {ha.technical.hasAnalytics ? "✓ Analytics" : "✗ Sem analytics"}
-                                    </Badge>
-                                    <Badge variant={ha.technical.hasStructuredData ? "default" : "secondary"} className="text-[10px]">
-                                      {ha.technical.hasStructuredData ? "✓ Schema" : "✗ Sem schema"}
-                                    </Badge>
-                                    <Badge variant="outline" className="text-[10px]">
-                                      ⏱ {ha.technical.loadTimeEstimate}
-                                    </Badge>
+                                {/* AI Analysis Status / Results */}
+                                {project.status === "completed" && !aiResults[project.id] && !project.ai_analysis && aiAnalyzing !== project.id && (
+                                  <div className={`rounded-lg border border-dashed p-3 flex items-center gap-3 ${canAiAnalysis ? "border-primary/30 bg-primary/5" : "border-amber-500/30 bg-amber-500/5"}`}>
+                                    <Sparkles className={`h-5 w-5 flex-shrink-0 ${canAiAnalysis ? "text-primary" : "text-amber-500"}`} />
+                                    <div className="flex-1">
+                                      <p className="text-xs font-medium text-foreground">
+                                        {canAiAnalysis ? "Análise por IA disponível" : "Análise por IA indisponível no seu plano"}
+                                      </p>
+                                      <p className="text-[11px] text-muted-foreground">
+                                        {!canAiAnalysis
+                                          ? "Faça upgrade para o plano Professional para desbloquear a análise por IA."
+                                          : hasAiKeys
+                                            ? "Clique em \"Analisar com IA\" para obter insights semânticos aprofundados."
+                                            : "Configure suas API keys em Configurações → Integrações de IA para habilitar."}
+                                      </p>
+                                    </div>
+                                    {canAiAnalysis && !hasAiKeys && (
+                                      <Button size="sm" variant="outline" className="text-xs flex-shrink-0" onClick={() => window.location.href = "/settings"}>
+                                        Configurar
+                                      </Button>
+                                    )}
                                   </div>
-                                </div>
-                                <div className="bg-muted/30 rounded-lg p-3 space-y-2">
-                                  <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                                    <FileText className="h-3.5 w-3.5" /> Conteúdo
-                                  </p>
-                                  <div className="flex flex-wrap gap-1.5">
-                                    <Badge variant="outline" className="text-[10px]">
-                                      {ha.content.wordCount} palavras
-                                    </Badge>
-                                    <Badge variant="outline" className="text-[10px]">
-                                      {ha.content.ctaCount} CTAs
-                                    </Badge>
-                                    <Badge variant="outline" className="text-[10px]">
-                                      {ha.content.formCount} formulários
-                                    </Badge>
-                                    <Badge variant="outline" className="text-[10px]">
-                                      {ha.content.imageCount} imagens
-                                    </Badge>
-                                    {ha.content.hasVideo && <Badge className="text-[10px]">✓ Vídeo</Badge>}
-                                    {ha.content.hasSocialProof && <Badge className="text-[10px]">✓ Prova social</Badge>}
-                                    {ha.content.hasPricing && <Badge className="text-[10px]">✓ Preços</Badge>}
-                                    {ha.content.hasFAQ && <Badge className="text-[10px]">✓ FAQ</Badge>}
-                                  </div>
-                                </div>
-                              </div>
+                                )}
 
-                              {/* Meta Info */}
-                              {(ha.meta.title || ha.meta.description) && (
-                                <div className="bg-muted/30 rounded-lg p-3 space-y-1">
-                                  {ha.meta.title && (
-                                    <p className="text-xs"><span className="font-medium text-foreground">Título:</span> <span className="text-muted-foreground">{ha.meta.title}</span></p>
-                                  )}
-                                  {ha.meta.description && (
-                                    <p className="text-xs"><span className="font-medium text-foreground">Descrição:</span> <span className="text-muted-foreground">{ha.meta.description.substring(0, 160)}</span></p>
-                                  )}
-                                  {ha.content.h1.length > 0 && (
-                                    <p className="text-xs"><span className="font-medium text-foreground">H1:</span> <span className="text-muted-foreground">{ha.content.h1[0]}</span></p>
-                                  )}
-                                </div>
-                              )}
-
-                              {/* Structured Data & HTML Snapshot (unified: principal + competitors) */}
-                              {(() => {
-                                // Build structured data from Edge Function response, DB columns, or synthesize from meta
-                                const sd = ha.structuredData || (project as any).structured_data;
-                                const hs = ha.htmlSnapshot || (project as any).html_snapshot;
-                                // If no structured data from Edge Function, synthesize OG from existing meta
-                                const fallbackSd = !sd && ha.meta ? {
-                                  jsonLd: [],
-                                  microdata: [],
-                                  openGraph: Object.fromEntries(
-                                    [
-                                      ha.meta.ogTitle && ["og:title", ha.meta.ogTitle],
-                                      ha.meta.ogDescription && ["og:description", ha.meta.ogDescription],
-                                      ha.meta.ogImage && ["og:image", ha.meta.ogImage],
-                                      ha.meta.language && ["og:locale", ha.meta.language],
-                                    ].filter(Boolean) as [string, string][]
-                                  ),
-                                  twitterCard: {},
-                                } : null;
-                                const finalSd = sd || fallbackSd;
-                                const compSd = competitorSdMap[project.id] || [];
-                                return (
-                                  <>
-                                    <StructuredDataViewer
-                                      structuredData={finalSd}
-                                      htmlSnapshot={hs}
-                                      htmlSnapshotAt={(project as any).html_snapshot_at}
-                                      competitors={compSd}
-                                      projectName={project.name}
-                                    />
-                                    <StructuredDataGenerator
-                                      projectStructuredData={finalSd}
-                                      projectMeta={ha.meta}
-                                      projectUrl={project.url}
-                                      projectName={project.name}
-                                      projectNiche={project.niche}
-                                      competitors={compSd}
-                                    />
-                                  </>
-                                );
-                              })()}
-
-                              {/* AI Analysis Status / Results */}
-                              {project.status === "completed" && !aiResults[project.id] && !project.ai_analysis && aiAnalyzing !== project.id && (
-                                <div className={`rounded-lg border border-dashed p-3 flex items-center gap-3 ${canAiAnalysis ? "border-primary/30 bg-primary/5" : "border-amber-500/30 bg-amber-500/5"}`}>
-                                  <Sparkles className={`h-5 w-5 flex-shrink-0 ${canAiAnalysis ? "text-primary" : "text-amber-500"}`} />
-                                  <div className="flex-1">
-                                    <p className="text-xs font-medium text-foreground">
-                                      {canAiAnalysis ? "Análise por IA disponível" : "Análise por IA indisponível no seu plano"}
-                                    </p>
-                                    <p className="text-[11px] text-muted-foreground">
-                                      {!canAiAnalysis
-                                        ? "Faça upgrade para o plano Professional para desbloquear a análise por IA."
-                                        : hasAiKeys
-                                          ? "Clique em \"Analisar com IA\" para obter insights semânticos aprofundados."
-                                          : "Configure suas API keys em Configurações → Integrações de IA para habilitar."}
-                                    </p>
+                                {/* AI Analyzing Loading — Lab animation */}
+                                {aiAnalyzing === project.id && (
+                                  <div className="rounded-lg border border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 p-4 flex items-center gap-4">
+                                    <div className="relative h-10 w-10 flex items-center justify-center flex-shrink-0">
+                                      <div className="absolute inset-0 rounded-full border-2 border-primary/20"></div>
+                                      <span className="absolute h-2 w-2 rounded-full bg-primary animate-lab-bubble"></span>
+                                      <span className="absolute h-1.5 w-1.5 rounded-full bg-primary/70 animate-lab-bubble-delay -translate-x-1.5"></span>
+                                      <span className="absolute h-1.5 w-1.5 rounded-full bg-primary/50 animate-lab-bubble-delay-2 translate-x-1.5"></span>
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="text-sm font-medium text-foreground">Preparando análise semântica...</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        Processando com {selectedAiModel.split("::")[1] ? (AI_MODEL_LABELS[selectedAiModel.split("::")[1]] || selectedAiModel.split("::")[1]) : "IA"}. Isso pode levar até 30 segundos.
+                                      </p>
+                                    </div>
                                   </div>
-                                  {canAiAnalysis && !hasAiKeys && (
-                                    <Button size="sm" variant="outline" className="text-xs flex-shrink-0" onClick={() => window.location.href = "/settings"}>
-                                      Configurar
-                                    </Button>
-                                  )}
-                                </div>
-                              )}
-
-                              {/* AI Analyzing Loading — Lab animation */}
-                              {aiAnalyzing === project.id && (
-                                <div className="rounded-lg border border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 p-4 flex items-center gap-4">
-                                  <div className="relative h-10 w-10 flex items-center justify-center flex-shrink-0">
-                                    <div className="absolute inset-0 rounded-full border-2 border-primary/20"></div>
-                                    <span className="absolute h-2 w-2 rounded-full bg-primary animate-lab-bubble"></span>
-                                    <span className="absolute h-1.5 w-1.5 rounded-full bg-primary/70 animate-lab-bubble-delay -translate-x-1.5"></span>
-                                    <span className="absolute h-1.5 w-1.5 rounded-full bg-primary/50 animate-lab-bubble-delay-2 translate-x-1.5"></span>
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="text-sm font-medium text-foreground">Preparando análise semântica...</p>
-                                    <p className="text-xs text-muted-foreground">
-                                      Processando com {selectedAiModel.split("::")[1] ? (AI_MODEL_LABELS[selectedAiModel.split("::")[1]] || selectedAiModel.split("::")[1]) : "IA"}. Isso pode levar até 30 segundos.
-                                    </p>
-                                  </div>
-                                </div>
-                              )}
-                            </>)}
+                                )}
+                              </>)}
                             </div>
                           );
                         })()}
@@ -1257,105 +1396,105 @@ export default function Projects() {
                               </div>
 
                               {!isSectionCollapsed(project.id, "ai") && (<>
-                              {/* Summary */}
-                              <div className="bg-muted/40 rounded-lg p-3">
-                                <p className="text-sm text-foreground leading-relaxed">{ai.summary}</p>
-                              </div>
+                                {/* Summary */}
+                                <div className="bg-muted/40 rounded-lg p-3">
+                                  <p className="text-sm text-foreground leading-relaxed">{ai.summary}</p>
+                                </div>
 
-                              {/* Investment Readiness */}
-                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <div className="bg-muted/30 rounded-lg p-3 text-center">
-                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Prontidão p/ Investimento</p>
-                                  <p className={`text-2xl font-bold ${readinessColor}`}>{ai.investmentReadiness.score}</p>
-                                  <Badge className={`mt-1 text-[10px] ${ai.investmentReadiness.level === "high" ? "bg-green-500" : ai.investmentReadiness.level === "medium" ? "bg-yellow-500" : "bg-red-500"}`}>
-                                    {ai.investmentReadiness.level === "high" ? "Alto" : ai.investmentReadiness.level === "medium" ? "Médio" : "Baixo"}
-                                  </Badge>
+                                {/* Investment Readiness */}
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                  <div className="bg-muted/30 rounded-lg p-3 text-center">
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Prontidão p/ Investimento</p>
+                                    <p className={`text-2xl font-bold ${readinessColor}`}>{ai.investmentReadiness.score}</p>
+                                    <Badge className={`mt-1 text-[10px] ${ai.investmentReadiness.level === "high" ? "bg-green-500" : ai.investmentReadiness.level === "medium" ? "bg-yellow-500" : "bg-red-500"}`}>
+                                      {ai.investmentReadiness.level === "high" ? "Alto" : ai.investmentReadiness.level === "medium" ? "Médio" : "Baixo"}
+                                    </Badge>
+                                  </div>
+                                  <div className="bg-muted/30 rounded-lg p-3 sm:col-span-2">
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Justificativa</p>
+                                    <p className="text-xs text-foreground leading-relaxed">{ai.investmentReadiness.justification}</p>
+                                  </div>
                                 </div>
-                                <div className="bg-muted/30 rounded-lg p-3 sm:col-span-2">
-                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Justificativa</p>
-                                  <p className="text-xs text-foreground leading-relaxed">{ai.investmentReadiness.justification}</p>
-                                </div>
-                              </div>
 
-                              {/* SWOT-like: Strengths, Weaknesses, Opportunities */}
-                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <div className="bg-green-500/5 border border-green-500/20 rounded-lg p-3 space-y-1.5">
-                                  <p className="text-xs font-semibold text-green-700 dark:text-green-400">Pontos Fortes</p>
-                                  {ai.strengths.map((s, i) => (
-                                    <p key={i} className="text-[11px] text-foreground flex items-start gap-1.5">
-                                      <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span> {s}
-                                    </p>
-                                  ))}
+                                {/* SWOT-like: Strengths, Weaknesses, Opportunities */}
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                  <div className="bg-green-500/5 border border-green-500/20 rounded-lg p-3 space-y-1.5">
+                                    <p className="text-xs font-semibold text-green-700 dark:text-green-400">Pontos Fortes</p>
+                                    {ai.strengths.map((s, i) => (
+                                      <p key={i} className="text-[11px] text-foreground flex items-start gap-1.5">
+                                        <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span> {s}
+                                      </p>
+                                    ))}
+                                  </div>
+                                  <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3 space-y-1.5">
+                                    <p className="text-xs font-semibold text-red-700 dark:text-red-400">Fraquezas</p>
+                                    {ai.weaknesses.map((w, i) => (
+                                      <p key={i} className="text-[11px] text-foreground flex items-start gap-1.5">
+                                        <span className="text-red-500 mt-0.5 flex-shrink-0">✗</span> {w}
+                                      </p>
+                                    ))}
+                                  </div>
+                                  <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-3 space-y-1.5">
+                                    <p className="text-xs font-semibold text-blue-700 dark:text-blue-400">Oportunidades</p>
+                                    {ai.opportunities.map((o, i) => (
+                                      <p key={i} className="text-[11px] text-foreground flex items-start gap-1.5">
+                                        <span className="text-blue-500 mt-0.5 flex-shrink-0">→</span> {o}
+                                      </p>
+                                    ))}
+                                  </div>
                                 </div>
-                                <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3 space-y-1.5">
-                                  <p className="text-xs font-semibold text-red-700 dark:text-red-400">Fraquezas</p>
-                                  {ai.weaknesses.map((w, i) => (
-                                    <p key={i} className="text-[11px] text-foreground flex items-start gap-1.5">
-                                      <span className="text-red-500 mt-0.5 flex-shrink-0">✗</span> {w}
-                                    </p>
-                                  ))}
-                                </div>
-                                <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-3 space-y-1.5">
-                                  <p className="text-xs font-semibold text-blue-700 dark:text-blue-400">Oportunidades</p>
-                                  {ai.opportunities.map((o, i) => (
-                                    <p key={i} className="text-[11px] text-foreground flex items-start gap-1.5">
-                                      <span className="text-blue-500 mt-0.5 flex-shrink-0">→</span> {o}
-                                    </p>
-                                  ))}
-                                </div>
-                              </div>
 
-                              {/* Channel Recommendations */}
-                              <div className="space-y-2">
-                                <p className="text-xs font-semibold text-foreground">Recomendações por Canal</p>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                  {ai.channelRecommendations.map((ch, i) => {
-                                    const vc = verdictConfig[ch.verdict] || verdictConfig.caution;
-                                    return (
-                                      <div key={i} className="bg-muted/30 rounded-lg p-3 space-y-1.5">
-                                        <div className="flex items-center justify-between">
-                                          <p className="text-xs font-semibold text-foreground">{ch.channel}</p>
-                                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${vc.color}`}>{vc.label}</span>
-                                        </div>
-                                        <p className="text-[11px] text-muted-foreground">{ch.reasoning}</p>
-                                        {ch.suggestedBudgetAllocation && (
-                                          <p className="text-[10px] text-primary font-medium">Budget: {ch.suggestedBudgetAllocation}</p>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-
-                              {/* Recommendations */}
-                              <div className="space-y-2">
-                                <p className="text-xs font-semibold text-foreground">Recomendações Estratégicas</p>
+                                {/* Channel Recommendations */}
                                 <div className="space-y-2">
-                                  {ai.recommendations.map((rec, i) => {
-                                    const pc = priorityConfig[rec.priority] || priorityConfig.medium;
-                                    return (
-                                      <div key={i} className="bg-muted/30 rounded-lg p-3 space-y-1">
-                                        <div className="flex items-center gap-2">
-                                          <span className={`h-2 w-2 rounded-full ${pc.color} flex-shrink-0`}></span>
-                                          <p className="text-xs font-semibold text-foreground">{rec.title}</p>
-                                          <Badge variant="outline" className="text-[9px] ml-auto">{rec.category}</Badge>
+                                  <p className="text-xs font-semibold text-foreground">Recomendações por Canal</p>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {ai.channelRecommendations.map((ch, i) => {
+                                      const vc = verdictConfig[ch.verdict] || verdictConfig.caution;
+                                      return (
+                                        <div key={i} className="bg-muted/30 rounded-lg p-3 space-y-1.5">
+                                          <div className="flex items-center justify-between">
+                                            <p className="text-xs font-semibold text-foreground">{ch.channel}</p>
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${vc.color}`}>{vc.label}</span>
+                                          </div>
+                                          <p className="text-[11px] text-muted-foreground">{ch.reasoning}</p>
+                                          {ch.suggestedBudgetAllocation && (
+                                            <p className="text-[10px] text-primary font-medium">Budget: {ch.suggestedBudgetAllocation}</p>
+                                          )}
                                         </div>
-                                        <p className="text-[11px] text-muted-foreground pl-4">{rec.description}</p>
-                                        <p className="text-[10px] text-primary font-medium pl-4">Impacto: {rec.expectedImpact}</p>
-                                      </div>
-                                    );
-                                  })}
+                                      );
+                                    })}
+                                  </div>
                                 </div>
-                              </div>
 
-                              {/* Competitive Position */}
-                              {ai.competitivePosition && (
-                                <div className="bg-muted/30 rounded-lg p-3">
-                                  <p className="text-xs font-semibold text-foreground mb-1">Posição Competitiva</p>
-                                  <p className="text-[11px] text-muted-foreground leading-relaxed">{ai.competitivePosition}</p>
+                                {/* Recommendations */}
+                                <div className="space-y-2">
+                                  <p className="text-xs font-semibold text-foreground">Recomendações Estratégicas</p>
+                                  <div className="space-y-2">
+                                    {ai.recommendations.map((rec, i) => {
+                                      const pc = priorityConfig[rec.priority] || priorityConfig.medium;
+                                      return (
+                                        <div key={i} className="bg-muted/30 rounded-lg p-3 space-y-1">
+                                          <div className="flex items-center gap-2">
+                                            <span className={`h-2 w-2 rounded-full ${pc.color} flex-shrink-0`}></span>
+                                            <p className="text-xs font-semibold text-foreground">{rec.title}</p>
+                                            <Badge variant="outline" className="text-[9px] ml-auto">{rec.category}</Badge>
+                                          </div>
+                                          <p className="text-[11px] text-muted-foreground pl-4">{rec.description}</p>
+                                          <p className="text-[10px] text-primary font-medium pl-4">Impacto: {rec.expectedImpact}</p>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
                                 </div>
-                              )}
-                            </>)}
+
+                                {/* Competitive Position */}
+                                {ai.competitivePosition && (
+                                  <div className="bg-muted/30 rounded-lg p-3">
+                                    <p className="text-xs font-semibold text-foreground mb-1">Posição Competitiva</p>
+                                    <p className="text-[11px] text-muted-foreground leading-relaxed">{ai.competitivePosition}</p>
+                                  </div>
+                                )}
+                              </>)}
                             </div>
                           );
                         })()}
@@ -1372,25 +1511,24 @@ export default function Projects() {
                             <h3 className="text-sm sm:text-base font-semibold text-foreground">Visão Geral do Projeto</h3>
                           </button>
                           {!isSectionCollapsed(project.id, "overview") && (
-                          <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                            <div className="bg-muted/50 rounded-xl p-3 sm:p-4 text-center">
-                              <p className="text-[10px] sm:text-sm text-muted-foreground mb-1">Score</p>
-                              <p className={`text-xl sm:text-3xl font-bold ${
-                                project.score >= 70 ? "text-green-600" : project.score >= 50 ? "text-yellow-600" : "text-red-500"
-                              }`}>{project.score}</p>
-                              <p className="text-[10px] text-muted-foreground mt-0.5">de 100</p>
+                            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                              <div className="bg-muted/50 rounded-xl p-3 sm:p-4 text-center">
+                                <p className="text-[10px] sm:text-sm text-muted-foreground mb-1">Score</p>
+                                <p className={`text-xl sm:text-3xl font-bold ${project.score >= 70 ? "text-green-600" : project.score >= 50 ? "text-yellow-600" : "text-red-500"
+                                  }`}>{project.score}</p>
+                                <p className="text-[10px] text-muted-foreground mt-0.5">de 100</p>
+                              </div>
+                              <div className="bg-muted/50 rounded-xl p-3 sm:p-4 text-center">
+                                <p className="text-[10px] sm:text-sm text-muted-foreground mb-1">Status</p>
+                                <p className="text-sm sm:text-lg font-semibold text-foreground capitalize">{project.status === "completed" ? "Concluído" : project.status === "analyzing" ? "Analisando" : "Pendente"}</p>
+                              </div>
+                              <div className="bg-muted/50 rounded-xl p-3 sm:p-4 text-center">
+                                <p className="text-[10px] sm:text-sm text-muted-foreground mb-1">Análise</p>
+                                <p className="text-sm sm:text-lg font-semibold text-foreground">
+                                  {project.last_update ? new Date(project.last_update).toLocaleDateString("pt-BR", { day: "numeric", month: "short" }) : "—"}
+                                </p>
+                              </div>
                             </div>
-                            <div className="bg-muted/50 rounded-xl p-3 sm:p-4 text-center">
-                              <p className="text-[10px] sm:text-sm text-muted-foreground mb-1">Status</p>
-                              <p className="text-sm sm:text-lg font-semibold text-foreground capitalize">{project.status === "completed" ? "Concluído" : project.status === "analyzing" ? "Analisando" : "Pendente"}</p>
-                            </div>
-                            <div className="bg-muted/50 rounded-xl p-3 sm:p-4 text-center">
-                              <p className="text-[10px] sm:text-sm text-muted-foreground mb-1">Análise</p>
-                              <p className="text-sm sm:text-lg font-semibold text-foreground">
-                                {project.last_update ? new Date(project.last_update).toLocaleDateString("pt-BR", { day: "numeric", month: "short" }) : "—"}
-                              </p>
-                            </div>
-                          </div>
                           )}
                         </div>
 
@@ -1414,75 +1552,74 @@ export default function Projects() {
                             )}
                           </div>
                           {!isSectionCollapsed(project.id, "channels") && (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {channelList.map((channel) => {
-                              const existing = scores.find((item) => item.channel === channel) || { channel, score: 0 } as ChannelScore;
-                              const channelNames: Record<string, string> = { google: "Google Ads", meta: "Meta Ads", linkedin: "LinkedIn Ads", tiktok: "TikTok Ads" };
-                              const channelLogos: Record<string, string> = { google: "/google-ads.svg", meta: "/meta-ads.svg", linkedin: "/linkedin-ads.svg", tiktok: "/tiktok-ads.svg" };
-                              const channelColors: Record<string, string> = { google: "border-blue-500/30 bg-blue-500/5", meta: "border-indigo-500/30 bg-indigo-500/5", linkedin: "border-cyan-500/30 bg-cyan-500/5", tiktok: "border-zinc-500/30 bg-zinc-500/5" };
-                              const scoreColor = existing.score >= 70 ? "text-green-600" : existing.score >= 50 ? "text-yellow-600" : "text-red-500";
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {channelList.map((channel) => {
+                                const existing = scores.find((item) => item.channel === channel) || { channel, score: 0 } as ChannelScore;
+                                const channelNames: Record<string, string> = { google: "Google Ads", meta: "Meta Ads", linkedin: "LinkedIn Ads", tiktok: "TikTok Ads" };
+                                const channelLogos: Record<string, string> = { google: "/google-ads.svg", meta: "/meta-ads.svg", linkedin: "/linkedin-ads.svg", tiktok: "/tiktok-ads.svg" };
+                                const channelColors: Record<string, string> = { google: "border-blue-500/30 bg-blue-500/5", meta: "border-indigo-500/30 bg-indigo-500/5", linkedin: "border-cyan-500/30 bg-cyan-500/5", tiktok: "border-zinc-500/30 bg-zinc-500/5" };
+                                const scoreColor = existing.score >= 70 ? "text-green-600" : existing.score >= 50 ? "text-yellow-600" : "text-red-500";
 
-                              return (
-                                <div key={channel} className={`rounded-xl border p-3 sm:p-4 space-y-3 ${channelColors[channel]}`}>
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center bg-white dark:bg-gray-900 border border-border/50 p-1 sm:p-1.5 flex-shrink-0">
-                                        <img src={channelLogos[channel]} alt={channelNames[channel]} className={`w-full h-full object-contain ${channel === "tiktok" ? "dark:brightness-0 dark:invert" : ""}`} />
+                                return (
+                                  <div key={channel} className={`rounded-xl border p-3 sm:p-4 space-y-3 ${channelColors[channel]}`}>
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center bg-white dark:bg-gray-900 border border-border/50 p-1 sm:p-1.5 flex-shrink-0">
+                                          <img src={channelLogos[channel]} alt={channelNames[channel]} className={`w-full h-full object-contain ${channel === "tiktok" ? "dark:brightness-0 dark:invert" : ""}`} />
+                                        </div>
+                                        <h4 className="text-sm sm:text-base font-semibold text-foreground">{channelNames[channel]}</h4>
                                       </div>
-                                      <h4 className="text-sm sm:text-base font-semibold text-foreground">{channelNames[channel]}</h4>
+                                      <span className={`text-xl sm:text-2xl font-bold ${scoreColor}`}>{existing.score}</span>
                                     </div>
-                                    <span className={`text-xl sm:text-2xl font-bold ${scoreColor}`}>{existing.score}</span>
-                                  </div>
-                                  {existing.is_recommended !== undefined && (
-                                    <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${
-                                      existing.is_recommended ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-500"
-                                    }`}>
-                                      {existing.is_recommended ? "✓ Recomendado" : "✗ Não recomendado"}
-                                    </span>
-                                  )}
-                                  {existing.objective && (
-                                    <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Objetivo:</span> {existing.objective}</p>
-                                  )}
-                                  {existing.funnel_role && (
-                                    <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Funil:</span> {existing.funnel_role}</p>
-                                  )}
-                                  {existing.risks && existing.risks.length > 0 && (
-                                    <div>
-                                      <p className="text-xs font-medium text-foreground mb-1">Riscos:</p>
-                                      <ul className="space-y-1">
-                                        {existing.risks.map((risk, i) => (
-                                          <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                                            <span className="text-red-400 mt-0.5 flex-shrink-0">•</span>
-                                            <span>{risk}</span>
-                                          </li>
-                                        ))}
-                                      </ul>
+                                    {existing.is_recommended !== undefined && (
+                                      <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${existing.is_recommended ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-500"
+                                        }`}>
+                                        {existing.is_recommended ? "✓ Recomendado" : "✗ Não recomendado"}
+                                      </span>
+                                    )}
+                                    {existing.objective && (
+                                      <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Objetivo:</span> {existing.objective}</p>
+                                    )}
+                                    {existing.funnel_role && (
+                                      <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Funil:</span> {existing.funnel_role}</p>
+                                    )}
+                                    {existing.risks && existing.risks.length > 0 && (
+                                      <div>
+                                        <p className="text-xs font-medium text-foreground mb-1">Riscos:</p>
+                                        <ul className="space-y-1">
+                                          {existing.risks.map((risk, i) => (
+                                            <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                                              <span className="text-red-400 mt-0.5 flex-shrink-0">•</span>
+                                              <span>{risk}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    {/* Editable score */}
+                                    <div className="pt-2 border-t border-border/50">
+                                      <label className="text-xs text-muted-foreground">Ajustar score:</label>
+                                      <Input
+                                        type="number"
+                                        min={0}
+                                        max={100}
+                                        value={existing.score}
+                                        className="h-8 mt-1"
+                                        onChange={(e) => {
+                                          const value = Number(e.target.value);
+                                          setChannelScores((prev) => {
+                                            const current = prev[project.id] || [];
+                                            const updated = current.filter((item) => item.channel !== channel);
+                                            updated.push({ ...existing, channel, score: value });
+                                            return { ...prev, [project.id]: updated };
+                                          });
+                                        }}
+                                      />
                                     </div>
-                                  )}
-                                  {/* Editable score */}
-                                  <div className="pt-2 border-t border-border/50">
-                                    <label className="text-xs text-muted-foreground">Ajustar score:</label>
-                                    <Input
-                                      type="number"
-                                      min={0}
-                                      max={100}
-                                      value={existing.score}
-                                      className="h-8 mt-1"
-                                      onChange={(e) => {
-                                        const value = Number(e.target.value);
-                                        setChannelScores((prev) => {
-                                          const current = prev[project.id] || [];
-                                          const updated = current.filter((item) => item.channel !== channel);
-                                          updated.push({ ...existing, channel, score: value });
-                                          return { ...prev, [project.id]: updated };
-                                        });
-                                      }}
-                                    />
                                   </div>
-                                </div>
-                              );
-                            })}
-                          </div>
+                                );
+                              })}
+                            </div>
                           )}
                         </div>
 
@@ -1497,111 +1634,112 @@ export default function Projects() {
                             <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
                             <h3 className="text-sm sm:text-base font-semibold text-foreground">Insights ({projectInsights.length})</h3>
                           </button>
-                          
-                          {!isSectionCollapsed(project.id, "insights") && (<>
-                          {projectInsights.length === 0 ? (
-                            <p className="text-sm text-muted-foreground py-4 text-center">Nenhum insight gerado. Clique em "Reanalisar URL" para gerar insights automáticos.</p>
-                          ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              {projectInsights.map((insight) => {
-                                const typeConfig: Record<string, { label: string; color: string; icon: string }> = {
-                                  warning: { label: "Alerta", color: "border-yellow-500/30 bg-yellow-500/5", icon: "⚠️" },
-                                  opportunity: { label: "Oportunidade", color: "border-green-500/30 bg-green-500/5", icon: "💡" },
-                                  improvement: { label: "Melhoria", color: "border-blue-500/30 bg-blue-500/5", icon: "🔧" },
-                                };
-                                const config = typeConfig[insight.type] || typeConfig.improvement;
 
-                                return editingInsightId === insight.id ? (
-                                  <div key={insight.id} className="border border-border rounded-lg p-3 space-y-2">
-                                    <select
-                                      className="h-8 w-full rounded-md border border-input bg-background px-2 text-sm"
-                                      value={editingInsight.type || insight.type}
-                                      onChange={(e) => setEditingInsight((prev) => ({ ...prev, type: e.target.value as Insight["type"] }))}
-                                    >
-                                      <option value="warning">Alerta</option>
-                                      <option value="opportunity">Oportunidade</option>
-                                      <option value="improvement">Melhoria</option>
-                                    </select>
-                                    <Input placeholder="Título" value={editingInsight.title || ""} onChange={(e) => setEditingInsight((prev) => ({ ...prev, title: e.target.value }))} className="h-8" />
-                                    <Input placeholder="Descrição" value={editingInsight.description || ""} onChange={(e) => setEditingInsight((prev) => ({ ...prev, description: e.target.value }))} className="h-8" />
-                                    <Input placeholder="Ação (opcional)" value={editingInsight.action || ""} onChange={(e) => setEditingInsight((prev) => ({ ...prev, action: e.target.value }))} className="h-8" />
-                                    <div className="flex gap-2">
-                                      <Button size="sm" onClick={() => handleInsightUpdate(project.id, insight.id)}>Salvar</Button>
-                                      <Button size="sm" variant="outline" onClick={cancelEditInsight}>Cancelar</Button>
+                          {!isSectionCollapsed(project.id, "insights") && (<>
+                            {projectInsights.length === 0 ? (
+                              <p className="text-sm text-muted-foreground py-4 text-center">Nenhum insight gerado. Clique em "Reanalisar URL" para gerar insights automáticos.</p>
+                            ) : (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {projectInsights.map((insight) => {
+                                  const typeConfig: Record<string, { label: string; color: string; icon: string }> = {
+                                    warning: { label: "Alerta", color: "border-yellow-500/30 bg-yellow-500/5", icon: "⚠️" },
+                                    opportunity: { label: "Oportunidade", color: "border-green-500/30 bg-green-500/5", icon: "💡" },
+                                    improvement: { label: "Melhoria", color: "border-blue-500/30 bg-blue-500/5", icon: "🔧" },
+                                  };
+                                  const config = typeConfig[insight.type] || typeConfig.improvement;
+
+                                  return editingInsightId === insight.id ? (
+                                    <div key={insight.id} className="border border-border rounded-lg p-3 space-y-2">
+                                      <select
+                                        className="h-8 w-full rounded-md border border-input bg-background px-2 text-sm"
+                                        value={editingInsight.type || insight.type}
+                                        onChange={(e) => setEditingInsight((prev) => ({ ...prev, type: e.target.value as Insight["type"] }))}
+                                      >
+                                        <option value="warning">Alerta</option>
+                                        <option value="opportunity">Oportunidade</option>
+                                        <option value="improvement">Melhoria</option>
+                                      </select>
+                                      <Input placeholder="Título" value={editingInsight.title || ""} onChange={(e) => setEditingInsight((prev) => ({ ...prev, title: e.target.value }))} className="h-8" />
+                                      <Input placeholder="Descrição" value={editingInsight.description || ""} onChange={(e) => setEditingInsight((prev) => ({ ...prev, description: e.target.value }))} className="h-8" />
+                                      <Input placeholder="Ação (opcional)" value={editingInsight.action || ""} onChange={(e) => setEditingInsight((prev) => ({ ...prev, action: e.target.value }))} className="h-8" />
+                                      <div className="flex gap-2">
+                                        <Button size="sm" onClick={() => handleInsightUpdate(project.id, insight.id)}>Salvar</Button>
+                                        <Button size="sm" variant="outline" onClick={cancelEditInsight}>Cancelar</Button>
+                                      </div>
                                     </div>
-                                  </div>
-                                ) : (
-                                  <div key={insight.id} className={`rounded-lg border p-3 space-y-2 ${config.color}`}>
-                                    <div className="flex items-start justify-between gap-2">
-                                      <div className="flex items-start gap-2 min-w-0">
-                                        <span className="text-base flex-shrink-0">{config.icon}</span>
-                                        <div className="min-w-0">
-                                          <span className="inline-block text-[10px] uppercase font-semibold tracking-wider text-muted-foreground mb-0.5">{config.label}</span>
-                                          <p className="text-sm font-medium text-foreground leading-tight">{insight.title}</p>
+                                  ) : (
+                                    <div key={insight.id} className={`rounded-lg border p-3 space-y-2 ${config.color}`}>
+                                      <div className="flex items-start justify-between gap-2">
+                                        <div className="flex items-start gap-2 min-w-0">
+                                          <span className="text-base flex-shrink-0">{config.icon}</span>
+                                          <div className="min-w-0">
+                                            <span className="inline-block text-[10px] uppercase font-semibold tracking-wider text-muted-foreground mb-0.5">{config.label}</span>
+                                            <p className="text-sm font-medium text-foreground leading-tight">{insight.title}</p>
+                                          </div>
+                                        </div>
+                                        <div className="flex gap-0.5 flex-shrink-0">
+                                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => startEditInsight(insight)}>
+                                            <span className="text-xs">✏️</span>
+                                          </Button>
+                                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleInsightDelete(project.id, insight.id)}>
+                                            <span className="text-xs">🗑️</span>
+                                          </Button>
                                         </div>
                                       </div>
-                                      <div className="flex gap-0.5 flex-shrink-0">
-                                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => startEditInsight(insight)}>
-                                          <span className="text-xs">✏️</span>
-                                        </Button>
-                                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleInsightDelete(project.id, insight.id)}>
-                                          <span className="text-xs">🗑️</span>
-                                        </Button>
-                                      </div>
+                                      <p className="text-xs text-muted-foreground leading-relaxed">{insight.description}</p>
+                                      {insight.action && (
+                                        <p className="text-xs text-primary font-medium">→ {insight.action}</p>
+                                      )}
                                     </div>
-                                    <p className="text-xs text-muted-foreground leading-relaxed">{insight.description}</p>
-                                    {insight.action && (
-                                      <p className="text-xs text-primary font-medium">→ {insight.action}</p>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
+                                  );
+                                })}
+                              </div>
+                            )}
 
-                          {/* Add insight form */}
-                          <details className="group">
-                            <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
-                              + Adicionar insight manualmente
-                            </summary>
-                            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                              <select
-                                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                                value={insightDraft.type}
-                                onChange={(e) => setInsightDraft((prev) => ({ ...prev, type: e.target.value as Insight["type"] }))}
-                              >
-                                <option value="warning">Alerta</option>
-                                <option value="opportunity">Oportunidade</option>
-                                <option value="improvement">Melhoria</option>
-                              </select>
-                              <Input placeholder="Título" value={insightDraft.title} onChange={(e) => setInsightDraft((prev) => ({ ...prev, title: e.target.value }))} />
-                              <Input placeholder="Descrição" value={insightDraft.description} onChange={(e) => setInsightDraft((prev) => ({ ...prev, description: e.target.value }))} />
-                              <Input placeholder="Ação (opcional)" value={insightDraft.action} onChange={(e) => setInsightDraft((prev) => ({ ...prev, action: e.target.value }))} />
-                            </div>
-                            <div className="flex justify-end mt-3">
-                              <Button size="sm" onClick={() => handleInsightCreate(project.id)}>Adicionar insight</Button>
-                            </div>
-                          </details>
+                            {/* Add insight form */}
+                            <details className="group">
+                              <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+                                + Adicionar insight manualmente
+                              </summary>
+                              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <select
+                                  className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                                  value={insightDraft.type}
+                                  onChange={(e) => setInsightDraft((prev) => ({ ...prev, type: e.target.value as Insight["type"] }))}
+                                >
+                                  <option value="warning">Alerta</option>
+                                  <option value="opportunity">Oportunidade</option>
+                                  <option value="improvement">Melhoria</option>
+                                </select>
+                                <Input placeholder="Título" value={insightDraft.title} onChange={(e) => setInsightDraft((prev) => ({ ...prev, title: e.target.value }))} />
+                                <Input placeholder="Descrição" value={insightDraft.description} onChange={(e) => setInsightDraft((prev) => ({ ...prev, description: e.target.value }))} />
+                                <Input placeholder="Ação (opcional)" value={insightDraft.action} onChange={(e) => setInsightDraft((prev) => ({ ...prev, action: e.target.value }))} />
+                              </div>
+                              <div className="flex justify-end mt-3">
+                                <Button size="sm" onClick={() => handleInsightCreate(project.id)}>Adicionar insight</Button>
+                              </div>
+                            </details>
                           </>)}
                         </div>
                       </div>
-                    )}
-                  </div>
-                  
-                  {/* AI Analysis Card - shown when analyzing this project */}
-                  {aiAnalyzing === project.id && (
-                    <AiAnalysisCard
-                      projectName={project.name}
-                      model={selectedAiModel.split("::")[1] || "IA"}
-                      onComplete={() => setAiAnalyzing(null)}
-                      onCancel={() => setAiAnalyzing(null)}
-                    />
-                  )}
-                </React.Fragment>
-                );
-              })}
-            </div>
-          </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                {/* AI Analysis Card - shown when analyzing this project */}
+                {aiAnalyzing === project.id && (
+                  <AiAnalysisCard
+                    projectName={project.name}
+                    model={selectedAiModel.split("::")[1] || "IA"}
+                    onComplete={() => setAiAnalyzing(null)}
+                    onCancel={() => setAiAnalyzing(null)}
+                  />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
     </DashboardLayout>
   );
 }
