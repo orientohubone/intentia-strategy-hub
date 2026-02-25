@@ -1,4 +1,5 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import injectBenchmarksRaw from "../../../documentacao/fine-tuning/benchmark/inject_clean.jsonl?raw";
 import { Link, useSearchParams } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -97,6 +98,13 @@ const formatNumber = (value: number) =>
 
 const formatPercent = (value: number) => `${(value || 0).toFixed(1)}%`;
 
+type InjectBenchmark = {
+  topic: string;
+  metric: string;
+  valor: string;
+  nota: string;
+};
+
 export default function OperationsLiveDashboard() {
   const { user, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
@@ -109,6 +117,7 @@ export default function OperationsLiveDashboard() {
   const [allocations, setAllocations] = useState<BudgetAllocationRow[]>([]);
   const [monthlyActuals, setMonthlyActuals] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
+  const [benchmarks, setBenchmarks] = useState<InjectBenchmark[]>([]);
 
   // Auto-start live mode if in public view (TV mode)
   const [isLive, setIsLive] = useState(() => !!searchParams.get("viewId"));
@@ -292,6 +301,19 @@ export default function OperationsLiveDashboard() {
   }, [projectId, user, viewId]);
 
   useEffect(() => {
+    try {
+      const parsed = injectBenchmarksRaw
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line && !line.startsWith("//"))
+        .map((line) => JSON.parse(line) as InjectBenchmark);
+      setBenchmarks(parsed);
+    } catch (err) {
+      console.error("Erro ao carregar benchmarks locais:", err);
+    }
+  }, []);
+
+  useEffect(() => {
     void loadDashboard();
   }, [loadDashboard]);
 
@@ -443,10 +465,36 @@ export default function OperationsLiveDashboard() {
   }, [allocations, campaigns]);
 
   const byChannel = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    const channelBudgetMap: Record<CampaignChannel, { planned: number; actual: number }> = {
+      google: { planned: 0, actual: 0 },
+      meta: { planned: 0, actual: 0 },
+      linkedin: { planned: 0, actual: 0 },
+      tiktok: { planned: 0, actual: 0 },
+    };
+
+    allocations
+      .filter((item) => item.month === currentMonth && item.year === currentYear)
+      .forEach((item) => {
+        const bucket = channelBudgetMap[item.channel];
+        if (!bucket) return;
+        bucket.planned += item.planned_budget || 0;
+        bucket.actual += item.actual_spent || 0;
+      });
+
     return CHANNEL_ORDER.map((channel) => {
       const rows = campaigns.filter((campaign) => campaign.channel === channel);
-      const budget = rows.reduce((sum, row) => sum + row.budget_total, 0);
-      const cost = rows.reduce((sum, row) => sum + row.budget_spent, 0);
+      const fallbackBudget = rows.reduce((sum, row) => sum + row.budget_total, 0);
+      const fallbackCost = rows.reduce((sum, row) => sum + row.budget_spent, 0);
+
+      const planned = channelBudgetMap[channel]?.planned || 0;
+      const actual = channelBudgetMap[channel]?.actual || 0;
+
+      const budget = planned > 0 ? planned : fallbackBudget;
+      const cost = actual > 0 ? actual : fallbackCost;
       return {
         channel,
         campaigns: rows.length,
@@ -455,7 +503,7 @@ export default function OperationsLiveDashboard() {
         pacing: budget > 0 ? (cost / budget) * 100 : 0,
       };
     }).filter((item) => item.campaigns > 0);
-  }, [campaigns, summariesByCampaign]);
+  }, [campaigns, allocations, summariesByCampaign]);
 
 
 
@@ -573,9 +621,9 @@ export default function OperationsLiveDashboard() {
           <TopCard icon={Eye} title="Impressões" value={formatNumber(totals.impressions)} helper={`CTR geral ${formatPercent(totals.ctr)}`} />
           <TopCard icon={MousePointerClick} title="Cliques" value={formatNumber(totals.clicks)} helper="Tráfego consolidado" />
           <TopCard icon={Target} title="Conversões" value={formatNumber(totals.conversions)} helper="Resultados totais" />
-          <TopCard icon={DollarSign} title="Custo Total" value={formatCurrency(totals.mediaCost)} helper={`Meta mês ${formatCurrency(currentMonthBudget.planned)}`} />
+          <TopCard icon={DollarSign} title="Custo Total" value={formatCurrency(totals.mediaCost)} helper={`Budget mês ${formatCurrency(currentMonthBudget.planned)}`} />
           <TopCard icon={TrendingUp} title="Receita" value={formatCurrency(totals.revenue)} helper={`ROAS ${totals.roas.toFixed(2)}x`} />
-          <TopCard icon={Wallet} title="Regressiva" value={formatCurrency(Math.max(currentMonthBudget.planned - currentMonthBudget.actual, 0))} helper="Falta para meta do mês" />
+          <TopCard icon={Wallet} title="Budget regressivo" value={formatCurrency(Math.max(currentMonthBudget.planned - currentMonthBudget.actual, 0))} helper="Falta para meta do mês" />
         </div>
 
         <SectionTitle title="Indicadores Marketing" colorClass="text-fuchsia-500" />
@@ -644,6 +692,31 @@ export default function OperationsLiveDashboard() {
               </CardContent>
             </Card>
           ))}
+          <Card className="border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 md:col-span-2 xl:col-span-2">
+            <CardContent className="pt-4 h-full flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-300">Saúde da Operação x Benchmark</p>
+                <Badge variant="outline" className="text-[11px]">Preview</Badge>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">Benchmarks carregados do dataset local (inject_clean.jsonl):</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                {benchmarks.slice(0, 8).map((item) => (
+                  <div key={`${item.metric}-${item.valor}`} className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/70 p-2">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="font-semibold truncate">{item.metric}</span>
+                      <Badge variant="secondary" className="text-[10px]">{item.topic}</Badge>
+                    </div>
+                    <p className="text-[11px] text-primary font-medium">{item.valor}</p>
+                    <p className="text-[11px] text-muted-foreground leading-snug mt-1">{item.nota}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-auto text-[11px] text-muted-foreground flex items-center justify-between">
+                <span>Fonte: inject_clean.jsonl (local)</span>
+                <span>Integração Vertex AI futura</span>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid grid-cols-1 2xl:grid-cols-2 gap-3">
@@ -958,10 +1031,13 @@ function buildCampaignMetricCards(
   }
 
   if (channel === "meta") {
+    // Meta: removendo card de conversão (mantido comentado para possível reuso futuro)
+    const metaCommon = common.filter((item) => item.label !== "Conversões");
     return [
-      ...common,
+      ...metaCommon,
       { label: "Alcance", value: formatNumber(metric.reach || 0) },
       { label: "Frequência", value: (metric.frequency || 0).toFixed(2) },
+      // { label: "Conversões", value: formatNumber(metric.conversions || 0) },
     ];
   }
 

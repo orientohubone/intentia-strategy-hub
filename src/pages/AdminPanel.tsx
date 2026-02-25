@@ -46,7 +46,6 @@ import {
   Plug,
   Gauge,
   MessageCircle,
-  Database,
   FileText,
   TrendingUp,
 } from "lucide-react";
@@ -70,7 +69,6 @@ import {
 } from "@/lib/adminApi";
 import AdminStatusTab from "@/components/AdminStatusTab";
 import AdminArchitectureTab from "@/components/AdminArchitectureTab";
-import DatabaseManagement from "@/components/admin/DatabaseManagement";
 
 // =====================================================
 // TYPES
@@ -108,6 +106,7 @@ interface TenantUser {
   analyses_used: number;
   monthly_analyses_limit: number;
   max_audiences: number;
+  max_projects: number;
 }
 
 interface UserFeatureOverride {
@@ -165,7 +164,7 @@ export default function AdminPanel() {
   const { admin, logout } = useAdminAuth();
 
   // State
-  const [activeTab, setActiveTab] = useState<"features" | "plans" | "users" | "status" | "reports" | "architecture" | "support" | "database">("features");
+  const [activeTab, setActiveTab] = useState<"features" | "plans" | "users" | "status" | "reports" | "architecture" | "support">("features");
   const [features, setFeatures] = useState<FeatureFlag[]>([]);
   const [planFeatures, setPlanFeatures] = useState<PlanFeature[]>([]);
   const [users, setUsers] = useState<TenantUser[]>([]);
@@ -462,7 +461,6 @@ export default function AdminPanel() {
             { key: "reports" as const, label: "Relatórios", icon: FileText },
             { key: "architecture" as const, label: "Arquitetura", icon: Layers },
             { key: "support" as const, label: "Atendimentos", icon: MessageCircle },
-            { key: "database" as const, label: "Database", icon: Database },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -480,7 +478,7 @@ export default function AdminPanel() {
         </div>
 
         {/* Search + Filters */}
-        {activeTab !== "architecture" && activeTab !== "database" && <div className="flex flex-col sm:flex-row gap-3">
+        {activeTab !== "architecture" && <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -1106,10 +1104,6 @@ export default function AdminPanel() {
 
             {activeTab === "support" && (
               <SupportDashboard />
-            )}
-
-            {activeTab === "database" && (
-              <DatabaseManagement />
             )}
 
             {activeTab === "users" && (
