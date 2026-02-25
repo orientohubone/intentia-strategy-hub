@@ -244,10 +244,20 @@ async function callGeminiApi(apiKey: string, model: string, prompt: string): Pro
 }
 
 async function callClaudeApi(apiKey: string, model: string, prompt: string): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+
+  if (!token) {
+    throw new Error("Authentication required to use Claude API");
+  }
+
   const maxTokens = getClaudeMaxTokens(model);
   const response = await fetch("/api/claude-proxy", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
     body: JSON.stringify({ apiKey, model, prompt, maxTokens }),
   });
 
