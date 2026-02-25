@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { create, getNumericDate } from "https://deno.land/x/djwt@v2.8/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -698,8 +699,20 @@ async function handleAdminLogin(supabase: any, params: any) {
     .update({ last_login_at: new Date().toISOString() })
     .eq("id", admin.id);
 
+  // Generate JWT
+  const jwt = await create(
+    { alg: "HS256", typ: "JWT" },
+    {
+      admin_id: admin.id,
+      role: admin.role,
+      exp: getNumericDate(60 * 60 * 4) // 4 hours
+    },
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
   return jsonResponse({
     success: true,
+    token: jwt,
     admin: {
       id: admin.id,
       cnpj: admin.cnpj,

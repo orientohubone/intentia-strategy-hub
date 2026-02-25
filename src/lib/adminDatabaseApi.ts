@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { getAdminSession } from '@/lib/adminAuth';
 
 // =====================================================
 // TYPES
@@ -33,9 +34,20 @@ export async function adminExecuteSQL(sqlPath: string): Promise<SQLExecutionResu
   try {
     const startTime = Date.now();
     
+    // Add session check
+    const session = getAdminSession();
+    if (!session) {
+      return {
+        success: false,
+        message: 'Admin not logged in',
+        error: 'No active admin session'
+      };
+    }
+
     // Chamar Edge Function para executar SQL
     const { data, error } = await supabase.functions.invoke('admin-execute-sql', {
-      body: { sqlPath }
+      headers: { 'x-admin-token': session.token },
+      body: { sqlPath, admin_id: session.admin.id }
     });
 
     const executionTime = Date.now() - startTime;
