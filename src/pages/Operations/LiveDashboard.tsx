@@ -165,6 +165,7 @@ export default function OperationsLiveDashboard() {
       // Only runs if user is logged in (normal flow)
       const currentUserId = user?.id || viewId; // Fallback just in case logic slips, but primarily user.id here
 
+      // 1. Prepare Independent Queries
       let campaignsQuery = (supabase as any)
         .from("campaigns")
         .select("id,name,channel,status,project_id,budget_total,budget_spent,projects!inner(name)")
@@ -174,9 +175,40 @@ export default function OperationsLiveDashboard() {
 
       if (projectId) campaignsQuery = campaignsQuery.eq("project_id", projectId);
 
-      const { data: campaignsData, error: campaignsError } = await campaignsQuery;
-      if (campaignsError) throw campaignsError;
+      let budgetQuery = (supabase as any)
+        .from("budget_allocations")
+        .select("id,month,year,planned_budget,actual_spent,channel")
+        .eq("user_id", currentUserId)
+        .order("year", { ascending: false })
+        .order("month", { ascending: false });
+      if (projectId) budgetQuery = budgetQuery.eq("project_id", projectId);
 
+      let viewersQuery = null;
+      if (user) {
+        const timeWindow = new Date(Date.now() - 600 * 1000).toISOString();
+        viewersQuery = (supabase as any)
+          .from("live_dashboard_access_logs")
+          .select("viewer_ip")
+          .eq("user_id", user.id)
+          .gte("created_at", timeWindow);
+      }
+
+      // 2. Execute Independent Queries in Parallel
+      const [campaignsResult, budgetResult, viewersResult] = await Promise.all([
+        campaignsQuery,
+        budgetQuery,
+        viewersQuery || Promise.resolve({ data: null, error: null })
+      ]);
+
+      if (campaignsResult.error) throw campaignsResult.error;
+      if (budgetResult.error) throw budgetResult.error;
+      if (viewersResult.error) throw viewersResult.error;
+
+      const campaignsData = campaignsResult.data;
+      const allocationsData = budgetResult.data;
+      const viewersData = viewersResult.data;
+
+      // 3. Process Group 1 results
       const mappedCampaigns: CampaignRow[] = (campaignsData || []).map((campaign: any) => ({
         id: campaign.id,
         name: campaign.name,
@@ -189,71 +221,6 @@ export default function OperationsLiveDashboard() {
       }));
       setCampaigns(mappedCampaigns);
 
-      const campaignIds = mappedCampaigns.map((campaign) => campaign.id);
-      const summaryMap: Record<string, MetricsSummaryRow> = {};
-      if (campaignIds.length > 0) {
-        const { data: summariesData, error: summariesError } = await (supabase as any)
-          .from("v_campaign_metrics_summary")
-          .select("campaign_id,total_entries,total_impressions,total_clicks,total_conversions,total_leads,total_cost,total_revenue,total_sessions,avg_ctr,avg_cpc,avg_cpa,calc_roas")
-          .eq("user_id", currentUserId)
-          .in("campaign_id", campaignIds);
-        if (summariesError) throw summariesError;
-        (summariesData || []).forEach((summary: MetricsSummaryRow) => {
-          summaryMap[summary.campaign_id] = summary;
-        });
-      }
-      setSummariesByCampaign(summaryMap);
-
-      const latestMap: Record<string, CampaignMetrics> = {};
-      if (campaignIds.length > 0) {
-        const { data: latestMetricsData, error: latestMetricsError } = await (supabase as any)
-          .from("campaign_metrics")
-          .select("id,campaign_id,user_id,period_start,period_end,impressions,clicks,ctr,cpc,cpm,conversions,cpa,roas,cost,revenue,reach,frequency,video_views,vtr,leads,cpl,quality_score,avg_position,search_impression_share,engagement_rate,sessions,first_visits,leads_month,mql_rate,sql_rate,clients_web,revenue_web,avg_ticket,google_ads_cost,cac_month,cost_per_conversion,ltv,cac_ltv_ratio,cac_ltv_benchmark,roi_accumulated,roi_period_months,notes,source,custom_metrics,created_at")
-          .eq("user_id", currentUserId)
-          .in("campaign_id", campaignIds)
-          .order("period_end", { ascending: false })
-          .order("created_at", { ascending: false });
-
-        if (latestMetricsError) throw latestMetricsError;
-
-        (latestMetricsData || []).forEach((metric: CampaignMetrics) => {
-          if (!latestMap[metric.campaign_id]) {
-            latestMap[metric.campaign_id] = metric;
-          }
-        });
-      }
-      setLatestMetricsByCampaign(latestMap);
-
-      // Buscando métricas históricas para evolucao mensal (Real)
-      const { data: historyMetricsData, error: historyMetricsError } = await (supabase as any)
-        .from("campaign_metrics")
-        .select("cost, period_end, created_at")
-        .eq("user_id", currentUserId)
-        .in("campaign_id", campaignIds)
-        .not("period_end", "is", null);
-
-      if (historyMetricsError) throw historyMetricsError;
-
-      const calculatedMonthlyActuals: Record<string, number> = {};
-      (historyMetricsData || []).forEach((metric: any) => {
-        const dateStr = metric.period_end || metric.created_at;
-        if (!dateStr) return;
-        const date = new Date(dateStr);
-        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-        calculatedMonthlyActuals[key] = (calculatedMonthlyActuals[key] || 0) + (Number(metric.cost) || 0);
-      });
-      setMonthlyActuals(calculatedMonthlyActuals);
-
-      let budgetQuery = (supabase as any)
-        .from("budget_allocations")
-        .select("id,month,year,planned_budget,actual_spent,channel")
-        .eq("user_id", currentUserId)
-        .order("year", { ascending: false })
-        .order("month", { ascending: false });
-      if (projectId) budgetQuery = budgetQuery.eq("project_id", projectId);
-
-      const { data: allocationsData, error: allocationsError } = await budgetQuery;
-      if (allocationsError) throw allocationsError;
       setAllocations((allocationsData || []).map((row: any) => ({
         id: row.id,
         month: row.month,
@@ -263,23 +230,67 @@ export default function OperationsLiveDashboard() {
         channel: row.channel,
       })));
 
-      // Fetch Active Viewers (Wider window)
-      // Fetch Active Viewers (Wider window)
-      if (user) {
-        // Widen window to 10 minutes to be extremely safe about timezones
-        const timeWindow = new Date(Date.now() - 600 * 1000).toISOString();
+      if (user && viewersData) {
+        const uniqueIPs = new Set(viewersData.map((v: any) => v.viewer_ip)).size;
+        setActiveViewers(uniqueIPs);
+      }
 
-        const { data: viewersData, error: viewersError } = await (supabase as any)
-          .from("live_dashboard_access_logs")
-          .select("viewer_ip")
-          .eq("user_id", user.id)
-          .gte("created_at", timeWindow);
+      const campaignIds = mappedCampaigns.map((campaign) => campaign.id);
 
-        if (!viewersError && viewersData) {
-          // Count unique IPs to avoid inflating count on page refreshes
-          const uniqueIPs = new Set(viewersData.map((v: any) => v.viewer_ip)).size;
-          setActiveViewers(uniqueIPs);
-        }
+      // 4. Group and Execute Dependent Queries in Parallel
+      if (campaignIds.length > 0) {
+        const [summariesResult, latestMetricsResult, historyMetricsResult] = await Promise.all([
+          (supabase as any)
+            .from("v_campaign_metrics_summary")
+            .select("campaign_id,total_entries,total_impressions,total_clicks,total_conversions,total_leads,total_cost,total_revenue,total_sessions,avg_ctr,avg_cpc,avg_cpa,calc_roas")
+            .eq("user_id", currentUserId)
+            .in("campaign_id", campaignIds),
+          (supabase as any)
+            .from("campaign_metrics")
+            .select("id,campaign_id,user_id,period_start,period_end,impressions,clicks,ctr,cpc,cpm,conversions,cpa,roas,cost,revenue,reach,frequency,video_views,vtr,leads,cpl,quality_score,avg_position,search_impression_share,engagement_rate,sessions,first_visits,leads_month,mql_rate,sql_rate,clients_web,revenue_web,avg_ticket,google_ads_cost,cac_month,cost_per_conversion,ltv,cac_ltv_ratio,cac_ltv_benchmark,roi_accumulated,roi_period_months,notes,source,custom_metrics,created_at")
+            .eq("user_id", currentUserId)
+            .in("campaign_id", campaignIds)
+            .order("period_end", { ascending: false })
+            .order("created_at", { ascending: false }),
+          (supabase as any)
+            .from("campaign_metrics")
+            .select("cost, period_end, created_at")
+            .eq("user_id", currentUserId)
+            .in("campaign_id", campaignIds)
+            .not("period_end", "is", null)
+        ]);
+
+        if (summariesResult.error) throw summariesResult.error;
+        if (latestMetricsResult.error) throw latestMetricsResult.error;
+        if (historyMetricsResult.error) throw historyMetricsResult.error;
+
+        const summaryMap: Record<string, MetricsSummaryRow> = {};
+        (summariesResult.data || []).forEach((summary: MetricsSummaryRow) => {
+          summaryMap[summary.campaign_id] = summary;
+        });
+        setSummariesByCampaign(summaryMap);
+
+        const latestMap: Record<string, CampaignMetrics> = {};
+        (latestMetricsResult.data || []).forEach((metric: CampaignMetrics) => {
+          if (!latestMap[metric.campaign_id]) {
+            latestMap[metric.campaign_id] = metric;
+          }
+        });
+        setLatestMetricsByCampaign(latestMap);
+
+        const calculatedMonthlyActuals: Record<string, number> = {};
+        (historyMetricsResult.data || []).forEach((metric: any) => {
+          const dateStr = metric.period_end || metric.created_at;
+          if (!dateStr) return;
+          const date = new Date(dateStr);
+          const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+          calculatedMonthlyActuals[key] = (calculatedMonthlyActuals[key] || 0) + (Number(metric.cost) || 0);
+        });
+        setMonthlyActuals(calculatedMonthlyActuals);
+      } else {
+        setSummariesByCampaign({});
+        setLatestMetricsByCampaign({});
+        setMonthlyActuals({});
       }
 
       setLastUpdatedAt(new Date());
