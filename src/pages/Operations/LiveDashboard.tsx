@@ -134,10 +134,8 @@ export default function OperationsLiveDashboard() {
 
   const loadDashboard = useCallback(async (silent = false) => {
     const targetUserId = user?.id || viewId;
-    console.log("loadDashboard called. User:", user?.id, "ViewId:", viewId, "Silent:", silent);
 
     if (!targetUserId) {
-      console.log("No user context for live dashboard.");
       setCampaigns([]);
       setSummariesByCampaign({});
       setLatestMetricsByCampaign({});
@@ -149,12 +147,9 @@ export default function OperationsLiveDashboard() {
     try {
       // PROXY MODE via EDGE FUNCTION (TV/Public View without Login)
       if (!user && viewId) {
-        console.log("Fetching live data via Edge Function (PROXY)... Target:", viewId);
         const { data, error } = await supabase.functions.invoke("view-live", {
           body: { targetUserId: viewId },
         });
-
-        console.log("Edge Function Response:", { data, error });
 
         if (error) throw new Error(error.message || "Erro na edge function");
         if (!data) throw new Error("Nenhum dado retornado");
