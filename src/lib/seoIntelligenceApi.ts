@@ -80,23 +80,7 @@ export async function fetchSeoIntelligence(params: {
     body: JSON.stringify(params),
   });
 
-  console.log('[seo-intelligence] Request sent:', {
-    url: params.url,
-    brandName: params.brandName,
-    niche: params.niche,
-    aiKeysCount: params.aiKeys?.length || 0,
-    aiKeysProviders: params.aiKeys?.map(k => k.provider),
-    competitorUrlsCount: params.competitorUrls?.length || 0,
-  });
-
   const data = await response.json().catch(() => null);
-
-  console.log('[seo-intelligence] Response:', {
-    llmResultsCount: data?.llmResults?.length || 0,
-    llmErrors: data?.llmErrors,
-    competitorsCount: data?.competitors?.length || 0,
-    hasBacklinks: !!data?.backlinks,
-  });
 
   if (!response.ok) {
     throw new Error(data?.error || `HTTP ${response.status}`);
