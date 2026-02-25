@@ -28,12 +28,13 @@ export function useNotifications() {
   const [loading, setLoading] = useState(true);
   const [processedNotifications, setProcessedNotifications] = useState<Set<string>>(new Set());
   const { user } = useAuth();
+  const userId = user?.id;
   const initializedRef = useRef(false);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       // Cleanup when user logs out
       initializedRef.current = false;
       if (intervalRef.current) {
@@ -77,7 +78,7 @@ export function useNotifications() {
         }
       }
     };
-  }, [user]);
+  }, [userId]);
 
   const loadNotifications = async () => {
     if (!user) return;
