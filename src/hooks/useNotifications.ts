@@ -2,6 +2,15 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
+// Singleton guards (compartilhados entre instâncias do hook)
+let sharedChannel: ReturnType<typeof supabase.channel> | null = null;
+let sharedUserId: string | null = null;
+let sharedRefs = 0;
+let sharedNotificationsCache: Notification[] = [];
+let sharedUnreadCache = 0;
+let sharedLoaded = false;
+let sharedLoadPromise: Promise<void> | null = null;
+
 export interface Notification {
   id: string;
   title: string;
@@ -31,9 +40,14 @@ export function useNotifications() {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
+      channelRef.current = null;
+      if (sharedChannel) {
+        sharedRefs = Math.max(0, sharedRefs - 1);
+        if (sharedRefs === 0) {
+          supabase.removeChannel(sharedChannel);
+          sharedChannel = null;
+          sharedUserId = null;
+        }
       }
       setNotifications([]);
       setUnreadCount(0);
@@ -42,26 +56,10 @@ export function useNotifications() {
 
     if (initializedRef.current) return;
     initializedRef.current = true;
+    sharedRefs += 1;
 
     loadNotifications();
     channelRef.current = setupRealtimeSubscription();
-
-    // Sync unread count (menos agressivo)
-    intervalRef.current = setInterval(async () => {
-      try {
-        const { data, error } = await (supabase as any)
-          .from("notifications")
-          .select("read")
-          .eq("user_id", user.id)
-          .eq("read", false);
-
-        if (!error && Array.isArray(data)) {
-          setUnreadCount(data.length);
-        }
-      } catch (error) {
-        console.error("Error syncing unread count:", error);
-      }
-    }, 15000);
 
     return () => {
       initializedRef.current = false;
@@ -69,9 +67,14 @@ export function useNotifications() {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
+      channelRef.current = null;
+      if (sharedChannel) {
+        sharedRefs = Math.max(0, sharedRefs - 1);
+        if (sharedRefs === 0) {
+          supabase.removeChannel(sharedChannel);
+          sharedChannel = null;
+          sharedUserId = null;
+        }
       }
     };
   }, [user]);
@@ -79,33 +82,68 @@ export function useNotifications() {
   const loadNotifications = async () => {
     if (!user) return;
 
-    try {
-      setLoading(true);
-      const { data, error } = await (supabase as any)
-        .from("notifications")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-
-      setNotifications((data || []) as Notification[]);
-      // Calculate unread count from actual data
-      const unreadCount = (data as Notification[] | null)?.filter(n => !n.read).length || 0;
-      setUnreadCount(unreadCount);
-      
-      // Reset processed notifications set with current IDs
-      setProcessedNotifications(new Set((data as any)?.map((n: any) => n.id) || []));
-    } catch (error) {
-      console.error("Error loading notifications:", error);
-    } finally {
+    // Reuse cache if já carregado para o mesmo usuário
+    if (sharedLoaded && sharedUserId === user.id) {
+      setNotifications(sharedNotificationsCache);
+      setUnreadCount(sharedUnreadCache);
+      setProcessedNotifications(new Set(sharedNotificationsCache.map((n) => n.id)));
       setLoading(false);
+      return;
     }
+
+    if (sharedLoadPromise && sharedUserId === user.id) {
+      setLoading(true);
+      await sharedLoadPromise;
+      setNotifications(sharedNotificationsCache);
+      setUnreadCount(sharedUnreadCache);
+      setProcessedNotifications(new Set(sharedNotificationsCache.map((n) => n.id)));
+      setLoading(false);
+      return;
+    }
+
+    sharedLoadPromise = (async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await (supabase as any)
+          .from("notifications")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        if (error) throw error;
+
+        sharedNotificationsCache = (data || []) as Notification[];
+        sharedUnreadCache = sharedNotificationsCache.filter(n => !n.read).length;
+        sharedLoaded = true;
+        sharedUserId = user.id;
+      } catch (error) {
+        console.error("Error loading notifications:", error);
+        sharedLoaded = false;
+      } finally {
+        setLoading(false);
+      }
+    })();
+
+    await sharedLoadPromise;
+    setNotifications(sharedNotificationsCache);
+    setUnreadCount(sharedUnreadCache);
+    setProcessedNotifications(new Set(sharedNotificationsCache.map((n) => n.id)));
   };
 
   const setupRealtimeSubscription = () => {
     if (!user) return;
+
+    // Reuse singleton channel por usuário
+    if (sharedChannel && sharedUserId === user.id) {
+      return sharedChannel;
+    }
+
+    if (sharedChannel && sharedUserId !== user.id) {
+      supabase.removeChannel(sharedChannel);
+      sharedChannel = null;
+      sharedUserId = null;
+    }
 
     const channel = supabase
       .channel('notifications')
@@ -152,6 +190,8 @@ export function useNotifications() {
       )
       .subscribe();
 
+    sharedChannel = channel;
+    sharedUserId = user.id;
     return channel;
   };
 
