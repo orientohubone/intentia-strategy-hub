@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Mail, CheckCircle, AlertCircle, Copy } from "lucide-react"
+import { Loader2, Mail, CheckCircle, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 
 export default function VerifyTest() {
@@ -51,15 +51,6 @@ export default function VerifyTest() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    toast.success("Link copiado!")
-  }
-
-  const testMagicLink = async (link: string) => {
-    window.open(link, '_blank')
   }
 
   return (
@@ -129,38 +120,17 @@ export default function VerifyTest() {
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Magic Link:</label>
-                  <div className="flex gap-2">
-                    <Input 
-                      value={result.magic_link}
-                      readOnly
-                      className="font-mono text-xs"
-                    />
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      onClick={() => copyToClipboard(result.magic_link)}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <p className="text-sm text-gray-600">
+                    O magic link foi gerado e enviado para o log interno (ou e-mail).
+                    Por favor, verifique a tabela <code>verification_logs</code> ou os logs da Edge Function.
+                  </p>
                 </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button 
-                  onClick={() => testMagicLink(result.magic_link)}
-                  className="flex-1"
-                >
-                  Abrir Link em Nova Aba
-                </Button>
               </div>
 
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Modo Teste:</strong> Link retornado diretamente (sem SendGrid). 
-                  Em produção, o link seria enviado por e-mail.
+                  <strong>Modo Seguro:</strong> O link não é mais retornado diretamente na resposta por motivos de segurança.
                 </AlertDescription>
               </Alert>
             </CardContent>
@@ -186,7 +156,7 @@ export default function VerifyTest() {
               <p><strong>2.</strong> Deploy da Edge Function: <code>supabase functions deploy request-verify</code></p>
               <p><strong>3.</strong> Configure secrets: <code>SUPABASE_SERVICE_ROLE_KEY</code></p>
               <p><strong>4.</strong> Teste com e-mail existente no Supabase Auth</p>
-              <p><strong>5.</strong> Clique no link gerado para verificar login automático</p>
+              <p><strong>5.</strong> Verifique os logs para obter o link gerado</p>
             </div>
           </CardContent>
         </Card>

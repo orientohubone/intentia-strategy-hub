@@ -92,8 +92,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        magic_link: magicLink, // Isolado: retorna link para teste
-        message: 'Link gerado com sucesso (modo teste)'
+        message: 'Link gerado com sucesso (verifique logs ou e-mail)'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
