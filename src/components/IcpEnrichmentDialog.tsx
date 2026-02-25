@@ -26,6 +26,7 @@ import {
   FileText,
 } from "lucide-react";
 import type { IcpEnrichmentResult } from "@/lib/icpEnricher";
+import { exportIcpToHtml, exportIcpToPdf } from "@/lib/exportIcp";
 
 interface IcpEnrichmentDialogProps {
   audienceName: string;

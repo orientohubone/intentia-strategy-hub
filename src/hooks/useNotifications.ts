@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
@@ -19,33 +19,61 @@ export function useNotifications() {
   const [loading, setLoading] = useState(true);
   const [processedNotifications, setProcessedNotifications] = useState<Set<string>>(new Set());
   const { user } = useAuth();
+  const initializedRef = useRef(false);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (user) {
-      loadNotifications();
-      setupRealtimeSubscription();
-      
-      // Sync unread count every 5 seconds to fix any drift quickly
-      const syncInterval = setInterval(async () => {
-        try {
-          const { data, error } = await supabase
-            .from("notifications")
-            .select("read")
-            .eq("user_id", user.id)
-            .eq("read", false);
-          
-          if (!error && data) {
-            setUnreadCount(data.length);
-          }
-        } catch (error) {
-          console.error("Error syncing unread count:", error);
-        }
-      }, 5000);
-      
-      return () => {
-        clearInterval(syncInterval);
-      };
+    if (!user) {
+      // Cleanup when user logs out
+      initializedRef.current = false;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
     }
+
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    loadNotifications();
+    channelRef.current = setupRealtimeSubscription();
+
+    // Sync unread count (menos agressivo)
+    intervalRef.current = setInterval(async () => {
+      try {
+        const { data, error } = await (supabase as any)
+          .from("notifications")
+          .select("read")
+          .eq("user_id", user.id)
+          .eq("read", false);
+
+        if (!error && Array.isArray(data)) {
+          setUnreadCount(data.length);
+        }
+      } catch (error) {
+        console.error("Error syncing unread count:", error);
+      }
+    }, 15000);
+
+    return () => {
+      initializedRef.current = false;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
   }, [user]);
 
   const loadNotifications = async () => {
@@ -53,7 +81,7 @@ export function useNotifications() {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("notifications")
         .select("*")
         .eq("user_id", user.id)
@@ -62,9 +90,9 @@ export function useNotifications() {
 
       if (error) throw error;
 
-      setNotifications(data || []);
+      setNotifications((data || []) as Notification[]);
       // Calculate unread count from actual data
-      const unreadCount = data?.filter(n => !n.read).length || 0;
+      const unreadCount = (data as Notification[] | null)?.filter(n => !n.read).length || 0;
       setUnreadCount(unreadCount);
       
       // Reset processed notifications set with current IDs
@@ -124,14 +152,12 @@ export function useNotifications() {
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return channel;
   };
 
   const markAsRead = async (notificationId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("notifications")
         .update({ read: true })
         .eq("id", notificationId);
@@ -151,7 +177,7 @@ export function useNotifications() {
     if (!user) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("notifications")
         .update({ read: true })
         .eq("user_id", user.id)
@@ -212,7 +238,7 @@ export function useNotifications() {
 
     try {
       // Check for new projects created in the last 24h
-      const { data: recentProjects } = await supabase
+      const { data: recentProjects } = await (supabase as any)
         .from("projects")
         .select("name, created_at")
         .eq("user_id", user.id)
@@ -229,7 +255,7 @@ export function useNotifications() {
       }
 
       // Check for benchmark analyses completed
-      const { data: recentBenchmarks } = await supabase
+      const { data: recentBenchmarks } = await (supabase as any)
         .from("benchmarks")
         .select("competitor_name, created_at")
         .eq("user_id", user.id)
@@ -246,9 +272,9 @@ export function useNotifications() {
       }
 
       // Check for weekly insights summary
-      const { data: insightsCount } = await supabase
+      const { count: insightsCount } = await (supabase as any)
         .from("insights")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("user_id", user.id)
         .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
 

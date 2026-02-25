@@ -44,7 +44,7 @@ export default async function handler(req: any, res: any) {
 
     const { data, error } = await supabase
       .from("projects")
-      .select("id, name, niche, url, solution_context")
+      .select("id, name, niche, url, solution_context, missing_features")
       .eq("id", project_id)
       .eq("user_id", userId)
       .maybeSingle();

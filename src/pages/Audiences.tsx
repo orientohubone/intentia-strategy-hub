@@ -18,7 +18,7 @@ import { exportAudiencesCsv } from "@/lib/exportCsv";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { getUserActiveKeys } from "@/lib/aiAnalyzer";
 import { getModelsForProvider } from "@/lib/aiModels";
-import { runIcpEnrichment, type IcpEnrichmentResult, generateEditorialLine, generateProjectEditorialPlan, type EditorialLine } from "@/lib/icpEnricher";
+import { runIcpEnrichment, type IcpEnrichmentResult, generateEditorialLine, generateProjectEditorialPlan, type EditorialLine, type ProjectContext } from "@/lib/icpEnricher";
 import { notifyAudienceCreated, notifyIcpEnriched } from "@/lib/notificationService";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -37,6 +37,15 @@ type Audience = {
   created_at: string;
   icp_enrichment?: IcpEnrichmentResult;
   icp_enriched_at?: string;
+};
+
+type SavedPlan = {
+  id: string;
+  title: string;
+  lines: EditorialLine[];
+  created_at: string;
+  project_id?: string | null;
+  version?: number | null;
 };
 
 const sizeConfig = {
@@ -75,6 +84,112 @@ export default function Audiences() {
     });
   };
 
+  const handleLoadSavedPlan = async () => {
+    if (!user) return;
+    const ctx = editorialContext;
+    if (!ctx?.audienceId) {
+      toast.error("Nenhum público associado para carregar plano.");
+      return;
+    }
+    setLoadingSavedPlan(true);
+    try {
+      const { data, error } = await (supabase as any)
+        .from("communication_plans")
+        .select("title, lines, project_id")
+        .eq("audience_id", ctx.audienceId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) {
+        toast.info("Nenhum plano salvo encontrado.");
+        return;
+      }
+      setProjectEditorialContent(null);
+      setEditorialContent(data.lines as EditorialLine[]);
+      setEditorialContext({
+        title: data.title || ctx.title,
+        audienceId: ctx.audienceId,
+        projectId: data.project_id || ctx.projectId,
+      });
+      toast.success("Plano salvo carregado.");
+    } catch (err: any) {
+      console.error("Erro ao carregar plano salvo:", err);
+      toast.error(err?.message || "Erro ao carregar plano salvo");
+    } finally {
+      setLoadingSavedPlan(false);
+    }
+  };
+
+  const handleSelectSavedPlan = (planId: string) => {
+    const plan = savedPlans.find((p) => p.id === planId);
+    if (!plan) {
+      toast.error("Plano não encontrado na lista.");
+      return;
+    }
+    setProjectEditorialContent(null);
+    setEditorialContent(plan.lines as EditorialLine[]);
+    setEditorialContext((ctx) => ({
+      title: plan.title || ctx?.title || "Plano salvo",
+      audienceId: ctx?.audienceId,
+      projectId: plan.project_id || ctx?.projectId,
+    }));
+    toast.success("Plano carregado do histórico.");
+  };
+
+  const fetchSavedPlans = async (audienceId: string): Promise<SavedPlan[]> => {
+    setLoadingSavedList(true);
+    try {
+      const { data, error } = await (supabase as any)
+        .from("communication_plans")
+        .select("id, title, lines, created_at, project_id, version")
+        .eq("audience_id", audienceId)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      const list = (data || []) as SavedPlan[];
+      setSavedPlans(list);
+      return list;
+    } catch (err) {
+      console.error("Erro ao carregar histórico de planos:", err);
+      toast.error(err?.message || "Erro ao carregar histórico");
+      return [];
+    } finally {
+      setLoadingSavedList(false);
+    }
+  };
+
+  const handleOpenSavedFromCard = async (audience: Audience) => {
+    if (!user) return;
+    setEditorialLoadingId(audience.id);
+    setProjectEditorialContent(null);
+    setEditorialContent([]);
+    setEditorialContext({ title: `Plano — ${audience.name}`, audienceId: audience.id, projectId: audience.project_id });
+    const list = await fetchSavedPlans(audience.id);
+    if (list.length > 0) {
+      const plan = list[0];
+      setEditorialContent(plan.lines as EditorialLine[]);
+      setEditorialContext({
+        title: plan.title || `Plano — ${audience.name}`,
+        audienceId: audience.id,
+        projectId: plan.project_id || audience.project_id,
+      });
+    }
+    setEditorialDialogOpen(true);
+    setEditorialLoadingId(null);
+  };
+
+  const toProjectContext = (project: any | undefined): ProjectContext | undefined => {
+    if (!project) return undefined;
+    return {
+      name: project.name,
+      niche: project.niche,
+      url: project.url,
+      solutionContext: (project as any).solution_context ?? project.solutionContext,
+      missingFeatures: (project as any).missing_features ?? project.missingFeatures,
+    };
+  };
+
   const fetchProjectContext = async (projectId: string) => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -99,7 +214,8 @@ export default function Audiences() {
         niche: json.project.niche,
         url: json.project.url,
         solutionContext: json.project.solution_context,
-      } as { id: string; name?: string; niche?: string; url?: string; solutionContext?: string };
+        missingFeatures: json.project.missing_features,
+      } as { id: string; name?: string; niche?: string; url?: string; solutionContext?: string; missingFeatures?: string };
     } catch (err) {
       console.warn("[project-context] fetch error", err);
       return null;
@@ -115,9 +231,11 @@ export default function Audiences() {
     setEditorialLoadingId(audience.id);
     try {
       const [provider, model] = selectedAiModel.split("::");
-      const projectInfo = audience.project_id
-        ? (await fetchProjectContext(audience.project_id)) || projects.find((p) => p.id === audience.project_id)
-        : undefined;
+      const projectInfo = toProjectContext(
+        audience.project_id
+          ? (await fetchProjectContext(audience.project_id)) || projects.find((p) => p.id === audience.project_id)
+          : undefined
+      );
       const result = await generateEditorialLine(
         user.id,
         audience.id,
@@ -129,6 +247,8 @@ export default function Audiences() {
       const normalized = result.map((line) => ({ ...line, audienceName: audience.name }));
       setEditorialContent(normalized);
       setProjectEditorialContent(null);
+      setEditorialContext({ title: `Plano — ${audience.name}`, audienceId: audience.id, projectId: audience.project_id });
+      fetchSavedPlans(audience.id);
       setEditorialDialogOpen(true);
     } catch (err: any) {
       console.error("Erro ao gerar linha editorial:", err);
@@ -153,9 +273,11 @@ export default function Audiences() {
     try {
       const [provider, model] = selectedAiModel.split("::");
       const projectName = targetGroups[0]?.projectName || "Projeto";
-      const projectInfo = targetGroups[0]?.audiences[0]?.project_id
-        ? (await fetchProjectContext(targetGroups[0].audiences[0].project_id)) || projects.find((p) => p.id === targetGroups[0].audiences[0].project_id)
-        : undefined;
+      const projectInfo = toProjectContext(
+        targetGroups[0]?.audiences[0]?.project_id
+          ? (await fetchProjectContext(targetGroups[0].audiences[0].project_id)) || projects.find((p) => p.id === targetGroups[0].audiences[0].project_id)
+          : undefined
+      );
       const result = await generateProjectEditorialPlan(
         user.id,
         projectName,
@@ -166,6 +288,9 @@ export default function Audiences() {
       );
       setProjectEditorialContent(result);
       setEditorialContent(null);
+      const anchorAudience = audiencesWithIcp[0];
+      setEditorialContext({ title: `Plano do projeto — ${projectName}`, audienceId: anchorAudience?.id, projectId: anchorAudience?.project_id });
+      if (anchorAudience?.id) fetchSavedPlans(anchorAudience.id);
       setEditorialDialogOpen(true);
     } catch (err: any) {
       console.error("Erro ao gerar linha editorial do projeto:", err);
@@ -189,6 +314,11 @@ export default function Audiences() {
   const [projectEditorialContent, setProjectEditorialContent] = useState<EditorialLine[] | null>(null);
   const [editorialLoadingId, setEditorialLoadingId] = useState<string | null>(null);
   const [projectEditorialLoading, setProjectEditorialLoading] = useState(false);
+  const [savingPlan, setSavingPlan] = useState(false);
+  const [editorialContext, setEditorialContext] = useState<{ title: string; audienceId?: string; projectId?: string } | null>(null);
+  const [loadingSavedPlan, setLoadingSavedPlan] = useState(false);
+  const [loadingSavedList, setLoadingSavedList] = useState(false);
+  const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([]);
 
   // Load AI keys
   useEffect(() => {
@@ -211,6 +341,40 @@ export default function Audiences() {
       }
     })();
   }, [user, canAiKeys]);
+
+  const handleSaveEditorialPlan = async () => {
+    if (!user) return;
+    const ctx = editorialContext;
+    const lines = projectEditorialContent || editorialContent;
+    if (!lines || lines.length === 0 || !ctx) {
+      toast.error("Nada para salvar. Gere um plano primeiro.");
+      return;
+    }
+    if (!ctx.audienceId) {
+      toast.error("Não foi possível associar o plano a um público.");
+      return;
+    }
+    setSavingPlan(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("communication_plans")
+        .insert({
+          audience_id: ctx.audienceId,
+          project_id: ctx.projectId || null,
+          user_id: user.id,
+          title: ctx.title,
+          lines,
+        } as any);
+      if (error) throw error;
+      toast.success("Plano de comunicação salvo com sucesso.");
+    } catch (err: any) {
+      console.error("Erro ao salvar plano:", err);
+      toast.error(err?.message || "Erro ao salvar plano");
+    } finally {
+      setSavingPlan(false);
+      if (ctx?.audienceId) fetchSavedPlans(ctx.audienceId);
+    }
+  };
 
   const handleEnrichIcp = async (audience: Audience) => {
     if (!user) return;
@@ -788,18 +952,29 @@ export default function Audiences() {
                                     <p className="text-xs text-muted-foreground">Gerar linha editorial tática</p>
                                   </div>
                                 </div>
-                                <Button
-                                  size="sm"
-                                  className="h-8 text-xs w-full"
-                                  variant="secondary"
-                                  onClick={(e) => { e.stopPropagation(); handleGenerateEditorial(audience); }}
-                                  disabled={!audience.icp_enrichment || editorialLoadingId === audience.id}
-                                >
-                                  {editorialLoadingId === audience.id ? (
-                                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent mr-1.5" />
-                                  ) : null}
-                                  Gerar Plano
-                                </Button>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  <Button
+                                    size="sm"
+                                    className="h-8 text-xs w-full"
+                                    variant="secondary"
+                                    onClick={(e) => { e.stopPropagation(); handleGenerateEditorial(audience); }}
+                                    disabled={!audience.icp_enrichment || editorialLoadingId === audience.id}
+                                  >
+                                    {editorialLoadingId === audience.id ? (
+                                      <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent mr-1.5" />
+                                    ) : null}
+                                    Gerar Plano
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    className="h-8 text-xs w-full"
+                                    variant="outline"
+                                    onClick={(e) => { e.stopPropagation(); handleOpenSavedFromCard(audience); }}
+                                    disabled={editorialLoadingId === audience.id}
+                                  >
+                                    Abrir planos salvos
+                                  </Button>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -826,10 +1001,16 @@ export default function Audiences() {
           onOpenChange={setEnrichmentDialogOpen}
         />
         <EditorialDialog
-          title={projectEditorialContent ? "Linha editorial do projeto" : "Linha editorial do público"}
+          title={editorialContext?.title || (projectEditorialContent ? "Linha editorial do projeto" : "Linha editorial do público")}
           lines={projectEditorialContent || editorialContent || []}
           open={editorialDialogOpen}
           onOpenChange={setEditorialDialogOpen}
+          onSave={handleSaveEditorialPlan}
+          saving={savingPlan}
+          onLoadSaved={handleLoadSavedPlan}
+          loadingSaved={loadingSavedPlan}
+          savedPlans={savedPlans}
+          onSelectSaved={handleSelectSavedPlan}
         />
       </DashboardLayout>
     </FeatureGate>

@@ -130,6 +130,7 @@ export default function Projects() {
     url: "",
     competitorUrls: "" as string,
     solutionContext: "",
+    missingFeatures: "",
     status: "pending" as "pending" | "analyzing" | "completed",
   });
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -307,9 +308,11 @@ export default function Projects() {
           url: urlToAnalyze,
           competitor_urls: competitorUrls,
           solution_context: formState.solutionContext,
+          // campo adicional para lacunas/funcionalidades ausentes
+          missing_features: formState.missingFeatures,
           status: shouldAnalyze ? "analyzing" : formState.status,
           last_update: new Date().toISOString(),
-        });
+        } as any);
         projectId = editingId;
         toast.success(shouldAnalyze ? "Projeto atualizado! Iniciando análise..." : "Projeto atualizado!");
       } else {
@@ -319,15 +322,17 @@ export default function Projects() {
           url: urlToAnalyze,
           competitor_urls: competitorUrls,
           solution_context: formState.solutionContext,
+          // campo adicional para lacunas/funcionalidades ausentes
+          missing_features: formState.missingFeatures,
           score: 0,
           status: shouldAnalyze ? "analyzing" : "pending",
           last_update: new Date().toISOString(),
-        });
+        } as any);
         projectId = result.id;
         toast.success(shouldAnalyze ? "Projeto criado! Iniciando análise..." : "Projeto criado! Análise heurística indisponível no momento.");
         if (!editingId && user) notifyProjectCreated(user.id, projectName);
       }
-      setFormState({ name: "", niche: "", url: "", competitorUrls: "", solutionContext: "", status: "pending" });
+      setFormState({ name: "", niche: "", url: "", competitorUrls: "", solutionContext: "", missingFeatures: "", status: "pending" });
       setEditingId(null);
       setIsDialogOpen(false);
 
@@ -413,6 +418,7 @@ export default function Projects() {
       url: project.url,
       competitorUrls: (project.competitor_urls || []).join("\n"),
       solutionContext: (project as any).solution_context || "",
+      missingFeatures: (project as any).missing_features || "",
       status: project.status as any,
     });
     setIsDialogOpen(true);
@@ -686,6 +692,17 @@ export default function Projects() {
                     onChange={(e) => setFormState((prev) => ({ ...prev, solutionContext: e.target.value }))}
                   />
                 </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="missingFeatures">O que não temos (lacunas/funcionalidades ausentes)</Label>
+                  <textarea
+                    id="missingFeatures"
+                    className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    placeholder="Liste funcionalidades, integrações ou características que ainda não existem no projeto (ex.: checkout nativo, onboarding guiado, integrações ERP X)."
+                    value={formState.missingFeatures}
+                    onChange={(e) => setFormState((prev) => ({ ...prev, missingFeatures: e.target.value }))}
+                  />
+                  <p className="text-xs text-muted-foreground">Usaremos estas lacunas para deixar o ICP e o plano de comunicação mais coerentes (não inventar features ausentes).</p>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="url">URL do Projeto</Label>
                   <Input
@@ -755,7 +772,7 @@ export default function Projects() {
                 {editingId && (
                   <Button type="button" variant="outline" disabled={analyzing} onClick={() => {
                     setEditingId(null);
-                    setFormState({ name: "", niche: "", url: "", competitorUrls: "", solutionContext: "", status: "pending" });
+                    setFormState({ name: "", niche: "", url: "", competitorUrls: "", solutionContext: "", missingFeatures: "", status: "pending" });
                     setIsDialogOpen(false);
                   }}>
                     Cancelar

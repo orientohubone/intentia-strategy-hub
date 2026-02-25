@@ -15,11 +15,12 @@ export interface IcpEnrichmentInput {
   keywords: string[];
 }
 
-type ProjectContext = {
+export type ProjectContext = {
   name?: string;
   niche?: string;
   url?: string;
   solutionContext?: string;
+  missingFeatures?: string;
 };
 
 function buildEditorialPrompt(audienceName: string, icp: IcpEnrichmentResult, project?: ProjectContext): string {
@@ -30,12 +31,16 @@ function buildEditorialPrompt(audienceName: string, icp: IcpEnrichmentResult, pr
   const solutionContext = project?.solutionContext
     ? `Contexto da solução (use como fonte principal de tom e proposta de valor): ${project.solutionContext}`
     : "Contexto da solução não fornecido.";
+  const missingSection = project?.missingFeatures
+    ? `Lacunas/debts atuais (NÃO inventar que já existem): ${project.missingFeatures}`
+    : "Lacunas não informadas. Não invente funcionalidades que não foram declaradas.";
 
   return `Você é um estrategista de conteúdo B2B. Crie um plano de comunicação com 6 a 10 blocos (posts), para o público "${audienceName}", usando fielmente as DORES PRINCIPAIS e GATILHOS DE COMPRA do ICP refinado e alinhando com o site do projeto.
 
 ${projectContext}
 ${siteContext}
 ${solutionContext}
+${missingSection}
 
 ICP (resumo): ${icp.refinedDescription}
 Dores (use explicitamente): ${icp.idealProfile.painPoints.join(", ")}
@@ -73,6 +78,7 @@ Gatilhos: ${i.icp.idealProfile.buyingTriggers.join(", ")}`)
 Site oficial: ${project?.url || "não informado"}
 Nicho/Produto: ${project?.niche || "(sem nicho informado)"}
 Contexto da solução: ${project?.solutionContext || "não fornecido"}
+Lacunas/funcionalidades ausentes: ${project?.missingFeatures || "não informado"}
 Se o nome do projeto ou domínio remeter a "vendasimples", mantenha aderência à proposta de valor do site (tom, ofertas, benefícios).
 
 Use dores, gatilhos e contexto de cada ICP abaixo:
