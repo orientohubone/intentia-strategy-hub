@@ -89,10 +89,10 @@ export function getAdminSession(): AdminSession | null {
   }
 }
 
-function setAdminSession(admin: AdminUser): AdminSession {
+function setAdminSession(admin: AdminUser, token?: string): AdminSession {
   const session: AdminSession = {
     admin,
-    token: generateToken(),
+    token: token || generateToken(),
     expires_at: Date.now() + SESSION_DURATION_MS,
   };
   localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
@@ -148,7 +148,7 @@ export async function adminLogin(cnpj: string, password: string): Promise<AdminL
       last_login_at: result.admin.last_login_at,
     };
 
-    const session = setAdminSession(adminUser);
+    const session = setAdminSession(adminUser, (result as any).token);
     return { success: true, session };
   } catch (err: any) {
     console.error("[admin-auth] Login error:", err);

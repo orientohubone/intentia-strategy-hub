@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { verify } from "https://deno.land/x/djwt@v2.8/mod.ts";
 
 // =====================================================
 // CONFIG
@@ -7,7 +8,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-admin-token',
 }
 
 // =====================================================
@@ -22,7 +23,7 @@ serve(async (req) => {
 
   try {
     // Parse request body
-    const { sqlPath } = await req.json()
+    const { sqlPath, admin_id } = await req.json()
     
     if (!sqlPath) {
       return new Response(
@@ -61,6 +62,68 @@ serve(async (req) => {
         persistSession: false
       }
     })
+
+    // =====================================================
+    // AUTH CHECK
+    // =====================================================
+
+    const adminToken = req.headers.get("x-admin-token");
+    if (!adminToken) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Admin token required" }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401
+        }
+      );
+    }
+
+    if (!admin_id) {
+      return new Response(
+        JSON.stringify({ success: false, error: "admin_id required" }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
+    }
+
+    // Verify JWT
+    try {
+      const payload = await verify(
+        adminToken,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+        "HS256"
+      );
+
+      if (payload.admin_id !== admin_id) {
+        throw new Error("Token mismatch");
+      }
+    } catch (e) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid token" }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401
+        }
+      );
+    }
+
+    const { data: admin, error: adminError } = await supabase
+      .from("admin_users")
+      .select("id, is_active, role")
+      .eq("id", admin_id)
+      .single();
+
+    if (adminError || !admin || !admin.is_active) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid or inactive admin" }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403
+        }
+      );
+    }
 
     // Read SQL file content
     const sqlContent = await readSQLFile(sqlPath)

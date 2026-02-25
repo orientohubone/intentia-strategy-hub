@@ -285,10 +285,22 @@ async function callClaudeApi(
   // Claude API requires server-side proxy due to CORS restrictions.
   // Dev: Vite plugin middleware at /api/claude-proxy
   // Production: Vercel Serverless Function at /api/claude-proxy
+
+  // Retrieve current session for authentication
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+
+  if (!token) {
+    throw new Error("Authentication required to use Claude API");
+  }
+
   const maxTokens = getClaudeMaxTokens(model);
   const response = await fetch("/api/claude-proxy", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
     body: JSON.stringify({ apiKey, model, prompt, maxTokens }),
   });
 

@@ -519,7 +519,6 @@ export default function SeoGeo() {
           .select("provider, api_key_encrypted, preferred_model, is_active")
           .eq("user_id", user.id)
           .eq("is_active", true);
-        console.log("[SeoGeo] user_api_keys query result:", { keys: keys?.map((k: any) => ({ provider: k.provider, hasKey: !!k.api_key_encrypted, keyLen: k.api_key_encrypted?.length, model: k.preferred_model, is_active: k.is_active })), error: keysError });
         if (keys && keys.length > 0) {
           aiKeys = keys
             .filter((k: any) => k.api_key_encrypted && k.api_key_encrypted.trim())
@@ -529,7 +528,6 @@ export default function SeoGeo() {
               model: k.preferred_model || (k.provider === "google_gemini" ? "gemini-2.0-flash" : "claude-sonnet-4-20250514"),
             }));
         }
-        console.log("[SeoGeo] aiKeys to send:", aiKeys.map(k => ({ provider: k.provider, model: k.model, keyLen: k.apiKey?.length })));
       }
 
       // Use niche or fallback to project name for LLM queries
