@@ -101,13 +101,9 @@ export interface InsightResult {
 // =====================================================
 
 export async function analyzeUrl(url: string): Promise<UrlAnalysis> {
-  console.log("[analyzeUrl] Chamando Edge Function rapid-action para:", url);
-
   const { data, error } = await supabase.functions.invoke("rapid-action", {
     body: { url },
   });
-
-  console.log("[analyzeUrl] Response:", { data, error });
 
   if (error) {
     console.error("[analyzeUrl] Edge Function error:", error);
@@ -325,8 +321,7 @@ export async function cleanBenchmarks(
   projectId: string,
   userId: string
 ): Promise<void> {
-  console.log(`[benchmark] Limpando benchmarks antigos para projeto ${projectId}`);
-  const { data, error } = await (supabase as any)
+  const { error } = await (supabase as any)
     .from("benchmarks")
     .delete()
     .eq("project_id", projectId)
@@ -335,8 +330,6 @@ export async function cleanBenchmarks(
 
   if (error) {
     console.error("[benchmark] Erro ao limpar benchmarks:", error);
-  } else {
-    console.log(`[benchmark] ${data?.length || 0} benchmarks removidos`);
   }
 }
 
@@ -352,7 +345,6 @@ export async function analyzeCompetitors(
 ): Promise<void> {
   for (const url of competitorUrls) {
     try {
-      console.log(`[benchmark] Analisando concorrente: ${url}`);
       const analysis = await analyzeUrl(url);
 
       // Extract domain as competitor name
@@ -368,8 +360,6 @@ export async function analyzeCompetitors(
         niche,
         url,
       }, analysis);
-
-      console.log(`[benchmark] Concorrente analisado: ${competitorName} — Score: ${analysis.overallScore}`);
     } catch (err: any) {
       console.error(`[benchmark] Erro ao analisar concorrente ${url}:`, err.message);
     }
@@ -527,7 +517,5 @@ export async function saveCompetitorBenchmark(
 
   if (error) {
     console.error("Error generating benchmark:", error);
-  } else {
-    console.log("[benchmark] Auto-benchmark gerado para", projectData.name);
   }
 }
