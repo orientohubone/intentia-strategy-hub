@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { adminExecuteSQL } from '@/lib/adminDatabaseApi';
+import { adminExecuteSQL, adminUpdateSQLStatus } from '@/lib/adminDatabaseApi';
 import { supabase } from '@/integrations/supabase/client';
 import { getAdminSession } from '@/lib/adminAuth';
 
@@ -49,5 +49,15 @@ describe('adminDatabaseApi', () => {
       headers: { 'x-admin-token': 'mock-token' },
       body: { sqlPath: 'test.sql', admin_id: 'mock-admin-id' },
     });
+  });
+
+  it('adminUpdateSQLStatus should not log to console', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await adminUpdateSQLStatus('test.sql', 'executed', 100);
+
+    expect(consoleSpy).not.toHaveBeenCalled();
+
+    consoleSpy.mockRestore();
   });
 });

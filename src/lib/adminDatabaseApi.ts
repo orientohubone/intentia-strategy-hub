@@ -104,7 +104,6 @@ export async function adminUpdateSQLStatus(
 ): Promise<boolean> {
   try {
     // Em produção, isso salvaria no banco de dados
-    console.log('Updating SQL status:', { sqlPath, status, executionTime, error });
     return true;
   } catch (error: any) {
     console.error('Error updating SQL status:', error);
