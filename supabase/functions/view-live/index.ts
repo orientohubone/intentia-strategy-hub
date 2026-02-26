@@ -43,7 +43,7 @@ serve(async (req) => {
         const region = req.headers.get("cf-ipcountry") || "unknown";
         const userAgent = req.headers.get("user-agent") || "unknown";
 
-        console.log(`Live Dashboard Access: User ${targetUserId} from IP ${clientIP} (${region}) via ${userAgent}`);
+        console.log(`Live Dashboard Access: User ${targetUserId}`);
 
         // Log access directly and throw if fails
         const { error: logError } = await supabaseClient.from('live_dashboard_access_logs').insert({
@@ -54,8 +54,8 @@ serve(async (req) => {
         });
 
         if (logError) {
-            console.error("Log insert failed:", logError);
-            return new Response(JSON.stringify({ error: `Log Insert Failed: ${logError.message}`, details: logError }), {
+            console.error("Log insert failed:", logError.message);
+            return new Response(JSON.stringify({ error: `Log Insert Failed` }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                 status: 500,
             })
