@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { create, getNumericDate } from "https://deno.land/x/djwt@v2.8/mod.ts";
+import { create, getNumericDate, verify } from "https://deno.land/x/djwt@v2.8/mod.ts";
+import { crypto } from "https://deno.land/std@0.168.0/crypto/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,7 +13,7 @@ const corsHeaders = {
 };
 
 // Version for cache busting - update when deploying
-const API_VERSION = "2026-02-17-v2";
+const API_VERSION = "2026-02-17-v3";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -60,6 +61,31 @@ serve(async (req) => {
     const adminId = params.admin_id;
     if (!adminId) {
       return jsonResponse({ error: "admin_id required" }, 400);
+    }
+
+    // CRITICAL SECURITY FIX: Verify the JWT token
+    try {
+      const keyBuf = new TextEncoder().encode(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      const key = await crypto.subtle.importKey(
+        "raw",
+        keyBuf,
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign", "verify"]
+      );
+
+      const payload = await verify(
+        adminToken,
+        key
+      );
+
+      // Ensure the token belongs to the admin claiming the action
+      if ((payload as any).admin_id !== adminId) {
+        throw new Error("Token mismatch");
+      }
+    } catch (e) {
+      console.error("[admin-api] Token verification failed:", e);
+      return jsonResponse({ error: "Invalid or expired token" }, 401);
     }
 
     const { data: admin, error: adminError } = await supabase
@@ -700,6 +726,15 @@ async function handleAdminLogin(supabase: any, params: any) {
     .eq("id", admin.id);
 
   // Generate JWT
+  const keyBuf = new TextEncoder().encode(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const key = await crypto.subtle.importKey(
+    "raw",
+    keyBuf,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"]
+  );
+
   const jwt = await create(
     { alg: "HS256", typ: "JWT" },
     {
@@ -707,7 +742,7 @@ async function handleAdminLogin(supabase: any, params: any) {
       role: admin.role,
       exp: getNumericDate(60 * 60 * 4) // 4 hours
     },
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    key
   );
 
   return jsonResponse({
