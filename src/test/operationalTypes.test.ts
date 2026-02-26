@@ -1,5 +1,42 @@
 import { describe, it, expect } from "vitest";
-import { computeAdherenceScore, parseMetricTarget, MetricGap, GapStatus } from "../lib/operationalTypes";
+import { computeAdherenceScore, parseMetricTarget, MetricGap, GapStatus, getBudgetPacingStatus } from "../lib/operationalTypes";
+
+describe("getBudgetPacingStatus", () => {
+  it("should return 'overspent' for values >= 100", () => {
+    expect(getBudgetPacingStatus(100)).toBe("overspent");
+    expect(getBudgetPacingStatus(100.1)).toBe("overspent");
+    expect(getBudgetPacingStatus(150)).toBe("overspent");
+  });
+
+  it("should return 'danger' for values >= 90 and < 100", () => {
+    expect(getBudgetPacingStatus(90)).toBe("danger");
+    expect(getBudgetPacingStatus(95)).toBe("danger");
+    expect(getBudgetPacingStatus(99.9)).toBe("danger");
+  });
+
+  it("should return 'caution' for values >= 70 and < 90", () => {
+    expect(getBudgetPacingStatus(70)).toBe("caution");
+    expect(getBudgetPacingStatus(75)).toBe("caution");
+    expect(getBudgetPacingStatus(89.9)).toBe("caution");
+  });
+
+  it("should return 'healthy' for values < 70", () => {
+    expect(getBudgetPacingStatus(69.9)).toBe("healthy");
+    expect(getBudgetPacingStatus(50)).toBe("healthy");
+    expect(getBudgetPacingStatus(0)).toBe("healthy");
+    expect(getBudgetPacingStatus(-10)).toBe("healthy");
+  });
+
+  it("should handle floating point precision correctly around boundaries", () => {
+    // 90 vs 89.9999
+    expect(getBudgetPacingStatus(89.9999)).toBe("caution");
+    expect(getBudgetPacingStatus(90.0001)).toBe("danger");
+
+    // 70 vs 69.9999
+    expect(getBudgetPacingStatus(69.9999)).toBe("healthy");
+    expect(getBudgetPacingStatus(70.0001)).toBe("caution");
+  });
+});
 
 describe("parseMetricTarget", () => {
   it("should parse simple integers", () => {
