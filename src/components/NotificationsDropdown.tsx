@@ -70,6 +70,7 @@ export function NotificationsDropdown() {
         size="icon"
         className="relative"
         onClick={() => setIsOpen(!isOpen)}
+        aria-label={unreadCount > 0 ? `Notificações, ${unreadCount} ${unreadCount === 1 ? 'não lida' : 'não lidas'}` : "Notificações"}
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
@@ -85,10 +86,16 @@ export function NotificationsDropdown() {
           <div 
             className="fixed inset-0 z-40" 
             onClick={() => setIsOpen(false)}
+            aria-hidden="true"
           />
           
           {/* Dropdown */}
-          <Card className="fixed sm:absolute inset-x-3 sm:inset-x-auto sm:right-0 top-16 sm:top-12 w-auto sm:w-96 max-h-[calc(100vh-5rem)] sm:max-h-[500px] z-50 shadow-lg">
+          <Card
+            className="fixed sm:absolute inset-x-3 sm:inset-x-auto sm:right-0 top-16 sm:top-12 w-auto sm:w-96 max-h-[calc(100vh-5rem)] sm:max-h-[500px] z-50 shadow-lg"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Notificações"
+          >
             <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6">
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-base sm:text-lg">Notificações</CardTitle>
@@ -100,7 +107,7 @@ export function NotificationsDropdown() {
                       onClick={markAllAsRead}
                       className="text-[10px] sm:text-xs h-7 px-2"
                     >
-                      <CheckCheck className="h-3 w-3 mr-0.5 sm:mr-1" />
+                      <CheckCheck className="h-3 w-3 mr-0.5 sm:mr-1" aria-hidden="true" />
                       <span className="hidden sm:inline">Marcar todas como lidas</span>
                       <span className="sm:hidden">Ler todas</span>
                     </Button>
@@ -181,6 +188,7 @@ export function NotificationsDropdown() {
                                     e.stopPropagation();
                                     deleteNotification(notification.id);
                                   }}
+                                  aria-label="Excluir notificação"
                                 >
                                   <Trash2 className="h-3 w-3" />
                                 </Button>
