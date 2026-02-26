@@ -670,7 +670,6 @@ export default function Reports() {
 
       setReports(finalReports);
       reportsCache.set(userId, { reports: finalReports, fetchedAt: Date.now() });
-      console.log("Relatórios carregados:", finalReports.length);
       return finalReports;
     } catch (error) {
       console.error("Erro ao carregar relatórios:", error);

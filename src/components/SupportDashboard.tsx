@@ -236,7 +236,6 @@ export function SupportDashboard() {
 
       data.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setTickets(data);
-      console.log("Tickets carregados:", data.length);
     } catch (error: any) {
       console.error("Error loading tickets:", error);
       toast.error("Erro ao carregar chamados: " + (error.message || error));

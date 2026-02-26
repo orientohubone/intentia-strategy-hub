@@ -77,9 +77,6 @@ export default function Support() {
 
       if (error) {
         console.error("Error loading tickets:", error);
-        if (error.message?.includes('does not exist') || error.code === 'PGRST116') {
-          console.log("Tabelas de suporte ainda não criadas - modo demo");
-        }
       } else {
         setTickets(data || []);
       }

@@ -151,7 +151,7 @@ export async function adminLogin(cnpj: string, password: string): Promise<AdminL
     const session = setAdminSession(adminUser, (result as any).token);
     return { success: true, session };
   } catch (err: any) {
-    console.error("[admin-auth] Login error:", err);
+    console.error("[admin-auth] Login error:", err.message);
     return { success: false, error: "Erro interno. Tente novamente." };
   }
 }

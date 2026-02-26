@@ -136,7 +136,6 @@ export function SupportTicketForm({ onSuccess, onCancel }: SupportTicketFormProp
         if (error) throw error;
         ticket = ticketData;
         
-        console.log("Ticket criado com sucesso:", ticket);
       } catch (dbError: any) {
         console.error("Database error REAL:", dbError);
         throw dbError; // Deixar o erro real aparecer
