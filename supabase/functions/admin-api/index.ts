@@ -459,8 +459,72 @@ serve(async (req) => {
       
       if (error) return jsonResponse({ error: error.message }, 500);
 
+      const tickets = data || [];
+      const userIds = new Set<string>();
+      const tenantIds = new Set<string>();
+      const adminIds = new Set<string>();
+      const categorySlugs = new Set<string>();
+      const ticketIds = tickets.map((t: any) => t.id);
+
+      tickets.forEach((ticket: any) => {
+        if (ticket.user_id) userIds.add(ticket.user_id);
+        if (ticket.tenant_id) tenantIds.add(ticket.tenant_id);
+        if (ticket.assigned_to) adminIds.add(ticket.assigned_to);
+        if (ticket.category) categorySlugs.add(ticket.category);
+      });
+
+      // Batch fetch tenants
+      const tenantMap = new Map();
+      if (tenantIds.size > 0) {
+        const { data: tenants } = await supabase
+          .from("tenant_settings")
+          .select("id, company_name")
+          .in("id", Array.from(tenantIds));
+        tenants?.forEach((t: any) => tenantMap.set(t.id, t));
+      }
+
+      // Batch fetch categories
+      const categoryMap = new Map();
+      if (categorySlugs.size > 0) {
+        const { data: categories } = await supabase
+          .from("support_categories")
+          .select("slug, name, color, icon")
+          .in("slug", Array.from(categorySlugs));
+        categories?.forEach((c: any) => categoryMap.set(c.slug, c));
+      }
+
+      // Batch fetch messages stats
+      const messageStats = new Map();
+      if (ticketIds.length > 0) {
+        const { data: messages } = await supabase
+          .from("support_ticket_messages")
+          .select("ticket_id, created_at")
+          .in("ticket_id", ticketIds)
+          .order("created_at", { ascending: true });
+
+        if (messages) {
+          messages.forEach((msg: any) => {
+            const current = messageStats.get(msg.ticket_id) || { count: 0, last_at: null };
+            current.count++;
+            current.last_at = msg.created_at;
+            messageStats.set(msg.ticket_id, current);
+          });
+        }
+      }
+
+      // Batch fetch users (Admins + Users)
+      const allUserIds = new Set([...userIds, ...adminIds]);
+      const userMap = new Map();
+
+      await Promise.all(Array.from(allUserIds).map(async (uid) => {
+        const { data: userData } = await supabase.auth.admin.getUserById(uid);
+        if (userData?.user) {
+          userMap.set(uid, userData.user);
+        }
+      }));
+
       // Enriquecer com dados do usuário
-      const enriched = await Promise.all((data || []).map(async (ticket: any) => {
+      const enriched = tickets.map((ticket: any) => {
         let user_email = 'email@nao.informado';
         let user_name = 'Cliente';
         let user_company = 'Empresa não informada';
@@ -468,66 +532,42 @@ serve(async (req) => {
         let assigned_to_name = 'Não atribuído';
         let assigned_to_email = '';
 
-        // Buscar dados do usuário
-        if (ticket.user_id) {
-          const { data: userData } = await supabase.auth.admin.getUserById(ticket.user_id);
-          if (userData?.user) {
-            user_email = userData.user.email || user_email;
-            user_name = userData.user.user_metadata?.name || 
-                       userData.user.user_metadata?.full_name || 
-                       userData.user.email?.split('@')[0] || user_name;
-            user_avatar_url = userData.user.user_metadata?.avatar_url || '';
-          }
+        // User Data
+        if (ticket.user_id && userMap.has(ticket.user_id)) {
+          const u = userMap.get(ticket.user_id);
+          user_email = u.email || user_email;
+          user_name = u.user_metadata?.name ||
+                     u.user_metadata?.full_name ||
+                     u.email?.split('@')[0] || user_name;
+          user_avatar_url = u.user_metadata?.avatar_url || '';
         }
 
-        // Buscar empresa
-        if (ticket.tenant_id) {
-          const { data: tenant } = await supabase
-            .from("tenant_settings")
-            .select("company_name")
-            .eq("id", ticket.tenant_id)
-            .single();
-          if (tenant) user_company = tenant.company_name || user_company;
+        // Tenant Data
+        if (ticket.tenant_id && tenantMap.has(ticket.tenant_id)) {
+          user_company = tenantMap.get(ticket.tenant_id).company_name || user_company;
         }
 
-        // Buscar admin atribuído
-        if (ticket.assigned_to) {
-          const { data: adminUser } = await supabase.auth.admin.getUserById(ticket.assigned_to);
-          if (adminUser?.user) {
-            assigned_to_email = adminUser.user.email || '';
-            assigned_to_name = adminUser.user.user_metadata?.name || 'Admin';
-          }
+        // Admin Data
+        if (ticket.assigned_to && userMap.has(ticket.assigned_to)) {
+          const u = userMap.get(ticket.assigned_to);
+          assigned_to_email = u.email || '';
+          assigned_to_name = u.user_metadata?.name || 'Admin';
         }
 
-        // Buscar categoria
+        // Category Data
         let category_name = ticket.category;
         let category_color = '#6b7280';
         let category_icon = 'MessageCircle';
-        const { data: cat } = await supabase
-          .from("support_categories")
-          .select("name, color, icon")
-          .eq("slug", ticket.category)
-          .single();
-        if (cat) {
+
+        if (ticket.category && categoryMap.has(ticket.category)) {
+          const cat = categoryMap.get(ticket.category);
           category_name = cat.name;
           category_color = cat.color;
           category_icon = cat.icon;
         }
 
-        // Contar mensagens
-        const { count } = await supabase
-          .from("support_ticket_messages")
-          .select("id", { count: 'exact', head: true })
-          .eq("ticket_id", ticket.id);
-
-        // Última mensagem
-        const { data: lastMsg } = await supabase
-          .from("support_ticket_messages")
-          .select("created_at")
-          .eq("ticket_id", ticket.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
+        // Message Stats
+        const stats = messageStats.get(ticket.id) || { count: 0, last_at: null };
 
         // SLA status
         let sla_status = 'on_track';
@@ -546,11 +586,11 @@ serve(async (req) => {
           category_name,
           category_color,
           category_icon,
-          message_count: count || 0,
-          last_message_at: lastMsg?.created_at || null,
+          message_count: stats.count,
+          last_message_at: stats.last_at,
           sla_status,
         };
-      }));
+      });
 
       return jsonResponse({ data: enriched });
     }
