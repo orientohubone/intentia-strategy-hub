@@ -1,5 +1,57 @@
 import { describe, it, expect } from "vitest";
-import { computeAdherenceScore, MetricGap, GapStatus } from "../lib/operationalTypes";
+import { computeAdherenceScore, parseMetricTarget, MetricGap, GapStatus } from "../lib/operationalTypes";
+
+describe("parseMetricTarget", () => {
+  it("should parse simple integers", () => {
+    expect(parseMetricTarget("100")).toEqual({ value: 100, unit: "" });
+  });
+
+  it("should parse decimals with dots", () => {
+    expect(parseMetricTarget("10.5")).toEqual({ value: 10.5, unit: "" });
+  });
+
+  it("should parse decimals with commas", () => {
+    expect(parseMetricTarget("10,5")).toEqual({ value: 10.5, unit: "" });
+  });
+
+  it("should parse currency values (R$)", () => {
+    expect(parseMetricTarget("R$ 100")).toEqual({ value: 100, unit: "R$" });
+    expect(parseMetricTarget("R$100")).toEqual({ value: 100, unit: "R$" });
+  });
+
+  it("should parse percentage values (%)", () => {
+    expect(parseMetricTarget("50%")).toEqual({ value: 50, unit: "%" });
+    expect(parseMetricTarget("50 %")).toEqual({ value: 50, unit: "%" });
+  });
+
+  it("should parse multiplier values (x)", () => {
+    expect(parseMetricTarget("5x")).toEqual({ value: 5, unit: "x" });
+    expect(parseMetricTarget("5 x")).toEqual({ value: 5, unit: "x" });
+  });
+
+  it("should handle whitespace", () => {
+    expect(parseMetricTarget("  100  ")).toEqual({ value: 100, unit: "" });
+  });
+
+  it("should return null for empty or null input", () => {
+    expect(parseMetricTarget("")).toBeNull();
+    // @ts-ignore
+    expect(parseMetricTarget(null)).toBeNull();
+    // @ts-ignore
+    expect(parseMetricTarget(undefined)).toBeNull();
+  });
+
+  it("should return null for invalid numeric strings", () => {
+    expect(parseMetricTarget("abc")).toBeNull();
+    expect(parseMetricTarget("R$ abc")).toBeNull();
+  });
+
+  it("should handle mixed separators (current behavior)", () => {
+    // Current implementation: replaces ',' with '.' and parses float.
+    // "1.234,56" -> "1.234.56" -> parseFloat("1.234.56") -> 1.234
+    expect(parseMetricTarget("1.234,56")).toEqual({ value: 1.234, unit: "" });
+  });
+});
 
 describe("computeAdherenceScore", () => {
   const allMatch = {
