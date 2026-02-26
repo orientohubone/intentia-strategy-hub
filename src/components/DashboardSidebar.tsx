@@ -227,6 +227,7 @@ export function DashboardSidebar({ mobileOpen = false, onMobileClose }: Dashboar
                 size="icon"
                 className="h-8 w-8 lg:hidden"
                 onClick={onMobileClose}
+                aria-label="Fechar menu"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -235,6 +236,7 @@ export function DashboardSidebar({ mobileOpen = false, onMobileClose }: Dashboar
                 size="icon"
                 className="h-8 w-8 hidden lg:flex"
                 onClick={() => setCollapsed(true)}
+                aria-label="Recolher menu"
               >
                 <ChevronLeft className="h-4 w-4 transition-transform" />
               </Button>
@@ -348,6 +350,7 @@ export function DashboardSidebar({ mobileOpen = false, onMobileClose }: Dashboar
                       "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:-translate-y-0.5 hover:shadow-md"
                     )}
                     onClick={handleLogout}
+                    aria-label="Sair"
                   >
                     <item.icon className="h-4.5 w-4.5" />
                   </Button>
@@ -361,6 +364,7 @@ export function DashboardSidebar({ mobileOpen = false, onMobileClose }: Dashboar
                         ? "bg-sidebar-accent text-sidebar-accent-foreground"
                         : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                     )}
+                    aria-label={item.label}
                   >
                     <item.icon className="h-4.5 w-4.5" />
                   </Link>
