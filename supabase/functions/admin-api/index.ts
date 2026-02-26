@@ -604,7 +604,7 @@ serve(async (req) => {
     return jsonResponse({ error: `Unknown action: ${action}` }, 400);
 
   } catch (err: any) {
-    console.error("[admin-api] Error:", err);
+    console.error("[admin-api] Error:", err.message); // Cleaned log
     return jsonResponse({ error: err.message || "Internal error" }, 500);
   }
 });
@@ -640,8 +640,8 @@ async function auditLog(
       target_id: targetId,
       details,
     }]);
-  } catch (e) {
-    console.error("[admin-api] Audit log error:", e);
+  } catch (e: any) {
+    console.error("[admin-api] Audit log error:", e.message); // Cleaned log
   }
 }
 

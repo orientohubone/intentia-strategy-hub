@@ -72,11 +72,11 @@ serve(async (req) => {
     const code = url.searchParams.get("code");
     const stateB64 = url.searchParams.get("state");
     const error = url.searchParams.get("error");
-    const errorDescription = url.searchParams.get("error_description");
 
     // Handle OAuth errors from provider
     if (error) {
-      const redirectUrl = `${appUrl}/oauth/callback?error=${encodeURIComponent(error)}&error_description=${encodeURIComponent(errorDescription || "")}`;
+      console.warn(`OAuth error from provider: ${error}`);
+      const redirectUrl = `${appUrl}/oauth/callback?error=${encodeURIComponent(error)}&error_description=Provider returned an error`;
       return new Response(null, { status: 302, headers: { Location: redirectUrl } });
     }
 
@@ -103,14 +103,15 @@ serve(async (req) => {
     const { user_id, provider } = state;
     const config = TOKEN_CONFIGS[provider];
     if (!config) {
-      const redirectUrl = `${appUrl}/oauth/callback?error=unknown_provider&error_description=Unknown provider: ${provider}`;
+      const redirectUrl = `${appUrl}/oauth/callback?error=unknown_provider&error_description=Unknown provider`;
       return new Response(null, { status: 302, headers: { Location: redirectUrl } });
     }
 
     const clientId = Deno.env.get(config.clientIdEnv);
     const clientSecret = Deno.env.get(config.clientSecretEnv);
     if (!clientId || !clientSecret) {
-      const redirectUrl = `${appUrl}/oauth/callback?error=config_error&error_description=OAuth credentials not configured for ${provider}`;
+      console.error(`Missing credentials for provider ${provider}`);
+      const redirectUrl = `${appUrl}/oauth/callback?error=config_error&error_description=OAuth credentials not configured`;
       return new Response(null, { status: 302, headers: { Location: redirectUrl } });
     }
 
@@ -146,9 +147,8 @@ serve(async (req) => {
     const tokenData = await tokenResponse.json();
 
     if (!tokenResponse.ok && !tokenData.data?.access_token) {
-      console.error("Token exchange failed:", tokenData);
-      const errMsg = tokenData.error_description || tokenData.error || tokenData.message || "Token exchange failed";
-      const redirectUrl = `${appUrl}/oauth/callback?error=token_error&error_description=${encodeURIComponent(errMsg)}`;
+      console.error("Token exchange failed");
+      const redirectUrl = `${appUrl}/oauth/callback?error=token_error&error_description=Token exchange failed with provider`;
       return new Response(null, { status: 302, headers: { Location: redirectUrl } });
     }
 
@@ -169,6 +169,7 @@ serve(async (req) => {
     }
 
     if (!accessToken) {
+      console.error("No access token received in response");
       const redirectUrl = `${appUrl}/oauth/callback?error=no_token&error_description=No access token received`;
       return new Response(null, { status: 302, headers: { Location: redirectUrl } });
     }
@@ -216,10 +217,10 @@ serve(async (req) => {
             } catch { /* use default name */ }
           }
         } else {
-          console.warn("listAccessibleCustomers failed:", await customersResponse.text());
+          console.warn("listAccessibleCustomers failed with status:", customersResponse.status);
         }
       } catch (e) {
-        console.warn("Could not fetch Google Ads account info:", e);
+        console.warn("Could not fetch Google Ads account info");
       }
     } else if (config.accountInfoUrl && config.accountInfoHeaders) {
       // Other providers: use generic account info endpoint
@@ -237,7 +238,7 @@ serve(async (req) => {
           }
         }
       } catch (e) {
-        console.warn("Could not fetch account info:", e);
+        console.warn("Could not fetch account info");
       }
     }
 
@@ -268,8 +269,8 @@ serve(async (req) => {
       );
 
     if (upsertError) {
-      console.error("Upsert error:", upsertError);
-      const redirectUrl = `${appUrl}/oauth/callback?error=db_error&error_description=${encodeURIComponent(upsertError.message)}`;
+      console.error("Upsert error: Database operation failed");
+      const redirectUrl = `${appUrl}/oauth/callback?error=db_error&error_description=Failed to save integration settings`;
       return new Response(null, { status: 302, headers: { Location: redirectUrl } });
     }
 
@@ -278,8 +279,8 @@ serve(async (req) => {
     return new Response(null, { status: 302, headers: { Location: redirectUrl } });
 
   } catch (err) {
-    console.error("oauth-callback error:", err);
-    const redirectUrl = `${appUrl}/oauth/callback?error=server_error&error_description=${encodeURIComponent(err.message)}`;
+    console.error("oauth-callback error: Internal server error");
+    const redirectUrl = `${appUrl}/oauth/callback?error=server_error&error_description=Internal server error`;
     return new Response(null, { status: 302, headers: { Location: redirectUrl } });
   }
 });

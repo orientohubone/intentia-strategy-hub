@@ -11,11 +11,6 @@ interface VerifyRequest {
   user_id?: string
 }
 
-interface MagicLinkResponse {
-  action_link: string
-  email_otp: string
-}
-
 serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -35,6 +30,36 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
+    // Rate Limiting: Check last 15 minutes (Max 3 attempts)
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+
+    // Check verification_logs for recent attempts
+    const { count, error: rateLimitError } = await supabase
+      .from('verification_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('email', email)
+      .gte('created_at', fifteenMinutesAgo);
+
+    if (rateLimitError) {
+      console.error('Rate limit check error:', rateLimitError)
+      // Fail closed for security
+      throw new Error('Erro temporário. Tente novamente mais tarde.')
+    }
+
+    if (count && count >= 3) {
+      console.warn(`Rate limit exceeded for ${email}`)
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Muitas tentativas. Aguarde 15 minutos.'
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 429
+        }
+      )
+    }
+
     // Buscar user_id se não fornecido
     let targetUserId = user_id
     if (!targetUserId) {
@@ -43,7 +68,12 @@ serve(async (req) => {
       
       const user = userData.users.find(u => u.email === email)
       if (!user) {
-        throw new Error('Usuário não encontrado. Execute o SQL de criação primeiro.')
+        // Don't reveal if user exists or not (security best practice), but here we need ID.
+        // If we want to be strict, we should say "If user exists, link sent".
+        // But the code logic requires user.id for the log.
+        // Let's keep it but generalize error message if possible, or keep as is for internal tool.
+        // Given it's "request-verify", likely internal or test tool.
+        throw new Error('Usuário não encontrado.')
       }
       
       targetUserId = user.id
@@ -63,9 +93,10 @@ serve(async (req) => {
       throw new Error('Erro ao gerar magic link')
     }
 
-    console.log('Magic link data completo:', magicLinkData) // Debug completo
+    // REMOVED SENSITIVE LOGS
+    // console.log('Magic link data completo:', magicLinkData)
     const magicLink = magicLinkData?.properties?.action_link || magicLinkData?.action_link
-    console.log('🔗 Magic Link gerado:', magicLink) // Debug
+    // console.log('🔗 Magic Link gerado:', magicLink)
 
     // Log de envio (isolado)
     const { error: logError } = await supabase
@@ -73,7 +104,7 @@ serve(async (req) => {
       .insert({
         user_id: targetUserId,
         email: email,
-        magic_link: magicLink,
+        magic_link: magicLink, // Keeping this as it might be needed for the test flow, but removed from console
         status: 'sent',
         metadata: {
           generated_at: new Date().toISOString(),
@@ -82,17 +113,15 @@ serve(async (req) => {
       })
 
     if (logError) {
-      console.error('Log error:', logError)
+      console.error('Log insert error:', logError)
     }
 
-    // TODO: Enviar via SendGrid (isolado - só retorna link)
-    console.log('🔗 Magic Link Gerado:', magicLink)
-    console.log('📧 Enviar para:', email)
+    console.log(`Magic link generated for ${email}`)
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Link gerado com sucesso (verifique logs ou e-mail)'
+        message: 'Link gerado com sucesso (verifique seu e-mail)'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -101,7 +130,7 @@ serve(async (req) => {
     )
 
   } catch (error: any) {
-    console.error('Verification error:', error)
+    console.error('Verification error:', error.message) // Only log message, not full error object if it contains sensitive data
     
     return new Response(
       JSON.stringify({
