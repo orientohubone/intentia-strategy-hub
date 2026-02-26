@@ -45,9 +45,10 @@ export function useNotifications() {
       if (sharedChannel) {
         sharedRefs = Math.max(0, sharedRefs - 1);
         if (sharedRefs === 0) {
-          supabase.removeChannel(sharedChannel);
+          const channelToRemove = sharedChannel;
           sharedChannel = null;
           sharedUserId = null;
+          supabase.removeChannel(channelToRemove).catch(console.error);
         }
       }
       setNotifications([]);
@@ -72,9 +73,10 @@ export function useNotifications() {
       if (sharedChannel) {
         sharedRefs = Math.max(0, sharedRefs - 1);
         if (sharedRefs === 0) {
-          supabase.removeChannel(sharedChannel);
+          const channelToRemove = sharedChannel;
           sharedChannel = null;
           sharedUserId = null;
+          supabase.removeChannel(channelToRemove).catch(console.error);
         }
       }
     };
