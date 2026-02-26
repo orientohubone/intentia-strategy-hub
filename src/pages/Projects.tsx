@@ -224,19 +224,19 @@ export default function Projects() {
   useEffect(() => {
     const fetchDetails = async () => {
       if (!activeProjectId) return;
-      const { data: scoreData } = await (supabase as any)
+      const { data: scoreData } = await supabase
         .from("project_channel_scores")
         .select("id, channel, score, objective, funnel_role, is_recommended, risks")
         .eq("project_id", activeProjectId);
 
-      const { data: insightData } = await (supabase as any)
+      const { data: insightData } = await supabase
         .from("insights")
         .select("id, type, title, description, action")
         .eq("project_id", activeProjectId)
         .order("created_at", { ascending: false });
 
       // Fetch competitor benchmarks with structured data
-      const { data: benchmarkData } = await (supabase as any)
+      const { data: benchmarkData } = await supabase
         .from("benchmarks")
         .select("competitor_name, competitor_url, structured_data, html_snapshot, html_snapshot_at")
         .eq("project_id", activeProjectId);
@@ -380,7 +380,7 @@ export default function Projects() {
           // Single notification — guarded by ref to prevent duplicates
           if (notificationSentRef.current !== projectId) {
             notificationSentRef.current = projectId;
-            await (supabase as any).from("notifications").insert({
+            await supabase.from("notifications").insert({
               user_id: user.id,
               title: "Análise Heurística Concluída",
               message: `Análise de "${projectName || 'Projeto'}" concluída com score ${analysis.overallScore}/100.`,
@@ -436,7 +436,7 @@ export default function Projects() {
       risks: score.risks ?? [],
     }));
 
-    await (supabase as any)
+    await supabase
       .from("project_channel_scores")
       .upsert(payload, { onConflict: "project_id,channel" });
   };
@@ -481,7 +481,7 @@ export default function Projects() {
       // Single notification — guarded by ref to prevent duplicates
       if (notificationSentRef.current !== projectId) {
         notificationSentRef.current = projectId;
-        await (supabase as any).from("notifications").insert({
+        await supabase.from("notifications").insert({
           user_id: user.id,
           title: "Análise Heurística Concluída",
           message: `Reanálise de "${project.name}" concluída com score ${analysis.overallScore}/100.`,
@@ -557,7 +557,7 @@ export default function Projects() {
 
   const handleInsightCreate = async (projectId: string) => {
     if (!insightDraft.title || !insightDraft.description) return;
-    await (supabase as any)
+    await supabase
       .from("insights")
       .insert({
         project_id: projectId,
@@ -572,7 +572,7 @@ export default function Projects() {
 
   const handleInsightUpdate = async (projectId: string, insightId: string) => {
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("insights")
         .update(editingInsight)
         .eq("id", insightId);
@@ -597,7 +597,7 @@ export default function Projects() {
 
   const handleInsightDelete = async (projectId: string, insightId: string) => {
     try {
-      await (supabase as any).from("insights").delete().eq("id", insightId);
+      await supabase.from("insights").delete().eq("id", insightId);
       setInsights((prev) => ({
         ...prev,
         [projectId]: (prev[projectId] || []).filter((item) => item.id !== insightId),
