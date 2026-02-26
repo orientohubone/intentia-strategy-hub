@@ -236,7 +236,7 @@ serve(async (req) => {
       let completed = 0;
       let failed = 0;
 
-      for (const job of jobs || []) {
+      const processJob = async (job: any) => {
         try {
           await supabase
             .from("seo_monitoring_jobs")
@@ -398,7 +398,21 @@ serve(async (req) => {
           }
           failed++;
         }
-      }
+      };
+
+      const MAX_CONCURRENCY = 4;
+      let index = 0;
+      const jobList = jobs || [];
+
+      const workers = Array(Math.min(jobList.length, MAX_CONCURRENCY)).fill(null).map(async () => {
+        while (index < jobList.length) {
+          const jobIndex = index++; // atomic in single threaded JS
+          if (jobIndex >= jobList.length) break;
+          await processJob(jobList[jobIndex]);
+        }
+      });
+
+      await Promise.all(workers);
 
       return { completed, failed, processed: completed + failed };
     };
