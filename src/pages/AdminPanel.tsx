@@ -68,7 +68,7 @@ import {
   adminDeleteOverride,
 } from "@/lib/adminApi";
 import AdminStatusTab from "@/components/AdminStatusTab";
-import AdminArchitectureTab from "@/components/AdminArchitectureTab";
+import AdminArchitectureTab from "@/components/admin-architecture";
 
 // =====================================================
 // TYPES
