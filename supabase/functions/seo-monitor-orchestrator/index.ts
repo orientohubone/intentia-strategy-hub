@@ -216,12 +216,45 @@ serve(async (req) => {
         .limit(limit);
       if (error) throw error;
 
-      let queued = 0;
-      for (const cfg of configs || []) {
-        await enqueueByConfig(cfg, "scheduled");
-        queued++;
-      }
-      return { queued };
+      if (!configs || configs.length === 0) return { queued: 0 };
+
+      // Optimized: Batch insert jobs to minimize DB roundtrips
+      const jobsToInsert = configs.map((cfg) => ({
+        config_id: cfg.id,
+        project_id: cfg.project_id,
+        user_id: cfg.user_id,
+        trigger_source: "scheduled",
+        status: "queued",
+        payload: {},
+      }));
+
+      const { error: insertError } = await supabase
+        .from("seo_monitoring_jobs")
+        .insert(jobsToInsert);
+
+      if (insertError) throw insertError;
+
+      // Update configs in parallel
+      await Promise.all(
+        configs.map((cfg) => {
+          const nextRunAt = new Date(
+            Date.now() + Number(cfg.interval_seconds || 300) * 1000,
+          ).toISOString();
+          return supabase
+            .from("seo_live_monitoring_configs")
+            .update({
+              next_run_at: nextRunAt,
+              last_status: "queued",
+              last_error: null,
+            })
+            .eq("id", cfg.id)
+            .then(({ error }) => {
+              if (error) throw error;
+            });
+        }),
+      );
+
+      return { queued: configs.length };
     };
 
     const runJobs = async () => {
