@@ -28,11 +28,12 @@ function RenderText({ text }: { text: string }) {
 export default function TiaHero() {
   const navigate = useNavigate();
   const [hovered, setHovered] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [visibleMessages, setVisibleMessages] = useState<number>(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (hovered) {
+    if (hovered || isOpen) {
       setVisibleMessages(0);
       let idx = 0;
       const showNext = () => {
@@ -50,7 +51,7 @@ export default function TiaHero() {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [hovered]);
+  }, [hovered, isOpen]);
 
   return (
     <section className="relative pt-32 pb-20 md:pt-40 md:pb-28">
@@ -133,65 +134,72 @@ export default function TiaHero() {
               onMouseLeave={() => setHovered(false)}
             >
               {/* Botão */}
-              <button className="group relative flex items-center gap-2.5 rounded-full px-5 py-2.5 border border-border/50 bg-card/50 backdrop-blur-sm shadow-lg hover:border-primary/40 hover:shadow-primary/20 transition-all duration-300">
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="group relative flex items-center gap-2.5 rounded-full px-5 py-2.5 border border-border/50 bg-card/50 backdrop-blur-sm shadow-lg hover:border-primary/40 hover:shadow-primary/20 transition-all duration-300 active:scale-95"
+              >
                 <img src="/tia-branco-ponto-laranja.svg" alt="Tia" className="h-5 w-auto" />
                 <div className="text-left">
                   <p className="text-sm font-semibold text-foreground leading-tight">Falar com a Tia</p>
                   <p className="text-[10px] text-muted-foreground flex items-center gap-1">
                     <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Passe o mouse para ver em ação
+                    <span className="hidden sm:inline">Passe o mouse para ver em ação</span>
+                    <span className="sm:hidden">Toque para ver em ação</span>
                   </p>
                 </div>
               </button>
 
               {/* Conversa que aparece ao hover */}
               <div
-                className="absolute left-1/2 top-full mt-4 w-80 space-y-3 transition-all duration-500 pointer-events-none"
+                className="absolute left-1/2 top-full mt-4 w-80 transition-all duration-500 z-50"
                 style={{
-                  opacity: hovered ? 1 : 0,
-                  transform: `translateX(-50%) ${hovered ? 'translateY(0)' : 'translateY(-8px)'}`,
+                  opacity: (hovered || isOpen) ? 1 : 0,
+                  transform: `translateX(-50%) ${(hovered || isOpen) ? 'translateY(0)' : 'translateY(-8px)'}`,
+                  pointerEvents: (hovered || isOpen) ? 'auto' : 'none',
                 }}
               >
-                {chatMessages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className="transition-all duration-300"
-                    style={{
-                      opacity: i < visibleMessages ? 1 : 0,
-                      transform: i < visibleMessages ? 'translateY(0)' : 'translateY(8px)',
-                      transitionDelay: `${i * 50}ms`,
-                    }}
-                  >
-                    {msg.role === "user" ? (
-                      <div className="flex justify-end">
-                        <div className="bg-primary text-white rounded-2xl rounded-tr-sm px-3.5 py-2.5 text-xs max-w-[240px] shadow-lg shadow-primary/20">
-                          {msg.text}
+                <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl space-y-3">
+                  {chatMessages.map((msg, i) => (
+                    <div
+                      key={i}
+                      className="transition-all duration-300"
+                      style={{
+                        opacity: i < visibleMessages ? 1 : 0,
+                        transform: i < visibleMessages ? 'translateY(0)' : 'translateY(8px)',
+                        transitionDelay: `${i * 50}ms`,
+                      }}
+                    >
+                      {msg.role === "user" ? (
+                        <div className="flex justify-end">
+                          <div className="bg-primary text-white rounded-2xl rounded-tr-sm px-3.5 py-2.5 text-xs max-w-[240px] shadow-lg shadow-primary/20">
+                            {msg.text}
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <img src="/tia-branco-ponto-laranja.svg" alt="Tia" className="h-4 w-auto shrink-0 mt-0.5" />
-                        <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl rounded-tl-sm px-3.5 py-2.5 text-xs text-foreground/80 shadow-lg leading-relaxed">
-                          <RenderText text={msg.text} />
+                      ) : (
+                        <div className="flex gap-2">
+                          <img src="/tia-branco-ponto-laranja.svg" alt="Tia" className="h-4 w-auto shrink-0 mt-0.5" />
+                          <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl rounded-tl-sm px-3.5 py-2.5 text-xs text-foreground/80 shadow-lg leading-relaxed">
+                            <RenderText text={msg.text} />
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                      )}
+                    </div>
+                  ))}
 
-                {/* Typing indicator */}
-                {visibleMessages > 0 && visibleMessages < chatMessages.length && (
-                  <div className="flex gap-2">
-                    <img src="/tia-branco-ponto-laranja.svg" alt="Tia" className="h-4 w-auto shrink-0" />
-                    <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl rounded-tl-sm px-3.5 py-2.5 shadow-lg">
-                      <div className="flex gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <span className="h-1.5 w-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <span className="h-1.5 w-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  {/* Typing indicator */}
+                  {visibleMessages > 0 && visibleMessages < chatMessages.length && (
+                    <div className="flex gap-2">
+                      <img src="/tia-branco-ponto-laranja.svg" alt="Tia" className="h-4 w-auto shrink-0" />
+                      <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl rounded-tl-sm px-3.5 py-2.5 shadow-lg">
+                        <div className="flex gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
