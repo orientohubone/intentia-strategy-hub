@@ -1,9 +1,7 @@
-import { useTheme } from "next-themes";
-
 export const Loading = () => {
-  // Use a simple div that matches the background color to prevent jarring flashes
-  // The 'bg-background' utility class ensures it respects light/dark mode
-  return (
-    <div className="fixed inset-0 z-50 bg-background w-full h-screen" />
-  );
+  // Return null to render nothing during the transition
+  // This allows the browser to show the underlying background color (body background)
+  // without blocking the view with a loading indicator or opaque overlay.
+  // The 'body' style in index.css handles the correct background color (bg-background).
+  return null;
 };
