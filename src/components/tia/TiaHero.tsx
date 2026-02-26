@@ -158,7 +158,7 @@ export default function TiaHero() {
                   pointerEvents: (hovered || isOpen) ? 'auto' : 'none',
                 }}
               >
-                <div className="bg-black/80 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-2xl space-y-3">
+                <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl space-y-3">
                   {chatMessages.map((msg, i) => (
                     <div
                       key={i}
