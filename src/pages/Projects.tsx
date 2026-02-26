@@ -25,6 +25,7 @@ import { notifyProjectCreated, notifyProjectDeleted, notifyAiAnalysisCompleted }
 import { fetchProjectReport, generateConsolidatedReport } from "@/lib/reportGenerator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
 import { ScoreRing } from "@/components/ScoreRing";
 import {
   AlertDialog,
@@ -657,7 +658,7 @@ export default function Projects() {
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden sidebar-scroll">
+          <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6 rounded-lg sidebar-scroll">
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Projeto" : "Novo Projeto"}</DialogTitle>
               <DialogDescription>
@@ -1051,7 +1052,7 @@ export default function Projects() {
 
                 {/* Project Detail Dialog overlays the space instead of expanding inline */}
                 <Dialog open={isActive} onOpenChange={(open) => { if (!open) setActiveProjectId(null); }}>
-                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden sidebar-scroll">
+                  <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6 rounded-lg sidebar-scroll">
                     <div className="space-y-6 pt-2">
                       <DialogHeader>
                         <DialogTitle className="text-xl flex items-center gap-2">
