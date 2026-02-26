@@ -1,17 +1,9 @@
+import { useTheme } from "next-themes";
+
 export const Loading = () => {
+  // Use a simple div that matches the background color to prevent jarring flashes
+  // The 'bg-background' utility class ensures it respects light/dark mode
   return (
-    <div className="fixed top-0 left-0 w-full h-[2px] z-[100] bg-transparent overflow-hidden">
-      <div className="h-full bg-primary animate-progress origin-left" />
-      <style>{`
-        @keyframes progress {
-          0% { width: 0%; }
-          50% { width: 70%; }
-          100% { width: 90%; }
-        }
-        .animate-progress {
-          animation: progress 2s ease-in-out infinite;
-        }
-      `}</style>
-    </div>
+    <div className="fixed inset-0 z-50 bg-background w-full h-screen" />
   );
 };
