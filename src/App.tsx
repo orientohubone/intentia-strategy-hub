@@ -5,84 +5,83 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { HelmetProvider } from "react-helmet-async";
-import { Suspense, lazy } from "react";
-import { Loading } from "@/components/Loading";
+
+import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
+import Home from "./pages/Home";
+import Projects from "./pages/Projects";
+import Insights from "./pages/Insights";
+import Audiences from "./pages/Audiences";
+import Benchmark from "./pages/Benchmark";
+import Settings from "./pages/Settings";
+import TacticalPlan from "./pages/TacticalPlan";
+import Alerts from "./pages/Alerts";
+import Operations from "./pages/Operations";
+import Reports from "./pages/Reports";
+import Pricing from "./pages/Pricing";
+import Auth from "./pages/Auth";
+import About from "./pages/About";
+import Cases from "./pages/Cases";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import Contact from "./pages/Contact";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import CookiePolicy from "./pages/CookiePolicy";
+import DataDeletion from "./pages/DataDeletion";
+import OperationsLiveDashboard from "./pages/Operations/LiveDashboard";
+import FeatureRelatorios from "./pages/FeatureRelatorios";
+import Help from "./pages/Help";
+import Support from "./pages/Support";
+import Integrations from "./pages/Integrations";
+import SeoGeo from "./pages/SeoGeo";
+import SeoMonitoring from "./pages/SeoMonitoring";
+import Checkout from "./pages/Checkout";
+import Subscribe from "./pages/Subscribe";
+import OAuthCallback from "./pages/OAuthCallback";
+import NotFound from "./pages/NotFound";
+import BrandGuide from "./pages/BrandGuide";
+import BrandPosts from "./pages/BrandPosts";
+import GoogleAdsDesignDoc from "./pages/GoogleAdsDesignDoc";
+import Security from "./pages/Security";
+import TacticalPlanPage from "./pages/TacticalPlanPage";
+import Status from "./pages/Status";
+import Comparar from "./pages/Comparar";
+import FeatureDiagnostico from "./pages/FeatureDiagnostico";
+import FeatureAnaliseIA from "./pages/FeatureAnaliseIA";
+import FeatureBenchmark from "./pages/FeatureBenchmark";
+import FeatureScoreCanal from "./pages/FeatureScoreCanal";
+import FeatureInsights from "./pages/FeatureInsights";
+import FeatureDadosEstruturados from "./pages/FeatureDadosEstruturados";
+import FeatureGestaoCampanhas from "./pages/FeatureGestaCampanhas";
+import FeatureGestaoBudget from "./pages/FeatureGestaoBudget";
+import FeatureSeoMonitoring from "./pages/FeatureSeoMonitoring";
+import AppStore from "./pages/AppStore";
+import AdminLogin from "./pages/AdminLogin";
+import AdminPanel from "./pages/AdminPanel";
+import StatusRssFallback from "./pages/StatusRssFallback";
+import TiaPage from "./pages/Tia";
+import Changelog from "./pages/Changelog";
+import VerifyTest from "./pages/VerifyTest";
+import VerifySuccess from "./pages/VerifySuccess";
+import CreateMetaUser from "./pages/CreateMetaUser";
+
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
 import { ForceLightMode } from "@/components/ForceLightMode";
 import { FeatureGate } from "@/components/FeatureGate";
 
-const Index = lazy(() => import("./pages/Index"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Home = lazy(() => import("./pages/Home"));
-const Pricing = lazy(() => import("./pages/Pricing"));
-const Auth = lazy(() => import("./pages/Auth"));
-const About = lazy(() => import("./pages/About"));
-const Cases = lazy(() => import("./pages/Cases"));
-const Blog = lazy(() => import("./pages/Blog"));
-const BlogPost = lazy(() => import("./pages/BlogPost"));
-const Contact = lazy(() => import("./pages/Contact"));
-const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
-const TermsOfService = lazy(() => import("./pages/TermsOfService"));
-const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
-const DataDeletion = lazy(() => import("./pages/DataDeletion"));
-const Projects = lazy(() => import("./pages/Projects"));
-const Insights = lazy(() => import("./pages/Insights"));
-const Audiences = lazy(() => import("./pages/Audiences"));
-const Benchmark = lazy(() => import("./pages/Benchmark"));
-const Settings = lazy(() => import("./pages/Settings"));
-const TacticalPlan = lazy(() => import("./pages/TacticalPlan"));
-const Alerts = lazy(() => import("./pages/Alerts"));
-const Operations = lazy(() => import("./pages/Operations"));
-const OperationsLiveDashboard = lazy(() => import("./pages/Operations/LiveDashboard"));
-const Reports = lazy(() => import("./pages/Reports"));
-const FeatureRelatorios = lazy(() => import("./pages/FeatureRelatorios"));
-const Help = lazy(() => import("./pages/Help"));
-const Support = lazy(() => import("./pages/Support"));
-const Integrations = lazy(() => import("./pages/Integrations"));
-const SeoGeo = lazy(() => import("./pages/SeoGeo"));
-const SeoMonitoring = lazy(() => import("./pages/SeoMonitoring"));
-const Checkout = lazy(() => import("./pages/Checkout"));
-const Subscribe = lazy(() => import("./pages/Subscribe"));
-const OAuthCallback = lazy(() => import("./pages/OAuthCallback"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const BrandGuide = lazy(() => import("./pages/BrandGuide"));
-const BrandPosts = lazy(() => import("./pages/BrandPosts"));
-const GoogleAdsDesignDoc = lazy(() => import("./pages/GoogleAdsDesignDoc"));
-const Security = lazy(() => import("./pages/Security"));
-const TacticalPlanPage = lazy(() => import("./pages/TacticalPlanPage"));
-const Status = lazy(() => import("./pages/Status"));
-const Comparar = lazy(() => import("./pages/Comparar"));
-const FeatureDiagnostico = lazy(() => import("./pages/FeatureDiagnostico"));
-const FeatureAnaliseIA = lazy(() => import("./pages/FeatureAnaliseIA"));
-const FeatureBenchmark = lazy(() => import("./pages/FeatureBenchmark"));
-const FeatureScoreCanal = lazy(() => import("./pages/FeatureScoreCanal"));
-const FeatureInsights = lazy(() => import("./pages/FeatureInsights"));
-const FeatureDadosEstruturados = lazy(() => import("./pages/FeatureDadosEstruturados"));
-const FeatureGestaoCampanhas = lazy(() => import("./pages/FeatureGestaCampanhas"));
-const FeatureGestaoBudget = lazy(() => import("./pages/FeatureGestaoBudget"));
-const FeatureSeoMonitoring = lazy(() => import("./pages/FeatureSeoMonitoring"));
-const AppStore = lazy(() => import("./pages/AppStore"));
-const AdminLogin = lazy(() => import("./pages/AdminLogin"));
-const AdminPanel = lazy(() => import("./pages/AdminPanel"));
-const StatusRssFallback = lazy(() => import("./pages/StatusRssFallback"));
-const TiaPage = lazy(() => import("./pages/Tia"));
-const Changelog = lazy(() => import("./pages/Changelog"));
-const VerifyTest = lazy(() => import("./pages/VerifyTest"));
-const VerifySuccess = lazy(() => import("./pages/VerifySuccess"));
-const CreateMetaUser = lazy(() => import("./pages/CreateMetaUser"));
-
 const queryClient = new QueryClient();
 
-const App = () => (
-  <HelmetProvider>
-  <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-      <BrowserRouter>
-        <Suspense fallback={<Loading />}>
+const App = () => {
+  return (
+    <HelmetProvider>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+        <BrowserRouter>
           <Routes>
             <Route path="/" element={<ForceLightMode><Index /></ForceLightMode>} />
             <Route path="/precos" element={<ForceLightMode><Pricing /></ForceLightMode>} />
@@ -285,12 +284,12 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<ForceLightMode><NotFound /></ForceLightMode>} />
           </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </TooltipProvider>
-    </QueryClientProvider>
-  </ThemeProvider>
-  </HelmetProvider>
-);
+        </BrowserRouter>
+      </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
+    </HelmetProvider>
+  );
+};
 
 export default App;
