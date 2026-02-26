@@ -1,16 +1,17 @@
 export const Loading = () => {
   return (
-    <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center animate-pulse">
-      {/* Skeleton / Smoothed entry placeholder */}
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="h-8 bg-muted/50 rounded w-1/4"></div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-           <div className="h-32 bg-muted/30 rounded"></div>
-           <div className="h-32 bg-muted/30 rounded"></div>
-           <div className="h-32 bg-muted/30 rounded"></div>
-        </div>
-        <div className="h-64 bg-muted/20 rounded"></div>
-      </div>
+    <div className="fixed top-0 left-0 w-full h-[2px] z-[100] bg-transparent overflow-hidden">
+      <div className="h-full bg-primary animate-progress origin-left" />
+      <style>{`
+        @keyframes progress {
+          0% { width: 0%; }
+          50% { width: 70%; }
+          100% { width: 90%; }
+        }
+        .animate-progress {
+          animation: progress 2s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 };
