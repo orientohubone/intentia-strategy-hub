@@ -237,6 +237,23 @@ export default function Home() {
       if (homeStatsInFlight.has(userId)) return homeStatsInFlight.get(userId)!;
 
       const loadPromise = (async () => {
+        // Try batched RPC call first for better performance
+        const { data: rpcData, error: rpcError } = await supabase.rpc('get_home_stats');
+
+        if (!rpcError && rpcData) {
+          const typedData = rpcData as unknown as HomeStatsCache;
+          const next: HomeStatsCache = {
+            audiencesCount: typedData.audiencesCount ?? 0,
+            benchmarksCount: typedData.benchmarksCount ?? 0,
+            totalInsightsCount: typedData.totalInsightsCount ?? 0,
+            hasAiKey: typedData.hasAiKey ?? false,
+            notificationsCount: typedData.notificationsCount ?? 0,
+          };
+          homeStatsCache.set(userId, { data: next, timestamp: Date.now() });
+          return next;
+        }
+
+        // Fallback to parallel requests if RPC fails (e.g. function not deployed yet)
         const [audiences, benchmarks, insights, aiKeys, notifications] = await Promise.all([
           supabase.from("audiences").select("*", { count: "exact", head: true }).eq("user_id", userId),
           supabase.from("benchmarks").select("*", { count: "exact", head: true }).eq("user_id", userId),
