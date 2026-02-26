@@ -58,6 +58,16 @@ export type Database = {
           last_update: string | null
           created_at: string
           updated_at: string
+          competitor_urls: string[] | null
+          solution_context: string | null
+          missing_features: string | null
+          heuristic_analysis: Json | null
+          heuristic_completed_at: string | null
+          ai_analysis: Json | null
+          ai_completed_at: string | null
+          html_snapshot: string | null
+          structured_data: Json | null
+          html_snapshot_at: string | null
         }
         Insert: Omit<Database["public"]["Tables"]["projects"]["Row"], "id" | "created_at" | "updated_at">
         Update: Partial<Database["public"]["Tables"]["projects"]["Insert"]>
@@ -138,6 +148,9 @@ export type Database = {
           last_update: string | null
           created_at: string
           updated_at: string
+          structured_data: Json | null
+          html_snapshot: string | null
+          html_snapshot_at: string | null
         }
         Insert: Omit<Database["public"]["Tables"]["benchmarks"]["Row"], "id" | "created_at" | "updated_at" | "analysis_date">
         Update: Partial<Database["public"]["Tables"]["benchmarks"]["Insert"]>
@@ -896,6 +909,41 @@ export type Database = {
           error_message?: string | null
           error_details?: Json | null
           metadata?: Json
+          created_at?: string
+        }
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          message: string
+          type: "info" | "success" | "warning" | "error"
+          action_url: string | null
+          action_text: string | null
+          read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          message: string
+          type: "info" | "success" | "warning" | "error"
+          action_url?: string | null
+          action_text?: string | null
+          read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          message?: string
+          type?: "info" | "success" | "warning" | "error"
+          action_url?: string | null
+          action_text?: string | null
+          read?: boolean
           created_at?: string
         }
       }

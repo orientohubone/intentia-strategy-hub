@@ -10,13 +10,14 @@ export interface Project {
   url: string;
   competitor_urls: string[];
   solution_context?: string | null;
+  missing_features?: string | null;
   score: number;
   status: 'pending' | 'analyzing' | 'completed';
   heuristic_analysis?: any;
-  heuristic_completed_at?: string;
+  heuristic_completed_at?: string | null;
   ai_analysis?: any;
-  ai_completed_at?: string;
-  last_update: string;
+  ai_completed_at?: string | null;
+  last_update: string | null;
   channel_scores?: {
     google: number;
     meta: number;
@@ -103,7 +104,7 @@ export function useTenantData() {
       let request = tenantDataInFlight.get(targetUserId);
       if (!request || force) {
         request = (async () => {
-          const { data: settings, error: settingsError } = await (supabase as any)
+          const { data: settings, error: settingsError } = await supabase
             .from('tenant_settings')
             .select('*')
             .eq('user_id', targetUserId)
@@ -118,7 +119,7 @@ export function useTenantData() {
             nextSettings = await createDefaultTenantSettings(targetUserId);
           }
 
-          const { data: userProjects, error: projectsError } = await (supabase as any)
+          const { data: userProjects, error: projectsError } = await supabase
             .from('projects')
             .select('*')
             .eq('user_id', targetUserId)
@@ -129,7 +130,7 @@ export function useTenantData() {
           }
 
           return {
-            projects: userProjects || [],
+            projects: (userProjects as unknown as Project[]) || [],
             tenantSettings: nextSettings,
             fetchedAt: Date.now(),
           } as TenantDataState;
@@ -156,7 +157,7 @@ export function useTenantData() {
     const { data: userData } = await supabase.auth.getUser();
     
     if (userData?.user?.user_metadata) {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('tenant_settings')
         .insert({
           user_id: targetUserId,
@@ -187,19 +188,19 @@ export function useTenantData() {
       throw new Error(`Limite de ${maxProjects} projetos ativos atingido no plano ${plan === 'starter' ? 'Starter' : plan}. Faça upgrade para criar mais projetos.`);
     }
 
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('projects')
       .insert({
         ...projectData,
         user_id: user.id,
-      })
+      } as any)
       .select()
       .single();
 
     if (error) throw error;
 
     setProjects(prev => {
-      const next = [data, ...prev];
+      const next = [(data as unknown as Project), ...prev];
       if (userId) {
         tenantDataCache.set(userId, {
           projects: next,
@@ -215,9 +216,9 @@ export function useTenantData() {
   const updateProject = async (id: string, updates: Partial<Project>) => {
     if (!user) throw new Error('User not authenticated');
 
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('projects')
-      .update(updates)
+      .update(updates as any)
       .eq('id', id)
       .eq('user_id', user.id) // Ensure user can only update their own projects
       .select()
@@ -227,7 +228,7 @@ export function useTenantData() {
 
     setProjects(prev => {
       const next = prev.map(project => 
-        project.id === id ? { ...project, ...data } : project
+        project.id === id ? { ...project, ...(data as unknown as Project) } : project
       );
       if (userId) {
         tenantDataCache.set(userId, {
@@ -244,7 +245,7 @@ export function useTenantData() {
   const deleteProject = async (id: string) => {
     if (!user) throw new Error('User not authenticated');
 
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('projects')
       .delete()
       .eq('id', id)

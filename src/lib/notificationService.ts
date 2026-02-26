@@ -23,7 +23,7 @@ export async function createNotification(
   try {
     // Dedup: evitar notificações duplicadas nas últimas 2h
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
-    const { data: existing } = await (supabase as any)
+    const { data: existing } = await supabase
       .from("notifications")
       .select("id")
       .eq("user_id", userId)
@@ -34,7 +34,7 @@ export async function createNotification(
 
     if (existing && existing.length > 0) return;
 
-    await (supabase as any).from("notifications").insert({
+    await supabase.from("notifications").insert({
       user_id: userId,
       ...payload,
       read: false,
