@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -141,7 +141,7 @@ export default function Integrations() {
       if (error) throw error;
       setIntegrations(data || []);
     } catch (err) {
-      console.error("Error loading integrations:", err);
+      // Error is handled by UI state if needed, logs removed for security
     } finally {
       setLoading(false);
     }
@@ -187,7 +187,6 @@ export default function Integrations() {
       // Redirect to provider's OAuth page
       window.location.href = data.url;
     } catch (err: any) {
-      console.error("Error connecting:", err);
       toast.error(`Erro ao conectar ${PROVIDER_CONFIGS[provider].name}: ${err.message}`);
       setConnectingProvider(null);
     }
@@ -321,7 +320,6 @@ export default function Integrations() {
       if (error) throw error;
       setDialogLogs(data || []);
     } catch (err) {
-      console.error("Error loading sync logs:", err);
       setDialogLogs([]);
     } finally {
       setLogsLoading(false);
@@ -728,5 +726,3 @@ export default function Integrations() {
     </FeatureGate>
   );
 }
-
-
