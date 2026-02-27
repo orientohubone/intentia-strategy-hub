@@ -64,13 +64,31 @@ export function Footer() {
               Plataforma de estrategia de midia para B2B. Ajudamos empresas a tomar decisoes inteligentes sobre investimentos em marketing digital.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors" aria-label="LinkedIn">
+              <a
+                href="#"
+                className="text-muted-foreground hover:text-primary transition-colors"
+                aria-label="LinkedIn"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Linkedin className="h-5 w-5" />
               </a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors" aria-label="Twitter">
+              <a
+                href="#"
+                className="text-muted-foreground hover:text-primary transition-colors"
+                aria-label="Twitter"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Twitter className="h-5 w-5" />
               </a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors" aria-label="Github">
+              <a
+                href="#"
+                className="text-muted-foreground hover:text-primary transition-colors"
+                aria-label="Github"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Github className="h-5 w-5" />
               </a>
             </div>

@@ -20,12 +20,14 @@ export default function OAuthCallback() {
 
     if (error) {
       setStatus("error");
-      setMessage(errorDescription || error || "Erro desconhecido na autenticação.");
-      toast.error(`Erro na conexão: ${errorDescription || error}`);
+      const cleanError = String(errorDescription || error || "Erro desconhecido na autenticação.");
+      setMessage(cleanError);
+      toast.error(`Erro na conexão: ${cleanError}`);
     } else if (connStatus === "connected" && provider) {
       setStatus("success");
       const providerName = PROVIDER_CONFIGS[provider]?.name || provider;
-      setMessage(`${providerName} conectado com sucesso!${account ? ` Conta: ${account}` : ""}`);
+      const cleanAccount = account ? String(account) : "";
+      setMessage(`${providerName} conectado com sucesso!${cleanAccount ? ` Conta: ${cleanAccount}` : ""}`);
       toast.success(`${providerName} conectado com sucesso!`);
     } else {
       setStatus("processing");
