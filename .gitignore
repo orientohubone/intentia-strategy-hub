@@ -34,3 +34,6 @@ supabase/sql/
 
 # Supabase Edge Functions
 supabase/functions/
+
+# Documentação Interna (MD files, PDFs)
+documentacao/
