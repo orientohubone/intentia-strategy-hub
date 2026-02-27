@@ -25,6 +25,7 @@ import { notifyProjectCreated, notifyProjectDeleted, notifyAiAnalysisCompleted }
 import { fetchProjectReport, generateConsolidatedReport } from "@/lib/reportGenerator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
+import { ScoreRing } from "@/components/ScoreRing";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -75,6 +76,7 @@ import {
   Plus,
   Target,
   Search,
+  Calendar,
 } from "lucide-react";
 
 type Insight = {
@@ -655,7 +657,7 @@ export default function Projects() {
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden sidebar-scroll">
+          <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6 rounded-lg sidebar-scroll">
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Projeto" : "Novo Projeto"}</DialogTitle>
               <DialogDescription>
@@ -934,106 +936,122 @@ export default function Projects() {
 
             return (
               <React.Fragment key={project.id}>
-                <div id={`project-${project.id}`} className="border border-border rounded-xl bg-card p-4 sm:p-5 flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex justify-between items-start gap-2">
-                      <h2 className="text-lg font-semibold text-foreground line-clamp-1">{project.name}</h2>
-                      <div className="flex gap-1 shrink-0">
-                        <TooltipProvider delayDuration={300}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-muted transition-colors disabled:opacity-50"
-                                onClick={() => handleReanalyze(project.id)}
-                                disabled={analyzing || !canAnalyze}
-                              >
-                                <RefreshCw className={`h-3 w-3 ${analyzing ? "animate-spin" : ""}`} />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top">
-                              <p>Reanalisar URL</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button size="icon" variant="ghost" className="h-7 w-7">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => startEdit(project.id)}>
-                              <Pencil className="h-3.5 w-3.5 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            {project.status === "completed" && (
-                              <DropdownMenuItem onClick={async () => {
-                                if (!user) return;
-                                toast.info("Gerando relatório...");
-                                try {
-                                  const report = await fetchProjectReport(project.id, user.id);
-                                  generateConsolidatedReport(report);
-                                } catch (e: any) {
-                                  toast.error("Erro ao gerar relatório: " + e.message);
-                                }
-                              }}>
-                                <FileText className="h-3.5 w-3.5 mr-2" />
-                                Relatório PDF
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuSeparator />
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
-                                  <Trash2 className="h-3.5 w-3.5 mr-2" />
-                                  Excluir
-                                </DropdownMenuItem>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Tem certeza que deseja excluir o projeto "{project.name}"? Esta ação não pode ser desfeita.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeleteProject(project.id)}>
-                                    Excluir
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                <div
+                  className="rounded-xl border border-border bg-card p-4 sm:p-5 flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow group cursor-pointer relative"
+                  onClick={() => setActiveProjectId(project.id)}
+                  tabIndex={0}
+                  role="button"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setActiveProjectId(project.id);
+                    }
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <FolderOpen className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                          <h3 className="font-semibold text-foreground text-sm sm:text-base truncate">{project.name}</h3>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">{project.niche}</Badge>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                          <Globe className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{project.url.replace(/^https?:\/\//, "")}</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground flex-wrap">
-                      <Badge variant="secondary" className="text-[10px] font-medium">{project.niche}</Badge>
-                      <span className="truncate max-w-full text-xs opacity-80" title={project.url}>{project.url}</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      <div className="bg-muted/40 rounded-lg p-2 flex flex-col">
-                        <span className="text-[10px] text-muted-foreground uppercase opacity-80">Score</span>
-                        <span className={`text-lg font-bold ${project.score >= 70 ? "text-green-600" : project.score >= 50 ? "text-yellow-600" : "text-red-500"}`}>{project.score}</span>
-                      </div>
-                      <div className="bg-muted/40 rounded-lg p-2 flex flex-col">
-                        <span className="text-[10px] text-muted-foreground uppercase opacity-80">Status</span>
-                        <span className="text-sm font-semibold capitalize mt-auto">{project.status === "completed" ? "Concluído" : "Pendente"}</span>
-                      </div>
-                    </div>
+                    <ScoreRing score={project.score} size="sm" label="Score" />
                   </div>
-                  <div>
-                    <Button size="sm" className="w-full flex justify-center items-center gap-1.5 mt-2" variant="outline" onClick={() => setActiveProjectId(project.id)}>
-                      <FolderOpen className="h-3.5 w-3.5" />
-                      Visualizar & Gerenciar
-                    </Button>
+
+                  <div className="flex items-center justify-between pt-3 border-t border-border mt-auto">
+                    <div className="flex items-center gap-2">
+                      <Badge variant={project.status === "completed" ? "default" : "secondary"} className="text-[10px] h-5">
+                        {project.status === "completed" ? "Concluído" : "Pendente"}
+                      </Badge>
+                      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {project.last_update ? new Date(project.last_update).toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit' }) : "-"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      <TooltipProvider delayDuration={300}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-muted transition-colors disabled:opacity-50 text-muted-foreground hover:text-foreground"
+                              onClick={() => handleReanalyze(project.id)}
+                              disabled={analyzing || !canAnalyze}
+                            >
+                              <RefreshCw className={`h-3.5 w-3.5 ${analyzing ? "animate-spin" : ""}`} />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <p>Reanalisar URL</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => startEdit(project.id)}>
+                            <Pencil className="h-3.5 w-3.5 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+                          {project.status === "completed" && (
+                            <DropdownMenuItem onClick={async () => {
+                              if (!user) return;
+                              toast.info("Gerando relatório...");
+                              try {
+                                const report = await fetchProjectReport(project.id, user.id);
+                                generateConsolidatedReport(report);
+                              } catch (e: any) {
+                                toast.error("Erro ao gerar relatório: " + e.message);
+                              }
+                            }}>
+                              <FileText className="h-3.5 w-3.5 mr-2" />
+                              Relatório PDF
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
+                                <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                Excluir
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja excluir o projeto "{project.name}"? Esta ação não pode ser desfeita.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteProject(project.id)}>
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </div>
 
                 {/* Project Detail Dialog overlays the space instead of expanding inline */}
                 <Dialog open={isActive} onOpenChange={(open) => { if (!open) setActiveProjectId(null); }}>
-                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden sidebar-scroll">
+                  <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6 rounded-lg sidebar-scroll">
                     <div className="space-y-6 pt-2">
                       <DialogHeader>
                         <DialogTitle className="text-xl flex items-center gap-2">
@@ -1244,94 +1262,100 @@ export default function Projects() {
                                     )}
                                   </div>
                                 )}
-
-                                {/* Structured Data & HTML Snapshot (unified: principal + competitors) */}
-                                {(() => {
-                                  // Build structured data from Edge Function response, DB columns, or synthesize from meta
-                                  const sd = ha.structuredData || (project as any).structured_data;
-                                  const hs = ha.htmlSnapshot || (project as any).html_snapshot;
-                                  // If no structured data from Edge Function, synthesize OG from existing meta
-                                  const fallbackSd = !sd && ha.meta ? {
-                                    jsonLd: [],
-                                    microdata: [],
-                                    openGraph: Object.fromEntries(
-                                      [
-                                        ha.meta.ogTitle && ["og:title", ha.meta.ogTitle],
-                                        ha.meta.ogDescription && ["og:description", ha.meta.ogDescription],
-                                        ha.meta.ogImage && ["og:image", ha.meta.ogImage],
-                                        ha.meta.language && ["og:locale", ha.meta.language],
-                                      ].filter(Boolean) as [string, string][]
-                                    ),
-                                    twitterCard: {},
-                                  } : null;
-                                  const finalSd = sd || fallbackSd;
-                                  const compSd = competitorSdMap[project.id] || [];
-                                  return (
-                                    <>
-                                      <StructuredDataViewer
-                                        structuredData={finalSd}
-                                        htmlSnapshot={hs}
-                                        htmlSnapshotAt={(project as any).html_snapshot_at}
-                                        competitors={compSd}
-                                        projectName={project.name}
-                                      />
-                                      <StructuredDataGenerator
-                                        projectStructuredData={finalSd}
-                                        projectMeta={ha.meta}
-                                        projectUrl={project.url}
-                                        projectName={project.name}
-                                        projectNiche={project.niche}
-                                        competitors={compSd}
-                                      />
-                                    </>
-                                  );
-                                })()}
-
-                                {/* AI Analysis Status / Results */}
-                                {project.status === "completed" && !aiResults[project.id] && !project.ai_analysis && aiAnalyzing !== project.id && (
-                                  <div className={`rounded-lg border border-dashed p-3 flex items-center gap-3 ${canAiAnalysis ? "border-primary/30 bg-primary/5" : "border-amber-500/30 bg-amber-500/5"}`}>
-                                    <Sparkles className={`h-5 w-5 flex-shrink-0 ${canAiAnalysis ? "text-primary" : "text-amber-500"}`} />
-                                    <div className="flex-1">
-                                      <p className="text-xs font-medium text-foreground">
-                                        {canAiAnalysis ? "Análise por IA disponível" : "Análise por IA indisponível no seu plano"}
-                                      </p>
-                                      <p className="text-[11px] text-muted-foreground">
-                                        {!canAiAnalysis
-                                          ? "Faça upgrade para o plano Professional para desbloquear a análise por IA."
-                                          : hasAiKeys
-                                            ? "Clique em \"Analisar com IA\" para obter insights semânticos aprofundados."
-                                            : "Configure suas API keys em Configurações → Integrações de IA para habilitar."}
-                                      </p>
-                                    </div>
-                                    {canAiAnalysis && !hasAiKeys && (
-                                      <Button size="sm" variant="outline" className="text-xs flex-shrink-0" onClick={() => window.location.href = "/settings"}>
-                                        Configurar
-                                      </Button>
-                                    )}
-                                  </div>
-                                )}
-
-                                {/* AI Analyzing Loading — Lab animation */}
-                                {aiAnalyzing === project.id && (
-                                  <div className="rounded-lg border border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 p-4 flex items-center gap-4">
-                                    <div className="relative h-10 w-10 flex items-center justify-center flex-shrink-0">
-                                      <div className="absolute inset-0 rounded-full border-2 border-primary/20"></div>
-                                      <span className="absolute h-2 w-2 rounded-full bg-primary animate-lab-bubble"></span>
-                                      <span className="absolute h-1.5 w-1.5 rounded-full bg-primary/70 animate-lab-bubble-delay -translate-x-1.5"></span>
-                                      <span className="absolute h-1.5 w-1.5 rounded-full bg-primary/50 animate-lab-bubble-delay-2 translate-x-1.5"></span>
-                                    </div>
-                                    <div className="flex-1">
-                                      <p className="text-sm font-medium text-foreground">Preparando análise semântica...</p>
-                                      <p className="text-xs text-muted-foreground">
-                                        Processando com {selectedAiModel.split("::")[1] ? (AI_MODEL_LABELS[selectedAiModel.split("::")[1]] || selectedAiModel.split("::")[1]) : "IA"}. Isso pode levar até 30 segundos.
-                                      </p>
-                                    </div>
-                                  </div>
-                                )}
                               </>)}
                             </div>
                           );
                         })()}
+
+                        {/* Extracted Structured Data & HTML Snapshot */}
+                        {(heuristicResults[project.id] || project.heuristic_analysis) && (() => {
+                          const ha = (heuristicResults[project.id] || project.heuristic_analysis) as UrlAnalysis;
+                          // Build structured data from Edge Function response, DB columns, or synthesize from meta
+                          const sd = ha.structuredData || (project as any).structured_data;
+                          const hs = ha.htmlSnapshot || (project as any).html_snapshot;
+                          // If no structured data from Edge Function, synthesize OG from existing meta
+                          const fallbackSd = !sd && ha.meta ? {
+                            jsonLd: [],
+                            microdata: [],
+                            openGraph: Object.fromEntries(
+                              [
+                                ha.meta.ogTitle && ["og:title", ha.meta.ogTitle],
+                                ha.meta.ogDescription && ["og:description", ha.meta.ogDescription],
+                                ha.meta.ogImage && ["og:image", ha.meta.ogImage],
+                                ha.meta.language && ["og:locale", ha.meta.language],
+                              ].filter(Boolean) as [string, string][]
+                            ),
+                            twitterCard: {},
+                          } : null;
+                          const finalSd = sd || fallbackSd;
+                          const compSd = competitorSdMap[project.id] || [];
+
+                          // Only render if there's data to show
+                          if (!finalSd && !hs && (!compSd || compSd.length === 0)) return null;
+
+                          return (
+                            <>
+                              <StructuredDataViewer
+                                structuredData={finalSd}
+                                htmlSnapshot={hs}
+                                htmlSnapshotAt={(project as any).html_snapshot_at}
+                                competitors={compSd}
+                                projectName={project.name}
+                              />
+                              <StructuredDataGenerator
+                                projectStructuredData={finalSd}
+                                projectMeta={ha.meta}
+                                projectUrl={project.url}
+                                projectName={project.name}
+                                projectNiche={project.niche}
+                                competitors={compSd}
+                              />
+                            </>
+                          );
+                        })()}
+
+                        {/* Extracted AI Analysis Section (Status, Loading, Results) */}
+                        {/* AI Analysis Status / Placeholder - only show if completed & no results & not analyzing */}
+                        {project.status === "completed" && !aiResults[project.id] && !project.ai_analysis && aiAnalyzing !== project.id && (
+                          <div className={`rounded-lg border border-dashed p-3 flex items-center gap-3 ${canAiAnalysis ? "border-primary/30 bg-primary/5" : "border-amber-500/30 bg-amber-500/5"}`}>
+                            <Sparkles className={`h-5 w-5 flex-shrink-0 ${canAiAnalysis ? "text-primary" : "text-amber-500"}`} />
+                            <div className="flex-1">
+                              <p className="text-xs font-medium text-foreground">
+                                {canAiAnalysis ? "Análise por IA disponível" : "Análise por IA indisponível no seu plano"}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground">
+                                {!canAiAnalysis
+                                  ? "Faça upgrade para o plano Professional para desbloquear a análise por IA."
+                                  : hasAiKeys
+                                    ? "Clique em \"Analisar com IA\" para obter insights semânticos aprofundados."
+                                    : "Configure suas API keys em Configurações → Integrações de IA para habilitar."}
+                              </p>
+                            </div>
+                            {canAiAnalysis && !hasAiKeys && (
+                              <Button size="sm" variant="outline" className="text-xs flex-shrink-0" onClick={() => window.location.href = "/settings"}>
+                                Configurar
+                              </Button>
+                            )}
+                          </div>
+                        )}
+
+                        {/* AI Analyzing Loading — Lab animation */}
+                        {aiAnalyzing === project.id && (
+                          <div className="rounded-lg border border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 p-4 flex items-center gap-4">
+                            <div className="relative h-10 w-10 flex items-center justify-center flex-shrink-0">
+                              <div className="absolute inset-0 rounded-full border-2 border-primary/20"></div>
+                              <span className="absolute h-2 w-2 rounded-full bg-primary animate-lab-bubble"></span>
+                              <span className="absolute h-1.5 w-1.5 rounded-full bg-primary/70 animate-lab-bubble-delay -translate-x-1.5"></span>
+                              <span className="absolute h-1.5 w-1.5 rounded-full bg-primary/50 animate-lab-bubble-delay-2 translate-x-1.5"></span>
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-foreground">Preparando análise semântica...</p>
+                              <p className="text-xs text-muted-foreground">
+                                Processando com {selectedAiModel.split("::")[1] ? (AI_MODEL_LABELS[selectedAiModel.split("::")[1]] || selectedAiModel.split("::")[1]) : "IA"}. Isso pode levar até 30 segundos.
+                              </p>
+                            </div>
+                          </div>
+                        )}
 
                         {/* AI Analysis Results Section */}
                         {(() => {
@@ -1528,7 +1552,7 @@ export default function Projects() {
                             <h3 className="text-sm sm:text-base font-semibold text-foreground">Visão Geral do Projeto</h3>
                           </button>
                           {!isSectionCollapsed(project.id, "overview") && (
-                            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
                               <div className="bg-muted/50 rounded-xl p-3 sm:p-4 text-center">
                                 <p className="text-[10px] sm:text-sm text-muted-foreground mb-1">Score</p>
                                 <p className={`text-xl sm:text-3xl font-bold ${project.score >= 70 ? "text-green-600" : project.score >= 50 ? "text-yellow-600" : "text-red-500"
