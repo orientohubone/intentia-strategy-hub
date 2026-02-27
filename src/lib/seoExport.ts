@@ -51,7 +51,7 @@ export function exportAsPdf(data: SeoAnalysisExportData): void {
 
 // ─── HTML Report Builder ───
 
-function buildHtmlReport(data: SeoAnalysisExportData): string {
+export function buildHtmlReport(data: SeoAnalysisExportData): string {
   const ps = data.pagespeed;
   const serp = data.serp;
   const intel = data.intelligence;
@@ -99,7 +99,7 @@ function buildHtmlReport(data: SeoAnalysisExportData): string {
       <table>
         <thead><tr><th>Métrica</th><th>Valor</th><th>Descrição</th></tr></thead>
         <tbody>
-          ${vitals.map(v => `<tr><td><strong>${v.label}</strong></td><td>${v.value}</td><td>${v.desc}</td></tr>`).join("")}
+          ${vitals.map(v => `<tr><td><strong>${v.label}</strong></td><td>${escapeHtml(String(v.value))}</td><td>${v.desc}</td></tr>`).join("")}
         </tbody>
       </table>
     </div>`;
@@ -114,11 +114,11 @@ function buildHtmlReport(data: SeoAnalysisExportData): string {
       <h2>Auditoria SEO (${passed.length}/${ps.seoAudits.filter(a => a.score !== null).length} aprovadas)</h2>
       ${failed.length > 0 ? `
         <h3 style="color: #ef4444">⚠ Itens que precisam de atenção (${failed.length})</h3>
-        <ul>${failed.map(a => `<li><strong>${a.title}</strong>${a.description ? ` — ${a.description}` : ""}</li>`).join("")}</ul>
+        <ul>${failed.map(a => `<li><strong>${escapeHtml(a.title)}</strong>${a.description ? ` — ${escapeHtml(a.description)}` : ""}</li>`).join("")}</ul>
       ` : ""}
       ${passed.length > 0 ? `
         <h3 style="color: #22c55e">✓ Aprovados (${passed.length})</h3>
-        <ul>${passed.map(a => `<li><strong>${a.title}</strong></li>`).join("")}</ul>
+        <ul>${passed.map(a => `<li><strong>${escapeHtml(a.title)}</strong></li>`).join("")}</ul>
       ` : ""}
     </div>`;
   }
@@ -128,7 +128,7 @@ function buildHtmlReport(data: SeoAnalysisExportData): string {
     sections += `
     <div class="section">
       <h2>Acessibilidade (Score: ${ps.accessibilityScore}/100)</h2>
-      <ul>${ps.accessibilityAudits.map(a => `<li><strong>${a.title}</strong>${a.description ? ` — ${a.description}` : ""}</li>`).join("")}</ul>
+      <ul>${ps.accessibilityAudits.map(a => `<li><strong>${escapeHtml(a.title)}</strong>${a.description ? ` — ${escapeHtml(a.description)}` : ""}</li>`).join("")}</ul>
     </div>`;
   }
 
@@ -137,7 +137,7 @@ function buildHtmlReport(data: SeoAnalysisExportData): string {
     sections += `
     <div class="section">
       <h2>Oportunidades de Melhoria (${ps.opportunities.length})</h2>
-      <ul>${ps.opportunities.map(a => `<li><strong>${a.title}</strong>${a.displayValue ? ` — ${a.displayValue}` : ""}${a.description ? `<br><small>${a.description}</small>` : ""}</li>`).join("")}</ul>
+      <ul>${ps.opportunities.map(a => `<li><strong>${escapeHtml(a.title)}</strong>${a.displayValue ? ` — ${escapeHtml(a.displayValue)}` : ""}${a.description ? `<br><small>${escapeHtml(a.description)}</small>` : ""}</li>`).join("")}</ul>
     </div>`;
   }
 
@@ -146,11 +146,11 @@ function buildHtmlReport(data: SeoAnalysisExportData): string {
     sections += `
     <div class="section">
       <h2>Ranking Google</h2>
-      <p>Domínio: <strong>${serp.targetDomain || "—"}</strong> | Posição: <strong>${serp.targetPosition ? `#${serp.targetPosition}` : "Fora do top 20"}</strong></p>
+      <p>Domínio: <strong>${escapeHtml(serp.targetDomain || "—")}</strong> | Posição: <strong>${serp.targetPosition ? `#${serp.targetPosition}` : "Fora do top 20"}</strong></p>
       <table>
         <thead><tr><th>#</th><th>Título</th><th>Domínio</th></tr></thead>
         <tbody>
-          ${serp.results.slice(0, 10).map(r => `<tr style="${r.isTarget ? "background: #fff7ed; font-weight: 600;" : ""}"><td>${r.position}</td><td>${r.title}</td><td>${r.domain}</td></tr>`).join("")}
+          ${serp.results.slice(0, 10).map(r => `<tr style="${r.isTarget ? "background: #fff7ed; font-weight: 600;" : ""}"><td>${r.position}</td><td>${escapeHtml(r.title)}</td><td>${escapeHtml(r.domain)}</td></tr>`).join("")}
         </tbody>
       </table>
     </div>`;
@@ -186,7 +186,7 @@ function buildHtmlReport(data: SeoAnalysisExportData): string {
         <thead><tr><th>Domínio</th><th>H1/Palavras</th><th>Links ext.</th><th>CTAs</th><th>Imagens</th><th>Sinais</th></tr></thead>
         <tbody>
           ${intel.competitors.map(c => `<tr>
-            <td><strong>${c.domain}</strong><br><small>${c.reachable ? (c.title || "Sem título") : "Inacessível"}</small></td>
+            <td><strong>${escapeHtml(c.domain)}</strong><br><small>${c.reachable ? (escapeHtml(c.title || "Sem título")) : "Inacessível"}</small></td>
             <td>${c.h1Count} / ${c.wordCount.toLocaleString()}</td>
             <td>${c.externalLinkCount}</td>
             <td>${c.ctaCount}</td>
@@ -207,8 +207,8 @@ function buildHtmlReport(data: SeoAnalysisExportData): string {
         <div class="llm-card">
           <p><strong>${llm.provider === "google_gemini" ? "Gemini" : "Claude"} — ${llm.model}</strong>
           | ${llm.mentioned ? '<span style="color: #22c55e">✓ Mencionado</span>' : '<span style="color: #ef4444">✗ Não mencionado</span>'}</p>
-          ${llm.mentionContext ? `<blockquote>...${llm.mentionContext}...</blockquote>` : ""}
-          ${llm.competitorsMentioned.length > 0 ? `<p><small>Concorrentes mencionados: ${llm.competitorsMentioned.join(", ")}</small></p>` : ""}
+          ${llm.mentionContext ? `<blockquote>...${escapeHtml(llm.mentionContext)}...</blockquote>` : ""}
+          ${llm.competitorsMentioned.length > 0 ? `<p><small>Concorrentes mencionados: ${llm.competitorsMentioned.map(c => escapeHtml(c)).join(", ")}</small></p>` : ""}
         </div>
       `).join("")}
     </div>`;
@@ -219,7 +219,7 @@ function buildHtmlReport(data: SeoAnalysisExportData): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Relatório SEO — ${data.projectName}</title>
+  <title>Relatório SEO — ${escapeHtml(data.projectName)}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a1a; line-height: 1.6; padding: 40px; max-width: 900px; margin: 0 auto; }
@@ -253,7 +253,7 @@ function buildHtmlReport(data: SeoAnalysisExportData): string {
 <body>
   <div class="header">
     <h1>Relatório SEO & Performance</h1>
-    <p><strong>Projeto:</strong> ${data.projectName} | <strong>URL:</strong> ${data.projectUrl}</p>
+    <p><strong>Projeto:</strong> ${escapeHtml(data.projectName)} | <strong>URL:</strong> ${escapeHtml(data.projectUrl)}</p>
     <p><strong>Dispositivo:</strong> ${data.strategy === "mobile" ? "Mobile" : "Desktop"} | <strong>Data:</strong> ${date}</p>
   </div>
   ${sections}
@@ -265,6 +265,17 @@ function buildHtmlReport(data: SeoAnalysisExportData): string {
 }
 
 // ─── Helpers ───
+
+function escapeHtml(unsafe: string | null | undefined): string {
+  if (unsafe == null) return "";
+  const str = String(unsafe);
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 function downloadFile(content: string, filename: string, mimeType: string): void {
   const blob = new Blob([content], { type: mimeType });
