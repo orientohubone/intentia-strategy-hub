@@ -1,10 +1,25 @@
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+const ALLOWED_ORIGINS = [
+  "https://intentia.com.br",
+  "http://www.intentia.com.br",
+  "https://www.intentia.com.br",
+  "https://intentia-strategy-hub.vercel.app",
+  "http://localhost:8080",
+  "http://localhost:5173",
+  "http://localhost:3000"
+];
 
 export default async function handler(req: any, res: any) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  const origin = req.headers.origin || "";
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  } else if (!origin) {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+  }
+
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
@@ -16,7 +31,7 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     return res.status(500).json({ error: "Supabase credentials not configured" });
   }
 
@@ -32,7 +47,7 @@ export default async function handler(req: any, res: any) {
       return res.status(401).json({ error: "Missing access token" });
     }
 
-    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Validate user token
     const { data: userData, error: userError } = await supabase.auth.getUser(token);

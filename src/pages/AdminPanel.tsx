@@ -69,6 +69,7 @@ import {
 } from "@/lib/adminApi";
 import AdminStatusTab from "@/components/AdminStatusTab";
 import AdminArchitectureTab from "@/components/admin-architecture";
+import AdminSecurityTab from "@/components/AdminSecurityTab";
 
 // =====================================================
 // TYPES
@@ -164,7 +165,7 @@ export default function AdminPanel() {
   const { admin, logout } = useAdminAuth();
 
   // State
-  const [activeTab, setActiveTab] = useState<"features" | "plans" | "users" | "status" | "reports" | "architecture" | "support">("features");
+  const [activeTab, setActiveTab] = useState<"features" | "plans" | "users" | "status" | "reports" | "architecture" | "support" | "security">("features");
   const [features, setFeatures] = useState<FeatureFlag[]>([]);
   const [planFeatures, setPlanFeatures] = useState<PlanFeature[]>([]);
   const [users, setUsers] = useState<TenantUser[]>([]);
@@ -338,7 +339,7 @@ export default function AdminPanel() {
 
   const filteredFeatures = features.filter((f) => {
     if (searchTerm && !f.feature_name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !f.feature_key.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+      !f.feature_key.toLowerCase().includes(searchTerm.toLowerCase())) return false;
     if (categoryFilter !== "all" && f.category !== categoryFilter) return false;
     if (statusFilter !== "all" && f.status !== statusFilter) return false;
     return true;
@@ -346,8 +347,8 @@ export default function AdminPanel() {
 
   const filteredUsers = users.filter((u) => {
     if (searchTerm && !(u.company_name || "").toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !(u.full_name || "").toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !(u.email || "").toLowerCase().includes(searchTerm.toLowerCase())) return false;
+      !(u.full_name || "").toLowerCase().includes(searchTerm.toLowerCase()) &&
+      !(u.email || "").toLowerCase().includes(searchTerm.toLowerCase())) return false;
     if (planFilter !== "all" && u.plan !== planFilter) return false;
     return true;
   });
@@ -461,15 +462,15 @@ export default function AdminPanel() {
             { key: "reports" as const, label: "Relatórios", icon: FileText },
             { key: "architecture" as const, label: "Arquitetura", icon: Layers },
             { key: "support" as const, label: "Atendimentos", icon: MessageCircle },
+            { key: "security" as const, label: "Segurança", icon: ShieldAlert },
           ].map((tab) => (
             <button
               key={tab.key}
               onClick={() => { setActiveTab(tab.key); setSearchTerm(""); }}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === tab.key
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.key
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground/90 hover:text-foreground hover:bg-muted/60"
-              }`}
+                }`}
             >
               <tab.icon className="h-4 w-4" />
               <span className="hidden sm:inline">{tab.label}</span>
@@ -607,20 +608,18 @@ export default function AdminPanel() {
                                     return (
                                       <div
                                         key={feature.id}
-                                        className={`mx-3 mb-1 rounded-lg transition-colors ${
-                                          feature.status === "active" ? "hover:bg-muted/50" :
-                                          feature.status === "disabled" ? "opacity-50" : "hover:bg-muted/30"
-                                        }`}
+                                        className={`mx-3 mb-1 rounded-lg transition-colors ${feature.status === "active" ? "hover:bg-muted/50" :
+                                            feature.status === "disabled" ? "opacity-50" : "hover:bg-muted/30"
+                                          }`}
                                       >
                                         <div className="flex items-center gap-3 px-3 py-2.5 pl-[52px]">
                                           {/* Status dot */}
-                                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                                            feature.status === "active" ? "bg-green-500" :
-                                            feature.status === "disabled" ? "bg-red-500" :
-                                            feature.status === "development" ? "bg-blue-500" :
-                                            feature.status === "maintenance" ? "bg-amber-500" :
-                                            "bg-gray-500"
-                                          }`} />
+                                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${feature.status === "active" ? "bg-green-500" :
+                                              feature.status === "disabled" ? "bg-red-500" :
+                                                feature.status === "development" ? "bg-blue-500" :
+                                                  feature.status === "maintenance" ? "bg-amber-500" :
+                                                    "bg-gray-500"
+                                            }`} />
 
                                           {/* Feature name + description */}
                                           <div className="flex-1 min-w-0">
@@ -642,11 +641,10 @@ export default function AdminPanel() {
                                                   onClick={(e) => { e.stopPropagation(); togglePlanFeature(feature.feature_key, plan, isEnabled); }}
                                                   disabled={isSaving}
                                                   title={`${PLAN_CONFIG[plan].label}: ${isEnabled ? "Habilitado" : "Desabilitado"}`}
-                                                  className={`w-6 h-6 rounded flex items-center justify-center text-[9px] font-bold transition-all ${
-                                                    isEnabled
+                                                  className={`w-6 h-6 rounded flex items-center justify-center text-[9px] font-bold transition-all ${isEnabled
                                                       ? "bg-green-500/15 text-green-400 hover:bg-green-500/25"
                                                       : "bg-muted/50 text-muted-foreground/80 hover:bg-muted/70"
-                                                  }`}
+                                                    }`}
                                                 >
                                                   {plan === "starter" ? "S" : plan === "professional" ? "P" : "E"}
                                                 </button>
@@ -764,11 +762,10 @@ export default function AdminPanel() {
                         className="w-full flex items-center gap-4 px-5 py-4 hover:bg-muted/20 transition-colors group"
                         onClick={() => toggleCategory(`plan-${plan}`)}
                       >
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                          plan === "starter" ? "bg-blue-500/10" :
-                          plan === "professional" ? "bg-primary/10" :
-                          "bg-purple-500/10"
-                        }`}>
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${plan === "starter" ? "bg-blue-500/10" :
+                            plan === "professional" ? "bg-primary/10" :
+                              "bg-purple-500/10"
+                          }`}>
                           <PlanIcon className={`h-5 w-5 ${planCfg.color}`} />
                         </div>
                         <div className="flex-1 min-w-0 text-left">
@@ -890,13 +887,12 @@ export default function AdminPanel() {
                                                 </Select>
                                               </div>
                                             )}
-                                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                                              feature.status === "active" ? "bg-green-500" :
-                                              feature.status === "disabled" ? "bg-red-500" :
-                                              feature.status === "development" ? "bg-blue-500" :
-                                              feature.status === "maintenance" ? "bg-amber-500" :
-                                              "bg-gray-500"
-                                            }`} />
+                                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${feature.status === "active" ? "bg-green-500" :
+                                                feature.status === "disabled" ? "bg-red-500" :
+                                                  feature.status === "development" ? "bg-blue-500" :
+                                                    feature.status === "maintenance" ? "bg-amber-500" :
+                                                      "bg-gray-500"
+                                              }`} />
                                           </div>
                                         </div>
                                       );
@@ -923,7 +919,7 @@ export default function AdminPanel() {
                   <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <h3 className="text-lg font-semibold mb-2">Relatórios</h3>
                   <p className="text-sm mb-6">Gerencie o acesso à tela de relatórios</p>
-                  
+
                   <div className="max-w-md mx-auto space-y-4">
                     <Card className="bg-card border-border shadow-md">
                       <CardHeader className="pb-3">
@@ -947,22 +943,21 @@ export default function AdminPanel() {
                                     reports_feature
                                   </p>
                                 </div>
-                                <Badge className={`text-xs ${
-                                  feature?.status === 'active' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                                  feature?.status === 'development' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                  feature?.status === 'disabled' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                  feature?.status === 'maintenance' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                  'bg-gray-500/10 text-gray-400 border-gray-500/20'
-                                }`}>
+                                <Badge className={`text-xs ${feature?.status === 'active' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                    feature?.status === 'development' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                      feature?.status === 'disabled' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                        feature?.status === 'maintenance' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                          'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                                  }`}>
                                   {feature?.status === 'active' ? 'Ativo' :
-                                   feature?.status === 'development' ? 'Em Desenvolvimento' :
-                                   feature?.status === 'disabled' ? 'Desativado' :
-                                   feature?.status === 'maintenance' ? 'Em Manutenção' :
-                                   feature?.status === 'deprecated' ? 'Descontinuado' :
-                                   feature?.status || 'Desconhecido'}
+                                    feature?.status === 'development' ? 'Em Desenvolvimento' :
+                                      feature?.status === 'disabled' ? 'Desativado' :
+                                        feature?.status === 'maintenance' ? 'Em Manutenção' :
+                                          feature?.status === 'deprecated' ? 'Descontinuado' :
+                                            feature?.status || 'Desconhecido'}
                                 </Badge>
                               </div>
-                              
+
                               <div className="pt-3 border-t border-border/50">
                                 <p className="text-xs text-muted-foreground mb-3">
                                   Status por plano:
@@ -972,7 +967,7 @@ export default function AdminPanel() {
                                     const planFeature = planFeatures.find(pf => pf.feature_key === "reports_feature" && pf.plan === plan);
                                     const isEnabled = planFeature?.is_enabled ?? false;
                                     const isActive = feature?.status === "active";
-                                    
+
                                     return (
                                       <div key={plan} className="flex items-center justify-between text-xs">
                                         <span className="capitalize">{PLAN_CONFIG[plan as keyof typeof PLAN_CONFIG]?.label || plan}</span>
@@ -996,7 +991,7 @@ export default function AdminPanel() {
                         })()}
                       </CardContent>
                     </Card>
-                    
+
                     <Card className="bg-card border-border shadow-md">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-base flex items-center gap-2">
@@ -1019,7 +1014,7 @@ export default function AdminPanel() {
                             <span>Categoria: general</span>
                           </div>
                         </div>
-                        
+
                         <div className="pt-2 border-t border-border/50">
                           <p className="text-xs text-muted-foreground">
                             <strong>Fluxo:</strong> Admin Panel → Feature Flags → Relatórios → reports_feature
@@ -1048,19 +1043,18 @@ export default function AdminPanel() {
                                   <p className="text-sm font-medium">Tela de Monitoramento SEO</p>
                                   <p className="text-xs text-muted-foreground">performance_monitoring</p>
                                 </div>
-                                <Badge className={`text-xs ${
-                                  feature?.status === "active" ? "bg-green-500/10 text-green-400 border-green-500/20" :
-                                  feature?.status === "development" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
-                                  feature?.status === "disabled" ? "bg-red-500/10 text-red-400 border-red-500/20" :
-                                  feature?.status === "maintenance" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
-                                  "bg-gray-500/10 text-gray-400 border-gray-500/20"
-                                }`}>
+                                <Badge className={`text-xs ${feature?.status === "active" ? "bg-green-500/10 text-green-400 border-green-500/20" :
+                                    feature?.status === "development" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                                      feature?.status === "disabled" ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                                        feature?.status === "maintenance" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                                          "bg-gray-500/10 text-gray-400 border-gray-500/20"
+                                  }`}>
                                   {feature?.status === "active" ? "Ativo" :
-                                   feature?.status === "development" ? "Em Desenvolvimento" :
-                                   feature?.status === "disabled" ? "Desativado" :
-                                   feature?.status === "maintenance" ? "Em Manutenção" :
-                                   feature?.status === "deprecated" ? "Descontinuado" :
-                                   feature?.status || "Desconhecido"}
+                                    feature?.status === "development" ? "Em Desenvolvimento" :
+                                      feature?.status === "disabled" ? "Desativado" :
+                                        feature?.status === "maintenance" ? "Em Manutenção" :
+                                          feature?.status === "deprecated" ? "Descontinuado" :
+                                            feature?.status || "Desconhecido"}
                                 </Badge>
                               </div>
 
@@ -1129,11 +1123,10 @@ export default function AdminPanel() {
                           onClick={() => setExpandedUser(isExpanded ? null : user.user_id)}
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                              user.plan === "starter" ? "bg-blue-500/10" :
-                              user.plan === "professional" ? "bg-primary/10" :
-                              "bg-purple-500/10"
-                            }`}>
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${user.plan === "starter" ? "bg-blue-500/10" :
+                                user.plan === "professional" ? "bg-primary/10" :
+                                  "bg-purple-500/10"
+                              }`}>
                               <Building2 className={`h-5 w-5 ${planCfg.color}`} />
                             </div>
                             <div className="min-w-0">
@@ -1144,11 +1137,10 @@ export default function AdminPanel() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            <Badge className={`text-[10px] border ${
-                              user.plan === "starter" ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
-                              user.plan === "professional" ? "bg-primary/10 text-primary border-primary/20" :
-                              "bg-purple-500/10 text-purple-500 border-purple-500/20"
-                            }`}>
+                            <Badge className={`text-[10px] border ${user.plan === "starter" ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
+                                user.plan === "professional" ? "bg-primary/10 text-primary border-primary/20" :
+                                  "bg-purple-500/10 text-purple-500 border-purple-500/20"
+                              }`}>
                               <PlanIcon className="h-3 w-3 mr-1" />
                               {planCfg.label}
                             </Badge>
@@ -1198,11 +1190,10 @@ export default function AdminPanel() {
                                     key={plan}
                                     size="sm"
                                     variant={isActive ? "default" : "outline"}
-                                    className={`h-7 text-[11px] gap-1.5 ${
-                                      isActive
+                                    className={`h-7 text-[11px] gap-1.5 ${isActive
                                         ? "bg-primary hover:bg-primary/90"
                                         : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
-                                    }`}
+                                      }`}
                                     disabled={isActive || isSaving2}
                                     onClick={() => updateUserPlan(user.user_id, plan)}
                                   >
@@ -1445,15 +1436,14 @@ export default function AdminPanel() {
                                   return (
                                     <div
                                       key={feature.feature_key}
-                                      className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[10px] transition-colors ${
-                                        hasOverride
+                                      className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[10px] transition-colors ${hasOverride
                                           ? override.is_enabled
                                             ? "bg-purple-500/10 border border-purple-500/20"
                                             : "bg-red-500/5 border border-red-500/20"
                                           : effectiveAccess
                                             ? "bg-green-500/5 hover:bg-green-500/10"
                                             : "bg-muted/30 hover:bg-muted/50"
-                                      }`}
+                                        }`}
                                     >
                                       {/* Toggle switch */}
                                       <Switch
@@ -1498,6 +1488,13 @@ export default function AdminPanel() {
                   })
                 )}
               </div>
+            )}
+
+            {/* =====================================================
+                TAB: SECURITY LOGS
+                ===================================================== */}
+            {activeTab === "security" && (
+              <AdminSecurityTab />
             )}
           </>
         )}
