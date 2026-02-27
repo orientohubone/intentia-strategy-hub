@@ -33,6 +33,8 @@ import {
   HelpCircle,
   MessageCircle,
   X,
+  Brain,
+  PenSquare,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -61,8 +63,23 @@ const navSections: NavSection[] = [
     items: [
       { icon: Home, label: "Início", href: "/home" },
       { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-      { icon: FolderOpen, label: "Projetos", href: "/projects" },
-      { icon: Target, label: "Públicos-Alvo", href: "/audiences" },
+      {
+        icon: FolderOpen,
+        label: "Projetos",
+        children: [
+          { icon: FolderOpen, label: "Visão Geral", href: "/projects" },
+          { icon: FileText, label: "Análise Heurística", href: "/heuristic-analysis" },
+        ],
+      },
+      {
+        icon: Target,
+        label: "Públicos-Alvo",
+        children: [
+          { icon: Target, label: "Visão Geral", href: "/audiences" },
+          { icon: Brain, label: "Refinar ICP", href: "/dashboard/audiences/refinar-icp" },
+          { icon: PenSquare, label: "Plano de Comunicação", href: "/dashboard/audiences/plano-comunicacao" },
+        ],
+      },
       { icon: BarChart3, label: "Benchmark", href: "/benchmark" },
       { icon: Lightbulb, label: "Insights", href: "/insights" },
       { icon: FileText, label: "Relatórios", href: "/reports" },

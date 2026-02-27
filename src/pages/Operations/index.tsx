@@ -172,7 +172,14 @@ export default function Operations() {
   const isToolOpen = (projectId: string, tool: string) =>
     openToolCard === `${projectId}::${tool}`;
 
-  const onReload = () => {
+  const onReload = async () => {
+    if (user?.id) {
+      try {
+        await (supabase as any).rpc("sync_all_budgets", { p_user_id: user.id });
+      } catch (e) {
+        console.error("Auto-sync budgets failed:", e);
+      }
+    }
     loadCampaigns();
     loadStats();
   };

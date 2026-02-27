@@ -36,6 +36,10 @@ import Support from "./pages/Support";
 import Integrations from "./pages/Integrations";
 import SeoGeo from "./pages/SeoGeo";
 import SeoMonitoring from "./pages/SeoMonitoring";
+import HeuristicAnalysisHub from "./pages/HeuristicAnalysisHub";
+import HeuristicAnalysisDetail from "./pages/HeuristicAnalysisDetail";
+import RefinarIcp from "./pages/RefinarIcp";
+import PlanoComunicacao from "./pages/PlanoComunicacao";
 import Checkout from "./pages/Checkout";
 import Subscribe from "./pages/Subscribe";
 import OAuthCallback from "./pages/OAuthCallback";
@@ -159,6 +163,22 @@ const App = () => {
               }
             />
             <Route
+              path="/dashboard/audiences/refinar-icp"
+              element={
+                <ProtectedRoute>
+                  <RefinarIcp />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/audiences/plano-comunicacao"
+              element={
+                <ProtectedRoute>
+                  <PlanoComunicacao />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/benchmark"
               element={
                 <ProtectedRoute>
@@ -266,6 +286,22 @@ const App = () => {
                   <FeatureGate featureKey="performance_monitoring">
                     <SeoMonitoring />
                   </FeatureGate>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/heuristic-analysis"
+              element={
+                <ProtectedRoute>
+                  <HeuristicAnalysisHub />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/heuristic-analysis/:projectId"
+              element={
+                <ProtectedRoute>
+                  <HeuristicAnalysisDetail />
                 </ProtectedRoute>
               }
             />

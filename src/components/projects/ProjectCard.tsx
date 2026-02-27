@@ -1,5 +1,5 @@
 import React from "react";
-import { FolderOpen, Globe, Calendar, RefreshCw, MoreVertical, Pencil, FileText, Trash2 } from "lucide-react";
+import { FolderOpen, Globe, Calendar, RefreshCw, MoreVertical, Pencil, FileText, Trash2, FileSearch } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -118,6 +118,12 @@ export function ProjectCard({
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                            {project.status === "completed" && project.heuristic_analysis && (
+                                <DropdownMenuItem onClick={() => window.location.href = `/heuristic-analysis/${project.id}`}>
+                                    <FileSearch className="h-3.5 w-3.5 mr-2" />
+                                    Análise Heurística
+                                </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem onClick={() => startEdit(project.id)}>
                                 <Pencil className="h-3.5 w-3.5 mr-2" />
                                 Editar
