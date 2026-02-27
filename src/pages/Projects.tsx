@@ -1262,94 +1262,100 @@ export default function Projects() {
                                     )}
                                   </div>
                                 )}
-
-                                {/* Structured Data & HTML Snapshot (unified: principal + competitors) */}
-                                {(() => {
-                                  // Build structured data from Edge Function response, DB columns, or synthesize from meta
-                                  const sd = ha.structuredData || (project as any).structured_data;
-                                  const hs = ha.htmlSnapshot || (project as any).html_snapshot;
-                                  // If no structured data from Edge Function, synthesize OG from existing meta
-                                  const fallbackSd = !sd && ha.meta ? {
-                                    jsonLd: [],
-                                    microdata: [],
-                                    openGraph: Object.fromEntries(
-                                      [
-                                        ha.meta.ogTitle && ["og:title", ha.meta.ogTitle],
-                                        ha.meta.ogDescription && ["og:description", ha.meta.ogDescription],
-                                        ha.meta.ogImage && ["og:image", ha.meta.ogImage],
-                                        ha.meta.language && ["og:locale", ha.meta.language],
-                                      ].filter(Boolean) as [string, string][]
-                                    ),
-                                    twitterCard: {},
-                                  } : null;
-                                  const finalSd = sd || fallbackSd;
-                                  const compSd = competitorSdMap[project.id] || [];
-                                  return (
-                                    <>
-                                      <StructuredDataViewer
-                                        structuredData={finalSd}
-                                        htmlSnapshot={hs}
-                                        htmlSnapshotAt={(project as any).html_snapshot_at}
-                                        competitors={compSd}
-                                        projectName={project.name}
-                                      />
-                                      <StructuredDataGenerator
-                                        projectStructuredData={finalSd}
-                                        projectMeta={ha.meta}
-                                        projectUrl={project.url}
-                                        projectName={project.name}
-                                        projectNiche={project.niche}
-                                        competitors={compSd}
-                                      />
-                                    </>
-                                  );
-                                })()}
-
-                                {/* AI Analysis Status / Results */}
-                                {project.status === "completed" && !aiResults[project.id] && !project.ai_analysis && aiAnalyzing !== project.id && (
-                                  <div className={`rounded-lg border border-dashed p-3 flex items-center gap-3 ${canAiAnalysis ? "border-primary/30 bg-primary/5" : "border-amber-500/30 bg-amber-500/5"}`}>
-                                    <Sparkles className={`h-5 w-5 flex-shrink-0 ${canAiAnalysis ? "text-primary" : "text-amber-500"}`} />
-                                    <div className="flex-1">
-                                      <p className="text-xs font-medium text-foreground">
-                                        {canAiAnalysis ? "Análise por IA disponível" : "Análise por IA indisponível no seu plano"}
-                                      </p>
-                                      <p className="text-[11px] text-muted-foreground">
-                                        {!canAiAnalysis
-                                          ? "Faça upgrade para o plano Professional para desbloquear a análise por IA."
-                                          : hasAiKeys
-                                            ? "Clique em \"Analisar com IA\" para obter insights semânticos aprofundados."
-                                            : "Configure suas API keys em Configurações → Integrações de IA para habilitar."}
-                                      </p>
-                                    </div>
-                                    {canAiAnalysis && !hasAiKeys && (
-                                      <Button size="sm" variant="outline" className="text-xs flex-shrink-0" onClick={() => window.location.href = "/settings"}>
-                                        Configurar
-                                      </Button>
-                                    )}
-                                  </div>
-                                )}
-
-                                {/* AI Analyzing Loading — Lab animation */}
-                                {aiAnalyzing === project.id && (
-                                  <div className="rounded-lg border border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 p-4 flex items-center gap-4">
-                                    <div className="relative h-10 w-10 flex items-center justify-center flex-shrink-0">
-                                      <div className="absolute inset-0 rounded-full border-2 border-primary/20"></div>
-                                      <span className="absolute h-2 w-2 rounded-full bg-primary animate-lab-bubble"></span>
-                                      <span className="absolute h-1.5 w-1.5 rounded-full bg-primary/70 animate-lab-bubble-delay -translate-x-1.5"></span>
-                                      <span className="absolute h-1.5 w-1.5 rounded-full bg-primary/50 animate-lab-bubble-delay-2 translate-x-1.5"></span>
-                                    </div>
-                                    <div className="flex-1">
-                                      <p className="text-sm font-medium text-foreground">Preparando análise semântica...</p>
-                                      <p className="text-xs text-muted-foreground">
-                                        Processando com {selectedAiModel.split("::")[1] ? (AI_MODEL_LABELS[selectedAiModel.split("::")[1]] || selectedAiModel.split("::")[1]) : "IA"}. Isso pode levar até 30 segundos.
-                                      </p>
-                                    </div>
-                                  </div>
-                                )}
                               </>)}
                             </div>
                           );
                         })()}
+
+                        {/* Extracted Structured Data & HTML Snapshot */}
+                        {(heuristicResults[project.id] || project.heuristic_analysis) && (() => {
+                          const ha = (heuristicResults[project.id] || project.heuristic_analysis) as UrlAnalysis;
+                          // Build structured data from Edge Function response, DB columns, or synthesize from meta
+                          const sd = ha.structuredData || (project as any).structured_data;
+                          const hs = ha.htmlSnapshot || (project as any).html_snapshot;
+                          // If no structured data from Edge Function, synthesize OG from existing meta
+                          const fallbackSd = !sd && ha.meta ? {
+                            jsonLd: [],
+                            microdata: [],
+                            openGraph: Object.fromEntries(
+                              [
+                                ha.meta.ogTitle && ["og:title", ha.meta.ogTitle],
+                                ha.meta.ogDescription && ["og:description", ha.meta.ogDescription],
+                                ha.meta.ogImage && ["og:image", ha.meta.ogImage],
+                                ha.meta.language && ["og:locale", ha.meta.language],
+                              ].filter(Boolean) as [string, string][]
+                            ),
+                            twitterCard: {},
+                          } : null;
+                          const finalSd = sd || fallbackSd;
+                          const compSd = competitorSdMap[project.id] || [];
+
+                          // Only render if there's data to show
+                          if (!finalSd && !hs && (!compSd || compSd.length === 0)) return null;
+
+                          return (
+                            <>
+                              <StructuredDataViewer
+                                structuredData={finalSd}
+                                htmlSnapshot={hs}
+                                htmlSnapshotAt={(project as any).html_snapshot_at}
+                                competitors={compSd}
+                                projectName={project.name}
+                              />
+                              <StructuredDataGenerator
+                                projectStructuredData={finalSd}
+                                projectMeta={ha.meta}
+                                projectUrl={project.url}
+                                projectName={project.name}
+                                projectNiche={project.niche}
+                                competitors={compSd}
+                              />
+                            </>
+                          );
+                        })()}
+
+                        {/* Extracted AI Analysis Section (Status, Loading, Results) */}
+                        {/* AI Analysis Status / Placeholder - only show if completed & no results & not analyzing */}
+                        {project.status === "completed" && !aiResults[project.id] && !project.ai_analysis && aiAnalyzing !== project.id && (
+                          <div className={`rounded-lg border border-dashed p-3 flex items-center gap-3 ${canAiAnalysis ? "border-primary/30 bg-primary/5" : "border-amber-500/30 bg-amber-500/5"}`}>
+                            <Sparkles className={`h-5 w-5 flex-shrink-0 ${canAiAnalysis ? "text-primary" : "text-amber-500"}`} />
+                            <div className="flex-1">
+                              <p className="text-xs font-medium text-foreground">
+                                {canAiAnalysis ? "Análise por IA disponível" : "Análise por IA indisponível no seu plano"}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground">
+                                {!canAiAnalysis
+                                  ? "Faça upgrade para o plano Professional para desbloquear a análise por IA."
+                                  : hasAiKeys
+                                    ? "Clique em \"Analisar com IA\" para obter insights semânticos aprofundados."
+                                    : "Configure suas API keys em Configurações → Integrações de IA para habilitar."}
+                              </p>
+                            </div>
+                            {canAiAnalysis && !hasAiKeys && (
+                              <Button size="sm" variant="outline" className="text-xs flex-shrink-0" onClick={() => window.location.href = "/settings"}>
+                                Configurar
+                              </Button>
+                            )}
+                          </div>
+                        )}
+
+                        {/* AI Analyzing Loading — Lab animation */}
+                        {aiAnalyzing === project.id && (
+                          <div className="rounded-lg border border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 p-4 flex items-center gap-4">
+                            <div className="relative h-10 w-10 flex items-center justify-center flex-shrink-0">
+                              <div className="absolute inset-0 rounded-full border-2 border-primary/20"></div>
+                              <span className="absolute h-2 w-2 rounded-full bg-primary animate-lab-bubble"></span>
+                              <span className="absolute h-1.5 w-1.5 rounded-full bg-primary/70 animate-lab-bubble-delay -translate-x-1.5"></span>
+                              <span className="absolute h-1.5 w-1.5 rounded-full bg-primary/50 animate-lab-bubble-delay-2 translate-x-1.5"></span>
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-foreground">Preparando análise semântica...</p>
+                              <p className="text-xs text-muted-foreground">
+                                Processando com {selectedAiModel.split("::")[1] ? (AI_MODEL_LABELS[selectedAiModel.split("::")[1]] || selectedAiModel.split("::")[1]) : "IA"}. Isso pode levar até 30 segundos.
+                              </p>
+                            </div>
+                          </div>
+                        )}
 
                         {/* AI Analysis Results Section */}
                         {(() => {
