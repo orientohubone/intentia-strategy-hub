@@ -21,12 +21,13 @@ const EVENT_LABELS: Record<string, { label: string; color: string }> = {
     DEVTOOLS_INSPECTED: { label: "DevTools Aberto", color: "bg-red-500/15 text-red-400 border-red-500/30" },
     DEVTOOLS_OPENED: { label: "DevTools Detectado", color: "bg-orange-500/15 text-orange-400 border-orange-500/30" },
     CONSOLE_WARNING_GENERATED: { label: "Aviso Exibido", color: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" },
-    MANUAL_CLI_TEST: { label: "Teste Manual", color: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
-    MANUAL_CLI_TEST_2: { label: "Teste Manual", color: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
 };
 
-const getEventMeta = (type: string) =>
-    EVENT_LABELS[type] ?? { label: type, color: "bg-muted/30 text-muted-foreground border-border" };
+const getEventMeta = (type: string) => {
+    if (EVENT_LABELS[type]) return EVENT_LABELS[type];
+    if (type.startsWith("MANUAL_")) return { label: "Teste Interno", color: "bg-blue-500/15 text-blue-400 border-blue-500/30" };
+    return { label: type, color: "bg-muted/30 text-muted-foreground border-border" };
+};
 
 const PAGE_SIZE = 10;
 
@@ -139,8 +140,8 @@ export default function AdminSecurityTab() {
                             key={type}
                             onClick={() => handleFilter(type)}
                             className={`text-xs px-2.5 py-1 rounded-full border transition-all font-medium ${isActive
-                                    ? "bg-primary text-primary-foreground border-primary"
-                                    : "bg-muted/30 text-muted-foreground border-border hover:border-primary/40"
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-muted/30 text-muted-foreground border-border hover:border-primary/40"
                                 }`}
                         >
                             {type === "ALL" ? `Todos (${logs.length})` : `${meta?.label ?? type} (${countByType[type] || 0})`}
