@@ -25,7 +25,6 @@ import { notifyProjectCreated, notifyProjectDeleted, notifyAiAnalysisCompleted }
 import { fetchProjectReport, generateConsolidatedReport } from "@/lib/reportGenerator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
-import { cn } from "@/lib/utils";
 import { ScoreRing } from "@/components/ScoreRing";
 import {
   AlertDialog,
@@ -1547,7 +1546,7 @@ export default function Projects() {
                             <h3 className="text-sm sm:text-base font-semibold text-foreground">Visão Geral do Projeto</h3>
                           </button>
                           {!isSectionCollapsed(project.id, "overview") && (
-                            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
                               <div className="bg-muted/50 rounded-xl p-3 sm:p-4 text-center">
                                 <p className="text-[10px] sm:text-sm text-muted-foreground mb-1">Score</p>
                                 <p className={`text-xl sm:text-3xl font-bold ${project.score >= 70 ? "text-green-600" : project.score >= 50 ? "text-yellow-600" : "text-red-500"
