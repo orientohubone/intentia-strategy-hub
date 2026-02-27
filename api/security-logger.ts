@@ -37,6 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+        console.error("[security-logger] Missing Supabase Credentials");
         return res.status(500).json({ error: "Supabase credentials missing" });
     }
 
@@ -61,7 +62,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         const { event_type, url, user_agent, details } = req.body || {};
 
-        const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+        const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY as string);
 
         const { error } = await supabase.from("security_events").insert({
             event_type: event_type || "UNKNOWN_SUSPICIOUS_EVENT",

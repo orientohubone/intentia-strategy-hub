@@ -12,24 +12,40 @@ if (typeof window !== "undefined") {
     );
 
     // Armadilhas interativas ("Honeypot" de Console)
-    // Ao rodar qualquer coisa no console que ative os getters (como ler propriedades complexas)
-    // ou ao carregar essa rotina em produção (import.meta.env.PROD), ele aciona nosso edge serverlet.
     if (import.meta.env.PROD) {
-        try {
-            fetch('/api/security-logger', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    event_type: "CONSOLE_WARNING_VIEWED",
-                    url: window.location.href,
-                    user_agent: navigator.userAgent,
-                    details: {
-                        screen: `${window.screen.width}x${window.screen.height}`,
-                        language: navigator.language
-                    }
-                })
-            });
-        } catch (e) { /* Silently fail, do not expose logger errors to attacker */ }
+        let isTrapTriggered = false;
+
+        const triggerHoneypot = () => {
+            if (isTrapTriggered) return;
+            isTrapTriggered = true;
+            try {
+                fetch('/api/security-logger', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        event_type: "DEVTOOLS_OPENED",
+                        url: window.location.href,
+                        user_agent: navigator.userAgent,
+                        details: {
+                            screen: `${window.screen.width}x${window.screen.height}`,
+                            language: navigator.language
+                        }
+                    })
+                });
+            } catch (e) { /* silent */ }
+        };
+
+        // O Chromium e FireFox "inspecionam" objetos passados no console apenas QUANDO o F12 é aberto.
+        // Ao colocar um Getter na mensagem, o Browser dispara a função exatamente quando o hacker bater o olho nele.
+        const honeypotElement = new Image();
+        Object.defineProperty(honeypotElement, 'id', {
+            get: function () {
+                triggerHoneypot();
+                return 'honeypot_triggered';
+            }
+        });
+
+        console.log('%c 🛑 O ACESSO AO CONSOLE DISPAROU UM ALERTA E SEU IP FOI LOGADO.', 'color: red; font-size: 18px; font-weight: bold;', honeypotElement);
     }
 
     // Opcional: Esvaziar o console para disfarçar logs nativos (se houver) periodicamente (somente em prod para não atrapalhar seu próprio dev)
