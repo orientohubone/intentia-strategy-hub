@@ -15,7 +15,7 @@ if (typeof window !== "undefined") {
     if (import.meta.env.PROD) {
         let isTrapTriggered = false;
 
-        const triggerHoneypot = () => {
+        const triggerHoneypot = (event = "DEVTOOLS_OPENED") => {
             if (isTrapTriggered) return;
             isTrapTriggered = true;
             try {
@@ -23,7 +23,7 @@ if (typeof window !== "undefined") {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        event_type: "DEVTOOLS_OPENED",
+                        event_type: event,
                         url: window.location.href,
                         user_agent: navigator.userAgent,
                         details: {
@@ -35,12 +35,14 @@ if (typeof window !== "undefined") {
             } catch (e) { /* silent */ }
         };
 
+        // Dispara de forma passiva avisando que o bloqueio vermelho foi "montado" na máquina
+        setTimeout(() => triggerHoneypot("CONSOLE_WARNING_GENERATED"), 2500);
+
         // O Chromium e FireFox "inspecionam" objetos passados no console apenas QUANDO o F12 é aberto.
-        // Ao colocar um Getter na mensagem, o Browser dispara a função exatamente quando o hacker bater o olho nele.
         const honeypotElement = new Image();
         Object.defineProperty(honeypotElement, 'id', {
             get: function () {
-                triggerHoneypot();
+                triggerHoneypot("DEVTOOLS_INSPECTED");
                 return 'honeypot_triggered';
             }
         });
