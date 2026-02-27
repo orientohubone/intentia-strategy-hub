@@ -37,8 +37,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-        console.error("[security-logger] Missing Supabase Credentials");
-        return res.status(500).json({ error: "Supabase credentials missing" });
+        console.error("[security-logger] Missing Supabase Credentials", { hasUrl: !!SUPABASE_URL, hasKey: !!SERVICE_ROLE_KEY });
+        return res.status(500).json({ error: "Supabase credentials missing", debug: { hasUrl: !!SUPABASE_URL, hasKey: !!SERVICE_ROLE_KEY } });
     }
 
     // Identificação básica via IP pro DB e Rate limit!
