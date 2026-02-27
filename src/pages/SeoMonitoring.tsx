@@ -158,7 +158,7 @@ export default function SeoMonitoring() {
           if (response.status === 546) {
             throw new Error(
               errorData?.error ||
-                "Erro 546 no monitoramento. A funcao Edge pode estar indisponivel temporariamente; tente novamente em alguns minutos.",
+              "Erro 546 no monitoramento. A funcao Edge pode estar indisponivel temporariamente; tente novamente em alguns minutos.",
             );
           }
           throw new Error(errorData?.error || `Erro ao executar monitoramento (${response.status})`);
@@ -300,11 +300,11 @@ export default function SeoMonitoring() {
 
   const recentSeoAvg = historyItems.length
     ? Math.round(
-        historyItems
-          .slice(0, 10)
-          .map((h) => Number(h.seo_score) || 0)
-          .reduce((a, b) => a + b, 0) / Math.min(10, historyItems.length)
-      )
+      historyItems
+        .slice(0, 10)
+        .map((h) => Number(h.seo_score) || 0)
+        .reduce((a, b) => a + b, 0) / Math.min(10, historyItems.length)
+    )
     : null;
   const competitorsInLatest = Array.isArray(lastItem?.intelligence_data?.competitors)
     ? lastItem.intelligence_data.competitors.length
@@ -335,11 +335,11 @@ export default function SeoMonitoring() {
 
         <Card>
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
-              <div className="min-w-0 lg:col-span-5">
+            <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end">
+              <div className="flex-1 min-w-0 lg:min-w-[320px]">
                 <label className="text-sm font-medium text-foreground mb-1.5 block">Projeto</label>
                 <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger>
                     <SelectValue placeholder="Selecione um projeto..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -350,31 +350,36 @@ export default function SeoMonitoring() {
                 </Select>
               </div>
 
-              <div className="lg:col-span-3">
+              <div>
                 <label className="text-sm font-medium text-foreground mb-1.5 block">Dispositivo</label>
-                <div className="flex gap-1 bg-muted rounded-lg p-1 w-full">
-                  <Button size="sm" variant={strategy === "mobile" ? "default" : "ghost"} className="h-8 gap-1.5 flex-1" onClick={() => setStrategy("mobile")}>
+                <div className="flex gap-1 bg-muted rounded-lg p-1">
+                  <Button size="sm" variant={strategy === "mobile" ? "default" : "ghost"} className="gap-1.5 h-8" onClick={() => setStrategy("mobile")}>
                     <Smartphone className="h-3.5 w-3.5" />
                     Mobile
                   </Button>
-                  <Button size="sm" variant={strategy === "desktop" ? "default" : "ghost"} className="h-8 gap-1.5 flex-1" onClick={() => setStrategy("desktop")}>
+                  <Button size="sm" variant={strategy === "desktop" ? "default" : "ghost"} className="gap-1.5 h-8" onClick={() => setStrategy("desktop")}>
                     <Monitor className="h-3.5 w-3.5" />
                     Desktop
                   </Button>
                 </div>
               </div>
 
-              <div className="lg:col-span-3">
+              <div className="min-w-[250px] lg:min-w-[280px]">
                 <label className="text-sm font-medium text-foreground mb-1.5 block">Monitoramento Live</label>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Switch
-                    checked={liveEnabled}
-                    disabled={!selectedProjectId}
-                    onCheckedChange={(checked) => {
-                      setLiveEnabled(checked);
-                      saveLiveConfig(checked, liveIntervalSec);
-                    }}
-                  />
+                <div className="flex items-center gap-2">
+                  <div className="h-8 px-3 rounded-md border border-border bg-background flex items-center gap-2">
+                    <Switch
+                      checked={liveEnabled}
+                      disabled={!selectedProjectId}
+                      onCheckedChange={(checked) => {
+                        setLiveEnabled(checked);
+                        saveLiveConfig(checked, liveIntervalSec);
+                      }}
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {liveEnabled ? "Ativado" : "Desativado"}
+                    </span>
+                  </div>
                   <Select
                     value={String(liveIntervalSec)}
                     disabled={!selectedProjectId}
@@ -384,8 +389,8 @@ export default function SeoMonitoring() {
                       saveLiveConfig(liveEnabled, next);
                     }}
                   >
-                    <SelectTrigger className="h-8 w-full sm:w-[120px]">
-                      <SelectValue />
+                    <SelectTrigger className="h-8 w-[120px]">
+                      <SelectValue placeholder="Intervalo" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="120">2 min</SelectItem>
@@ -397,7 +402,7 @@ export default function SeoMonitoring() {
                 </div>
               </div>
 
-              <Button className="gap-2 w-full lg:w-auto lg:col-span-1 lg:self-end" disabled={!selectedProjectId || running} onClick={runMonitoringNow}>
+              <Button className="gap-2 shrink-0 whitespace-nowrap" disabled={!selectedProjectId || running} onClick={runMonitoringNow}>
                 {running ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                 {running ? "Monitorando..." : "Rodar Agora"}
               </Button>
@@ -586,40 +591,41 @@ export default function SeoMonitoring() {
                     const visualSrc = comp.previewImageUrl || comp.screenshotUrl || "";
                     const cardKey = comp.domain || comp.url || `competitor-${index}`;
                     return (
-                    <a
-                      key={cardKey}
-                      href={comp.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-lg border border-border overflow-hidden bg-muted/20 hover:border-primary/40 transition-colors"
-                    >
-                      {visualSrc ? (
-                        <img
-                          src={visualSrc}
-                          alt={comp.domain}
-                          className="w-full h-28 object-cover"
-                          loading="lazy"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).style.display = "none";
-                            const next = e.currentTarget.nextElementSibling as HTMLElement | null;
-                            if (next) next.style.display = "flex";
-                          }}
-                        />
-                      ) : null}
-                      <div
-                        className="w-full h-28 bg-gradient-to-br from-muted to-muted/60 items-center justify-center hidden"
-                        style={{ display: visualSrc ? "none" : "flex" }}
+                      <a
+                        key={cardKey}
+                        href={comp.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-lg border border-border overflow-hidden bg-muted/20 hover:border-primary/40 transition-colors"
                       >
-                        <span className="text-2xl font-bold text-muted-foreground">
-                          {(comp.domain || "?").charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="p-2">
-                        <p className="text-xs font-medium text-foreground truncate">{comp.domain}</p>
-                        <p className="text-[11px] text-muted-foreground truncate">{comp.title || "Sem título"}</p>
-                      </div>
-                    </a>
-                  )})}
+                        {visualSrc ? (
+                          <img
+                            src={visualSrc}
+                            alt={comp.domain}
+                            className="w-full h-28 object-cover"
+                            loading="lazy"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).style.display = "none";
+                              const next = e.currentTarget.nextElementSibling as HTMLElement | null;
+                              if (next) next.style.display = "flex";
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className="w-full h-28 bg-gradient-to-br from-muted to-muted/60 items-center justify-center hidden"
+                          style={{ display: visualSrc ? "none" : "flex" }}
+                        >
+                          <span className="text-2xl font-bold text-muted-foreground">
+                            {(comp.domain || "?").charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="p-2">
+                          <p className="text-xs font-medium text-foreground truncate">{comp.domain}</p>
+                          <p className="text-[11px] text-muted-foreground truncate">{comp.title || "Sem título"}</p>
+                        </div>
+                      </a>
+                    )
+                  })}
                 </div>
               </CardContent>
             </Card>

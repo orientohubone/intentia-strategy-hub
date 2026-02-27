@@ -21,6 +21,7 @@ const EVENT_LABELS: Record<string, { label: string; color: string }> = {
     DEVTOOLS_INSPECTED: { label: "DevTools Aberto", color: "bg-red-500/15 text-red-400 border-red-500/30" },
     DEVTOOLS_OPENED: { label: "DevTools Detectado", color: "bg-orange-500/15 text-orange-400 border-orange-500/30" },
     CONSOLE_WARNING_GENERATED: { label: "Aviso Exibido", color: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" },
+    MANUAL: { label: "Teste Interno", color: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
 };
 
 const getEventMeta = (type: string) => {
@@ -60,25 +61,31 @@ export default function AdminSecurityTab() {
         return () => { supabase.removeChannel(sub); };
     }, []);
 
-    // Tipos únicos para filttos
+    // Normaliza tipos p/ agrupar MANUAL_* em "MANUAL"
+    const normalizeType = (type: string) => type.startsWith("MANUAL_") ? "MANUAL" : type;
+
+    // Tipos únicos para filtros (normalizados)
     const eventTypes = useMemo(() => {
-        const set = new Set(logs.map(l => l.event_type));
+        const set = new Set(logs.map(l => normalizeType(l.event_type)));
         return ["ALL", ...Array.from(set)];
     }, [logs]);
 
     // IPs únicos
     const uniqueIPs = useMemo(() => new Set(logs.map(l => l.ip_address)).size, [logs]);
 
-    // Contagem por tipo
+    // Contagem por tipo normalizado
     const countByType = useMemo(() => {
         const map: Record<string, number> = {};
-        logs.forEach(l => { map[l.event_type] = (map[l.event_type] || 0) + 1; });
+        logs.forEach(l => {
+            const key = normalizeType(l.event_type);
+            map[key] = (map[key] || 0) + 1;
+        });
         return map;
     }, [logs]);
 
-    // Logs filtrados
+    // Logs filtrados (compara tipo normalizado)
     const filtered = useMemo(() =>
-        filterType === "ALL" ? logs : logs.filter(l => l.event_type === filterType),
+        filterType === "ALL" ? logs : logs.filter(l => normalizeType(l.event_type) === filterType),
         [logs, filterType]
     );
 

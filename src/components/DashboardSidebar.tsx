@@ -1,5 +1,16 @@
 import { cn } from "@/lib/utils";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import {
   Home,
   LayoutDashboard,
   FolderOpen,
@@ -33,7 +44,8 @@ import { supabase } from "@/integrations/supabase/client";
 interface NavItem {
   icon: React.ElementType;
   label: string;
-  href: string;
+  href?: string;           // opcional para grupos
+  children?: NavItem[];    // subitems (cria grupo)
   active?: boolean;
   featureKey?: string;
 }
@@ -54,8 +66,14 @@ const navSections: NavSection[] = [
       { icon: BarChart3, label: "Benchmark", href: "/benchmark" },
       { icon: Lightbulb, label: "Insights", href: "/insights" },
       { icon: FileText, label: "Relatórios", href: "/reports" },
-      { icon: Globe, label: "SEO & Performance", href: "/seo-geo", featureKey: "seo_analysis" },
-      { icon: Activity, label: "Monitoramento SEO", href: "/seo-monitoring", featureKey: "performance_monitoring" },
+      {
+        icon: Globe,
+        label: "SEO",
+        children: [
+          { icon: Globe, label: "SEO & Performance", href: "/seo-geo", featureKey: "seo_analysis" },
+          { icon: Activity, label: "Monitoramento SEO", href: "/seo-monitoring", featureKey: "performance_monitoring" },
+        ],
+      },
     ],
   },
   {
@@ -188,195 +206,296 @@ export function DashboardSidebar({ mobileOpen = false, onMobileClose }: Dashboar
   };
 
   return (
-    <>
-      {/* Mobile backdrop */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={onMobileClose}
-        />
-      )}
-      <aside className={cn(
-        "bg-sidebar border-r border-sidebar-border h-screen flex flex-col transition-all duration-300",
-        // Mobile: fixed overlay, hidden by default
-        "fixed inset-y-0 left-0 z-50 lg:relative lg:z-30",
-        mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
-        collapsed ? "w-16" : "w-64"
-      )}>
-        {/* Logo */}
-        <div className="p-4 flex items-center justify-between border-b border-sidebar-border relative">
-          {!collapsed && (
-            <span className="text-lg font-extrabold tracking-tight text-sidebar-foreground">
-              intentia<span className="text-primary">.</span>
-            </span>
-          )}
-          {collapsed && (
-            <div className="mx-auto cursor-pointer"
-              onClick={() => setCollapsed(false)}
-              title="Abrir Menu - Intentia Strategy Hub">
-              <span className="text-lg font-extrabold tracking-tight text-sidebar-foreground">
-                i<span className="text-primary">.</span>
-              </span>
-            </div>
-          )}
-          {/* Close button on mobile, collapse on desktop */}
-          {!collapsed && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 lg:hidden"
-                onClick={onMobileClose}
-                aria-label="Fechar menu"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 hidden lg:flex"
-                onClick={() => setCollapsed(true)}
-                aria-label="Recolher menu"
-              >
-                <ChevronLeft className="h-4 w-4 transition-transform" />
-              </Button>
-            </>
-          )}
-        </div>
-
-        {/* Workspace */}
-        {!collapsed && (
-          <div className="p-4 border-b border-sidebar-border">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
-                <Users className="h-5 w-5 text-accent-foreground" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-sidebar-foreground">
-                  {loading ? (
-                    <span className="animate-pulse bg-muted h-4 w-24 rounded inline-block"></span>
-                  ) : (
-                    tenantName || "Carregando..."
-                  )}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {loading ? (
-                    <span className="animate-pulse bg-muted h-3 w-16 rounded inline-block"></span>
-                  ) : (
-                    `${projectCount} projeto${projectCount !== 1 ? 's' : ''}`
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
+    <TooltipProvider>
+      <>
+        {/* Mobile backdrop */}
+        {mobileOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+            onClick={onMobileClose}
+          />
         )}
-
-        {/* Main Navigation */}
-        <nav className="flex-1 p-2 overflow-y-auto overflow-x-hidden sidebar-scroll">
-          {navSections.map((section) => {
-            const isOpen = expandedSections[section.title] ?? true;
-            return (
-              <div key={section.title} className="mb-1">
-                {!collapsed ? (
-                  <button
-                    onClick={() => setExpandedSections((prev) => ({ ...prev, [section.title]: !prev[section.title] }))}
-                    className="w-full flex items-center justify-between px-3 pt-3 pb-1 group/section"
-                  >
-                    <span className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest">
-                      {section.title}
-                    </span>
-                    <ChevronDown className={cn(
-                      "h-3 w-3 text-muted-foreground/50 transition-transform duration-200",
-                      !isOpen && "-rotate-90"
-                    )} />
-                  </button>
-                ) : (
-                  <div className="mx-auto my-2 w-6 border-t border-sidebar-border" />
-                )}
-                {(collapsed || isOpen) && (
-                  <div className="space-y-0.5">
-                    {section.items.map((item) => {
-                      if (item.featureKey && !isFeatureAvailable(item.featureKey)) {
-                        return null;
-                      }
-                      const isActive = location.pathname === item.href;
-                      return (
-                        <Link
-                          key={item.href}
-                          to={item.href}
-                          onClick={onMobileClose}
-                          className={cn(
-                            "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative group",
-                            isActive
-                              ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                              : "text-sidebar-foreground hover:bg-sidebar-accent/50",
-                            collapsed && "justify-center px-2 hover:-translate-y-0.5 hover:shadow-md"
-                          )}
-                        >
-                          <item.icon className="h-5 w-5 flex-shrink-0" />
-                          {!collapsed && <span>{item.label}</span>}
-                          {collapsed && (
-                            <div className="absolute left-full ml-2 px-2.5 py-1 bg-popover text-popover-foreground text-xs font-medium rounded-md shadow-lg border border-primary/40 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-[9999]">
-                              {item.label}
-                            </div>
-                          )}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </nav>
-
-        {/* Bottom Navigation — always icon-only with tooltip */}
-        <div className={cn(
-          "flex items-center justify-center gap-1 p-2 border-t border-sidebar-border",
-          collapsed ? "flex-col" : "flex-row"
+        <aside className={cn(
+          "bg-sidebar border-r border-sidebar-border h-screen flex flex-col transition-all duration-300",
+          // Mobile: fixed overlay, hidden by default
+          "fixed inset-y-0 left-0 z-50 lg:relative lg:z-30",
+          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+          collapsed ? "w-16" : "w-64"
         )}>
-          {bottomNavItems.map((item) => {
-            const isActive = location.pathname === item.href;
-            const isLogout = item.href === "/logout";
+          {/* Logo */}
+          <div className="p-4 flex items-center justify-between border-b border-sidebar-border relative">
+            {!collapsed && (
+              <span className="text-lg font-extrabold tracking-tight text-sidebar-foreground">
+                intentia<span className="text-primary">.</span>
+              </span>
+            )}
+            {collapsed && (
+              <div className="mx-auto cursor-pointer"
+                onClick={() => setCollapsed(false)}
+                title="Abrir Menu - Intentia Strategy Hub">
+                <span className="text-lg font-extrabold tracking-tight text-sidebar-foreground">
+                  i<span className="text-primary">.</span>
+                </span>
+              </div>
+            )}
+            {/* Close button on mobile, collapse on desktop */}
+            {!collapsed && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 lg:hidden"
+                  onClick={onMobileClose}
+                  aria-label="Fechar menu"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 hidden lg:flex"
+                  onClick={() => setCollapsed(true)}
+                  aria-label="Recolher menu"
+                >
+                  <ChevronLeft className="h-4 w-4 transition-transform" />
+                </Button>
+              </>
+            )}
+          </div>
 
-            return (
-              <div key={item.href} className="relative group">
-                {isLogout ? (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(
-                      "h-9 w-9 rounded-lg transition-all duration-200",
-                      "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:-translate-y-0.5 hover:shadow-md"
+          {/* Workspace */}
+          {!collapsed && (
+            <div className="p-4 border-b border-sidebar-border">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
+                  <Users className="h-5 w-5 text-accent-foreground" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-sidebar-foreground">
+                    {loading ? (
+                      <span className="animate-pulse bg-muted h-4 w-24 rounded inline-block"></span>
+                    ) : (
+                      tenantName || "Carregando..."
                     )}
-                    onClick={handleLogout}
-                    aria-label="Sair"
-                  >
-                    <item.icon className="h-4.5 w-4.5" />
-                  </Button>
-                ) : (
-                  <Link
-                    to={item.href}
-                    onClick={onMobileClose}
-                    className={cn(
-                      "flex items-center justify-center h-9 w-9 rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-                      isActive
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {loading ? (
+                      <span className="animate-pulse bg-muted h-3 w-16 rounded inline-block"></span>
+                    ) : (
+                      `${projectCount} projeto${projectCount !== 1 ? 's' : ''}`
                     )}
-                    aria-label={item.label}
-                  >
-                    <item.icon className="h-4.5 w-4.5" />
-                  </Link>
-                )}
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 bg-popover text-popover-foreground text-xs font-medium rounded-md shadow-lg border border-primary/40 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-[9999]">
-                  {item.label}
+                  </p>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </aside>
-    </>
+            </div>
+          )}
+
+          {/* Main Navigation */}
+          <nav className="flex-1 p-2 overflow-y-auto overflow-x-hidden sidebar-scroll">
+            {navSections.map((section) => {
+              const isOpen = expandedSections[section.title] ?? true;
+              return (
+                <div key={section.title} className="mb-1">
+                  {!collapsed ? (
+                    <button
+                      onClick={() => setExpandedSections((prev) => ({ ...prev, [section.title]: !prev[section.title] }))}
+                      className="w-full flex items-center justify-between px-3 pt-3 pb-1 group/section"
+                    >
+                      <span className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest">
+                        {section.title}
+                      </span>
+                      <ChevronDown className={cn(
+                        "h-3 w-3 text-muted-foreground/50 transition-transform duration-200",
+                        !isOpen && "-rotate-90"
+                      )} />
+                    </button>
+                  ) : (
+                    <div className="mx-auto my-2 w-6 border-t border-sidebar-border" />
+                  )}
+                  {(collapsed || isOpen) && (
+                    <div className="space-y-0.5">
+                      {section.items.map((item) => {
+                        // ── GRUPO com children (ex: SEO) ──────────────────
+                        if (item.children) {
+                          const visibleChildren = item.children.filter(
+                            (c) => !c.featureKey || isFeatureAvailable(c.featureKey)
+                          );
+                          if (visibleChildren.length === 0) return null;
+
+                          const isGroupActive = visibleChildren.some((c) => c.href && location.pathname === c.href);
+
+                          if (collapsed) {
+                            // Flyout via HoverCard
+                            return (
+                              <HoverCard key={item.label} openDelay={100} closeDelay={150}>
+                                <HoverCardTrigger asChild>
+                                  <button
+                                    className={cn(
+                                      "flex w-full items-center justify-center px-2 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                                      isGroupActive
+                                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                                        : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:-translate-y-0.5"
+                                    )}
+                                  >
+                                    <item.icon className="h-5 w-5 flex-shrink-0" />
+                                  </button>
+                                </HoverCardTrigger>
+                                <HoverCardContent
+                                  side="right"
+                                  align="start"
+                                  className="w-44 p-1.5 border-primary/40"
+                                >
+                                  <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest px-2 pb-1">
+                                    {item.label}
+                                  </p>
+                                  {visibleChildren.map((child) => (
+                                    <Link
+                                      key={child.href}
+                                      to={child.href!}
+                                      onClick={onMobileClose}
+                                      className={cn(
+                                        "flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm font-medium transition-colors",
+                                        location.pathname === child.href
+                                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                                          : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                                      )}
+                                    >
+                                      <child.icon className="h-4 w-4 flex-shrink-0" />
+                                      {child.label}
+                                    </Link>
+                                  ))}
+                                </HoverCardContent>
+                              </HoverCard>
+                            );
+                          }
+
+                          // Expandido: subseção colapsável
+                          const [groupOpen, setGroupOpen] = [expandedSections[`grp_${item.label}`] ?? true,
+                          (v: boolean) => setExpandedSections((p) => ({ ...p, [`grp_${item.label}`]: v }))];
+                          return (
+                            <div key={item.label}>
+                              <button
+                                onClick={() => setGroupOpen(!groupOpen)}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-sidebar-foreground hover:bg-sidebar-accent/50"
+                              >
+                                <item.icon className={cn("h-5 w-5 flex-shrink-0", isGroupActive && "text-primary")} />
+                                <span className="flex-1 text-left">{item.label}</span>
+                                <ChevronDown className={cn(
+                                  "h-3.5 w-3.5 text-muted-foreground/60 transition-transform duration-200",
+                                  !groupOpen && "-rotate-90"
+                                )} />
+                              </button>
+                              {groupOpen && (
+                                <div className="ml-3 pl-3 border-l border-primary/30 space-y-0.5 mt-0.5">
+                                  {visibleChildren.map((child) => (
+                                    <Link
+                                      key={child.href}
+                                      to={child.href!}
+                                      onClick={onMobileClose}
+                                      className={cn(
+                                        "flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                                        location.pathname === child.href
+                                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                                          : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                                      )}
+                                    >
+                                      <child.icon className="h-4 w-4 flex-shrink-0" />
+                                      {child.label}
+                                    </Link>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        // ── ITEM NORMAL ───────────────────────────────────
+                        if (item.featureKey && !isFeatureAvailable(item.featureKey)) return null;
+                        const isActive = item.href ? location.pathname === item.href : false;
+                        const linkEl = (
+                          <Link
+                            key={item.href}
+                            to={item.href!}
+                            onClick={onMobileClose}
+                            className={cn(
+                              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative group",
+                              isActive
+                                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                                : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+                              collapsed && "justify-center px-2 hover:-translate-y-0.5 hover:shadow-md"
+                            )}
+                          >
+                            <item.icon className="h-5 w-5 flex-shrink-0" />
+                            {!collapsed && <span>{item.label}</span>}
+                          </Link>
+                        );
+                        if (collapsed) {
+                          return (
+                            <Tooltip key={item.href} delayDuration={100}>
+                              <TooltipTrigger asChild>{linkEl}</TooltipTrigger>
+                              <TooltipContent side="right" className="text-xs font-medium border-primary/40">
+                                {item.label}
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        }
+                        return linkEl;
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
+
+          {/* Bottom Nav with Tooltip */}
+          <div className={cn(
+            "flex items-center justify-center gap-1 p-2 border-t border-sidebar-border",
+            collapsed ? "flex-col" : "flex-row"
+          )}>
+            {bottomNavItems.map((item) => {
+              const isActive = location.pathname === item.href;
+              const isLogout = item.href === "/logout";
+              const iconEl = isLogout ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-9 w-9 rounded-lg transition-all duration-200",
+                    "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:-translate-y-0.5 hover:shadow-md"
+                  )}
+                  onClick={handleLogout}
+                  aria-label="Sair"
+                >
+                  <item.icon className="h-4.5 w-4.5" />
+                </Button>
+              ) : (
+                <Link
+                  to={item.href}
+                  onClick={onMobileClose}
+                  className={cn(
+                    "flex items-center justify-center h-9 w-9 rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+                    isActive
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  )}
+                  aria-label={item.label}
+                >
+                  <item.icon className="h-4.5 w-4.5" />
+                </Link>
+              );
+              return (
+                <Tooltip key={item.href} delayDuration={100}>
+                  <TooltipTrigger asChild>{iconEl}</TooltipTrigger>
+                  <TooltipContent side={collapsed ? "right" : "top"} className="text-xs font-medium border-primary/40">
+                    {item.label}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+        </aside>
+      </>
+    </TooltipProvider>
   );
 }
