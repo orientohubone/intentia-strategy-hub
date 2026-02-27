@@ -12,7 +12,12 @@ import { toast } from "sonner";
 export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/home";
+
+  const redirectParam = searchParams.get("redirect");
+  const redirectTo = (redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//"))
+    ? redirectParam
+    : "/home";
+
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
@@ -111,7 +116,6 @@ export default function Auth() {
       toast.success("Email de redefinição enviado! Verifique sua caixa de entrada.");
       setMode("signin");
     } catch (error: any) {
-      console.error("resetPasswordForEmail", error);
       toast.error(error?.message || "Erro ao enviar email de redefinição");
     } finally {
       setLoading(false);
