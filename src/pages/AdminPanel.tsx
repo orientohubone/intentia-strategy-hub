@@ -453,7 +453,7 @@ export default function AdminPanel() {
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 bg-card border border-border rounded-xl p-1 shadow-md">
+        <div className="flex items-center gap-1 bg-card border border-border rounded-xl p-1 shadow-md overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {[
             { key: "features" as const, label: "Feature Flags", icon: ToggleLeft },
             { key: "plans" as const, label: "Planos", icon: Settings2 },
@@ -467,9 +467,9 @@ export default function AdminPanel() {
             <button
               key={tab.key}
               onClick={() => { setActiveTab(tab.key); setSearchTerm(""); }}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.key
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground/90 hover:text-foreground hover:bg-muted/60"
+              className={`flex-shrink-0 sm:flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.key
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground/90 hover:text-foreground hover:bg-muted/60"
                 }`}
             >
               <tab.icon className="h-4 w-4" />
@@ -609,16 +609,16 @@ export default function AdminPanel() {
                                       <div
                                         key={feature.id}
                                         className={`mx-3 mb-1 rounded-lg transition-colors ${feature.status === "active" ? "hover:bg-muted/50" :
-                                            feature.status === "disabled" ? "opacity-50" : "hover:bg-muted/30"
+                                          feature.status === "disabled" ? "opacity-50" : "hover:bg-muted/30"
                                           }`}
                                       >
-                                        <div className="flex items-center gap-3 px-3 py-2.5 pl-[52px]">
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-3 py-2.5 sm:pl-[52px]">
                                           {/* Status dot */}
                                           <div className={`w-2 h-2 rounded-full flex-shrink-0 ${feature.status === "active" ? "bg-green-500" :
-                                              feature.status === "disabled" ? "bg-red-500" :
-                                                feature.status === "development" ? "bg-blue-500" :
-                                                  feature.status === "maintenance" ? "bg-amber-500" :
-                                                    "bg-gray-500"
+                                            feature.status === "disabled" ? "bg-red-500" :
+                                              feature.status === "development" ? "bg-blue-500" :
+                                                feature.status === "maintenance" ? "bg-amber-500" :
+                                                  "bg-gray-500"
                                             }`} />
 
                                           {/* Feature name + description */}
@@ -629,8 +629,7 @@ export default function AdminPanel() {
                                             )}
                                           </div>
 
-                                          {/* Plan pills */}
-                                          <div className="flex items-center gap-1 flex-shrink-0">
+                                          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-1 flex-shrink-0">
                                             {(["starter", "professional", "enterprise"] as const).map((plan) => {
                                               const pf = getPlanFeature(feature.feature_key, plan);
                                               const isEnabled = pf?.is_enabled ?? false;
@@ -642,8 +641,8 @@ export default function AdminPanel() {
                                                   disabled={isSaving}
                                                   title={`${PLAN_CONFIG[plan].label}: ${isEnabled ? "Habilitado" : "Desabilitado"}`}
                                                   className={`w-6 h-6 rounded flex items-center justify-center text-[9px] font-bold transition-all ${isEnabled
-                                                      ? "bg-green-500/15 text-green-400 hover:bg-green-500/25"
-                                                      : "bg-muted/50 text-muted-foreground/80 hover:bg-muted/70"
+                                                    ? "bg-green-500/15 text-green-400 hover:bg-green-500/25"
+                                                    : "bg-muted/50 text-muted-foreground/80 hover:bg-muted/70"
                                                     }`}
                                                 >
                                                   {plan === "starter" ? "S" : plan === "professional" ? "P" : "E"}
@@ -763,8 +762,8 @@ export default function AdminPanel() {
                         onClick={() => toggleCategory(`plan-${plan}`)}
                       >
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${plan === "starter" ? "bg-blue-500/10" :
-                            plan === "professional" ? "bg-primary/10" :
-                              "bg-purple-500/10"
+                          plan === "professional" ? "bg-primary/10" :
+                            "bg-purple-500/10"
                           }`}>
                           <PlanIcon className={`h-5 w-5 ${planCfg.color}`} />
                         </div>
@@ -834,20 +833,22 @@ export default function AdminPanel() {
                                       return (
                                         <div
                                           key={feature.feature_key}
-                                          className="flex items-center gap-3 px-5 py-2 ml-10 mr-3 rounded-lg hover:bg-muted/30 transition-colors"
+                                          className="flex flex-col sm:flex-row sm:items-center gap-3 px-3 sm:px-5 py-3 sm:ml-10 sm:mr-3 rounded-lg hover:bg-muted/30 transition-colors"
                                         >
-                                          <Switch
-                                            checked={isEnabled}
-                                            onCheckedChange={() => togglePlanFeature(feature.feature_key, plan, isEnabled)}
-                                            disabled={isSaving}
-                                            className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-red-500/60 flex-shrink-0 scale-90"
-                                          />
-                                          <div className="flex-1 min-w-0">
-                                            <p className={`text-xs font-medium ${isEnabled ? "text-foreground/90" : "text-muted-foreground"}`}>
-                                              {feature.feature_name}
-                                            </p>
+                                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <Switch
+                                              checked={isEnabled}
+                                              onCheckedChange={() => togglePlanFeature(feature.feature_key, plan, isEnabled)}
+                                              disabled={isSaving}
+                                              className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-red-500/60 flex-shrink-0 scale-90"
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                              <p className={`text-xs font-medium ${isEnabled ? "text-foreground/90" : "text-muted-foreground"}`}>
+                                                {feature.feature_name}
+                                              </p>
+                                            </div>
                                           </div>
-                                          <div className="flex items-center gap-2 flex-shrink-0">
+                                          <div className="flex items-center gap-2 flex-shrink-0 mt-2 sm:mt-0 ml-10 sm:ml-0">
                                             {isEnabled && (
                                               <div className="flex items-center gap-1">
                                                 <Input
@@ -888,10 +889,10 @@ export default function AdminPanel() {
                                               </div>
                                             )}
                                             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${feature.status === "active" ? "bg-green-500" :
-                                                feature.status === "disabled" ? "bg-red-500" :
-                                                  feature.status === "development" ? "bg-blue-500" :
-                                                    feature.status === "maintenance" ? "bg-amber-500" :
-                                                      "bg-gray-500"
+                                              feature.status === "disabled" ? "bg-red-500" :
+                                                feature.status === "development" ? "bg-blue-500" :
+                                                  feature.status === "maintenance" ? "bg-amber-500" :
+                                                    "bg-gray-500"
                                               }`} />
                                           </div>
                                         </div>
@@ -944,10 +945,10 @@ export default function AdminPanel() {
                                   </p>
                                 </div>
                                 <Badge className={`text-xs ${feature?.status === 'active' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                                    feature?.status === 'development' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                      feature?.status === 'disabled' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                        feature?.status === 'maintenance' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                          'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                                  feature?.status === 'development' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                    feature?.status === 'disabled' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                      feature?.status === 'maintenance' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                        'bg-gray-500/10 text-gray-400 border-gray-500/20'
                                   }`}>
                                   {feature?.status === 'active' ? 'Ativo' :
                                     feature?.status === 'development' ? 'Em Desenvolvimento' :
@@ -1044,10 +1045,10 @@ export default function AdminPanel() {
                                   <p className="text-xs text-muted-foreground">performance_monitoring</p>
                                 </div>
                                 <Badge className={`text-xs ${feature?.status === "active" ? "bg-green-500/10 text-green-400 border-green-500/20" :
-                                    feature?.status === "development" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
-                                      feature?.status === "disabled" ? "bg-red-500/10 text-red-400 border-red-500/20" :
-                                        feature?.status === "maintenance" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
-                                          "bg-gray-500/10 text-gray-400 border-gray-500/20"
+                                  feature?.status === "development" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                                    feature?.status === "disabled" ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                                      feature?.status === "maintenance" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                                        "bg-gray-500/10 text-gray-400 border-gray-500/20"
                                   }`}>
                                   {feature?.status === "active" ? "Ativo" :
                                     feature?.status === "development" ? "Em Desenvolvimento" :
@@ -1119,13 +1120,13 @@ export default function AdminPanel() {
                         className="bg-card border border-border rounded-xl overflow-hidden shadow-md"
                       >
                         <button
-                          className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/30 transition-colors"
+                          className="w-full flex flex-col sm:flex-row sm:items-center gap-4 px-4 py-3 hover:bg-muted/30 transition-colors text-left"
                           onClick={() => setExpandedUser(isExpanded ? null : user.user_id)}
                         >
-                          <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${user.plan === "starter" ? "bg-blue-500/10" :
-                                user.plan === "professional" ? "bg-primary/10" :
-                                  "bg-purple-500/10"
+                              user.plan === "professional" ? "bg-primary/10" :
+                                "bg-purple-500/10"
                               }`}>
                               <Building2 className={`h-5 w-5 ${planCfg.color}`} />
                             </div>
@@ -1136,14 +1137,14 @@ export default function AdminPanel() {
                               <p className="text-[11px] text-muted-foreground truncate">{user.email || user.user_id}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <Badge className={`text-[10px] border ${user.plan === "starter" ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
-                                user.plan === "professional" ? "bg-primary/10 text-primary border-primary/20" :
-                                  "bg-purple-500/10 text-purple-500 border-purple-500/20"
-                              }`}>
-                              <PlanIcon className="h-3 w-3 mr-1" />
-                              {planCfg.label}
-                            </Badge>
+                          <Badge className={`text-[10px] border ${user.plan === "starter" ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
+                            user.plan === "professional" ? "bg-primary/10 text-primary border-primary/20" :
+                              "bg-purple-500/10 text-purple-500 border-purple-500/20"
+                            }`}>
+                            <PlanIcon className="h-3 w-3 mr-1" />
+                            {planCfg.label}
+                          </Badge>
+                          <div className="flex items-center gap-2 flex-shrink-0 mt-2 sm:mt-0">
                             {isExpanded ? (
                               <ChevronDown className="h-4 w-4 text-muted-foreground" />
                             ) : (
@@ -1191,8 +1192,8 @@ export default function AdminPanel() {
                                     size="sm"
                                     variant={isActive ? "default" : "outline"}
                                     className={`h-7 text-[11px] gap-1.5 ${isActive
-                                        ? "bg-primary hover:bg-primary/90"
-                                        : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                                      ? "bg-primary hover:bg-primary/90"
+                                      : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
                                       }`}
                                     disabled={isActive || isSaving2}
                                     onClick={() => updateUserPlan(user.user_id, plan)}
@@ -1437,12 +1438,12 @@ export default function AdminPanel() {
                                     <div
                                       key={feature.feature_key}
                                       className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[10px] transition-colors ${hasOverride
-                                          ? override.is_enabled
-                                            ? "bg-purple-500/10 border border-purple-500/20"
-                                            : "bg-red-500/5 border border-red-500/20"
-                                          : effectiveAccess
-                                            ? "bg-green-500/5 hover:bg-green-500/10"
-                                            : "bg-muted/30 hover:bg-muted/50"
+                                        ? override.is_enabled
+                                          ? "bg-purple-500/10 border border-purple-500/20"
+                                          : "bg-red-500/5 border border-red-500/20"
+                                        : effectiveAccess
+                                          ? "bg-green-500/5 hover:bg-green-500/10"
+                                          : "bg-muted/30 hover:bg-muted/50"
                                         }`}
                                     >
                                       {/* Toggle switch */}

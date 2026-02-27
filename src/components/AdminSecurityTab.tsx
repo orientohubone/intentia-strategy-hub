@@ -47,15 +47,15 @@ export default function AdminSecurityTab() {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-                        <ShieldAlert className="text-red-500 h-6 w-6" />
-                        Auditoria e Segurança em Tempo Real
+                        <ShieldAlert className="text-red-500 h-6 w-6 shrink-0" />
+                        <span className="line-clamp-2">Auditoria e Segurança em Tempo Real</span>
                     </h2>
-                    <p className="text-sm text-muted-foreground">Monitoramento de Honeypot e inspeções não autorizadas.</p>
+                    <p className="text-sm text-muted-foreground mt-1">Monitoramento de Honeypot e inspeções não autorizadas.</p>
                 </div>
-                <Button size="sm" variant="outline" onClick={fetchLogs} disabled={loading} className="gap-2">
+                <Button size="sm" variant="outline" onClick={fetchLogs} disabled={loading} className="gap-2 shrink-0 self-start sm:self-auto">
                     <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Atualizar
                 </Button>
             </div>
@@ -96,7 +96,7 @@ export default function AdminSecurityTab() {
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-col items-end text-xs text-muted-foreground min-w-[120px]">
+                                    <div className="flex flex-col sm:items-end text-xs text-muted-foreground mt-3 sm:mt-0 sm:min-w-[120px] pt-3 sm:pt-0 border-t sm:border-0 border-border/40">
                                         {new Date(log.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long" })}
                                         <span className="font-semibold">{new Date(log.created_at).toLocaleTimeString("pt-BR")}</span>
                                     </div>

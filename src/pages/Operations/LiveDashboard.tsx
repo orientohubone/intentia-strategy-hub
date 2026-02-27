@@ -1,5 +1,5 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import injectBenchmarksRaw from "../../../documentacao/fine-tuning/benchmark/inject_clean.jsonl?raw";
+import injectBenchmarksRaw from "@/lib/benchmark/inject_clean.jsonl?raw";
 import { Link, useSearchParams } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { ThemeToggle } from "@/components/ThemeToggle";
