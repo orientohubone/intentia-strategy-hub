@@ -4,50 +4,43 @@ import "./index.css";
 
 // 🛡️ Security Console Warning - Scare tactics for attackers
 if (typeof window !== "undefined") {
+    // Style variables using Intentia design system colors and typography
+    const primaryOrange = "#ea580c"; // Tailwind orange-600 used in design system
+    const warningRed = "#ef4444"; // Tailwind red-500
+    const alertYellow = "#f59e0b"; // Tailwind amber-500
+    const textLight = "#f8fafc";
+    const bgDark = "#0f172a"; // Tailwind slate-900
+    const fontFamily = "'Inter', sans-serif, monospace";
+
     console.log(
-        "%c 🛑 ACESSO RESTRITO - INTENTIA STRATEGY HUB 🛑 \n\n%cEsta é uma área sensível reservada a desenvolvedores e sistemas internos.\nQualquer tentativa de engenharia reversa, manipulação de tráfego, injeção de scripts (XSS/CSRF)\nou extração maliciosa de módulos (Scraping) está sendo ativamente rastreada.\n\nSeu endereço IP, User-Agent e Fingerprint da máquina já foram correlacionados com sua sessão atual.\nOs Logs estão sendo direcionados em tempo real aos nossos servidores de segurança Edge.\n\n%c[ AVISO LEGAL ] O USO NÃO AUTORIZADO DESTE CONSOLE E SUAS ROTAS É CRIME CIBERNÉTICO (LEI Nº 12.737/12).\nFECHE ESTE PAINEL IMEDIATAMENTE. ESTAMOS MONITORANDO VOCÊ.",
-        "color: red; font-size: 24px; font-weight: 900; background: black; padding: 10px; border-radius: 8px;",
-        "color: #ddd; font-size: 14px; background: #111; padding: 15px; display: block; border-left: 5px solid red; font-family: monospace; line-height: 1.5;",
-        "color: #ff2a2a; font-size: 16px; font-weight: 900; display: block; margin-top: 15px; text-transform: uppercase; text-decoration: underline;"
+        `%c 🛡️ INTENTIA STRATEGY HUB %c \n\n%cACESSO RESTRITO\n\n%cEsta é uma área sensível reservada a desenvolvedores e sistemas internos.\nQualquer tentativa de engenharia reversa, manipulação de tráfego, injeção de scripts (XSS/CSRF) ou extração maliciosa de módulos (Scraping) está sendo ativamente rastreada.\n\n%cSeu endereço IP, User-Agent e Fingerprint da máquina já foram correlacionados com sua sessão atual.\nOs Logs estão sendo direcionados em tempo real aos nossos servidores de segurança Edge.\n\n%c[ AVISO LEGAL ] O USO NÃO AUTORIZADO DESTE CONSOLE E SUAS ROTAS É CRIME CIBERNÉTICO (LEI Nº 12.737/12).\nFECHE ESTE PAINEL IMEDIATAMENTE. ESTAMOS MONITORANDO VOCÊ.`,
+        `color: ${textLight}; background: ${primaryOrange}; font-size: 18px; font-weight: 900; padding: 6px 12px; border-radius: 6px; font-family: ${fontFamily};`,
+        "", // clear styles for the newline
+        `color: ${warningRed}; font-size: 22px; font-weight: 900; font-family: ${fontFamily}; letter-spacing: 1px;`,
+        `color: ${textLight}; font-size: 14px; background: ${bgDark}; padding: 12px; border-left: 4px solid ${primaryOrange}; font-family: ${fontFamily}; line-height: 1.6; display: block; border-radius: 0 4px 4px 0;`,
+        `color: ${alertYellow}; font-size: 13px; font-family: ${fontFamily}; line-height: 1.5; padding: 10px 0; font-weight: 600;`,
+        `color: ${warningRed}; font-size: 13px; font-weight: 800; display: block; margin-top: 10px; text-transform: uppercase; border-top: 1px solid ${warningRed}; padding-top: 10px; font-family: ${fontFamily};`
     );
 
     // Armadilhas interativas ("Honeypot" de Console)
+    // Ao rodar qualquer coisa no console que ative os getters (como ler propriedades complexas)
+    // ou ao carregar essa rotina em produção (import.meta.env.PROD), ele aciona nosso edge serverlet.
     if (import.meta.env.PROD) {
-        let isTrapTriggered = false;
-
-        const triggerHoneypot = (event = "DEVTOOLS_OPENED") => {
-            if (isTrapTriggered) return;
-            isTrapTriggered = true;
-            try {
-                fetch('/api/security-logger', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        event_type: event,
-                        url: window.location.href,
-                        user_agent: navigator.userAgent,
-                        details: {
-                            screen: `${window.screen.width}x${window.screen.height}`,
-                            language: navigator.language
-                        }
-                    })
-                });
-            } catch (e) { /* silent */ }
-        };
-
-        // Dispara de forma passiva avisando que o bloqueio vermelho foi "montado" na máquina
-        setTimeout(() => triggerHoneypot("CONSOLE_WARNING_GENERATED"), 2500);
-
-        // O Chromium e FireFox "inspecionam" objetos passados no console apenas QUANDO o F12 é aberto.
-        const honeypotElement = new Image();
-        Object.defineProperty(honeypotElement, 'id', {
-            get: function () {
-                triggerHoneypot("DEVTOOLS_INSPECTED");
-                return 'honeypot_triggered';
-            }
-        });
-
-        console.log('%c 🛑 O ACESSO AO CONSOLE DISPAROU UM ALERTA E SEU IP FOI LOGADO.', 'color: red; font-size: 18px; font-weight: bold;', honeypotElement);
+        try {
+            fetch('/api/security-logger', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event_type: "CONSOLE_WARNING_VIEWED",
+                    url: window.location.href,
+                    user_agent: navigator.userAgent,
+                    details: {
+                        screen: `${window.screen.width}x${window.screen.height}`,
+                        language: navigator.language
+                    }
+                })
+            });
+        } catch (e) { /* Silently fail, do not expose logger errors to attacker */ }
     }
 
     // Opcional: Esvaziar o console para disfarçar logs nativos (se houver) periodicamente (somente em prod para não atrapalhar seu próprio dev)
