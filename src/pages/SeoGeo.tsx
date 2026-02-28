@@ -337,7 +337,7 @@ export default function SeoGeo() {
       // Reload history
       loadHistory(selectedProjectId);
     } catch (err: any) {
-      console.error("Failed to save analysis:", err);
+      console.error("Failed to save analysis:", err?.message || "Unknown error");
     }
   };
 

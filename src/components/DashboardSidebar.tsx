@@ -203,7 +203,7 @@ export function DashboardSidebar({ mobileOpen = false, onMobileClose }: Dashboar
         fetchedAt: Date.now(),
       });
     } catch (error) {
-      console.error("Error loading workspace data:", error);
+      console.error("Error loading workspace data:", error?.message || "Unknown error");
       setTenantName((prev) => prev ?? cached?.tenantName ?? "Minha Empresa");
       setProjectCount((prev) => prev || cached?.projectCount || 0);
     } finally {
@@ -218,7 +218,7 @@ export function DashboardSidebar({ mobileOpen = false, onMobileClose }: Dashboar
       await supabase.auth.signOut();
       // Redirecionar para login será feito automaticamente pelo useAuth
     } catch (error) {
-      console.error("Error logging out:", error);
+      console.error("Error logging out:", error?.message || "Unknown error");
     }
   };
 

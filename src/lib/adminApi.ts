@@ -68,7 +68,7 @@ async function callAdminApi<T = any>(
 
     if (!response.ok) {
       const errMsg = data?.error || response.statusText || "Erro na operação.";
-      console.error(`[adminApi] ${action} error (${response.status}):`, errMsg);
+      console.error(`[adminApi] ${action} error (${response.status}):`, errMsg?.message || "Unknown error");
       return { error: errMsg };
     }
 
@@ -78,7 +78,7 @@ async function callAdminApi<T = any>(
 
     return data;
   } catch (err: any) {
-    console.error(`[adminApi] ${action} fetch error:`, err);
+    console.error(`[adminApi] ${action} fetch error:`, err?.message || "Unknown error");
     return { error: err.message || "Erro de conexão." };
   }
 }

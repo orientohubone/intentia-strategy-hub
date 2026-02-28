@@ -53,7 +53,7 @@ export async function adminExecuteSQL(sqlPath: string): Promise<SQLExecutionResu
     const executionTime = Date.now() - startTime;
 
     if (error) {
-      console.error('SQL execution error:', error);
+      console.error('SQL execution error:', error?.message || "Unknown error");
       return {
         success: false,
         message: 'Erro ao executar SQL',
@@ -70,7 +70,7 @@ export async function adminExecuteSQL(sqlPath: string): Promise<SQLExecutionResu
     };
 
   } catch (error: any) {
-    console.error('SQL execution exception:', error);
+    console.error('SQL execution exception:', error?.message || "Unknown error");
     return {
       success: false,
       message: 'Erro ao executar SQL',
@@ -88,7 +88,7 @@ export async function adminGetSQLContent(sqlPath: string): Promise<string> {
     // Por agora, vamos retornar um placeholder
     return `-- Conteúdo do arquivo: ${sqlPath}\n-- Em produção, isso viria da API`;
   } catch (error: any) {
-    console.error('Error getting SQL content:', error);
+    console.error('Error getting SQL content:', error?.message || "Unknown error");
     return `-- Erro ao carregar conteúdo: ${error.message}`;
   }
 }
@@ -106,7 +106,7 @@ export async function adminUpdateSQLStatus(
     // Em produção, isso salvaria no banco de dados
     return true;
   } catch (error: any) {
-    console.error('Error updating SQL status:', error);
+    console.error('Error updating SQL status:', error?.message || "Unknown error");
     return false;
   }
 }
@@ -120,7 +120,7 @@ export async function adminGetSQLFiles(): Promise<SQLFile[]> {
     // Por agora, retornamos os dados mock do componente
     return [];
   } catch (error: any) {
-    console.error('Error getting SQL files:', error);
+    console.error('Error getting SQL files:', error?.message || "Unknown error");
     return [];
   }
 }

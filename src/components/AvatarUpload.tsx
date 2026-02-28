@@ -100,7 +100,7 @@ export function AvatarUpload({
       toast.success('Foto de perfil atualizada com sucesso!');
 
     } catch (error: any) {
-      console.error('Upload error:', error);
+      console.error('Upload error:', error?.message || "Unknown error");
       toast.error('Erro ao fazer upload da foto: ' + error.message);
     } finally {
       setUploading(false);

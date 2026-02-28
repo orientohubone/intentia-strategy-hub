@@ -176,7 +176,7 @@ export function useAiPerformance(
         await notifyPerformanceAnalysisCompleted(user.id, campaign.name, result.overallHealth.score);
       }
     } catch (error: any) {
-      console.error("Erro na análise de performance:", error);
+      console.error("Erro na análise de performance:", error?.message || "Unknown error");
       toast.error(`Análise falhou: ${error.message}`);
     } finally {
       setAiAnalyzing(null);

@@ -40,7 +40,7 @@ export default function VerifySuccess() {
         }
       }
     } catch (error) {
-      console.error('Session check error:', error)
+      console.error('Session check error:', error?.message || "Unknown error")
     } finally {
       setLoading(false)
     }

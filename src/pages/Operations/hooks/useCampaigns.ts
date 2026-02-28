@@ -91,7 +91,7 @@ export function useCampaigns() {
       setCampaigns(mapped);
       updateCache(mapped, stats);
     } catch (error: any) {
-      console.error("Error loading campaigns:", error);
+      console.error("Error loading campaigns:", error?.message || "Unknown error");
       toast.error("Erro ao carregar campanhas");
     } finally {
       if (!options?.silent || !cached) setLoading(false);
@@ -142,7 +142,7 @@ export function useCampaigns() {
       setStats(nextStats);
       updateCache(campaigns, nextStats);
     } catch (error: any) {
-      console.error("Error loading stats:", error);
+      console.error("Error loading stats:", error?.message || "Unknown error");
     }
   };
 
@@ -195,7 +195,7 @@ export function useCampaigns() {
       loadCampaigns();
       loadStats();
     } catch (error: any) {
-      console.error("Error saving campaign:", error);
+      console.error("Error saving campaign:", error?.message || "Unknown error");
       toast.error("Erro ao salvar campanha: " + error.message);
     }
   };
@@ -230,7 +230,7 @@ export function useCampaigns() {
       loadCampaigns();
       loadStats();
     } catch (error: any) {
-      console.error("Error deleting campaign:", error);
+      console.error("Error deleting campaign:", error?.message || "Unknown error");
       toast.error("Erro ao excluir campanha");
     }
   };
@@ -258,7 +258,7 @@ export function useCampaigns() {
       loadCampaigns();
       loadStats();
     } catch (error: any) {
-      console.error("Error updating status:", error);
+      console.error("Error updating status:", error?.message || "Unknown error");
       toast.error("Erro ao alterar status");
     }
   };

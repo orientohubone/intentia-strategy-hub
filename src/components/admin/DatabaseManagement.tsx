@@ -833,7 +833,7 @@ const DatabaseManagement: React.FC = () => {
       
     } catch (error: any) {
       toast.error(`Erro inesperado ao executar ${fileName}`, { id: 'sql-execution' });
-      console.error('SQL execution error:', error);
+      console.error('SQL execution error:', error?.message || "Unknown error");
     } finally {
       setExecutingFile(null);
     }

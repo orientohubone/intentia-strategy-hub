@@ -50,7 +50,7 @@ const ensureAuthInitialized = async () => {
     authInitialized = true;
     notifyListeners();
   })().catch((error) => {
-    console.error('Error initializing auth:', error);
+    console.error('Error initializing auth:', error?.message || "Unknown error");
     authState = { ...authState, loading: false };
     authInitialized = true;
     notifyListeners();

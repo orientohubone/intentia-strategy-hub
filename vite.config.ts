@@ -96,7 +96,7 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     outDir: "dist",
-    sourcemap: true,
+    sourcemap: false, // Desabilitado em produção para não expor código fonte no devtools
     rollupOptions: {
       output: {
         manualChunks: {

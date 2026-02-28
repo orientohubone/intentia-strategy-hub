@@ -126,7 +126,7 @@ export function useFeatureFlags() {
       featureFlagsCache.set(userId, next);
       applyState(next);
     } catch (err) {
-      console.error("[feature-flags] Error loading:", err);
+      console.error("[feature-flags] Error loading:", err?.message || "Unknown error");
     } finally {
       featureFlagsInFlight.delete(userId);
       setLoading(false);

@@ -360,7 +360,7 @@ export default function Home() {
         applyStats(data);
       })
       .catch((err) => {
-        console.error("Error fetching home stats:", err);
+        console.error("Error fetching home stats:", err?.message || "Unknown error");
       })
       .finally(() => {
         if (!active) return;
@@ -373,7 +373,7 @@ export default function Home() {
         setRecentActivity(data);
       })
       .catch((err) => {
-        console.error("Error fetching recent activity:", err);
+        console.error("Error fetching recent activity:", err?.message || "Unknown error");
       })
       .finally(() => {
         if (!active) return;

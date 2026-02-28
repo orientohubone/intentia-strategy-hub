@@ -692,7 +692,7 @@ ${report.metadata ? `
     window.URL.revokeObjectURL(url);
     toast.success("Download HTML concluído!");
   } catch (error: unknown) {
-    console.error("Erro ao fazer download:", error);
+    console.error("Erro ao fazer download:", error?.message || "Unknown error");
     const message = error instanceof Error ? error.message : "Falha ao gerar arquivo";
     toast.error(`Erro ao fazer download: ${message}`);
   }

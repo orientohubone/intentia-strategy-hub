@@ -169,7 +169,7 @@ export default function Insights() {
       setInsights(mapped);
       insightsCache.set(userId, { insights: mapped, fetchedAt: Date.now() });
     } catch (error) {
-      console.error("Erro ao buscar insights:", error);
+      console.error("Erro ao buscar insights:", error?.message || "Unknown error");
       toast.error("Erro ao carregar insights");
     } finally {
       if (!options?.silent || !cached) setLoading(false);
@@ -304,7 +304,7 @@ export default function Insights() {
 
       await fetchInsights();
     } catch (error: any) {
-      console.error("Erro no enriquecimento:", error);
+      console.error("Erro no enriquecimento:", error?.message || "Unknown error");
       toast.error(error.message || "Erro ao enriquecer insights com IA");
     } finally {
       setEnrichingProject(null);

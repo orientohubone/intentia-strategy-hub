@@ -112,7 +112,7 @@ export function useTenantData() {
 
           let nextSettings = settings || null;
           if (settingsError && settingsError.code !== 'PGRST116') {
-            console.error('Error fetching tenant settings:', settingsError);
+            console.error('Error fetching tenant settings:', settingsError?.message || "Unknown error");
           }
 
           if (!nextSettings) {
@@ -126,7 +126,7 @@ export function useTenantData() {
             .order('created_at', { ascending: false });
 
           if (projectsError) {
-            console.error('Error fetching projects:', projectsError);
+            console.error('Error fetching projects:', projectsError?.message || "Unknown error");
           }
 
           return {
@@ -144,7 +144,7 @@ export function useTenantData() {
       setTenantSettings(next.tenantSettings);
 
     } catch (error) {
-      console.error('Error fetching tenant data:', error);
+      console.error('Error fetching tenant data:', error?.message || "Unknown error");
     } finally {
       tenantDataInFlight.delete(targetUserId);
       setLoading(false);

@@ -102,7 +102,7 @@ export default function Contact() {
       toast.success("Mensagem enviada com sucesso! Entraremos em contato em breve.");
       setFormData({ name: "", email: "", company: "", phone: "", message: "" });
     } catch (error) {
-      console.error('Error sending contact message:', error);
+      console.error('Error sending contact message:', error?.message || "Unknown error");
       toast.error("Erro ao enviar mensagem. Tente novamente.");
     } finally {
       setLoading(false);

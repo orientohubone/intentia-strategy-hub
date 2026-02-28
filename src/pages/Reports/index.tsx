@@ -105,7 +105,7 @@ export default function Reports() {
     try {
       const currentReport = reports.find((r) => r.id === reportId);
       if (!currentReport) {
-        console.error("Relatório não encontrado:", reportId);
+        console.error("Relatório não encontrado:", reportId?.message || "Unknown error");
         toast.error("Relatório não encontrado");
         return;
       }
@@ -120,7 +120,7 @@ export default function Reports() {
 
       toast.success(newFavoriteStatus ? "Adicionado aos favoritos!" : "Removido dos favoritos!");
     } catch (error) {
-      console.error("Erro ao atualizar favorito:", error);
+      console.error("Erro ao atualizar favorito:", error?.message || "Unknown error");
       toast.error("Erro ao atualizar favorito");
     }
   };

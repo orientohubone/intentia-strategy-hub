@@ -121,7 +121,7 @@ export function useNotifications() {
         sharedLoaded = true;
         sharedUserId = user.id;
       } catch (error) {
-        console.error("Error loading notifications:", error);
+        console.error("Error loading notifications:", error?.message || "Unknown error");
         sharedLoaded = false;
       } finally {
         setLoading(false);
@@ -212,7 +212,7 @@ export function useNotifications() {
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
-      console.error("Error marking notification as read:", error);
+      console.error("Error marking notification as read:", error?.message || "Unknown error");
     }
   };
 
@@ -231,7 +231,7 @@ export function useNotifications() {
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
     } catch (error) {
-      console.error("Error marking all notifications as read:", error);
+      console.error("Error marking all notifications as read:", error?.message || "Unknown error");
     }
   };
 
@@ -250,7 +250,7 @@ export function useNotifications() {
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
     } catch (error) {
-      console.error("Error deleting notification:", error);
+      console.error("Error deleting notification:", error?.message || "Unknown error");
     }
   };
 
@@ -271,7 +271,7 @@ export function useNotifications() {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error("Error creating notification:", error);
+      console.error("Error creating notification:", error?.message || "Unknown error");
     }
   };
 
@@ -331,7 +331,7 @@ export function useNotifications() {
         });
       }
     } catch (error) {
-      console.error("Error generating system notifications:", error);
+      console.error("Error generating system notifications:", error?.message || "Unknown error");
     }
   };
 

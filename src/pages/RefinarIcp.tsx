@@ -107,7 +107,7 @@ export default function RefinarIcp() {
       if (error) throw error;
       setAudiences(data || []);
     } catch (error: any) {
-      console.error("Error loading audiences:", error);
+      console.error("Error loading audiences:", error?.message || "Unknown error");
       toast.error("Erro ao carregar públicos");
     } finally {
       setLoading(false);
@@ -137,7 +137,7 @@ export default function RefinarIcp() {
         setSelectedAiModel(`${models[0].provider}::${models[0].model}`);
       }
     } catch (error: any) {
-      console.error("Error loading AI config:", error);
+      console.error("Error loading AI config:", error?.message || "Unknown error");
     }
   };
 
@@ -168,7 +168,7 @@ export default function RefinarIcp() {
           : a
       ));
     } catch (err: any) {
-      console.error("Erro ao refinar ICP:", err);
+      console.error("Erro ao refinar ICP:", err?.message || "Unknown error");
       toast.error(err?.message || "Erro ao refinar ICP com IA");
     } finally {
       setEnrichingId(null);

@@ -123,7 +123,7 @@ export default function PlanoComunicacao() {
       if (error) throw error;
       setAudiences(data || []);
     } catch (error: any) {
-      console.error("Error loading audiences:", error);
+      console.error("Error loading audiences:", error?.message || "Unknown error");
       toast.error("Erro ao carregar públicos");
     } finally {
       setLoading(false);
@@ -153,7 +153,7 @@ export default function PlanoComunicacao() {
         setSelectedAiModel(`${models[0].provider}::${models[0].model}`);
       }
     } catch (error: any) {
-      console.error("Error loading AI config:", error);
+      console.error("Error loading AI config:", error?.message || "Unknown error");
     }
   };
 
@@ -170,7 +170,7 @@ export default function PlanoComunicacao() {
       if (error) throw error;
       setSavedPlans(data || []);
     } catch (err: any) {
-      console.error("Erro ao carregar planos salvos:", err);
+      console.error("Erro ao carregar planos salvos:", err?.message || "Unknown error");
       toast.error("Erro ao carregar planos salvos");
     } finally {
       setLoadingSavedPlan(false);
@@ -189,7 +189,7 @@ export default function PlanoComunicacao() {
       fetchSavedPlans(audience.id);
       setEditorialDialogOpen(true);
     } catch (err: any) {
-      console.error("Erro ao gerar linha editorial:", err);
+      console.error("Erro ao gerar linha editorial:", err?.message || "Unknown error");
       toast.error(err?.message || "Erro ao gerar linha editorial");
     } finally {
       setEditorialLoadingId(null);
@@ -229,7 +229,7 @@ export default function PlanoComunicacao() {
       toast.success("Plano de comunicação salvo com sucesso.");
       await fetchSavedPlans(editorialContext.audienceId);
     } catch (err: any) {
-      console.error("Erro ao salvar plano:", err);
+      console.error("Erro ao salvar plano:", err?.message || "Unknown error");
       toast.error(err?.message || "Erro ao salvar plano");
     } finally {
       setSavingPlan(false);
@@ -262,7 +262,7 @@ export default function PlanoComunicacao() {
         toast.info("Nenhum plano salvo encontrado.");
       }
     } catch (err: any) {
-      console.error("Erro ao carregar plano salvo:", err);
+      console.error("Erro ao carregar plano salvo:", err?.message || "Unknown error");
       toast.error("Erro ao carregar plano salvo");
     } finally {
       setLoadingSavedPlan(false);

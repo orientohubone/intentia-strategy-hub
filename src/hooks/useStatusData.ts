@@ -233,7 +233,7 @@ export function useStatusData() {
       setUptimeData(upt);
       setLatencyData(lat);
     } catch (err: any) {
-      console.error("[useStatusData] Error loading data:", err);
+      console.error("[useStatusData] Error loading data:", err?.message || "Unknown error");
       setError(err.message || "Erro ao carregar dados de status.");
     } finally {
       setLoading(false);

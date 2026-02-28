@@ -186,7 +186,7 @@ export function SupportDashboard() {
         };
       }
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error('Error fetching user data:', error?.message || "Unknown error");
     }
     return {
       user_email: 'email@nao.informado',
@@ -202,7 +202,7 @@ export function SupportDashboard() {
       const result = await adminListSupportTickets();
       
       if (result.error) {
-        console.error("Error loading tickets:", result.error);
+        console.error("Error loading tickets:", result.error?.message || "Unknown error");
         if (result.error.includes('does not exist')) {
           setTickets([]);
           toast("Sistema em Configuração", {
@@ -236,9 +236,9 @@ export function SupportDashboard() {
 
       data.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setTickets(data);
-      console.log("Tickets carregados:", data.length);
+//       console.log("Tickets carregados:", data.length);
     } catch (error: any) {
-      console.error("Error loading tickets:", error);
+      console.error("Error loading tickets:", error?.message || "Unknown error");
       toast.error("Erro ao carregar chamados: " + (error.message || error));
     } finally {
       setLoading(false);
@@ -258,7 +258,7 @@ export function SupportDashboard() {
       if (result.error) throw new Error(result.error);
       setMessages(result.data || []);
     } catch (error) {
-      console.error("Error loading messages:", error);
+      console.error("Error loading messages:", error?.message || "Unknown error");
     }
   };
 
@@ -279,7 +279,7 @@ export function SupportDashboard() {
       loadTickets();
       toast.success("Mensagem enviada: O cliente será notificado sobre sua resposta.");
     } catch (error: any) {
-      console.error("Error sending message:", error);
+      console.error("Error sending message:", error?.message || "Unknown error");
       toast.error("Erro ao enviar mensagem: " + error.message);
     } finally {
       setSendingMessage(false);
@@ -304,7 +304,7 @@ export function SupportDashboard() {
       const ticket = tickets.find(t => t.id === ticketId);
       toast.success("Status atualizado: Chamado #" + ticket?.ticket_number + " atualizado para " + status.replace('_', ' ') + ".");
     } catch (error: any) {
-      console.error("Error updating status:", error);
+      console.error("Error updating status:", error?.message || "Unknown error");
       toast.error("Erro ao atualizar status: " + error.message);
       // Reverter
       if (selectedTicket?.id === ticketId) {
