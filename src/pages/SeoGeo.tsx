@@ -1281,7 +1281,7 @@ export default function SeoGeo() {
                                 <a
                                   href={item.link}
                                   target="_blank"
-                                  rel="noreferrer"
+                                  rel="noopener noreferrer"
                                   className="text-xs text-primary hover:underline flex items-center gap-1 shrink-0 mt-1"
                                 >
                                   <ExternalLink className="h-3 w-3" />
@@ -1396,7 +1396,7 @@ export default function SeoGeo() {
                                 <span className="text-muted-foreground w-5 text-right shrink-0">{i + 1}</span>
                                 <span className="font-medium text-foreground truncate flex-1">{link.anchorText || link.domain}</span>
                                 <span className="text-muted-foreground truncate max-w-[150px]">{link.domain}</span>
-                                <a href={link.url} target="_blank" rel="noreferrer" className="shrink-0">
+                                <a href={link.url} target="_blank" rel="noopener noreferrer" className="shrink-0">
                                   <ExternalLink className="h-3 w-3 text-primary" />
                                 </a>
                               </div>
@@ -1438,7 +1438,7 @@ export default function SeoGeo() {
                                   <p className="text-sm font-semibold text-foreground flex items-center gap-2">
                                     <CompetitorFavicon url={comp.url} domain={comp.domain} />
                                     <span className="truncate">{comp.domain}</span>
-                                    <a href={comp.url} target="_blank" rel="noreferrer">
+                                    <a href={comp.url} target="_blank" rel="noopener noreferrer">
                                       <ExternalLink className="h-3 w-3 text-muted-foreground" />
                                     </a>
                                   </p>

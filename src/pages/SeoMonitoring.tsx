@@ -595,7 +595,7 @@ export default function SeoMonitoring() {
                         key={cardKey}
                         href={comp.url}
                         target="_blank"
-                        rel="noreferrer"
+                        rel="noopener noreferrer"
                         className="rounded-lg border border-border overflow-hidden bg-muted/20 hover:border-primary/40 transition-colors"
                       >
                         {visualSrc ? (
