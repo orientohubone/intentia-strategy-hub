@@ -147,6 +147,7 @@ export function SupportChatDialog({
             <Button
               variant="ghost"
               size="icon"
+              aria-label={isFullscreen ? "Minimizar" : "Maximizar"}
               className="h-8 w-8"
               onClick={() => setIsFullscreen(!isFullscreen)}
             >
@@ -155,6 +156,7 @@ export function SupportChatDialog({
             <Button
               variant="ghost"
               size="icon"
+              aria-label="Fechar"
               className="h-8 w-8"
               onClick={() => onOpenChange(false)}
             >

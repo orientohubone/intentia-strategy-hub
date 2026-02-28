@@ -350,7 +350,7 @@ export function CampaignMetricsForm({
             <Badge variant="outline" className="text-xs">{campaignName}</Badge>
             <Badge variant="outline" className="text-xs">{CHANNEL_LABELS[channel]}</Badge>
           </div>
-          <Button variant="ghost" size="icon" onClick={onCancel} className="h-8 w-8">
+          <Button variant="ghost" size="icon" aria-label="Fechar" onClick={onCancel} className="h-8 w-8">
             <X className="h-4 w-4" />
           </Button>
         </div>

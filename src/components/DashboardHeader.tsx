@@ -30,6 +30,7 @@ export function DashboardHeader({ onMenuToggle }: DashboardHeaderProps) {
         <Button
           variant="ghost"
           size="icon"
+          aria-label="Menu principal"
           className="h-9 w-9 lg:hidden shrink-0"
           onClick={onMenuToggle}
         >
