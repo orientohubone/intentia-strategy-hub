@@ -76,7 +76,7 @@ export default function AppStore() {
               <Button
                 variant="hero"
                 className="w-full justify-center gap-2"
-                onClick={() => window.open(app.url, "_blank", "noreferrer")}
+                onClick={() => window.open(app.url, "_blank", "noopener,noreferrer")}
               >
                 Abrir aplicativo
                 <ExternalLink className="h-4 w-4" />
