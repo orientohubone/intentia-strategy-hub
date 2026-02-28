@@ -106,7 +106,7 @@ export async function analyzeUrl(url: string): Promise<UrlAnalysis> {
   });
 
   if (error) {
-    console.error("[analyzeUrl] Edge Function error:", error);
+    console.error("[analyzeUrl] Edge Function error:", error?.message || "Unknown error");
     throw new Error(error.message || "Erro ao conectar com a Edge Function");
   }
 
@@ -145,7 +145,7 @@ export async function saveAnalysisResults(
     .eq("user_id", userId);
 
   if (projectError) {
-    console.error("Error updating project:", projectError);
+    console.error("Error updating project:", projectError?.message || "Unknown error");
     throw new Error(`Erro ao atualizar projeto com resultados da análise: ${projectError.message || projectError.code || JSON.stringify(projectError)}`);
   }
 
@@ -168,7 +168,7 @@ export async function saveAnalysisResults(
       );
 
     if (channelError) {
-      console.error(`Error upserting channel score (${cs.channel}):`, channelError);
+      console.error(`Error upserting channel score (${cs.channel}):`, channelError?.message || "Unknown error");
     }
   }
 
@@ -194,7 +194,7 @@ export async function saveAnalysisResults(
       .insert(insightRows);
 
     if (insightsError) {
-      console.error("Error inserting insights:", insightsError);
+      console.error("Error inserting insights:", insightsError?.message || "Unknown error");
     }
   }
 
@@ -252,7 +252,7 @@ export async function createAnalysisNotification(
         action_text: hasAiKeys ? "Analisar com IA" : "Ver Projeto",
       });
   } catch (error) {
-    console.error("Error creating analysis notification:", error);
+    console.error("Error creating analysis notification:", error?.message || "Unknown error");
   }
 }
 
@@ -267,7 +267,7 @@ export async function countUserBenchmarks(userId: string): Promise<number> {
     .eq("user_id", userId);
 
   if (error) {
-    console.error("[benchmark] Erro ao contar benchmarks:", error);
+    console.error("[benchmark] Erro ao contar benchmarks:", error?.message || "Unknown error");
     return 0;
   }
   return count || 0;
@@ -329,7 +329,7 @@ export async function cleanBenchmarks(
     .select();
 
   if (error) {
-    console.error("[benchmark] Erro ao limpar benchmarks:", error);
+    console.error("[benchmark] Erro ao limpar benchmarks:", error?.message || "Unknown error");
   }
 }
 
@@ -516,6 +516,6 @@ export async function saveCompetitorBenchmark(
     );
 
   if (error) {
-    console.error("Error generating benchmark:", error);
+    console.error("Error generating benchmark:", error?.message || "Unknown error");
   }
 }

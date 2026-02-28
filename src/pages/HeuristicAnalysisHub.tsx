@@ -68,7 +68,7 @@ export default function HeuristicAnalysisHub() {
       if (error) throw error;
       setProjects(data || []);
     } catch (error: any) {
-      console.error("Error loading projects:", error);
+      console.error("Error loading projects:", error?.message || "Unknown error");
       setProjects([]);
     } finally {
       setLoading(false);

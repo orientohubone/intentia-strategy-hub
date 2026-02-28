@@ -265,22 +265,22 @@ export default function Dashboard() {
         ]);
 
         if (insightsRes.error) {
-          console.error("Error fetching insights:", insightsRes.error);
+          console.error("Error fetching insights:", insightsRes.error?.message || "Unknown error");
         }
         if (weeklyInsightsRes.error) {
-          console.error("Error fetching weekly insights:", weeklyInsightsRes.error);
+          console.error("Error fetching weekly insights:", weeklyInsightsRes.error?.message || "Unknown error");
         }
         if (audiencesRes.error) {
-          console.error("Error fetching audiences count:", audiencesRes.error);
+          console.error("Error fetching audiences count:", audiencesRes.error?.message || "Unknown error");
         }
         if (benchmarksRes.error) {
-          console.error("Error fetching benchmarks count:", benchmarksRes.error);
+          console.error("Error fetching benchmarks count:", benchmarksRes.error?.message || "Unknown error");
         }
         if (projectsMonthRes.error) {
-          console.error("Error fetching projects this month:", projectsMonthRes.error);
+          console.error("Error fetching projects this month:", projectsMonthRes.error?.message || "Unknown error");
         }
         if (campaignsRes.error) {
-          console.error("Error fetching campaigns:", campaignsRes.error);
+          console.error("Error fetching campaigns:", campaignsRes.error?.message || "Unknown error");
         }
 
         const projectMap = new Map(projects.map((p) => [p.id, p.name]));
@@ -321,7 +321,7 @@ export default function Dashboard() {
         applyState(next);
       })
       .catch((err) => {
-        console.error("Unexpected error fetching dashboard stats:", err);
+        console.error("Unexpected error fetching dashboard stats:", err?.message || "Unknown error");
       })
       .finally(() => {
         if (!active) return;
@@ -361,7 +361,7 @@ export default function Dashboard() {
           .eq("user_id", userId);
 
         if (error) {
-          console.error("Error fetching channel scores:", error);
+          console.error("Error fetching channel scores:", error?.message || "Unknown error");
           return {} as Record<string, ChannelScore[]>;
         }
 

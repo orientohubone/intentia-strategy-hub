@@ -97,7 +97,7 @@ export default function HeuristicAnalysisDetail() {
       if (error) throw error;
       setProject(data);
     } catch (error: any) {
-      console.error("Error loading project:", error);
+      console.error("Error loading project:", error?.message || "Unknown error");
       toast.error("Erro ao carregar projeto");
       navigate("/heuristic-analysis");
     } finally {
@@ -126,7 +126,7 @@ export default function HeuristicAnalysisDetail() {
         setSelectedAiModel(`${models[0].provider}::${models[0].model}`);
       }
     } catch (error) {
-      console.error("Error loading AI config:", error);
+      console.error("Error loading AI config:", error?.message || "Unknown error");
     }
   };
 
@@ -151,7 +151,7 @@ export default function HeuristicAnalysisDetail() {
       toast.success("Análise heurística concluída!");
       await loadProject();
     } catch (error: any) {
-      console.error("Error analyzing:", error);
+      console.error("Error analyzing:", error?.message || "Unknown error");
       toast.error("Erro ao analisar: " + error.message);
     } finally {
       setAnalyzing(false);
@@ -175,7 +175,7 @@ export default function HeuristicAnalysisDetail() {
       toast.success("Análise por IA concluída!");
       await loadProject();
     } catch (error: any) {
-      console.error("Error AI analysis:", error);
+      console.error("Error AI analysis:", error?.message || "Unknown error");
       toast.error("Erro na análise por IA: " + error.message);
     } finally {
       setAiAnalyzing(false);

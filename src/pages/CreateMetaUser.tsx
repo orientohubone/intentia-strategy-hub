@@ -63,7 +63,7 @@ export default function CreateMetaUser() {
       }
 
     } catch (error: any) {
-      console.error('Create user error:', error)
+      console.error('Create user error:', error?.message || "Unknown error")
       setResult({
         success: false,
         error: error.message

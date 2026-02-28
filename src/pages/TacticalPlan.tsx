@@ -226,7 +226,7 @@ export default function TacticalPlan() {
         fetchedAt: Date.now(),
       });
     } catch (err) {
-      console.error("Error loading projects:", err);
+      console.error("Error loading projects:", err?.message || "Unknown error");
     } finally {
       if (!options?.silent || !cached) setLoading(false);
     }
@@ -250,7 +250,7 @@ export default function TacticalPlan() {
       setProjectAudiences(next);
       return next as ProjectAudience[];
     } catch (err) {
-      console.error("Error loading project audiences:", err);
+      console.error("Error loading project audiences:", err?.message || "Unknown error");
       setProjectAudiences([]);
       return [];
     }
@@ -274,7 +274,7 @@ export default function TacticalPlan() {
       setTacticalPlan(next);
       return next as TacticalPlanData | null;
     } catch (err) {
-      console.error("Error loading tactical plan:", err);
+      console.error("Error loading tactical plan:", err?.message || "Unknown error");
       setTacticalPlan(null);
       return null;
     }
@@ -294,7 +294,7 @@ export default function TacticalPlan() {
       setChannelScores(scores);
       return scores;
     } catch (err) {
-      console.error("Error loading channel scores:", err);
+      console.error("Error loading channel scores:", err?.message || "Unknown error");
       return [];
     }
   };
@@ -481,7 +481,7 @@ export default function TacticalPlan() {
           : prev
       );
     } catch (err) {
-      console.error("Error loading channel tactical scores:", err);
+      console.error("Error loading channel tactical scores:", err?.message || "Unknown error");
     }
   };
 
@@ -528,7 +528,7 @@ export default function TacticalPlan() {
       const pName = projects.find(p => p.id === selectedProjectId)?.name || 'Projeto';
       notifyTacticalPlanCreated(user.id, pName, !!templateId);
     } catch (err: any) {
-      console.error("Error creating tactical plan:", err);
+      console.error("Error creating tactical plan:", err?.message || "Unknown error");
       toast.error("Erro ao criar plano tático");
     } finally {
       setCreating(false);
@@ -628,7 +628,7 @@ export default function TacticalPlan() {
       }
       toast.success("Plano tático excluído. Escolha um template para recomeçar.");
     } catch (err) {
-      console.error("Error deleting tactical plan:", err);
+      console.error("Error deleting tactical plan:", err?.message || "Unknown error");
       toast.error("Erro ao excluir plano tático");
     } finally {
       setCreating(false);
@@ -777,7 +777,7 @@ export default function TacticalPlan() {
       const pName = projects.find(p => p.id === selectedProjectId)?.name || 'Projeto';
       notifyPlaybookGenerated(user.id, pName);
     } catch (err) {
-      console.error("Error generating playbook:", err);
+      console.error("Error generating playbook:", err?.message || "Unknown error");
       toast.error("Erro ao gerar playbook");
     } finally {
       setRunningPlan(false);
@@ -817,7 +817,7 @@ export default function TacticalPlan() {
       setActiveTab("overview");
       toast.success(`Template "${template.name}" aplicado com sucesso!`);
     } catch (err) {
-      console.error("Error applying template:", err);
+      console.error("Error applying template:", err?.message || "Unknown error");
       toast.error("Erro ao aplicar template");
     } finally {
       setCreating(false);

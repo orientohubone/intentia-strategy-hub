@@ -40,7 +40,7 @@ export async function createNotification(
       read: false,
     });
   } catch (error) {
-    console.error("[notification-service] Error:", error);
+    console.error("[notification-service] Error:", error?.message || "Unknown error");
   }
 }
 

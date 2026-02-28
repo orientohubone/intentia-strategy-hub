@@ -331,7 +331,7 @@ export function useProjectsData() {
           // Auto-open project management to show heuristic results
           setTimeout(() => setActiveProjectId(projectId), 300);
         } catch (analysisError: any) {
-          console.error("Erro na análise:", analysisError);
+          console.error("Erro na análise:", analysisError?.message || "Unknown error");
           toast.error(`Análise falhou: ${analysisError.message}. Você pode reanalisar depois.`);
           await updateProject(projectId, { status: "pending" });
         } finally {
@@ -340,7 +340,7 @@ export function useProjectsData() {
         }
       }
     } catch (error: any) {
-      console.error("Erro ao salvar projeto:", error);
+      console.error("Erro ao salvar projeto:", error?.message || "Unknown error");
       toast.error(error?.message || "Erro ao salvar projeto. Tente novamente.");
     }
   };
@@ -435,7 +435,7 @@ export function useProjectsData() {
       setActiveProjectId(null);
       setTimeout(() => setActiveProjectId(projectId), 300);
     } catch (error: any) {
-      console.error("Erro na reanálise:", error);
+      console.error("Erro na reanálise:", error?.message || "Unknown error");
       toast.error(`Reanálise falhou: ${error.message}`);
       await updateProject(projectId, { status: "pending" });
     } finally {
@@ -486,7 +486,7 @@ export function useProjectsData() {
 
       await refetch();
     } catch (error: any) {
-      console.error("Erro na análise por IA:", error);
+      console.error("Erro na análise por IA:", error?.message || "Unknown error");
       toast.error(`Análise por IA falhou: ${error.message}`);
     } finally {
       setAiAnalyzing(null);
@@ -530,7 +530,7 @@ export function useProjectsData() {
       setEditingInsight({});
       toast.success("Insight atualizado com sucesso!");
     } catch (error: any) {
-      console.error("Erro ao atualizar insight:", error);
+      console.error("Erro ao atualizar insight:", error?.message || "Unknown error");
       toast.error("Erro ao atualizar insight. Tente novamente.");
     }
   };
@@ -544,7 +544,7 @@ export function useProjectsData() {
       }));
       toast.success("Insight removido com sucesso!");
     } catch (error: any) {
-      console.error("Erro ao remover insight:", error);
+      console.error("Erro ao remover insight:", error?.message || "Unknown error");
       toast.error("Erro ao remover insight. Tente novamente.");
     }
   };
@@ -571,7 +571,7 @@ export function useProjectsData() {
       toast.success("Projeto excluído com sucesso!");
       if (user) notifyProjectDeleted(user.id, projectName);
     } catch (error: any) {
-      console.error("Erro ao excluir projeto:", error);
+      console.error("Erro ao excluir projeto:", error?.message || "Unknown error");
       toast.error(error?.message || "Erro ao excluir projeto. Tente novamente.");
     }
   };

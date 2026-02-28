@@ -299,7 +299,7 @@ export default function OperationsLiveDashboard() {
 
       setLastUpdatedAt(new Date());
     } catch (error: any) {
-      console.error("Error loading live dashboard:", error);
+      console.error("Error loading live dashboard:", error?.message || "Unknown error");
       toast.error(error.message || "Erro ao carregar dashboard (TV Mode/Direct)");
     } finally {
       if (!silent) setLoading(false);
@@ -315,7 +315,7 @@ export default function OperationsLiveDashboard() {
         .map((line) => JSON.parse(line) as InjectBenchmark);
       setBenchmarks(parsed);
     } catch (err) {
-      console.error("Erro ao carregar benchmarks locais:", err);
+      console.error("Erro ao carregar benchmarks locais:", err?.message || "Unknown error");
     }
   }, []);
 

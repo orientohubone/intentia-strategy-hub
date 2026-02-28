@@ -41,7 +41,7 @@ export function useCampaignMetrics() {
       });
       setMetricsSummaries(map);
     } catch (error: any) {
-      console.error("Error loading metrics summaries:", error);
+      console.error("Error loading metrics summaries:", error?.message || "Unknown error");
     }
   };
 
@@ -59,7 +59,7 @@ export function useCampaignMetrics() {
       if (error) throw error;
       setCampaignMetricsEntries((prev) => ({ ...prev, [campaignId]: data || [] }));
     } catch (error: any) {
-      console.error("Error loading campaign metrics:", error);
+      console.error("Error loading campaign metrics:", error?.message || "Unknown error");
     } finally {
       setMetricsEntriesLoading((prev) => ({ ...prev, [campaignId]: false }));
     }
@@ -146,7 +146,7 @@ export function useCampaignMetrics() {
       loadCampaignMetrics(campaignId);
       onReload();
     } catch (error: any) {
-      console.error("Error saving metrics:", error);
+      console.error("Error saving metrics:", error?.message || "Unknown error");
       toast.error("Erro ao salvar métricas: " + error.message);
     }
   };
@@ -179,7 +179,7 @@ export function useCampaignMetrics() {
       loadCampaignMetrics(campaignId);
       onReload();
     } catch (error: any) {
-      console.error("Error updating metrics:", error);
+      console.error("Error updating metrics:", error?.message || "Unknown error");
       toast.error("Erro ao atualizar métricas: " + error.message);
     }
   };
@@ -248,7 +248,7 @@ export function useCampaignMetrics() {
       loadCampaignMetrics(campaignId);
       onReload();
     } catch (error: any) {
-      console.error("Error deleting metric:", error);
+      console.error("Error deleting metric:", error?.message || "Unknown error");
       toast.error("Erro ao excluir métricas: " + error.message);
     }
   };

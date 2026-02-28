@@ -166,7 +166,7 @@ export function TacticalChannelView({ channel, tacticalPlanId, channelScore, pro
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (cpError) console.error("Error loading channel plan:", cpError);
+      if (cpError) console.error("Error loading channel plan:", cpError?.message || "Unknown error");
 
       if (channelPlan) {
         setPlan({
@@ -246,7 +246,7 @@ export function TacticalChannelView({ channel, tacticalPlanId, channelScore, pro
         }))
       );
     } catch (err) {
-      console.error("Error loading channel data:", err);
+      console.error("Error loading channel data:", err?.message || "Unknown error");
     } finally {
       setLoading(false);
     }
@@ -396,7 +396,7 @@ export function TacticalChannelView({ channel, tacticalPlanId, channelScore, pro
 
       toast.success(`Plano tático ${config.fullLabel} salvo!`);
     } catch (err) {
-      console.error("Error saving channel plan:", err);
+      console.error("Error saving channel plan:", err?.message || "Unknown error");
       toast.error("Erro ao salvar plano tático");
     } finally {
       setSaving(false);

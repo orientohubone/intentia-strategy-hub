@@ -76,15 +76,15 @@ export default function Support() {
         .limit(20);
 
       if (error) {
-        console.error("Error loading tickets:", error);
+        console.error("Error loading tickets:", error?.message || "Unknown error");
         if (error.message?.includes('does not exist') || error.code === 'PGRST116') {
-          console.log("Tabelas de suporte ainda não criadas - modo demo");
+//           console.log("Tabelas de suporte ainda não criadas - modo demo");
         }
       } else {
         setTickets(data || []);
       }
     } catch (error) {
-      console.error("Error loading tickets:", error);
+      console.error("Error loading tickets:", error?.message || "Unknown error");
     } finally {
       setLoading(false);
     }
@@ -102,7 +102,7 @@ export default function Support() {
       if (error) throw error;
       setMessages(data || []);
     } catch (error) {
-      console.error("Error loading messages:", error);
+      console.error("Error loading messages:", error?.message || "Unknown error");
     }
   };
 
@@ -128,7 +128,7 @@ export default function Support() {
       loadMessages(selectedTicket.id);
       toast.success("Mensagem enviada com sucesso.");
     } catch (error: any) {
-      console.error("Error sending message:", error);
+      console.error("Error sending message:", error?.message || "Unknown error");
       toast.error("Erro ao enviar mensagem: " + error.message);
     } finally {
       setSendingMessage(false);

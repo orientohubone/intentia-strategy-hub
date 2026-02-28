@@ -284,7 +284,7 @@ export function FloatingChat() {
         setActiveTicketId(data[0].id);
       }
     } catch (e) {
-      console.error("Error loading active ticket:", e);
+      console.error("Error loading active ticket:", e?.message || "Unknown error");
     }
   }, [user]);
 
@@ -302,7 +302,7 @@ export function FloatingChat() {
         setMessages(data || []);
       }
     } catch (e) {
-      console.error("Error loading messages:", e);
+      console.error("Error loading messages:", e?.message || "Unknown error");
     }
   }, [activeTicketId]);
 
@@ -695,7 +695,7 @@ export function FloatingChat() {
     }
 
     if (error) {
-      console.error("assistant-ia invoke error", error);
+      console.error("assistant-ia invoke error", error?.message || "Unknown error");
       toast.error(`Erro ao acionar assistente IA${(error as any)?.status ? ` (${(error as any).status})` : ""}`);
       return null;
     }

@@ -46,7 +46,7 @@ export default function CampaignCalendarManager({ userId, projectId, projectName
       if (error) throw error;
       setCampaigns((data || []) as CalendarCampaign[]);
     } catch (err) {
-      console.error("Error loading calendar data:", err);
+      console.error("Error loading calendar data:", err?.message || "Unknown error");
       // Fallback: load from campaigns table directly
       try {
         const { data, error } = await (supabase as any)
@@ -95,7 +95,7 @@ export default function CampaignCalendarManager({ userId, projectId, projectName
 
         setCampaigns(mapped);
       } catch (fallbackErr) {
-        console.error("Fallback loading failed:", fallbackErr);
+        console.error("Fallback loading failed:", fallbackErr?.message || "Unknown error");
         setCampaigns([]);
       }
     } finally {

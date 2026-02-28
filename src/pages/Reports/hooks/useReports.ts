@@ -345,10 +345,10 @@ export const useReports = () => {
 
       setReports(finalReports);
       reportsCache.set(userId, { reports: finalReports, fetchedAt: Date.now() });
-      console.log("Relatórios carregados:", finalReports.length);
+//       console.log("Relatórios carregados:", finalReports.length);
       return finalReports;
     } catch (error) {
-      console.error("Erro ao carregar relatórios:", error);
+      console.error("Erro ao carregar relatórios:", error?.message || "Unknown error");
       toast.error("Erro ao carregar relatórios");
       return [] as Report[];
     } finally {

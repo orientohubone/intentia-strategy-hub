@@ -294,7 +294,7 @@ export default function Status() {
       toast.success("Inscrito com sucesso! Você receberá alertas de status por email.");
       setSubscribeEmail("");
     } catch (err: any) {
-      console.error("[subscribe] Error:", err);
+      console.error("[subscribe] Error:", err?.message || "Unknown error");
       toast.error("Erro ao se inscrever. Tente novamente.");
     } finally {
       setSubscribing(false);

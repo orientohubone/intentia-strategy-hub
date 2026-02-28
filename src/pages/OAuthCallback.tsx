@@ -14,19 +14,37 @@ export default function OAuthCallback() {
   useEffect(() => {
     const error = searchParams.get("error");
     const errorDescription = searchParams.get("error_description");
-    const provider = searchParams.get("provider") as AdProvider | null;
+    const rawProvider = searchParams.get("provider");
     const connStatus = searchParams.get("status");
     const account = searchParams.get("account");
 
+    // Validação estrita do provider para evitar Open Redirect/XSS via payload de provider inválido
+    const isValidProvider = rawProvider && Object.keys(PROVIDER_CONFIGS).includes(rawProvider);
+    const provider = isValidProvider ? (rawProvider as AdProvider) : null;
+
+    // Função para sanitizar texto simples para evitar XSS ao injetar no DOM via toast/message
+    const escapeHTML = (str: string) => {
+      return str.replace(/[&<>'"]/g,
+        tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+          }[tag] || tag)
+      );
+    };
+
     if (error) {
       setStatus("error");
-      const cleanError = String(errorDescription || error || "Erro desconhecido na autenticação.");
+      const rawErrorText = String(errorDescription || error || "Erro desconhecido na autenticação.");
+      const cleanError = escapeHTML(rawErrorText);
       setMessage(cleanError);
       toast.error(`Erro na conexão: ${cleanError}`);
     } else if (connStatus === "connected" && provider) {
       setStatus("success");
-      const providerName = PROVIDER_CONFIGS[provider]?.name || provider;
-      const cleanAccount = account ? String(account) : "";
+      const providerName = PROVIDER_CONFIGS[provider].name;
+      const cleanAccount = account ? escapeHTML(String(account)) : "";
       setMessage(`${providerName} conectado com sucesso!${cleanAccount ? ` Conta: ${cleanAccount}` : ""}`);
       toast.success(`${providerName} conectado com sucesso!`);
     } else {

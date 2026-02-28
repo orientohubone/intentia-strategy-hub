@@ -120,7 +120,7 @@ export default function BudgetManagement({ userId, projectId, projectName, campa
 
       setAllocations(mapped);
     } catch (error: any) {
-      console.error("Error loading budget allocations:", error);
+      console.error("Error loading budget allocations:", error?.message || "Unknown error");
     } finally {
       setLoading(false);
     }
@@ -181,7 +181,7 @@ export default function BudgetManagement({ userId, projectId, projectName, campa
       resetForm();
       loadAllocations();
     } catch (error: any) {
-      console.error("Error saving budget:", error);
+      console.error("Error saving budget:", error?.message || "Unknown error");
       toast.error("Erro ao salvar budget: " + error.message);
     } finally {
       setSaving(false);
@@ -199,7 +199,7 @@ export default function BudgetManagement({ userId, projectId, projectName, campa
       toast.success("Alocação removida");
       loadAllocations();
     } catch (error: any) {
-      console.error("Error deleting allocation:", error);
+      console.error("Error deleting allocation:", error?.message || "Unknown error");
       toast.error("Erro ao remover alocação");
     }
   };
@@ -221,7 +221,7 @@ export default function BudgetManagement({ userId, projectId, projectName, campa
       loadAllocations();
       onSync?.();
     } catch (error: any) {
-      console.error("Error syncing budgets:", error);
+      console.error("Error syncing budgets:", error?.message || "Unknown error");
       toast.error("Erro ao sincronizar: " + error.message);
     }
   };

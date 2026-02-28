@@ -182,7 +182,7 @@ export default function Alerts() {
         fetchedAt: Date.now(),
       });
     } catch (error) {
-      console.error("Error loading alerts:", error);
+      console.error("Error loading alerts:", error?.message || "Unknown error");
     } finally {
       if (!options?.silent || !cached) setLoading(false);
     }

@@ -214,7 +214,7 @@ export default function AdminStatusTab() {
     try {
       await Promise.all([loadServices(), loadIncidents(), loadMaintenances()]);
     } catch (err) {
-      console.error('[AdminStatusTab] loadAll error:', err);
+      console.error('[AdminStatusTab] loadAll error:', err?.message || "Unknown error");
     } finally {
       setLoading(false);
     }

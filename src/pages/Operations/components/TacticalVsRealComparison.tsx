@@ -445,7 +445,7 @@ export default function TacticalVsRealComparison({ projectId, projectName, campa
         channelsExecuted: new Set(campaigns.map((c) => c.channel)).size,
       });
     } catch (err) {
-      console.error("[TacticalVsReal] Error:", err);
+      console.error("[TacticalVsReal] Error:", err?.message || "Unknown error");
     } finally {
       setLoading(false);
       requestAnimationFrame(() => {

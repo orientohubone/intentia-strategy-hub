@@ -269,7 +269,7 @@ export default function Settings() {
         });
       }
     } catch (error) {
-      console.error("Error loading tenant settings:", error);
+      console.error("Error loading tenant settings:", error?.message || "Unknown error");
     } finally {
       setTenantLoading(false);
     }
@@ -309,7 +309,7 @@ export default function Settings() {
         timestamp: Date.now(),
       });
     } catch (error) {
-      console.error("Error loading usage stats:", error);
+      console.error("Error loading usage stats:", error?.message || "Unknown error");
     }
   };
 
@@ -360,7 +360,7 @@ export default function Settings() {
         .eq("user_id", userId);
 
       if (error) {
-        console.error("Error loading API keys:", error);
+        console.error("Error loading API keys:", error?.message || "Unknown error");
         return;
       }
 
@@ -389,7 +389,7 @@ export default function Settings() {
         });
       }
     } catch (error) {
-      console.error("Error loading API keys:", error);
+      console.error("Error loading API keys:", error?.message || "Unknown error");
     }
   };
 

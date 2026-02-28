@@ -52,7 +52,7 @@ export function IcpEnrichmentDialog({
       await exportIcpToPdf(audienceName, enrichment);
       toast.success("PDF exportado com sucesso!");
     } catch (error) {
-      console.error("Erro ao exportar PDF:", error);
+      console.error("Erro ao exportar PDF:", error?.message || "Unknown error");
       toast.error("Erro ao exportar PDF");
     } finally {
       setIsExporting(false);
@@ -66,7 +66,7 @@ export function IcpEnrichmentDialog({
       exportIcpToHtml(audienceName, enrichment);
       toast.success("HTML exportado com sucesso!");
     } catch (error) {
-      console.error("Erro ao exportar HTML:", error);
+      console.error("Erro ao exportar HTML:", error?.message || "Unknown error");
       toast.error("Erro ao exportar HTML");
     }
   };

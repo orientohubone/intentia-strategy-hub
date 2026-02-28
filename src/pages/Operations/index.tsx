@@ -149,7 +149,7 @@ export default function Operations() {
         .eq("month", currentMonth)
         .eq("year", currentYear);
       if (error) {
-        console.error("Erro ao carregar budgets do projeto:", error);
+        console.error("Erro ao carregar budgets do projeto:", error?.message || "Unknown error");
         return;
       }
       const grouped: Record<string, number> = {};
@@ -177,7 +177,7 @@ export default function Operations() {
       try {
         await (supabase as any).rpc("sync_all_budgets", { p_user_id: user.id });
       } catch (e) {
-        console.error("Auto-sync budgets failed:", e);
+        console.error("Auto-sync budgets failed:", e?.message || "Unknown error");
       }
     }
     loadCampaigns();

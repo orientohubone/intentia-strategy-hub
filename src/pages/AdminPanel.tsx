@@ -274,7 +274,7 @@ export default function AdminPanel() {
     const result = await adminUpdateUserPlan(userId, newPlan, admin.cnpj);
     if (result.error) {
       toast.error(result.error);
-      console.error("[admin] Plan change error:", result.error);
+      console.error("[admin] Plan change error:", result.error?.message || "Unknown error");
     } else {
       toast.success(`Plano atualizado para ${PLAN_CONFIG[newPlan]?.label || newPlan}.`);
       await loadUsers();

@@ -43,11 +43,23 @@ if (typeof window !== "undefined") {
         } catch (e) { /* Silently fail, do not expose logger errors to attacker */ }
     }
 
-    // Opcional: Esvaziar o console para disfarçar logs nativos (se houver) periodicamente (somente em prod para não atrapalhar seu próprio dev)
+    // Bloquear console em produção: preenchê-los com no-ops impede DevTools de renderizá-los e vazar informações
     if (import.meta.env.PROD) {
+        // Interceptar chamadas subseqüentes
+        const noop = () => {};
+        Object.defineProperties(console, {
+            log: { value: noop, writable: false, configurable: false },
+            info: { value: noop, writable: false, configurable: false },
+            warn: { value: noop, writable: false, configurable: false },
+            error: { value: noop, writable: false, configurable: false },
+            debug: { value: noop, writable: false, configurable: false },
+            table: { value: noop, writable: false, configurable: false },
+            dir: { value: noop, writable: false, configurable: false },
+            trace: { value: noop, writable: false, configurable: false }
+        });
+
         setInterval(() => {
-            // Uncomment to make it even harder for attackers to read console logs
-            // console.clear();
+            console.clear();
         }, 5000);
     }
 }

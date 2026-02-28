@@ -61,7 +61,7 @@ export function SupportTicketForm({ onSuccess, onCancel }: SupportTicketFormProp
         .order("name");
 
       if (error) {
-        console.error("Error loading categories:", error);
+        console.error("Error loading categories:", error?.message || "Unknown error");
       } else {
         setCategories(data || []);
       }
@@ -97,7 +97,7 @@ export function SupportTicketForm({ onSuccess, onCancel }: SupportTicketFormProp
             .upload(fileName, file);
 
           if (uploadError) {
-            console.error("Upload error:", uploadError);
+            console.error("Upload error:", uploadError?.message || "Unknown error");
             continue;
           }
 
@@ -136,9 +136,9 @@ export function SupportTicketForm({ onSuccess, onCancel }: SupportTicketFormProp
         if (error) throw error;
         ticket = ticketData;
         
-        console.log("Ticket criado com sucesso:", ticket);
+//         console.log("Ticket criado com sucesso:", ticket);
       } catch (dbError: any) {
-        console.error("Database error REAL:", dbError);
+        console.error("Database error REAL:", dbError?.message || "Unknown error");
         throw dbError; // Deixar o erro real aparecer
       }
 
@@ -180,7 +180,7 @@ export function SupportTicketForm({ onSuccess, onCancel }: SupportTicketFormProp
       });
 
     } catch (error: any) {
-      console.error("Error creating ticket:", error);
+      console.error("Error creating ticket:", error?.message || "Unknown error");
       toast({
         title: "Erro ao criar chamado",
         description: error.message || "Tente novamente mais tarde.",

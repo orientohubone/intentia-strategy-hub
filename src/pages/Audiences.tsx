@@ -114,7 +114,7 @@ export default function Audiences() {
       });
       toast.success("Plano salvo carregado.");
     } catch (err: any) {
-      console.error("Erro ao carregar plano salvo:", err);
+      console.error("Erro ao carregar plano salvo:", err?.message || "Unknown error");
       toast.error(err?.message || "Erro ao carregar plano salvo");
     } finally {
       setLoadingSavedPlan(false);
@@ -151,7 +151,7 @@ export default function Audiences() {
       setSavedPlans(list);
       return list;
     } catch (err) {
-      console.error("Erro ao carregar histórico de planos:", err);
+      console.error("Erro ao carregar histórico de planos:", err?.message || "Unknown error");
       toast.error(err?.message || "Erro ao carregar histórico");
       return [];
     } finally {
@@ -251,7 +251,7 @@ export default function Audiences() {
       fetchSavedPlans(audience.id);
       setEditorialDialogOpen(true);
     } catch (err: any) {
-      console.error("Erro ao gerar linha editorial:", err);
+      console.error("Erro ao gerar linha editorial:", err?.message || "Unknown error");
       toast.error(err?.message || "Erro ao gerar linha editorial");
     } finally {
       setEditorialLoadingId(null);
@@ -293,7 +293,7 @@ export default function Audiences() {
       if (anchorAudience?.id) fetchSavedPlans(anchorAudience.id);
       setEditorialDialogOpen(true);
     } catch (err: any) {
-      console.error("Erro ao gerar linha editorial do projeto:", err);
+      console.error("Erro ao gerar linha editorial do projeto:", err?.message || "Unknown error");
       toast.error(err?.message || "Erro ao gerar linha editorial do projeto");
     } finally {
       setProjectEditorialLoading(false);
@@ -368,7 +368,7 @@ export default function Audiences() {
       if (error) throw error;
       toast.success("Plano de comunicação salvo com sucesso.");
     } catch (err: any) {
-      console.error("Erro ao salvar plano:", err);
+      console.error("Erro ao salvar plano:", err?.message || "Unknown error");
       toast.error(err?.message || "Erro ao salvar plano");
     } finally {
       setSavingPlan(false);
@@ -409,7 +409,7 @@ export default function Audiences() {
       toast.success("ICP refinado com sucesso!");
       if (user) notifyIcpEnriched(user.id, audience.name);
     } catch (err: any) {
-      console.error("Erro ao refinar ICP:", err);
+      console.error("Erro ao refinar ICP:", err?.message || "Unknown error");
       toast.error(err?.message || "Erro ao refinar ICP com IA");
     } finally {
       setEnrichingId(null);
@@ -470,7 +470,7 @@ export default function Audiences() {
       setAudiences(mapped);
       audiencesCache.set(userId, { audiences: mapped, fetchedAt: Date.now() });
     } catch (error) {
-      console.error("Erro ao buscar públicos:", error);
+      console.error("Erro ao buscar públicos:", error?.message || "Unknown error");
       toast.error("Erro ao carregar públicos-alvo");
     } finally {
       if (!options?.silent || !cached) setLoading(false);
@@ -522,7 +522,7 @@ export default function Audiences() {
       resetForm();
       fetchAudiences();
     } catch (error: any) {
-      console.error("Erro ao salvar público-alvo:", error);
+      console.error("Erro ao salvar público-alvo:", error?.message || "Unknown error");
       toast.error(error?.message || "Erro ao salvar público-alvo");
     }
   };

@@ -321,7 +321,7 @@ export default function Benchmark() {
         });
       }
     } catch (error: any) {
-      console.error("Erro na análise IA do benchmark:", error);
+      console.error("Erro na análise IA do benchmark:", error?.message || "Unknown error");
       toast.error(`Análise IA falhou: ${error.message}`);
     } finally {
       setAiAnalyzing(null);
