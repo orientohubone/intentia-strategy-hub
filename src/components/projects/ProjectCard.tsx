@@ -99,6 +99,7 @@ export function ProjectCard({
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <button
+                                    aria-label="Reanalisar URL"
                                     className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-muted transition-colors disabled:opacity-50 text-muted-foreground hover:text-foreground"
                                     onClick={() => handleReanalyze(project.id)}
                                     disabled={analyzing || !canAnalyze}
@@ -113,7 +114,7 @@ export function ProjectCard({
                     </TooltipProvider>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                            <Button aria-label="Opções do projeto" size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground">
                                 <MoreVertical className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>

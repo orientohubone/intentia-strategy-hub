@@ -424,7 +424,7 @@ export function ProjectDetailDialog({
                               <div className="sm:hidden">
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
-                                    <Button size="icon" variant="ghost" className="h-7 w-7">
+                                    <Button aria-label="Opções de exportação" size="icon" variant="ghost" className="h-7 w-7">
                                       <Download className="h-3.5 w-3.5" />
                                     </Button>
                                   </DropdownMenuTrigger>
