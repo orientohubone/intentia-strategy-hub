@@ -71,6 +71,8 @@ export function NotificationsDropdown() {
         className="relative"
         onClick={() => setIsOpen(!isOpen)}
         aria-label={unreadCount > 0 ? `Notificações, ${unreadCount} ${unreadCount === 1 ? 'não lida' : 'não lidas'}` : "Notificações"}
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
