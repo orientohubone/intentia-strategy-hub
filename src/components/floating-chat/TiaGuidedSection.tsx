@@ -49,7 +49,7 @@ export function TiaGuidedSection({
             <div className="flex items-center gap-1.5">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
+                  <button aria-label="Passo anterior"
                     disabled={!hasPrev}
                     onClick={onPrev}
                     className="h-7 w-7 rounded-full border border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:border-primary/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -63,7 +63,7 @@ export function TiaGuidedSection({
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
+                  <button aria-label="Próximo passo"
                     disabled={!hasNext}
                     onClick={onNext}
                     className="h-7 w-7 rounded-full border border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:border-primary/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
