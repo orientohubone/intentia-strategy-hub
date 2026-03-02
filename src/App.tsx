@@ -68,7 +68,6 @@ import TiaPage from "./pages/Tia";
 import Changelog from "./pages/Changelog";
 import VerifyTest from "./pages/VerifyTest";
 import VerifySuccess from "./pages/VerifySuccess";
-import CreateMetaUser from "./pages/CreateMetaUser";
 
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
@@ -121,7 +120,6 @@ const App = () => {
             <Route path="/tia" element={<TiaPage />} />
             <Route path="/verify-test" element={<ForceLightMode><VerifyTest /></ForceLightMode>} />
             <Route path="/verify-success" element={<ForceLightMode><VerifySuccess /></ForceLightMode>} />
-            <Route path="/create-meta-user" element={<ForceLightMode><CreateMetaUser /></ForceLightMode>} />
             <Route
               path="/home"
               element={
