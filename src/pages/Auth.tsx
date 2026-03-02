@@ -14,8 +14,26 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
 
   const redirectParam = searchParams.get("redirect");
-  const redirectTo = (redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//"))
-    ? redirectParam
+
+  // Security Standard: Robust validation for Open Redirect prevention
+  const isValidRelativeUrl = (url: string | null) => {
+    if (!url) return false;
+    // Must start with a single slash, not a double slash (protocol-relative)
+    // and not contain any slashes after a backslash to prevent bypasses like `/\example.com`
+    if (!url.startsWith('/') || url.startsWith('//') || url.startsWith('/\\')) return false;
+    try {
+      // If we can construct a URL with a base, it's structurally valid
+      // Then we ensure its pathname matches the original path,
+      // proving it didn't get parsed as a domain.
+      const parsed = new URL(url, window.location.origin);
+      return parsed.origin === window.location.origin;
+    } catch {
+      return false;
+    }
+  };
+
+  const redirectTo = isValidRelativeUrl(redirectParam)
+    ? redirectParam!
     : "/home";
 
   const [loading, setLoading] = useState(false);
