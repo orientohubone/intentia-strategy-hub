@@ -96,141 +96,65 @@ export function CampaignRow({
   const remainingBudget = Math.max(0, (campaign.budget_total || 0) - (campaign.budget_spent || 0));
 
   return (
-    <div className="p-3 sm:p-4 hover:bg-accent/30 transition-colors">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        {/* Campaign Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h4 className="font-medium text-sm sm:text-base truncate">{campaign.name}</h4>
-            <Badge className={`text-xs ${CAMPAIGN_STATUS_COLORS[campaign.status]}`}>
-              {CAMPAIGN_STATUS_LABELS[campaign.status]}
-            </Badge>
-            <Badge className={`text-xs ${CHANNEL_COLORS[campaign.channel]}`}>
-              {CHANNEL_LABELS[campaign.channel]}
-            </Badge>
-          </div>
-          {campaign.objective && (
-            <p className="text-xs text-muted-foreground mt-1 truncate">
-              <Target className="h-3 w-3 inline mr-1" />
-              {campaign.objective}
-            </p>
-          )}
-          <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap">
-            {campaign.budget_total > 0 && (
-              <span className="flex items-center gap-1">
-                <DollarSign className="h-3 w-3" />
-                {formatCurrency(campaign.budget_total)}
-                {budgetPacing > 0 && (
-                  <span className={`ml-1 ${budgetPacing >= 90 ? "text-red-500" : budgetPacing >= 70 ? "text-yellow-500" : "text-green-500"}`}>
-                    ({budgetPacing}%)
-                  </span>
-                )}
-              </span>
-            )}
-            {highlight?.type === "source" && (
-              <Badge variant="outline" className="text-[10px] text-amber-600 bg-amber-500/10 border-amber-500/40">
-                Saldo reaproveitado
-              </Badge>
-            )}
-            {highlight?.type === "target" && (
-              <Badge variant="outline" className="text-[10px] text-emerald-700 bg-emerald-500/10 border-emerald-500/40 animate-pulse">
-                Reforço recebido
-              </Badge>
-            )}
-            {(campaign.start_date || campaign.end_date) && (
-              <span className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {formatDate(campaign.start_date)}
-                {campaign.end_date && ` → ${formatDate(campaign.end_date)}`}
-              </span>
-            )}
-          </div>
-          {/* Budget Pacing Bar */}
-          {campaign.budget_total > 0 && (
-            <div className="mt-2 w-full max-w-xs">
-              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${
-                    budgetPacing >= 90 ? "bg-red-500" : budgetPacing >= 70 ? "bg-yellow-500" : "bg-green-500"
-                  }`}
-                  style={{ width: `${Math.min(budgetPacing, 100)}%` }}
-                />
-              </div>
-            </div>
-          )}
+    <div className={`
+      relative group transition-all duration-300
+      ${isExpanded
+        ? "bg-card border-primary/30 shadow-md ring-1 ring-primary/20"
+        : "bg-card/50 hover:bg-card border-border hover:border-primary/30 hover:shadow-sm"
+      }
+      border rounded-xl overflow-hidden flex flex-col h-full
+    `}>
+      {/* Card Header: Channel & Actions */}
+      <div className="p-3 border-b bg-muted/20 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Badge className={`text-[10px] font-bold uppercase tracking-wider ${CHANNEL_COLORS[campaign.channel]}`}>
+            {CHANNEL_LABELS[campaign.channel]}
+          </Badge>
+          <Badge variant="outline" className={`text-[10px] font-medium border-border flex items-center gap-1.5 px-2 py-0.5 h-5 bg-background`}>
+            <div className={`h-1.5 w-1.5 rounded-full ${campaign.status === "active" ? "bg-emerald-500 animate-pulse" :
+                campaign.status === "paused" ? "bg-amber-500" :
+                  campaign.status === "completed" ? "bg-blue-500" :
+                    campaign.status === "archived" ? "bg-red-500" : "bg-slate-400"
+              }`} />
+            {CAMPAIGN_STATUS_LABELS[campaign.status]}
+          </Badge>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-1 flex-shrink-0">
-          {statusActions.map(({ status, label, Icon }) => (
-            <Button
-              key={status}
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              title={label}
-              onClick={() => onStatusChange(campaign.id, status)}
-            >
-              <Icon className="h-4 w-4" />
-            </Button>
-          ))}
+        <div className="flex items-center gap-0.5">
           {onReallocate && campaign.status === "completed" && remainingBudget > 0 && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-amber-600"
-              title="Reaproveitar saldo desta campanha"
+              className="h-7 w-7 text-amber-600 hover:bg-amber-500/10"
+              title="Reaproveitar saldo"
               onClick={() => onReallocate(campaign, remainingBudget)}
             >
-              <GitCompareArrows className="h-4 w-4" />
+              <GitCompareArrows className="h-3.5 w-3.5" />
             </Button>
           )}
           <Button
             variant="ghost"
             size="icon"
-            className={`h-8 w-8 ${isExpanded ? "text-primary" : ""}`}
-            title="Métricas"
-            onClick={() => onToggleExpand(campaign.id)}
-          >
-            <BarChart3 className="h-4 w-4" />
-          </Button>
-          {hasAiResult && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-purple-500"
-              title="Ver Análise de Performance"
-              onClick={() => onShowAiDialog(campaign.id)}
-            >
-              <Sparkles className="h-4 w-4" />
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
+            className="h-7 w-7"
             title="Editar"
             onClick={() => onEdit(campaign)}
           >
-            <Edit2 className="h-4 w-4" />
+            <Edit2 className="h-3.5 w-3.5" />
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-destructive hover:text-destructive"
+              <button
+                className="h-7 w-7 inline-flex items-center justify-center rounded-md text-destructive hover:bg-destructive/10 transition-colors"
                 title="Excluir"
               >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Excluir campanha?</AlertDialogTitle>
                 <AlertDialogDescription>
                   A campanha "{campaign.name}" será movida para a lixeira.
-                  Esta ação pode ser revertida em até 30 dias.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -247,8 +171,113 @@ export function CampaignRow({
         </div>
       </div>
 
+      {/* Card Body: Info */}
+      <div className="p-4 flex-1 space-y-3">
+        <div className="space-y-1">
+          <h4 className="font-semibold text-sm leading-tight line-clamp-2 min-h-[2.5rem]">
+            {campaign.name}
+          </h4>
+          {campaign.objective && (
+            <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+              <Target className="h-3 w-3" />
+              <span className="truncate">{campaign.objective}</span>
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-muted-foreground flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {formatDate(campaign.start_date)}
+            </span>
+            {campaign.budget_total > 0 && (
+              <span className="font-medium">
+                {formatCurrency(campaign.budget_total)}
+              </span>
+            )}
+          </div>
+
+          {highlight?.type === "source" && (
+            <Badge variant="outline" className="w-fit text-[9px] text-amber-600 bg-amber-500/10 border-amber-500/30 font-bold uppercase py-0 px-1.5 h-4">
+              Saldo reaproveitado
+            </Badge>
+          )}
+          {highlight?.type === "target" && (
+            <Badge variant="outline" className="w-fit text-[9px] text-emerald-700 bg-emerald-500/10 border-emerald-500/30 font-bold uppercase py-0 px-1.5 h-4 animate-pulse">
+              Reforço recebido
+            </Badge>
+          )}
+
+          {campaign.budget_total > 0 && (
+            <div className="space-y-1">
+              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${budgetPacing >= 90 ? "bg-red-500" : budgetPacing >= 70 ? "bg-amber-500" : "bg-emerald-500"
+                    }`}
+                  style={{ width: `${Math.min(budgetPacing, 100)}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className={budgetPacing >= 90 ? "text-red-500 font-medium" : "text-muted-foreground"}>
+                  {budgetPacing}% consumido
+                </span>
+                <span className="text-muted-foreground">
+                  Restante: {formatCurrency(remainingBudget)}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Card Footer: Quick Actions & Status Flow */}
+      <div className="px-3 py-2 border-t bg-muted/10 flex items-center justify-between">
+        <div className="flex items-center gap-1">
+          {statusActions.map(({ status, label, Icon }) => (
+            <Button
+              key={status}
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-primary"
+              title={label}
+              onClick={() => onStatusChange(campaign.id, status)}
+            >
+              <Icon className="h-4 w-4" />
+            </Button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-1">
+          {hasAiResult && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-purple-500 hover:bg-purple-500/10"
+              title="Análise IA"
+              onClick={() => onShowAiDialog(campaign.id)}
+            >
+              <Sparkles className="h-4 w-4" />
+            </Button>
+          )}
+          <Button
+            variant={isExpanded ? "default" : "outline"}
+            size="sm"
+            className={`h-8 px-2 gap-1.5 text-[10px] uppercase font-bold tracking-wider`}
+            onClick={() => onToggleExpand(campaign.id)}
+          >
+            <BarChart3 className="h-3.5 w-3.5" />
+            {isExpanded ? "Fechar" : "Métricas"}
+          </Button>
+        </div>
+      </div>
+
       {/* Expanded content (metrics) */}
-      {children}
+      {isExpanded && (
+        <div className="p-4 border-t bg-muted/5 animate-in slide-in-from-top-2 duration-300">
+          {children}
+        </div>
+      )}
     </div>
   );
 }

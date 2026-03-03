@@ -677,9 +677,18 @@ function ChannelPacingRow({ allocation }: { allocation: BudgetAllocationRow }) {
     <div className="px-3 py-2 sm:px-4 sm:py-2.5">
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-1.5">
-          <Badge className={`text-[10px] px-1.5 py-0 ${CHANNEL_COLORS[allocation.channel]}`}>
-            {CHANNEL_LABELS[allocation.channel]}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <div className="p-1 rounded bg-white shadow-xs border border-border/50">
+              <img
+                src={`/${allocation.channel === "google" ? "google-ads" : allocation.channel === "meta" ? "meta-ads" : allocation.channel === "linkedin" ? "linkedin-ads" : "tiktok-ads"}.svg`}
+                alt={CHANNEL_LABELS[allocation.channel]}
+                className="h-3.5 w-3.5 object-contain"
+              />
+            </div>
+            <span className="text-xs font-semibold text-foreground tracking-tight">
+              {CHANNEL_LABELS[allocation.channel]}
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-2 text-[11px]">
           <span className="text-muted-foreground">

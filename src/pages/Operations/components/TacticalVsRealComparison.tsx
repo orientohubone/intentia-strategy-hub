@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import {
   ArrowRight,
   Info,
   Loader2,
+  MonitorUp,
 } from "lucide-react";
 import {
   type CampaignChannel,
@@ -150,96 +151,119 @@ function ChannelGapCard({ channelGap }: { channelGap: ChannelGapAnalysis }) {
   const plan = channelGap.tacticalPlan;
   const hasMetrics = channelGap.metricGaps.length > 0;
   const criticalCount = channelGap.metricGaps.filter((g) => g.status === "critical").length;
-  const belowCount = channelGap.metricGaps.filter((g) => g.status === "below").length;
 
   return (
-    <div className="border rounded-lg overflow-hidden bg-card">
+    <div className={`
+      relative transition-all duration-300 rounded-xl border
+      ${expanded ? "bg-card shadow-lg border-primary/30 ring-1 ring-primary/10" : "bg-card/40 hover:bg-card border-border hover:border-primary/30 shadow-sm"}
+    `}>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-3 sm:p-4 hover:bg-accent/50 transition-colors text-left"
+        className="w-full p-4 flex items-center justify-between text-left"
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <AdherenceRing score={channelGap.adherenceScore} size={44} />
+        <div className="flex items-center gap-4 min-w-0">
+          <div className="relative">
+            <AdherenceRing score={channelGap.adherenceScore} size={48} />
+            {criticalCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 items-center justify-center text-[8px] text-white font-bold">
+                  !
+                </span>
+              </span>
+            )}
+          </div>
+
           <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h4 className="font-semibold text-sm">{CHANNEL_LABELS[channelGap.channel]}</h4>
-              <Badge className={`text-[10px] ${CHANNEL_COLORS[channelGap.channel]}`}>
-                {channelGap.campaigns.length} campanha{channelGap.campaigns.length !== 1 ? "s" : ""}
+            <div className="flex items-center gap-2 mb-0.5 mt-0.5 flex-wrap">
+              <div className={`p-1.5 rounded-md bg-white shadow-sm border ${channelGap.channel === "google" ? "border-blue-100" :
+                channelGap.channel === "meta" ? "border-blue-50" :
+                  channelGap.channel === "linkedin" ? "border-blue-200" : "border-slate-200"
+                }`}>
+                <img
+                  src={`/${channelGap.channel === "google" ? "google-ads" : channelGap.channel === "meta" ? "meta-ads" : channelGap.channel === "linkedin" ? "linkedin-ads" : "tiktok-ads"}.svg`}
+                  alt={CHANNEL_LABELS[channelGap.channel]}
+                  className="h-3.5 w-3.5 object-contain"
+                />
+              </div>
+              <h4 className="font-bold text-sm tracking-tight text-foreground">
+                {CHANNEL_LABELS[channelGap.channel]}
+              </h4>
+              <Badge variant="secondary" className="text-[10px] h-4 px-1.5 font-bold uppercase tracking-wider bg-primary/5 text-primary border-primary/10">
+                {channelGap.campaigns.length} {channelGap.campaigns.length === 1 ? 'Ativa' : 'Ativas'}
               </Badge>
-              {criticalCount > 0 && (
-                <Badge className="text-[10px] bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 border-0">
-                  {criticalCount} crítico{criticalCount !== 1 ? "s" : ""}
-                </Badge>
-              )}
-              {belowCount > 0 && (
-                <Badge className="text-[10px] bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400 border-0">
-                  {belowCount} abaixo
-                </Badge>
-              )}
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5 truncate">{channelGap.summary}</p>
+            <p className="text-[11px] text-muted-foreground font-medium line-clamp-1 opacity-80">
+              {channelGap.summary}
+            </p>
           </div>
         </div>
-        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ml-2 ${expanded ? "rotate-180" : ""}`} />
+        <div className={`
+          h-8 w-8 rounded-full flex items-center justify-center transition-all duration-300
+          ${expanded ? "bg-primary text-primary-foreground rotate-180" : "bg-muted/40 text-muted-foreground hover:bg-muted/60"}
+        `}>
+          <ChevronDown className="h-4 w-4" />
+        </div>
       </button>
 
       {expanded && (
-        <div className="border-t p-3 sm:p-4 space-y-4">
-          {/* Structure Match */}
-          {plan && (
-            <div className="space-y-2">
-              <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <Layers className="h-3.5 w-3.5" />
-                Aderência Estrutural
-              </h5>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-muted/30 rounded-lg p-3">
-                <StructureMatchItem label={`Tipo: ${plan.campaign_type || "Não definido"}`} match={channelGap.structureMatch.campaignTypeMatch} />
-                <StructureMatchItem label={`Funil: ${plan.funnel_stage || "Não definido"}`} match={channelGap.structureMatch.funnelStageMatch} />
-                <StructureMatchItem label={`Lances: ${plan.bidding_strategy || "Não definido"}`} match={channelGap.structureMatch.biddingStrategyMatch} />
-              </div>
-            </div>
-          )}
+        <div className="px-4 pb-4 space-y-5 animate-in slide-in-from-top-2 duration-300">
+          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
-          {/* Tactical Scores */}
-          {plan && (
-            <div className="space-y-2">
-              <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <Crosshair className="h-3.5 w-3.5" />
-                Scores Táticos
-              </h5>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {[
-                  { label: "Tático", value: plan.tactical_score },
-                  { label: "Coerência", value: plan.coherence_score },
-                  { label: "Clareza", value: plan.clarity_score },
-                  { label: "Segmentação", value: plan.segmentation_score },
-                ].map((s) => (
-                  <div key={s.label} className="bg-muted/30 rounded-lg p-2 text-center">
-                    <p className="text-[10px] text-muted-foreground">{s.label}</p>
-                    <p className={`text-sm font-bold ${getScoreColor(s.value)}`}>{s.value}</p>
-                    <p className="text-[10px] text-muted-foreground">{getScoreLabel(s.value)}</p>
+          {/* Adherence & Scores Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Structural Match */}
+            {plan && (
+              <div className="space-y-3 p-4 rounded-xl bg-muted/20 border border-muted/30">
+                <h5 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                  <Layers className="h-3 w-3 text-primary" />
+                  Aderência Estrutural
+                </h5>
+                <div className="space-y-2">
+                  <StructureMatchItem label={`Tipo: ${plan.campaign_type || "N/A"}`} match={channelGap.structureMatch.campaignTypeMatch} />
+                  <StructureMatchItem label={`Funil: ${plan.funnel_stage || "N/A"}`} match={channelGap.structureMatch.funnelStageMatch} />
+                  <StructureMatchItem label={`Lances: ${plan.bidding_strategy || "N/A"}`} match={channelGap.structureMatch.biddingStrategyMatch} />
+                </div>
+              </div>
+            )}
+
+            {/* Tactical Ratings */}
+            {plan && (
+              <div className="space-y-3 p-4 rounded-xl bg-muted/20 border border-muted/30">
+                <h5 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                  <Crosshair className="h-3 w-3 text-primary" />
+                  Ratings Táticos
+                </h5>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] text-muted-foreground uppercase font-medium">Tático</span>
+                    <span className={`text-base font-black ${getScoreColor(plan.tactical_score)}`}>{plan.tactical_score}</span>
                   </div>
-                ))}
+                  <div className="flex flex-col">
+                    <span className="text-[9px] text-muted-foreground uppercase font-medium">Coerência</span>
+                    <span className={`text-base font-black ${getScoreColor(plan.coherence_score)}`}>{plan.coherence_score}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* Metric Gaps Table */}
+          {/* Metric Gaps Table with Modern Styling */}
           {hasMetrics ? (
-            <div className="space-y-2">
-              <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <Target className="h-3.5 w-3.5" />
-                Gap de Métricas — Planejado vs Real
+            <div className="space-y-3">
+              <h5 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                <Target className="h-3 w-3 text-primary" />
+                Performance vs Planejado
               </h5>
-              <div className="rounded-lg border overflow-hidden">
-                <div className="grid grid-cols-12 gap-2 items-center py-1.5 px-2 bg-muted/50 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+              <div className="rounded-xl border border-muted/40 overflow-hidden bg-card/30 backdrop-blur-sm">
+                <div className="grid grid-cols-12 gap-2 items-center py-2.5 px-3 bg-muted/50 text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
                   <div className="col-span-4 sm:col-span-3">Métrica</div>
-                  <div className="col-span-2 text-right">Planejado</div>
+                  <div className="col-span-2 text-right">Plan.</div>
                   <div className="col-span-2 text-right">Real</div>
-                  <div className="col-span-2 sm:col-span-3 text-right">Desvio</div>
+                  <div className="col-span-2 sm:col-span-3 text-right">Gap</div>
                   <div className="col-span-2 sm:col-span-2 text-right">Status</div>
                 </div>
-                <div className="divide-y divide-border/50">
+                <div className="divide-y divide-border/30">
                   {channelGap.metricGaps.map((gap, i) => (
                     <MetricGapRow key={i} gap={gap} />
                   ))}
@@ -247,35 +271,22 @@ function ChannelGapCard({ channelGap }: { channelGap: ChannelGapAnalysis }) {
               </div>
             </div>
           ) : (
-            <div className="text-center py-4 text-xs text-muted-foreground">
-              <Info className="h-4 w-4 mx-auto mb-1" />
-              Nenhuma métrica-alvo definida no plano tático para este canal.
+            <div className="flex flex-col items-center justify-center p-8 bg-muted/10 rounded-xl border border-dashed text-center">
+              <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-2">
+                <Info className="h-5 w-5 text-muted-foreground/50" />
+              </div>
+              <p className="text-xs font-medium text-muted-foreground">Sem métricas-alvo definidas</p>
             </div>
           )}
 
-          {/* Campaigns in this channel */}
-          <div className="space-y-1.5">
-            <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Campanhas neste canal
-            </h5>
-            <div className="flex flex-wrap gap-1.5">
-              {channelGap.campaigns.map((c) => (
-                <Badge key={c.id} variant="outline" className="text-[10px] gap-1">
-                  {c.name}
-                  <span className="text-muted-foreground">({CAMPAIGN_STATUS_LABELS[c.status as keyof typeof CAMPAIGN_STATUS_LABELS] || c.status})</span>
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          {/* No tactical plan warning */}
+          {/* Warning for Missing Plan */}
           {!plan && (
-            <div className="flex items-start gap-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
-              <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
-              <div className="text-xs">
-                <p className="font-medium text-yellow-800 dark:text-yellow-300">Sem plano tático para este canal</p>
-                <p className="text-yellow-700 dark:text-yellow-400 mt-0.5">
-                  Crie um plano tático em <strong>Plano Tático</strong> para habilitar o comparativo completo.
+            <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 flex gap-3">
+              <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-amber-600 dark:text-amber-400">Configuração Incompleta</p>
+                <p className="text-[11px] text-amber-700/80 dark:text-amber-400/70 leading-relaxed">
+                  Não encontramos um plano tático ativo para este canal. As métricas estão sendo comparadas com médias de mercado ou dados históricos.
                 </p>
               </div>
             </div>
@@ -286,25 +297,61 @@ function ChannelGapCard({ channelGap }: { channelGap: ChannelGapAnalysis }) {
   );
 }
 
-export default function TacticalVsRealComparison({ projectId, projectName, campaigns, metricsSummaries }: Props) {
+// Global cache to persist analysis results across navigation/remounts
+const analysisCache = new Map<string, { analysis: ProjectGapAnalysis; dataKey: string }>();
+
+function TacticalVsRealComparison({ projectId, projectName, campaigns, metricsSummaries }: Props) {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [ready, setReady] = useState(false);
-  const [gapAnalysis, setGapAnalysis] = useState<ProjectGapAnalysis | null>(null);
+
+  // Create a unique key for the input data to detect actual changes
+  const dataKey = useMemo(() => {
+    try {
+      const campaignIds = campaigns.map(c => `${c.id}:${c.status}`).sort().join('|');
+      // For metrics, we just use the count of campaign summaries and a sample of IDs to catch major shifts
+      // without stringifying the whole metrics object every time
+      const metricsSample = Object.keys(metricsSummaries).slice(0, 5).join(',');
+      return `${projectId}-${campaignIds}-${Object.keys(metricsSummaries).length}-${metricsSample}`;
+    } catch (e) {
+      return `${projectId}-${campaigns.length}-${new Date().getTime()}`;
+    }
+  }, [projectId, campaigns, metricsSummaries]);
+
+  // Try to recover from cache first
+  const initialData = useMemo(() => {
+    const cached = analysisCache.get(projectId);
+    if (cached && cached.dataKey === dataKey) {
+      return cached.analysis;
+    }
+    return null;
+  }, [projectId, dataKey]);
+
+  const [loading, setLoading] = useState(!initialData);
+  const [ready, setReady] = useState(!!initialData);
+  const [gapAnalysis, setGapAnalysis] = useState<ProjectGapAnalysis | null>(initialData);
   const [expanded, setExpanded] = useState(false);
 
+  // Use a ref to track the last data analyzed and avoid redundant calls
+  const lastAnalyzedKey = useRef<string | null>(initialData ? dataKey : null);
+
   useEffect(() => {
-    if (user && projectId && campaigns.length > 0) {
+    const shouldLoad = user && projectId && campaigns.length > 0 && lastAnalyzedKey.current !== dataKey;
+
+    if (shouldLoad) {
       loadGapAnalysis();
-    } else {
+    } else if (!user || !projectId || campaigns.length === 0) {
       setLoading(false);
       setReady(true);
     }
-  }, [user, projectId, campaigns, metricsSummaries]);
+  }, [user, projectId, dataKey]);
 
   const loadGapAnalysis = async () => {
     if (!user) return;
-    setLoading(true);
+
+    // Only show loading if we don't have any data for this project yet
+    if (!gapAnalysis || gapAnalysis.projectId !== projectId) {
+      setLoading(true);
+    }
+
     try {
       // 1. Load tactical plan for this project
       const { data: plan } = await (supabase as any)
@@ -434,7 +481,7 @@ export default function TacticalVsRealComparison({ projectId, projectName, campa
         ? Math.round(channelsWithScores.reduce((sum, g) => sum + g.adherenceScore, 0) / channelsWithScores.length)
         : 0;
 
-      setGapAnalysis({
+      const analysis: ProjectGapAnalysis = {
         projectId,
         projectName,
         overallAdherence,
@@ -443,7 +490,13 @@ export default function TacticalVsRealComparison({ projectId, projectName, campa
         activeCampaigns: campaigns.filter((c) => c.status === "active").length,
         channelsPlanned: channelPlans.length,
         channelsExecuted: new Set(campaigns.map((c) => c.channel)).size,
-      });
+      };
+
+      setGapAnalysis(analysis);
+
+      // Update cache
+      analysisCache.set(projectId, { analysis, dataKey });
+      lastAnalyzedKey.current = dataKey;
     } catch (err) {
       console.error("[TacticalVsReal] Error:", err?.message || "Unknown error");
     } finally {
@@ -470,89 +523,152 @@ export default function TacticalVsRealComparison({ projectId, projectName, campa
   const criticalTotal = channelGaps.reduce((sum, g) => sum + g.metricGaps.filter((m) => m.status === "critical").length, 0);
 
   return (
-    <div className={`border rounded-lg overflow-hidden bg-card transition-opacity duration-500 ease-out ${ready ? "opacity-100" : "opacity-0"}`}>
-      {/* Header */}
+    <div className={`
+      relative overflow-hidden transition-all duration-700 ease-out rounded-2xl border bg-card/50 backdrop-blur-md
+      ${ready ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}
+    `}>
+      {/* Main Header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-3 sm:p-4 hover:bg-accent/50 transition-colors text-left"
+        className="w-full p-5 flex items-center justify-between hover:bg-primary/[0.02] transition-colors text-left"
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <GitCompareArrows className="h-4.5 w-4.5 text-primary" />
+        <div className="flex items-center gap-4 min-w-0">
+          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 shadow-inner border border-primary/10">
+            <GitCompareArrows className="h-6 w-6 text-primary" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-semibold text-sm">Comparativo Tático vs Real</h3>
+              <h3 className="font-semibold text-sm text-foreground uppercase tracking-wider">
+                Comparativo Tático vs Real
+              </h3>
               {overallAdherence > 0 && (
-                <Badge className={`text-[10px] border-0 ${
-                  overallAdherence >= 70
-                    ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400"
-                    : overallAdherence >= 50
-                    ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400"
-                    : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400"
-                }`}>
-                  Aderência {overallAdherence}%
-                </Badge>
-              )}
-              {criticalTotal > 0 && (
-                <Badge className="text-[10px] bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 border-0">
-                  {criticalTotal} alerta{criticalTotal !== 1 ? "s" : ""}
+                <Badge variant="outline" className={`
+                  text-[10px] font-black px-2 py-0.5 border-none shadow-sm
+                  ${overallAdherence >= 70 ? "bg-emerald-500/10 text-emerald-600 animate-pulse" :
+                    overallAdherence >= 50 ? "bg-amber-500/10 text-amber-600" : "bg-red-500/10 text-red-600"}
+                `}>
+                  ADERÊNCIA {overallAdherence}%
                 </Badge>
               )}
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {channelsPlanned} canal(is) planejado(s)
-              <ArrowRight className="h-3 w-3 inline mx-1" />
-              {channelsExecuted} em execução
-              {channelsPlanned > 0 && channelsExecuted === 0 && " · Nenhuma campanha iniciada"}
+            <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5 mt-1">
+              <Target className="h-3.5 w-3.5 text-primary/60" />
+              {channelsPlanned} planejado(s)
+              <ArrowRight className="h-3 w-3 opacity-40" />
+              <Layers className="h-3.5 w-3.5 text-primary/60 ml-0.5" />
+              {channelsExecuted} em operação
             </p>
           </div>
         </div>
-        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ml-2 ${expanded ? "rotate-180" : ""}`} />
+        <div className={`
+          h-10 w-10 rounded-full flex items-center justify-center transition-all duration-500
+          ${expanded ? "bg-primary text-primary-foreground rotate-180 shadow-md shadow-primary/20" : "bg-muted/30 text-muted-foreground"}
+        `}>
+          <ChevronDown className="h-5 w-5" />
+        </div>
       </button>
 
-      {/* Content */}
       {expanded && (
-        <div className="border-t p-3 sm:p-4 space-y-3">
-          {/* Overview Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <div className="bg-muted/30 rounded-lg p-2.5 text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Aderência Geral</p>
-              <p className={`text-lg font-bold ${getScoreColor(overallAdherence)}`}>{overallAdherence}%</p>
+        <div className="p-5 pt-0 space-y-6 animate-in fade-in zoom-in-95 duration-500">
+          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+
+          {/* Global Stats Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="relative group p-4 rounded-2xl bg-muted/10 border border-muted/20 hover:border-primary/30 transition-all duration-300">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                  <Target className="h-4 w-4" />
+                </div>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Aderência</p>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className={`text-2xl font-bold ${getScoreColor(overallAdherence)}`}>{overallAdherence}</span>
+                <span className="text-xs font-bold text-muted-foreground/60">%</span>
+              </div>
+              <div className="w-full h-1 bg-muted/30 rounded-full mt-2 overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-1000 delay-300 ${overallAdherence >= 70 ? "bg-emerald-500" : "bg-amber-500"}`}
+                  style={{ width: `${overallAdherence}%` }}
+                />
+              </div>
             </div>
-            <div className="bg-muted/30 rounded-lg p-2.5 text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Canais Ativos</p>
-              <p className="text-lg font-bold">{channelsExecuted}/{channelsPlanned || channelsExecuted}</p>
+
+            <div className="relative group p-4 rounded-2xl bg-muted/10 border border-muted/20 hover:border-primary/30 transition-all duration-300">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                  <Layers className="h-4 w-4" />
+                </div>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Canais</p>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold text-foreground">{channelsExecuted}</span>
+                <span className="text-xs font-bold text-muted-foreground/60">/ {channelsPlanned}</span>
+              </div>
+              <p className="text-[10px] font-medium text-muted-foreground mt-2">Canais sob gestão</p>
             </div>
-            <div className="bg-muted/30 rounded-lg p-2.5 text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Campanhas</p>
-              <p className="text-lg font-bold">{gapAnalysis.totalCampaigns}</p>
-              <p className="text-[10px] text-muted-foreground">{gapAnalysis.activeCampaigns} ativa{gapAnalysis.activeCampaigns !== 1 ? "s" : ""}</p>
+
+            <div className="relative group p-4 rounded-2xl bg-muted/10 border border-muted/20 hover:border-primary/30 transition-all duration-300">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                  <MonitorUp className="h-4 w-4" />
+                </div>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Campanhas</p>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold text-foreground">{gapAnalysis.totalCampaigns}</span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-semibold text-emerald-600">{gapAnalysis.activeCampaigns} ativas</span>
+              </div>
             </div>
-            <div className="bg-muted/30 rounded-lg p-2.5 text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Alertas</p>
-              <p className={`text-lg font-bold ${criticalTotal > 0 ? "text-red-500" : "text-green-500"}`}>{criticalTotal}</p>
-              <p className="text-[10px] text-muted-foreground">métrica{criticalTotal !== 1 ? "s" : ""} crítica{criticalTotal !== 1 ? "s" : ""}</p>
+
+            <div className="relative group p-4 rounded-2xl bg-muted/10 border border-muted/20 hover:border-primary/30 transition-all duration-300">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-1.5 rounded-lg bg-red-500/10 text-red-500">
+                  <AlertTriangle className="h-4 w-4" />
+                </div>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Alertas GLOBAIS</p>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className={`text-2xl font-bold ${criticalTotal > 0 ? "text-red-500" : "text-emerald-500"}`}>{criticalTotal}</span>
+              </div>
+              <p className="text-[10px] font-medium text-muted-foreground mt-2">Desvios críticos detectados</p>
             </div>
           </div>
 
-          {/* Channel Gap Cards */}
-          <div className="space-y-2">
+          {/* Sub-header for Channels */}
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent to-border/40" />
+            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] px-2">Análise por Canal</span>
+            <div className="h-px flex-1 bg-gradient-to-l from-transparent to-border/40" />
+          </div>
+
+          {/* Channel Gap Cards - Now in an even cleaner spacing */}
+          <div className="grid grid-cols-1 gap-4">
             {channelGaps.map((cg) => (
               <ChannelGapCard key={cg.channel} channelGap={cg} />
             ))}
           </div>
 
-          {/* Info box */}
-          <div className="flex items-start gap-2 bg-muted/30 rounded-lg p-3">
-            <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-            <p className="text-[10px] text-muted-foreground leading-relaxed">
-              O comparativo cruza as métricas-alvo definidas no <strong>Plano Tático</strong> com os resultados reais das campanhas em <strong>Operações</strong>.
-              A aderência é calculada com base na correspondência estrutural (30%) e no desempenho das métricas (70%).
-            </p>
+          {/* Bottom Info Section */}
+          <div className="flex items-start gap-4 p-4 rounded-2xl bg-primary/5 border border-primary/10">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <Info className="h-5 w-5 text-primary" />
+            </div>
+            <div className="space-y-1.5">
+              <h5 className="text-xs font-semibold text-foreground tracking-normal">Como interpretamos esta análise?</h5>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Este comparativo utiliza um motor de análise de aderência (30% estrutural, 70% métricas).
+                Sinalizadores <span className="text-red-500 font-bold">(!) Alerta</span> indicam desvios críticos onde o custo por aquisição ou ROI divergem significativamente do planejado no Plano Tático.
+              </p>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
 }
+
+const MemoizedTacticalVsRealComparison = memo(TacticalVsRealComparison);
+export default MemoizedTacticalVsRealComparison;

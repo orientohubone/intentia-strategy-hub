@@ -27,6 +27,7 @@ import CampaignCalendarManager from "./components/CampaignCalendarManager";
 import PerformanceAlerts from "./components/PerformanceAlerts";
 import TacticalVsRealComparison from "./components/TacticalVsRealComparison";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { CampaignReallocateDialog, type CampaignLite } from "./components/CampaignReallocateDialog";
 import { toast } from "sonner";
 
@@ -47,6 +48,8 @@ export default function Operations() {
     setFilterChannel,
     filterProject,
     setFilterProject,
+    filterPeriod,
+    setFilterPeriod,
     showCreateForm,
     setShowCreateForm,
     editingId,
@@ -133,7 +136,12 @@ export default function Operations() {
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
 
-  // Planned budget por projeto (mês/ano atuais) vindo de budget_allocations
+  const [filterYear, filterMonth] = useMemo(() => {
+    const parts = filterPeriod.split('-');
+    return [parseInt(parts[0], 10), parseInt(parts[1], 10)];
+  }, [filterPeriod]);
+
+  // Planned budget por projeto (mês/ano) vindo de budget_allocations
   const [projectBudgets, setProjectBudgets] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -146,8 +154,8 @@ export default function Operations() {
         .from("budget_allocations")
         .select("project_id, planned_budget")
         .eq("user_id", user.id)
-        .eq("month", currentMonth)
-        .eq("year", currentYear);
+        .eq("month", filterMonth)
+        .eq("year", filterYear);
       if (error) {
         console.error("Erro ao carregar budgets do projeto:", error?.message || "Unknown error");
         return;
@@ -162,7 +170,7 @@ export default function Operations() {
     };
 
     void loadProjectBudgets();
-  }, [user?.id, currentMonth, currentYear]);
+  }, [user?.id, filterMonth, filterYear]);
 
   const toggleToolCard = (projectId: string, tool: string) => {
     const key = `${projectId}::${tool}`;
@@ -186,9 +194,9 @@ export default function Operations() {
 
   return (
     <FeatureGate featureKey="operations" withLayout={false} pageTitle="Operações">
-    <DashboardLayout>
-      <SEO title="Operações | Intentia" description="Gestão de campanhas e métricas operacionais" />
-          <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+      <DashboardLayout>
+        <SEO title="Operações | Intentia" description="Gestão de campanhas e métricas operacionais" />
+        <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
 
           <OperationsHeader
             groupedCampaigns={groupedCampaigns}
@@ -208,6 +216,8 @@ export default function Operations() {
             onFilterChannelChange={setFilterChannel}
             filterProject={filterProject}
             onFilterProjectChange={setFilterProject}
+            filterPeriod={filterPeriod}
+            onFilterPeriodChange={setFilterPeriod}
             projects={(projects || []).map((p: any) => ({ id: p.id, name: p.name }))}
           />
 
@@ -266,354 +276,411 @@ export default function Operations() {
 
                 return (
                   <div key={group.projectId} className="space-y-3">
-                  <div className="bg-card border rounded-lg overflow-hidden">
-                    {/* Group Header */}
-                    <div className="w-full flex items-center justify-between p-3 sm:p-4 hover:bg-accent/50 transition-colors text-left">
-                      <button
-                        onClick={() => toggleGroup(group.projectId)}
-                        className="flex items-center gap-3 text-left min-w-0"
-                      >
-                        <FolderOpen className="h-5 w-5 text-primary flex-shrink-0" />
-                        <div>
-                          <h3 className="font-semibold text-sm sm:text-base">{group.projectName}</h3>
-                          <p className="text-xs text-muted-foreground">
-                            {group.campaigns.length} campanha{group.campaigns.length !== 1 ? "s" : ""}
-                            {activeCount > 0 && ` · ${activeCount} ativa${activeCount !== 1 ? "s" : ""}`}
-                            {(plannedBudget ?? totalBudget) > 0 && ` · ${formatCurrency(plannedBudget ?? totalBudget)}`}
-                          </p>
-                        </div>
-                      </button>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 gap-1.5 text-xs"
-                          onClick={() => navigate(`/operations/live-dashboard?projectId=${group.projectId}`)}
-                        >
-                          <MonitorUp className="h-3.5 w-3.5" />
-                          Dashboard
-                        </Button>
+                    <div className="bg-card border rounded-lg overflow-hidden">
+                      {/* Group Header */}
+                      <div className="w-full flex items-center justify-between p-3 sm:p-4 hover:bg-accent/50 transition-colors text-left">
                         <button
                           onClick={() => toggleGroup(group.projectId)}
-                          className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-accent"
-                          aria-label={isExpanded ? "Recolher projeto" : "Expandir projeto"}
+                          className="flex items-center gap-3 text-left min-w-0"
                         >
-                          <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                          <FolderOpen className="h-5 w-5 text-primary flex-shrink-0" />
+                          <div>
+                            <h3 className="font-semibold text-sm sm:text-base">{group.projectName}</h3>
+                            <p className="text-xs text-muted-foreground">
+                              {group.campaigns.length} campanha{group.campaigns.length !== 1 ? "s" : ""}
+                              {activeCount > 0 && ` · ${activeCount} ativa${activeCount !== 1 ? "s" : ""}`}
+                              {(plannedBudget ?? totalBudget) > 0 && ` · ${formatCurrency(plannedBudget ?? totalBudget)}`}
+                            </p>
+                          </div>
                         </button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 gap-1.5 text-xs"
+                            onClick={() => navigate(`/operations/live-dashboard?projectId=${group.projectId}`)}
+                          >
+                            <MonitorUp className="h-3.5 w-3.5" />
+                            Dashboard
+                          </Button>
+                          <button
+                            onClick={() => toggleGroup(group.projectId)}
+                            className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-accent"
+                            aria-label={isExpanded ? "Recolher projeto" : "Expandir projeto"}
+                          >
+                            <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                          </button>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Group Content — sub-grouped by channel */}
-                    {isExpanded && (() => {
-                      const channelOrder: CampaignChannel[] = ["google", "meta", "linkedin", "tiktok"];
-                      const byChannel = channelOrder
-                        .map((ch) => ({
-                          channel: ch,
-                          items: group.campaigns.filter((c) => c.channel === ch),
-                        }))
-                        .filter((g) => g.items.length > 0);
+                      {/* Group Content — sub-grouped by channel */}
+                      {isExpanded && (() => {
+                        const channelOrder: CampaignChannel[] = ["google", "meta", "linkedin", "tiktok"];
+                        const byChannel = channelOrder
+                          .map((ch) => ({
+                            channel: ch,
+                            items: group.campaigns.filter((c) => c.channel === ch),
+                          }))
+                          .filter((g) => g.items.length > 0);
 
-                      return (
-                        <div className="border-t">
-                          {byChannel.map(({ channel, items }) => (
-                            <div key={channel}>
-                              {/* Channel sub-header — clickable */}
-                              <button
-                                onClick={() => toggleChannel(`${group.projectId}::${channel}`)}
-                                className="flex items-center gap-2 px-4 py-2 bg-muted/40 border-b w-full text-left hover:bg-muted/60 transition-colors"
-                              >
-                                <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${
-                                  isChannelExpanded(group.projectId, channel) ? "rotate-180" : ""
-                                }`} />
-                                <img
-                                  src={`/${channel === "google" ? "google-ads" : channel === "meta" ? "meta-ads" : channel === "linkedin" ? "linkedin-ads" : "tiktok-ads"}.svg`}
-                                  alt={CHANNEL_LABELS[channel]}
-                                  className="h-4 w-4 object-contain"
-                                />
-                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                  {CHANNEL_LABELS[channel]}
-                                </span>
-                                <span className="text-[10px] text-muted-foreground">
-                                  ({items.length})
-                                </span>
-                              </button>
+                        return (
+                          <div className="border-t p-4 bg-muted/10 dark:bg-slate-950/20">
+                            <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
+                              {byChannel.map(({ channel, items }) => {
+                                const channelBudget = items.reduce((sum, c) => sum + (c.budget_total || 0), 0);
+                                const channelSpent = items.reduce((sum, c) => sum + (c.budget_spent || 0), 0);
+                                const channelPacing = channelBudget > 0 ? Math.round((channelSpent / channelBudget) * 100) : 0;
+                                const isExpanded = isChannelExpanded(group.projectId, channel);
 
-                              {/* Campaigns for this channel */}
-                              {isChannelExpanded(group.projectId, channel) && (
-                              <div className="divide-y">
-                                {items.map((campaign) => {
-                                  const currentEditingMetricId =
-                                    metricsFormCampaignId === campaign.id ? editingMetricId : null;
-
-                                  const handleReallocate = (sourceCampaign: any, remainingBudget: number) => {
-                                    const targets: CampaignLite[] = items
-                                      .filter(
-                                        (c) =>
-                                          c.id !== sourceCampaign.id &&
-                                          c.status === "active" &&
-                                          c.budget_total > 0 &&
-                                          (c.budget_spent / c.budget_total) * 100 >= 100
-                                      )
-                                      .map((c) => ({
-                                        id: c.id,
-                                        name: c.name,
-                                        channel: c.channel,
-                                        project_id: c.project_id,
-                                        budget_total: c.budget_total,
-                                        budget_spent: c.budget_spent,
-                                      }));
-
-                                    setReallocModal({
-                                      open: true,
-                                      source: {
-                                        id: sourceCampaign.id,
-                                        name: sourceCampaign.name,
-                                        channel: sourceCampaign.channel,
-                                        project_id: sourceCampaign.project_id,
-                                        budget_total: sourceCampaign.budget_total,
-                                        budget_spent: sourceCampaign.budget_spent,
-                                      },
-                                      targets,
-                                      amount: remainingBudget.toFixed(2),
-                                      targetId: targets.length > 0 ? targets[0]?.id : "",
-                                    });
-                                  };
-                                  return (
-                                  <div key={campaign.id}>
-                                    <CampaignRow
-                                      campaign={campaign}
-                                      isExpanded={expandedCampaigns.has(campaign.id)}
-                                      hasAiResult={!!aiResults[campaign.id]}
-                                      onStatusChange={handleStatusChange}
-                                      onToggleExpand={toggleCampaignExpand}
-                                      onShowAiDialog={setAiDialogCampaignId}
-                                      onEdit={handleEdit}
-                                      onDelete={handleDelete}
-                                      onReallocate={handleReallocate}
-                                      highlight={highlightMap[campaign.id] ? { type: highlightMap[campaign.id] } : null}
+                                return (
+                                  <div
+                                    key={channel}
+                                    className={`
+                                      flex flex-col rounded-xl border transition-all duration-300
+                                      ${isExpanded ? "bg-card shadow-sm border-primary/20" : "bg-card/40 hover:bg-card/60"}
+                                    `}
+                                  >
+                                    {/* Channel Header Card */}
+                                    <button
+                                      onClick={() => toggleChannel(`${group.projectId}::${channel}`)}
+                                      className="flex items-center justify-between p-4 w-full text-left"
                                     >
-                                      {expandedCampaigns.has(campaign.id) && (
-                                        <CampaignExpandedMetrics
-                                          campaign={campaign}
-                                          summary={metricsSummaries[campaign.id]}
-                                          metricsEntries={campaignMetricsEntries[campaign.id] || []}
-                                          metricsLoading={metricsEntriesLoading[campaign.id] || false}
-                                          metricsFormCampaignId={metricsFormCampaignId === campaign.id ? campaign.id : null}
-                                          metricsFormDraft={metricsFormDrafts[campaign.id]}
-                                          editingMetricId={currentEditingMetricId}
-                                          canAiKeys={canAiKeys}
-                                          canAiPerformance={canAiPerformance}
-                                          hasAiKeys={hasAiKeys}
-                                          availableAiModels={availableAiModels}
-                                          selectedAiModel={selectedAiModel}
-                                          onSelectedAiModelChange={setSelectedAiModel}
-                                          aiAnalyzing={aiAnalyzing}
-                                          hasAiResult={!!aiResults[campaign.id]}
-                                          onAiAnalysis={handleAiPerformanceAnalysis}
-                                          onShowAiDialog={setAiDialogCampaignId}
-                                          onMetricsSubmit={(data) => handleMetricsSubmit(campaign.id, data, onReload)}
-                                          onMetricsUpdate={(metricId, data) => handleMetricsUpdate(campaign.id, metricId, data, onReload)}
-                                          onMetricsEdit={(metric) => handleMetricsEdit(campaign.id, metric)}
-                                          onMetricsDelete={(metricId) => handleMetricsDelete(campaign.id, metricId, onReload)}
-                                          onMetricsCancel={() => cancelMetricsForm(campaign.id)}
-                                          onMetricsFormDraftChange={(data) => setMetricsFormDrafts((prev) => ({ ...prev, [campaign.id]: data }))}
-                                          onOpenNewMetricsForm={() => openNewMetricsForm(campaign.id)}
-                                        />
-                                      )}
-                                    </CampaignRow>
-                                    
-                                    {/* Performance Analysis Card - shown when analyzing this campaign */}
-                                    {aiAnalyzing === campaign.id && (
-                                      <PerformanceAnalysisCard
-                                        campaignName={campaign.name}
-                                        channel={CHANNEL_LABELS[campaign.channel] || campaign.channel}
-                                        model={selectedAiModel.split("::")[1] || "IA"}
-                                        onComplete={() => setAiAnalyzing(null)}
-                                        onCancel={() => setAiAnalyzing(null)}
-                                      />
+                                      <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-lg bg-white shadow-sm border ${channel === "google" ? "border-blue-100" :
+                                          channel === "meta" ? "border-blue-50" :
+                                            channel === "linkedin" ? "border-blue-200" : "border-slate-200"
+                                          }`}>
+                                          <img
+                                            src={`/${channel === "google" ? "google-ads" : channel === "meta" ? "meta-ads" : channel === "linkedin" ? "linkedin-ads" : "tiktok-ads"}.svg`}
+                                            alt={CHANNEL_LABELS[channel]}
+                                            className="h-5 w-5 object-contain"
+                                          />
+                                        </div>
+                                        <div>
+                                          <div className="flex items-center gap-2">
+                                            <h4 className="text-sm font-bold uppercase tracking-tight text-foreground">
+                                              {CHANNEL_LABELS[channel]}
+                                            </h4>
+                                            <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                                              {items.length}
+                                            </Badge>
+                                          </div>
+                                          <p className="text-[10px] text-muted-foreground font-medium">
+                                            {formatCurrency(channelSpent)} investidos
+                                          </p>
+                                        </div>
+                                      </div>
+
+                                      <div className="flex items-center gap-4">
+                                        {channelBudget > 0 && (
+                                          <div className="hidden sm:flex flex-col items-end gap-1">
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Pacing</span>
+                                              <span className={`text-xs font-bold ${channelPacing >= 90 ? "text-red-500" : channelPacing >= 70 ? "text-amber-500" : "text-emerald-500"
+                                                }`}>
+                                                {channelPacing}%
+                                              </span>
+                                            </div>
+                                            <div className="w-24 h-1 bg-muted rounded-full overflow-hidden">
+                                              <div
+                                                className={`h-full rounded-full ${channelPacing >= 90 ? "bg-red-500" : channelPacing >= 70 ? "bg-amber-500" : "bg-emerald-500"
+                                                  }`}
+                                                style={{ width: `${Math.min(channelPacing, 100)}%` }}
+                                              />
+                                            </div>
+                                          </div>
+                                        )}
+                                        <div className={`
+                                          h-8 w-8 rounded-full border flex items-center justify-center transition-transform
+                                          ${isExpanded ? "rotate-180 bg-primary/5 border-primary/20 text-primary" : "text-muted-foreground bg-muted/20 border-transparent"}
+                                        `}>
+                                          <ChevronDown className="h-4 w-4" />
+                                        </div>
+                                      </div>
+                                    </button>
+
+                                    {/* Campaigns Grid within Channel Card */}
+                                    {isExpanded && (
+                                      <div className="p-4 pt-0 border-t bg-muted/5">
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                                          {items.map((campaign) => {
+                                            const currentEditingMetricId =
+                                              metricsFormCampaignId === campaign.id ? editingMetricId : null;
+                                            const isCampaignExpanded = expandedCampaigns.has(campaign.id);
+
+                                            const handleReallocate = (sourceCampaign: any, remainingBudget: number) => {
+                                              const targets: CampaignLite[] = items
+                                                .filter(
+                                                  (c) =>
+                                                    c.id !== sourceCampaign.id &&
+                                                    c.status === "active" &&
+                                                    c.budget_total > 0 &&
+                                                    (c.budget_spent / c.budget_total) * 100 >= 100
+                                                )
+                                                .map((c) => ({
+                                                  id: c.id,
+                                                  name: c.name,
+                                                  channel: c.channel,
+                                                  project_id: c.project_id,
+                                                  budget_total: c.budget_total,
+                                                  budget_spent: c.budget_spent,
+                                                }));
+
+                                              setReallocModal({
+                                                open: true,
+                                                source: {
+                                                  id: sourceCampaign.id,
+                                                  name: sourceCampaign.name,
+                                                  channel: sourceCampaign.channel,
+                                                  project_id: sourceCampaign.project_id,
+                                                  budget_total: sourceCampaign.budget_total,
+                                                  budget_spent: sourceCampaign.budget_spent,
+                                                },
+                                                targets,
+                                                amount: remainingBudget.toFixed(2),
+                                                targetId: targets.length > 0 ? targets[0]?.id : "",
+                                              });
+                                            };
+
+                                            return (
+                                              <div key={campaign.id} className={isCampaignExpanded ? "lg:col-span-2 transition-all" : "transition-all"}>
+                                                <CampaignRow
+                                                  campaign={campaign}
+                                                  isExpanded={isCampaignExpanded}
+                                                  hasAiResult={!!aiResults[campaign.id]}
+                                                  onStatusChange={handleStatusChange}
+                                                  onToggleExpand={toggleCampaignExpand}
+                                                  onShowAiDialog={setAiDialogCampaignId}
+                                                  onEdit={handleEdit}
+                                                  onDelete={handleDelete}
+                                                  onReallocate={handleReallocate}
+                                                  highlight={highlightMap[campaign.id] ? { type: highlightMap[campaign.id] } : null}
+                                                >
+                                                  {isCampaignExpanded && (
+                                                    <CampaignExpandedMetrics
+                                                      campaign={campaign}
+                                                      summary={metricsSummaries[campaign.id]}
+                                                      metricsEntries={campaignMetricsEntries[campaign.id] || []}
+                                                      metricsLoading={metricsEntriesLoading[campaign.id] || false}
+                                                      metricsFormCampaignId={metricsFormCampaignId === campaign.id ? campaign.id : null}
+                                                      metricsFormDraft={metricsFormDrafts[campaign.id]}
+                                                      editingMetricId={currentEditingMetricId}
+                                                      canAiKeys={canAiKeys}
+                                                      canAiPerformance={canAiPerformance}
+                                                      hasAiKeys={hasAiKeys}
+                                                      availableAiModels={availableAiModels}
+                                                      selectedAiModel={selectedAiModel}
+                                                      onSelectedAiModelChange={setSelectedAiModel}
+                                                      aiAnalyzing={aiAnalyzing}
+                                                      hasAiResult={!!aiResults[campaign.id]}
+                                                      onAiAnalysis={handleAiPerformanceAnalysis}
+                                                      onShowAiDialog={setAiDialogCampaignId}
+                                                      onMetricsSubmit={(data) => handleMetricsSubmit(campaign.id, data, onReload)}
+                                                      onMetricsUpdate={(metricId, data) => handleMetricsUpdate(campaign.id, metricId, data, onReload)}
+                                                      onMetricsEdit={(metric) => handleMetricsEdit(campaign.id, metric)}
+                                                      onMetricsDelete={(metricId) => handleMetricsDelete(campaign.id, metricId, onReload)}
+                                                      onMetricsCancel={() => cancelMetricsForm(campaign.id)}
+                                                      onMetricsFormDraftChange={(data) => setMetricsFormDrafts((prev) => ({ ...prev, [campaign.id]: data }))}
+                                                      onOpenNewMetricsForm={() => openNewMetricsForm(campaign.id)}
+                                                    />
+                                                  )}
+                                                </CampaignRow>
+
+                                                {aiAnalyzing === campaign.id && (
+                                                  <div className="mt-4">
+                                                    <PerformanceAnalysisCard
+                                                      campaignName={campaign.name}
+                                                      channel={CHANNEL_LABELS[campaign.channel] || campaign.channel}
+                                                      model={selectedAiModel.split("::")[1] || "IA"}
+                                                      onComplete={() => setAiAnalyzing(null)}
+                                                      onCancel={() => setAiAnalyzing(null)}
+                                                    />
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
                                     )}
                                   </div>
-                                )})}
-                              </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                    </div>
+
+                    {/* Tools Cards — visual cards grid + accordion */}
+                    {isExpanded && (() => {
+                      const tools = [
+                        ...(user ? [{
+                          key: "budget",
+                          icon: DollarSign,
+                          iconColor: "text-emerald-500",
+                          iconBg: "bg-emerald-500/10",
+                          title: "Gestão de Budget",
+                          description: "Alocação mensal por canal, pacing e projeções de gasto",
+                        }] : []),
+                        ...(user ? [{
+                          key: "calendar",
+                          icon: CalendarDays,
+                          iconColor: "text-blue-500",
+                          iconBg: "bg-blue-500/10",
+                          title: "Calendário de Campanhas",
+                          description: "Visualize cronogramas em calendário ou timeline",
+                        }] : []),
+                        ...(group.campaigns.length > 0 ? [{
+                          key: "alerts",
+                          icon: AlertTriangle,
+                          iconColor: "text-amber-500",
+                          iconBg: "bg-amber-500/10",
+                          title: "Alertas de Performance",
+                          description: "Avisos automáticos sobre métricas fora do esperado",
+                        }] : []),
+                        ...(group.campaigns.length > 0 ? [{
+                          key: "tactical",
+                          icon: GitCompareArrows,
+                          iconColor: "text-purple-500",
+                          iconBg: "bg-purple-500/10",
+                          title: "Comparativo Tático vs Real",
+                          description: "Aderência entre planejamento tático e execução real",
+                        }] : []),
+                      ];
+
+                      const activeKey = tools.find((t) => isToolOpen(group.projectId, t.key))?.key || null;
+
+                      return (
+                        <div className="space-y-3">
+                          {/* Cards grid */}
+                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                            {tools.map((tool) => {
+                              const Icon = tool.icon;
+                              const isActive = isToolOpen(group.projectId, tool.key);
+                              return (
+                                <button
+                                  key={tool.key}
+                                  onClick={() => toggleToolCard(group.projectId, tool.key)}
+                                  className={`border rounded-lg p-4 sm:p-5 text-left transition-all hover:shadow-md group ${isActive
+                                    ? "bg-card border-primary/40 ring-1 ring-primary/20 shadow-sm"
+                                    : "bg-card border-border hover:border-primary/30"
+                                    }`}
+                                >
+                                  <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg ${tool.iconBg} flex items-center justify-center mb-3`}>
+                                    {Icon ? (
+                                      <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${tool.iconColor}`} />
+                                    ) : (
+                                      <Megaphone className={`h-4 w-4 sm:h-5 sm:w-5 ${tool.iconColor}`} />
+                                    )}
+                                  </div>
+                                  <h4 className={`text-sm font-semibold mb-1 transition-colors ${isActive ? "text-primary" : "text-foreground group-hover:text-primary"
+                                    }`}>
+                                    {tool.title}
+                                  </h4>
+                                  <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                                    {tool.description}
+                                  </p>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* Expanded tool content */}
+                          {user && (
+                            <div className="space-y-3">
+                              {/* Budget Management */}
+                              {activeKey === "budget" && BudgetManagement && (
+                                <div className="bg-card border border-primary/20 rounded-lg p-4 sm:p-5 animate-in fade-in slide-in-from-top-2 duration-200">
+                                  <BudgetManagement
+                                    userId={user.id}
+                                    projectId={group.projectId}
+                                    projectName={group.projectName}
+                                    campaigns={group.campaigns}
+                                    onSync={() => {
+                                      loadStats();
+                                      loadCampaigns();
+                                    }}
+                                  />
+                                </div>
+                              )}
+
+                              {/* Calendar */}
+                              {activeKey === "calendar" && CampaignCalendarManager && (
+                                <div className="bg-card border border-primary/20 rounded-lg p-4 sm:p-5 animate-in fade-in slide-in-from-top-2 duration-200">
+                                  <CampaignCalendarManager
+                                    userId={user.id}
+                                    projectId={group.projectId}
+                                    projectName={group.projectName}
+                                  />
+                                </div>
+                              )}
+
+                              {/* Alerts */}
+                              {activeKey === "alerts" && PerformanceAlerts && (
+                                <div className="bg-card border border-primary/20 rounded-lg p-4 sm:p-5 animate-in fade-in slide-in-from-top-2 duration-200">
+                                  <PerformanceAlerts
+                                    campaigns={group.campaigns}
+                                    metricsSummaries={metricsSummaries as unknown as Record<string, Record<string, number | null>>}
+                                  />
+                                </div>
+                              )}
+
+                              {/* TacticalVsReal - Keep alive to avoid losing state and re-loading */}
+                              {TacticalVsRealComparison && (
+                                <div className={`${activeKey === "tactical" ? "block" : "hidden"} bg-card border border-primary/20 rounded-lg p-4 sm:p-5 animate-in fade-in slide-in-from-top-2 duration-200`}>
+                                  <TacticalVsRealComparison
+                                    projectId={group.projectId}
+                                    projectName={group.projectName}
+                                    campaigns={group.campaigns}
+                                    metricsSummaries={metricsSummaries as unknown as Record<string, Record<string, number | null>>}
+                                  />
+                                </div>
                               )}
                             </div>
-                          ))}
+                          )}
                         </div>
                       );
                     })()}
-
                   </div>
-
-                  {/* Tools Cards — visual cards grid + accordion */}
-                  {isExpanded && (() => {
-                    const tools = [
-                      ...(user ? [{
-                        key: "budget",
-                        icon: DollarSign,
-                        iconColor: "text-emerald-500",
-                        iconBg: "bg-emerald-500/10",
-                        title: "Gestão de Budget",
-                        description: "Alocação mensal por canal, pacing e projeções de gasto",
-                      }] : []),
-                      ...(user ? [{
-                        key: "calendar",
-                        icon: CalendarDays,
-                        iconColor: "text-blue-500",
-                        iconBg: "bg-blue-500/10",
-                        title: "Calendário de Campanhas",
-                        description: "Visualize cronogramas em calendário ou timeline",
-                      }] : []),
-                      ...(group.campaigns.length > 0 ? [{
-                        key: "alerts",
-                        icon: AlertTriangle,
-                        iconColor: "text-amber-500",
-                        iconBg: "bg-amber-500/10",
-                        title: "Alertas de Performance",
-                        description: "Avisos automáticos sobre métricas fora do esperado",
-                      }] : []),
-                      ...(group.campaigns.length > 0 ? [{
-                        key: "tactical",
-                        icon: GitCompareArrows,
-                        iconColor: "text-purple-500",
-                        iconBg: "bg-purple-500/10",
-                        title: "Comparativo Tático vs Real",
-                        description: "Aderência entre planejamento tático e execução real",
-                      }] : []),
-                    ];
-
-                    const activeKey = tools.find((t) => isToolOpen(group.projectId, t.key))?.key || null;
-
-                    return (
-                      <div className="space-y-3">
-                        {/* Cards grid */}
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                          {tools.map((tool) => {
-                            const Icon = tool.icon;
-                            const isActive = isToolOpen(group.projectId, tool.key);
-                            return (
-                              <button
-                                key={tool.key}
-                                onClick={() => toggleToolCard(group.projectId, tool.key)}
-                                className={`border rounded-lg p-4 sm:p-5 text-left transition-all hover:shadow-md group ${
-                                  isActive
-                                    ? "bg-card border-primary/40 ring-1 ring-primary/20 shadow-sm"
-                                    : "bg-card border-border hover:border-primary/30"
-                                }`}
-                              >
-                                <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg ${tool.iconBg} flex items-center justify-center mb-3`}>
-                                  <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${tool.iconColor}`} />
-                                </div>
-                                <h4 className={`text-sm font-semibold mb-1 transition-colors ${
-                                  isActive ? "text-primary" : "text-foreground group-hover:text-primary"
-                                }`}>
-                                  {tool.title}
-                                </h4>
-                                <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                                  {tool.description}
-                                </p>
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {/* Expanded tool content */}
-                        {activeKey === "budget" && user && (
-                          <div className="bg-card border border-primary/20 rounded-lg p-4 sm:p-5 animate-in fade-in slide-in-from-top-2 duration-200">
-                            <BudgetManagement
-                              userId={user.id}
-                              projectId={group.projectId}
-                              projectName={group.projectName}
-                              campaigns={group.campaigns}
-                              onSync={() => { loadStats(); loadCampaigns(); }}
-                            />
-                          </div>
-                        )}
-
-                        {activeKey === "calendar" && user && (
-                          <div className="bg-card border border-primary/20 rounded-lg p-4 sm:p-5 animate-in fade-in slide-in-from-top-2 duration-200">
-                            <CampaignCalendarManager
-                              userId={user.id}
-                              projectId={group.projectId}
-                              projectName={group.projectName}
-                            />
-                          </div>
-                        )}
-
-                        {activeKey === "alerts" && (
-                          <div className="bg-card border border-primary/20 rounded-lg p-4 sm:p-5 animate-in fade-in slide-in-from-top-2 duration-200">
-                            <PerformanceAlerts
-                              campaigns={group.campaigns.map((c) => ({
-                                id: c.id,
-                                name: c.name,
-                                channel: c.channel,
-                                status: c.status,
-                                budget_total: c.budget_total,
-                                budget_spent: c.budget_spent,
-                                start_date: c.start_date,
-                                end_date: c.end_date,
-                              }))}
-                              metricsSummaries={metricsSummaries as unknown as Record<string, Record<string, number | null>>}
-                            />
-                          </div>
-                        )}
-
-                        {activeKey === "tactical" && (
-                          <div className="bg-card border border-primary/20 rounded-lg p-4 sm:p-5 animate-in fade-in slide-in-from-top-2 duration-200">
-                            <TacticalVsRealComparison
-                              projectId={group.projectId}
-                              projectName={group.projectName}
-                              campaigns={group.campaigns.map((c) => ({
-                                id: c.id,
-                                name: c.name,
-                                channel: c.channel,
-                                status: c.status,
-                                objective: c.objective,
-                              }))}
-                              metricsSummaries={metricsSummaries as unknown as Record<string, Record<string, number | null>>}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
                 );
               })}
             </div>
           )}
-          </div>
+        </div>
 
-      {/* AI Performance Analysis Dialog */}
-      {aiDialogCampaignId && aiResults[aiDialogCampaignId] && (
-        <CampaignPerformanceAiDialog
-          open={!!aiDialogCampaignId}
-          onOpenChange={(open) => { if (!open) setAiDialogCampaignId(null); }}
-          analysis={aiResults[aiDialogCampaignId]}
-          campaignName={campaigns.find((c) => c.id === aiDialogCampaignId)?.name || ""}
-          channel={CHANNEL_LABELS[campaigns.find((c) => c.id === aiDialogCampaignId)?.channel || "google"] || ""}
+        {/* AI Performance Analysis Dialog */}
+        {aiDialogCampaignId && aiResults[aiDialogCampaignId] && (
+          <CampaignPerformanceAiDialog
+            open={!!aiDialogCampaignId}
+            onOpenChange={(open) => { if (!open) setAiDialogCampaignId(null); }}
+            analysis={aiResults[aiDialogCampaignId]}
+            campaignName={campaigns.find((c) => c.id === aiDialogCampaignId)?.name || ""}
+            channel={CHANNEL_LABELS[campaigns.find((c) => c.id === aiDialogCampaignId)?.channel || "google"] || ""}
+          />
+        )}
+
+        <CampaignReallocateDialog
+          userId={user?.id}
+          open={reallocModal.open}
+          source={reallocModal.source}
+          targets={reallocModal.targets}
+          amount={reallocModal.amount}
+          targetId={reallocModal.targetId}
+          month={currentMonth}
+          year={currentYear}
+          onChange={(patch) => setReallocModal((prev) => ({ ...prev, ...patch }))}
+          onClose={() => setReallocModal({ open: false, source: null, targets: [], amount: "", targetId: "" })}
+          onSuccess={(sourceId, targetId) => {
+            setHighlightMap({ [sourceId]: "source", [targetId]: "target" });
+            setTimeout(() => setHighlightMap({}), 4000);
+            loadCampaigns();
+            loadStats();
+          }}
         />
-      )}
 
-      <CampaignReallocateDialog
-        userId={user?.id}
-        open={reallocModal.open}
-        source={reallocModal.source}
-        targets={reallocModal.targets}
-        amount={reallocModal.amount}
-        targetId={reallocModal.targetId}
-        month={currentMonth}
-        year={currentYear}
-        onChange={(patch) => setReallocModal((prev) => ({ ...prev, ...patch }))}
-        onClose={() => setReallocModal({ open: false, source: null, targets: [], amount: "", targetId: "" })}
-        onSuccess={(sourceId, targetId) => {
-          setHighlightMap({ [sourceId]: "source", [targetId]: "target" });
-          setTimeout(() => setHighlightMap({}), 4000);
-          loadCampaigns();
-          loadStats();
-        }}
-      />
-
-    </DashboardLayout>
+      </DashboardLayout>
     </FeatureGate>
   );
 }

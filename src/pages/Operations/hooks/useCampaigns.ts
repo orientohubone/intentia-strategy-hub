@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenantData } from "@/hooks/useTenantData";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +33,21 @@ export function useCampaigns() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterChannel, setFilterChannel] = useState<string>("all");
   const [filterProject, setFilterProject] = useState<string>("all");
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const filterPeriod = searchParams.get("period") || (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  })();
+
+  const setFilterPeriod = (val: string) => {
+    setSearchParams((prev) => {
+      prev.set("period", val);
+      return prev;
+    });
+  };
+
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -45,21 +61,9 @@ export function useCampaigns() {
       return;
     }
 
-    const cached = campaignsCache.get(userId);
-    if (cached) {
-      setCampaigns(cached.campaigns);
-      setStats(cached.stats);
-      setLoading(false);
-      if (Date.now() - cached.fetchedAt >= CACHE_TTL_MS) {
-        void loadCampaigns({ silent: true });
-        void loadStats({ silent: true });
-      }
-      return;
-    }
-
     void loadCampaigns();
     void loadStats();
-  }, [userId]);
+  }, [userId, filterPeriod]);
 
   const updateCache = (nextCampaigns: Campaign[], nextStats: OperationalStats | null) => {
     if (!userId) return;
@@ -101,9 +105,9 @@ export function useCampaigns() {
   const loadStats = async (options?: { silent?: boolean }) => {
     if (!userId) return;
     try {
-      const now = new Date();
-      const currentMonth = now.getMonth() + 1;
-      const currentYear = now.getFullYear();
+      const parts = filterPeriod.split('-');
+      const filterYear = parseInt(parts[0], 10);
+      const filterMonth = parseInt(parts[1], 10);
 
       // Base counts from view
       const { data: viewStats, error: viewError } = await (supabase as any)
@@ -118,8 +122,8 @@ export function useCampaigns() {
         .from("v_budget_stats_monthly")
         .select("total_planned, total_spent")
         .eq("user_id", userId)
-        .eq("month", currentMonth)
-        .eq("year", currentYear)
+        .eq("month", filterMonth)
+        .eq("year", filterYear)
         .single();
       if (budgetError && budgetError.code !== "PGRST116") throw budgetError;
 
@@ -279,6 +283,14 @@ export function useCampaigns() {
   };
 
   const filteredCampaigns = useMemo(() => {
+    const parts = filterPeriod.split('-');
+    const fYear = parseInt(parts[0], 10);
+    const fMonth = parseInt(parts[1], 10);
+
+    // Create first and last day of selected month for intersection
+    const monthStart = new Date(fYear, fMonth - 1, 1);
+    const monthEnd = new Date(fYear, fMonth, 0);
+
     return campaigns.filter((c) => {
       const matchesSearch =
         !searchTerm ||
@@ -287,9 +299,19 @@ export function useCampaigns() {
       const matchesStatus = filterStatus === "all" || c.status === filterStatus;
       const matchesChannel = filterChannel === "all" || c.channel === filterChannel;
       const matchesProject = filterProject === "all" || c.project_id === filterProject;
-      return matchesSearch && matchesStatus && matchesChannel && matchesProject;
+
+      // Time filter: overlap with selected month
+      // If campaign has no dates, assume it's always visible for now
+      if (!c.start_date) return matchesSearch && matchesStatus && matchesChannel && matchesProject;
+
+      const cStart = new Date(c.start_date + "T00:00:00");
+      const cEnd = c.end_date ? new Date(c.end_date + "T23:59:59") : new Date(2100, 0, 1);
+
+      const overlaps = cStart <= monthEnd && cEnd >= monthStart;
+
+      return matchesSearch && matchesStatus && matchesChannel && matchesProject && overlaps;
     });
-  }, [campaigns, searchTerm, filterStatus, filterChannel, filterProject]);
+  }, [campaigns, searchTerm, filterStatus, filterChannel, filterProject, filterPeriod]);
 
   const groupedCampaigns = useMemo<CampaignGroup[]>(() => {
     const groups: Record<string, CampaignGroup> = {};
@@ -326,6 +348,8 @@ export function useCampaigns() {
     setFilterChannel,
     filterProject,
     setFilterProject,
+    filterPeriod,
+    setFilterPeriod,
     showCreateForm,
     setShowCreateForm,
     editingId,

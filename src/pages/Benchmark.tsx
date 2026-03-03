@@ -193,13 +193,13 @@ export default function Benchmark() {
 
   const filteredAndSortedBenchmarks = benchmarks
     .filter(benchmark => {
-      const matchesSearch = 
+      const matchesSearch =
         benchmark.competitor_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         benchmark.competitor_url.toLowerCase().includes(searchTerm.toLowerCase()) ||
         benchmark.competitor_niche.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       const matchesProject = filterProject === "all" || benchmark.project_id === filterProject;
-      
+
       return matchesSearch && matchesProject;
     })
     .sort((a, b) => {
@@ -350,272 +350,288 @@ export default function Benchmark() {
   if (loading) {
     return (
       <FeatureGate featureKey="benchmark_swot" withLayout={false} pageTitle="Benchmark Competitivo">
-      <DashboardLayout>
-        <SEO title="Benchmark" noindex />
-            <div className="max-w-6xl mx-auto">
-              <div className="animate-pulse space-y-4">
-                <div className="h-8 bg-muted rounded w-1/3"></div>
-                <div className="h-4 bg-muted rounded w-2/3"></div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="h-24 bg-muted rounded-lg"></div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {[1, 2].map(i => (
-                    <div key={i} className="h-48 bg-muted rounded-lg"></div>
-                  ))}
-                </div>
-              </div>
+        <DashboardLayout>
+          <SEO title="Benchmark" noindex />
+          <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+            <div className="animate-pulse space-y-1.5">
+              <div className="h-6 bg-muted rounded w-48" />
+              <div className="h-3 bg-muted rounded w-72" />
             </div>
-      </DashboardLayout>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="rounded-xl border border-border bg-card p-3 sm:p-4 animate-pulse">
+                  <div className="flex items-center gap-2">
+                    <div className="h-9 w-9 bg-muted rounded-lg" />
+                    <div className="space-y-1.5 flex-1">
+                      <div className="h-3 w-16 bg-muted rounded" />
+                      <div className="h-5 w-10 bg-muted rounded" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="rounded-xl border border-border bg-card p-4 sm:p-5 animate-pulse">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 bg-muted rounded-lg" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-4 w-36 bg-muted rounded" />
+                      <div className="h-3 w-48 bg-muted rounded" />
+                    </div>
+                    <div className="h-4 w-4 bg-muted rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </DashboardLayout>
       </FeatureGate>
     );
   }
 
   return (
     <FeatureGate featureKey="benchmark_swot" withLayout={false} pageTitle="Benchmark Competitivo">
-    <DashboardLayout>
-      <SEO title="Benchmark" noindex />
-          <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-foreground">Benchmark Competitivo</h1>
-                <p className="text-muted-foreground text-xs sm:text-sm mt-1">
-                  Análise comparativa com concorrentes — gerada automaticamente a partir das URLs cadastradas nos projetos.
-                </p>
-                {isStarter && benchmarkLimit !== null && (
-                  <div className="flex items-center gap-1.5 mt-1.5">
-                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${
-                      benchmarks.length >= benchmarkLimit
-                        ? "bg-red-500/10 text-red-500 border-red-500/30"
-                        : "bg-amber-500/10 text-amber-500 border-amber-500/30"
+      <DashboardLayout>
+        <SEO title="Benchmark" noindex />
+        <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Benchmark Competitivo</h1>
+              <p className="text-muted-foreground text-xs sm:text-sm mt-1">
+                Análise comparativa com concorrentes — gerada automaticamente a partir das URLs cadastradas nos projetos.
+              </p>
+              {isStarter && benchmarkLimit !== null && (
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${benchmarks.length >= benchmarkLimit
+                    ? "bg-red-500/10 text-red-500 border-red-500/30"
+                    : "bg-amber-500/10 text-amber-500 border-amber-500/30"
                     }`}>
-                      {benchmarks.length >= benchmarkLimit
-                        ? `Esgotado (${benchmarks.length}/${benchmarkLimit})`
-                        : `${benchmarks.length}/${benchmarkLimit} benchmarks`
-                      } — Starter
-                    </Badge>
-                  </div>
-                )}
-              </div>
-              {benchmarks.length > 0 && (
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-1"
-                    title="Expandir todos"
-                    onClick={() => setExpandedGroups(new Set(groupedByProject.map(g => g.projectId)))}
-                  >
-                    <ChevronsUpDown className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-1"
-                    title="Recolher todos"
-                    onClick={() => setExpandedGroups(new Set())}
-                  >
-                    <ChevronsDownUp className="h-3.5 w-3.5" />
-                  </Button>
-                  <div className="w-px h-5 bg-border mx-0.5" />
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-1"
-                    onClick={() => {
-                      const avgScore = benchmarks.reduce((s, b) => s + b.overall_score, 0) / benchmarks.length;
-                      exportBenchmarksPdf({
-                        benchmarks: benchmarks.map(b => ({
-                          competitor_name: b.competitor_name,
-                          competitor_url: b.competitor_url,
-                          competitor_niche: b.competitor_niche,
-                          overall_score: b.overall_score,
-                          score_gap: b.score_gap,
-                          strengths: [],
-                          weaknesses: [],
-                          project_name: b.project_name,
-                        })),
-                        totalBenchmarks: benchmarks.length,
-                        averageScore: avgScore,
-                      });
-                    }}
-                  >
-                    <FileText className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">PDF</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-1"
-                    onClick={() => {
-                      exportBenchmarksCsv(benchmarks.map(b => ({
+                    {benchmarks.length >= benchmarkLimit
+                      ? `Esgotado (${benchmarks.length}/${benchmarkLimit})`
+                      : `${benchmarks.length}/${benchmarkLimit} benchmarks`
+                    } — Starter
+                  </Badge>
+                </div>
+              )}
+            </div>
+            {benchmarks.length > 0 && (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1"
+                  title="Expandir todos"
+                  onClick={() => setExpandedGroups(new Set(groupedByProject.map(g => g.projectId)))}
+                >
+                  <ChevronsUpDown className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1"
+                  title="Recolher todos"
+                  onClick={() => setExpandedGroups(new Set())}
+                >
+                  <ChevronsDownUp className="h-3.5 w-3.5" />
+                </Button>
+                <div className="w-px h-5 bg-border mx-0.5" />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1"
+                  onClick={() => {
+                    const avgScore = benchmarks.reduce((s, b) => s + b.overall_score, 0) / benchmarks.length;
+                    exportBenchmarksPdf({
+                      benchmarks: benchmarks.map(b => ({
                         competitor_name: b.competitor_name,
                         competitor_url: b.competitor_url,
                         competitor_niche: b.competitor_niche,
                         overall_score: b.overall_score,
                         score_gap: b.score_gap,
-                        value_proposition_score: b.value_proposition_score,
-                        offer_clarity_score: b.offer_clarity_score,
-                        user_journey_score: b.user_journey_score,
+                        strengths: [],
+                        weaknesses: [],
                         project_name: b.project_name,
-                        created_at: b.created_at,
-                      })));
-                    }}
-                  >
-                    <FileSpreadsheet className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">CSV</span>
-                  </Button>
-                </div>
-              )}
-            </div>
+                      })),
+                      totalBenchmarks: benchmarks.length,
+                      averageScore: avgScore,
+                    });
+                  }}
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">PDF</span>
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1"
+                  onClick={() => {
+                    exportBenchmarksCsv(benchmarks.map(b => ({
+                      competitor_name: b.competitor_name,
+                      competitor_url: b.competitor_url,
+                      competitor_niche: b.competitor_niche,
+                      overall_score: b.overall_score,
+                      score_gap: b.score_gap,
+                      value_proposition_score: b.value_proposition_score,
+                      offer_clarity_score: b.offer_clarity_score,
+                      user_journey_score: b.user_journey_score,
+                      project_name: b.project_name,
+                      created_at: b.created_at,
+                    })));
+                  }}
+                >
+                  <FileSpreadsheet className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">CSV</span>
+                </Button>
+              </div>
+            )}
+          </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-              <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg shrink-0">
-                    <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Análises</p>
-                    <p className="text-lg sm:text-xl font-bold text-foreground">{benchmarks.length}</p>
-                  </div>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+            <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg shrink-0">
+                  <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                 </div>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 sm:p-2 bg-green-500/10 rounded-lg shrink-0">
-                    <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Score Médio</p>
-                    <p className="text-lg sm:text-xl font-bold text-foreground">
-                      {benchmarks.length > 0 
-                        ? Math.round(benchmarks.reduce((acc, b) => acc + b.overall_score, 0) / benchmarks.length)
-                        : 0}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 sm:p-2 bg-blue-500/10 rounded-lg shrink-0">
-                    <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Melhor Score</p>
-                    <p className="text-lg sm:text-xl font-bold text-foreground">
-                      {benchmarks.length > 0 
-                        ? Math.max(...benchmarks.map(b => b.overall_score))
-                        : 0}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 sm:p-2 bg-yellow-500/10 rounded-lg shrink-0">
-                    <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-500" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Concorrentes</p>
-                    <p className="text-lg sm:text-xl font-bold text-foreground">
-                      {new Set(benchmarks.map(b => b.competitor_url)).size}
-                    </p>
-                  </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Análises</p>
+                  <p className="text-lg sm:text-xl font-bold text-foreground">{benchmarks.length}</p>
                 </div>
               </div>
             </div>
-
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por nome, URL ou nicho..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={filterProject} onValueChange={setFilterProject}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filtrar por projeto" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os projetos</SelectItem>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Ordenar por" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="created_at">Mais recentes</SelectItem>
-                  <SelectItem value="overall_score">Maior score</SelectItem>
-                  <SelectItem value="score_gap">Maior gap</SelectItem>
-                  <SelectItem value="competitor_name">Nome (A-Z)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Benchmarks List */}
-            {filteredAndSortedBenchmarks.length === 0 ? (
-              <div className="rounded-xl border border-border bg-card p-8 sm:p-12 text-center">
-                <div className="space-y-3">
-                  <div className="w-14 h-14 bg-muted rounded-full flex items-center justify-center mx-auto">
-                    <Target className="h-7 w-7 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-lg font-semibold">Compare-se com a concorrência</h3>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                    {searchTerm || filterProject !== "all" 
-                      ? "Tente ajustar os filtros ou busca."
-                      : "Adicione URLs de concorrentes nos seus projetos e execute a análise. Benchmarks com SWOT e gap analysis serão gerados automaticamente."}
+            <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 sm:p-2 bg-green-500/10 rounded-lg shrink-0">
+                  <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Score Médio</p>
+                  <p className="text-lg sm:text-xl font-bold text-foreground">
+                    {benchmarks.length > 0
+                      ? Math.round(benchmarks.reduce((acc, b) => acc + b.overall_score, 0) / benchmarks.length)
+                      : 0}
                   </p>
                 </div>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {groupedByProject.map((group) => {
-                  const isGroupExpanded = expandedGroups.has(group.projectId);
-                  return (
-                    <div key={group.projectId} className="space-y-3">
-                      {/* Project header — clickable to expand/collapse */}
-                      <div className="flex items-center gap-2.5 sm:gap-3">
-                        <button
-                          onClick={() => toggleGroup(group.projectId)}
-                          className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0 text-left group"
-                        >
-                          <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                            <FolderOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${!isGroupExpanded ? "-rotate-90" : ""}`} />
-                              <h2 className="text-sm sm:text-base font-semibold text-foreground truncate group-hover:text-primary transition-colors">{group.projectName}</h2>
-                            </div>
-                            <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 flex-wrap ml-[22px]">
-                              <span className="text-[10px] sm:text-xs text-muted-foreground">{group.benchmarks.length} concorrentes</span>
-                              <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 bg-primary/10 text-primary border-primary/30">
-                                Score médio: {group.avgScore}
-                              </Badge>
-                            </div>
-                          </div>
-                        </button>
-                      </div>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 sm:p-2 bg-blue-500/10 rounded-lg shrink-0">
+                  <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Melhor Score</p>
+                  <p className="text-lg sm:text-xl font-bold text-foreground">
+                    {benchmarks.length > 0
+                      ? Math.max(...benchmarks.map(b => b.overall_score))
+                      : 0}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 sm:p-2 bg-yellow-500/10 rounded-lg shrink-0">
+                  <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Concorrentes</p>
+                  <p className="text-lg sm:text-xl font-bold text-foreground">
+                    {new Set(benchmarks.map(b => b.competitor_url)).size}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-                      {/* Benchmark cards grid — only visible when expanded */}
-                      {isGroupExpanded && (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome, URL ou nicho..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={filterProject} onValueChange={setFilterProject}>
+              <SelectTrigger className="w-full sm:w-48">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Filtrar por projeto" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os projetos</SelectItem>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="Ordenar por" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="created_at">Mais recentes</SelectItem>
+                <SelectItem value="overall_score">Maior score</SelectItem>
+                <SelectItem value="score_gap">Maior gap</SelectItem>
+                <SelectItem value="competitor_name">Nome (A-Z)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Benchmarks Grid */}
+          {filteredAndSortedBenchmarks.length === 0 ? (
+            <div className="rounded-xl border border-border bg-card p-8 sm:p-12 text-center">
+              <div className="space-y-3">
+                <div className="w-14 h-14 bg-muted rounded-full flex items-center justify-center mx-auto">
+                  <Target className="h-7 w-7 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold">Compare-se com a concorrência</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  {searchTerm || filterProject !== "all"
+                    ? "Tente ajustar os filtros ou busca."
+                    : "Adicione URLs de concorrentes nos seus projetos e execute a análise. Benchmarks com SWOT e gap analysis serão gerados automaticamente."}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+              {groupedByProject.map((group) => {
+                const isGroupExpanded = expandedGroups.has(group.projectId);
+                const scoreColor = group.avgScore >= 70 ? "text-green-600 dark:text-green-400" : group.avgScore >= 50 ? "text-yellow-600 dark:text-yellow-400" : "text-red-500 dark:text-red-400";
+                const scoreBg = group.avgScore >= 70 ? "bg-green-500/10 border-green-500/20" : group.avgScore >= 50 ? "bg-yellow-500/10 border-yellow-500/20" : "bg-red-500/10 border-red-500/20";
+                return (
+                  <div key={group.projectId} className={`rounded-xl border bg-card overflow-hidden transition-all duration-300 hover:shadow-lg ${isGroupExpanded ? "border-primary/30 col-span-1 lg:col-span-2" : "border-border hover:border-primary/50"}`}>
+                    {/* Project Card Header */}
+                    <button
+                      onClick={() => toggleGroup(group.projectId)}
+                      className="w-full text-left p-4 sm:p-5 flex items-center gap-3 group"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <FolderOpen className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">{group.projectName}</p>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          <span className="text-[11px] text-muted-foreground">{group.benchmarks.length} concorrente{group.benchmarks.length !== 1 ? "s" : ""}</span>
+                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${scoreBg} ${scoreColor}`}>
+                            <BarChart3 className="h-2.5 w-2.5 mr-0.5" />
+                            Score: {group.avgScore}
+                          </Badge>
+                        </div>
+                      </div>
+                      <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 shrink-0 ${!isGroupExpanded ? "-rotate-90" : ""}`} />
+                    </button>
+
+                    {/* Expanded: Benchmark Cards */}
+                    {isGroupExpanded && (
+                      <div className="border-t border-border/50 p-4 sm:p-5 pt-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                           {group.benchmarks.map((benchmark) => (
                             <BenchmarkCard
                               key={benchmark.id}
@@ -636,28 +652,29 @@ export default function Benchmark() {
                             />
                           ))}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-      {/* Detail Dialog */}
-      <BenchmarkDetailDialog
-        benchmark={selectedBenchmark}
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        hasAiKeys={hasAiKeys && canAiEnrichment}
-        availableAiModels={availableAiModels}
-        selectedAiModel={selectedAiModel}
-        onAiModelChange={setSelectedAiModel}
-        onAiAnalysis={handleBenchmarkAiAnalysis}
-        aiAnalyzing={aiAnalyzing}
-        aiResult={selectedBenchmark ? aiResults[selectedBenchmark.id] || null : null}
-      />
-    </DashboardLayout>
+        {/* Detail Dialog */}
+        <BenchmarkDetailDialog
+          benchmark={selectedBenchmark}
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
+          hasAiKeys={hasAiKeys && canAiEnrichment}
+          availableAiModels={availableAiModels}
+          selectedAiModel={selectedAiModel}
+          onAiModelChange={setSelectedAiModel}
+          onAiAnalysis={handleBenchmarkAiAnalysis}
+          aiAnalyzing={aiAnalyzing}
+          aiResult={selectedBenchmark ? aiResults[selectedBenchmark.id] || null : null}
+        />
+      </DashboardLayout>
     </FeatureGate>
   );
 }

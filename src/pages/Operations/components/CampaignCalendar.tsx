@@ -71,9 +71,11 @@ export default function CampaignCalendar({ campaigns, filterChannel = "all", fil
           <Button variant="outline" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-colors" onClick={nextMonth}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <div className="h-8 flex items-center px-4 rounded-md bg-primary/10 ml-1 sm:ml-2">
-            <h4 className="text-sm font-bold text-primary capitalize tracking-wide">
-              {MONTH_LABELS[month + 1]} <span className="text-primary/70">{year}</span>
+          <div className="flex items-center px-4 h-9 rounded-lg bg-primary/10 ml-2 border border-primary/20 shadow-[0_0_15px_-5px_rgba(var(--primary),0.2)]">
+            <h4 className="text-sm font-bold text-primary dark:text-white capitalize tracking-tighter sm:tracking-normal flex items-center gap-1.5 flex-wrap">
+              <span className="opacity-100">{MONTH_LABELS[month + 1]}</span>
+              <span className="w-1 h-3.5 bg-primary/20 dark:bg-white/20 rounded-full hidden sm:block mx-1" />
+              <span className="text-primary/70 dark:text-white/70 font-medium">{year}</span>
             </h4>
           </div>
         </div>

@@ -37,3 +37,4 @@ supabase/functions/
 
 # Documentação Interna (MD files, PDFs)
 documentacao/
+agents.md

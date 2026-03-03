@@ -49,11 +49,11 @@ type SavedPlan = {
 };
 
 const sizeConfig = {
-  startup: { label: "Startup", color: "bg-blue-100 text-blue-800" },
-  small: { label: "Pequena", color: "bg-green-100 text-green-800" },
-  medium: { label: "Média", color: "bg-yellow-100 text-yellow-800" },
-  large: { label: "Grande", color: "bg-orange-100 text-orange-800" },
-  enterprise: { label: "Enterprise", color: "bg-purple-100 text-purple-800" },
+  startup: { label: "Startup", color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20" },
+  small: { label: "Pequena", color: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20" },
+  medium: { label: "Média", color: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20" },
+  large: { label: "Grande", color: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20" },
+  enterprise: { label: "Enterprise", color: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20" },
 };
 
 
@@ -745,17 +745,19 @@ export default function Audiences() {
           )}
 
           {loading && (
-            <div className="space-y-4">
-              {[1, 2].map((i) => (
-                <div key={i} className="border border-border rounded-lg bg-card p-4 space-y-3 animate-pulse">
-                  <div className="flex items-center justify-between">
-                    <div className="h-5 w-44 bg-muted rounded" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="rounded-xl border border-border bg-card p-4 sm:p-5 space-y-3 animate-pulse">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 bg-muted rounded-lg" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-4 w-36 bg-muted rounded" />
+                      <div className="h-3 w-48 bg-muted rounded" />
+                    </div>
                     <div className="h-5 w-16 bg-muted rounded-full" />
                   </div>
-                  <div className="h-3 w-64 bg-muted rounded" />
-                  <div className="flex gap-2">
-                    <div className="h-5 w-20 bg-muted rounded-full" />
-                    <div className="h-5 w-20 bg-muted rounded-full" />
+                  <div className="flex gap-1.5">
+                    <div className="h-5 w-16 bg-muted rounded-full" />
                     <div className="h-5 w-20 bg-muted rounded-full" />
                   </div>
                 </div>
@@ -770,228 +772,182 @@ export default function Audiences() {
             </div>
           )}
 
-          {/* Grouped by project */}
-          {!loading && groupedByProject.map((group) => {
-            const isGroupExpanded = expandedGroups.has(group.groupKey);
-            return (
-              <div key={group.groupKey} className="space-y-3">
-                {/* Project header — clickable to expand/collapse */}
-                <div className="flex items-center gap-2.5 sm:gap-3">
-                  <button
-                    onClick={() => toggleGroup(group.groupKey)}
-                    className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0 text-left group"
-                  >
-                    <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <FolderOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${!isGroupExpanded ? "-rotate-90" : ""}`} />
-                        <h2 className="text-sm sm:text-base font-semibold text-foreground truncate group-hover:text-primary transition-colors">{group.projectName}</h2>
+          {/* Project Cards Grid */}
+          {!loading && groupedByProject.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+              {groupedByProject.map((group) => {
+                const isGroupExpanded = expandedGroups.has(group.groupKey);
+                const icpCount = group.audiences.filter(a => a.icp_enrichment).length;
+                return (
+                  <div key={group.groupKey} className={`rounded-xl border bg-card overflow-hidden transition-all duration-300 hover:shadow-lg ${isGroupExpanded ? "border-primary/30 col-span-1 lg:col-span-2" : "border-border hover:border-primary/50"}`}>
+                    {/* Project Card Header */}
+                    <button
+                      onClick={() => toggleGroup(group.groupKey)}
+                      className="w-full text-left p-4 sm:p-5 flex items-center gap-3 group"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <FolderOpen className="h-5 w-5 text-primary" />
                       </div>
-                      <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 flex-wrap ml-[22px]">
-                        <span className="text-[10px] sm:text-xs text-muted-foreground">{group.audiences.length} público{group.audiences.length !== 1 ? "s" : ""}</span>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-
-                {/* Audience cards grid — only visible when expanded */}
-                {isGroupExpanded && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                    {group.audiences.map((audience) => (
-                      <div key={audience.id} className="border border-border rounded-lg bg-card p-4 sm:p-6 space-y-3 sm:space-y-4">
-                        <div className="flex items-start gap-2 sm:gap-3 mb-2">
-                          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                            <Target className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-foreground text-sm sm:text-base truncate">{audience.name}</h3>
-                            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{audience.description}</p>
-                          </div>
-                        </div>
-
-                        <div className="space-y-1.5 sm:space-y-2">
-                          {audience.industry && (
-                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                              <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
-                              <span className="text-xs sm:text-sm text-muted-foreground">Indústria:</span>
-                              <Badge variant="secondary" className="text-xs">{audience.industry}</Badge>
-                            </div>
-                          )}
-
-                          {audience.company_size && (
-                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                              <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
-                              <span className="text-xs sm:text-sm text-muted-foreground">Porte:</span>
-                              <Badge variant="secondary" className={`text-xs ${sizeConfig[audience.company_size as keyof typeof sizeConfig]?.color}`}>
-                                {sizeConfig[audience.company_size as keyof typeof sizeConfig]?.label}
-                              </Badge>
-                            </div>
-                          )}
-
-                          {audience.location && (
-                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                              <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
-                              <span className="text-xs sm:text-sm text-muted-foreground">Local:</span>
-                              <Badge variant="secondary" className="text-xs">{audience.location}</Badge>
-                            </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">{group.projectName}</p>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          <span className="text-[11px] text-muted-foreground">{group.audiences.length} público{group.audiences.length !== 1 ? "s" : ""}</span>
+                          {icpCount > 0 && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20">
+                              <Brain className="h-2.5 w-2.5 mr-0.5" />
+                              {icpCount} ICP
+                            </Badge>
                           )}
                         </div>
+                      </div>
+                      <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 shrink-0 ${!isGroupExpanded ? "-rotate-90" : ""}`} />
+                    </button>
 
-                        {audience.keywords.length > 0 && (
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium text-foreground">Palavras-chave:</p>
-                            <div className="flex flex-wrap gap-1">
-                              {audience.keywords.map((keyword, index) => (
-                                <Badge key={index} variant="outline" className="text-xs">
-                                  {keyword}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Estratégia de Conteúdo / Pipeline */}
-                        {canAiKeys && hasAiKeys && (
-                          <div className="mt-4 pt-4 border-t border-border">
-                            <div className="flex items-center gap-2 mb-3">
-                              <Sparkles className="h-4 w-4 text-primary" />
-                              <h4 className="text-sm font-semibold text-foreground">Estratégia & Planejamento</h4>
-                            </div>
-
-                            <div className="flex flex-col gap-2">
-                              {/* Step 1: Expand ICP */}
-                              <div className="flex flex-col gap-3 p-3 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 transition-colors">
-                                <div className="flex items-center gap-3">
-                                  <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${audience.icp_enrichment ? "bg-emerald-500/10 text-emerald-500" : "bg-primary/10 text-primary"}`}>
-                                    <Brain className="h-4 w-4" />
+                    {/* Expanded: Audience Sub-Cards */}
+                    {isGroupExpanded && (
+                      <div className="border-t border-border/50 p-4 sm:p-5 pt-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {group.audiences.map((audience) => {
+                            const sizeInfo = audience.company_size ? sizeConfig[audience.company_size as keyof typeof sizeConfig] : null;
+                            return (
+                              <div key={audience.id} className={`rounded-xl border p-4 space-y-3 transition-all hover:shadow-md ${audience.icp_enrichment ? "border-green-500/20 bg-green-500/[0.02]" : "border-border bg-card"}`}>
+                                {/* Audience Header */}
+                                <div className="flex items-start gap-3">
+                                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${audience.icp_enrichment ? "bg-green-500/10" : "bg-primary/10"}`}>
+                                    <Target className={`h-4 w-4 ${audience.icp_enrichment ? "text-green-500" : "text-primary"}`} />
                                   </div>
-                                  <div>
-                                    <p className="text-sm font-medium text-foreground">1. Refinar ICP com IA</p>
-                                    <p className="text-xs text-muted-foreground">{audience.icp_enrichment ? "ICP enriquecido e documentado" : "Analisar mercado e expandir perfil"}</p>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold text-foreground truncate">{audience.name}</p>
+                                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{audience.description}</p>
                                   </div>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  {!audience.icp_enrichment && (
-                                    <Select
-                                      value={selectedAiModel}
-                                      onValueChange={setSelectedAiModel}
-                                      disabled={enrichingId === audience.id}
-                                    >
-                                      <SelectTrigger className="h-8 w-[120px] text-xs">
-                                        <SelectValue placeholder="Modelo IA" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {availableAiModels.map((m) => (
-                                          <SelectItem key={`${m.provider}::${m.model}`} value={`${m.provider}::${m.model}`} className="text-xs">
-                                            {m.label}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  )}
-                                  <Button
-                                    size="sm"
-                                    variant={audience.icp_enrichment ? "outline" : "default"}
-                                    className="h-8 text-xs flex-1 min-w-[120px]"
-                                    disabled={enrichingId === audience.id}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (audience.icp_enrichment) {
-                                        setSelectedEnrichmentAudience(audience);
-                                        setEnrichmentDialogOpen(true);
-                                      } else {
-                                        handleEnrichIcp(audience);
-                                      }
-                                    }}
-                                  >
-                                    {enrichingId === audience.id ? (
-                                      <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                                    ) : audience.icp_enrichment ? (
-                                      "Visualizar ICP"
-                                    ) : (
-                                      "Gerar Refinamento"
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    {sizeInfo && (
+                                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${sizeInfo.color}`}>
+                                        {sizeInfo.label}
+                                      </Badge>
                                     )}
-                                  </Button>
-                                  {audience.icp_enrichment && (
-                                    <TooltipProvider delayDuration={0}>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            className="h-8 w-8 text-muted-foreground hover:text-primary"
-                                            disabled={enrichingId === audience.id}
-                                            onClick={(e) => { e.stopPropagation(); handleEnrichIcp(audience); }}
-                                          >
-                                            {enrichingId === audience.id ? (
-                                              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                                            ) : (
-                                              <Sparkles className="h-3.5 w-3.5" />
-                                            )}
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="top" className="text-xs bg-popover text-popover-foreground border-primary/50 shadow-lg shadow-primary/10">
-                                          Refinar novamente
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
+                                    {audience.icp_enrichment && (
+                                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20">
+                                        <Brain className="h-2.5 w-2.5 mr-0.5" />
+                                        ICP
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Meta */}
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {audience.industry && (
+                                    <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                                      <TrendingUp className="h-3 w-3" />
+                                      <span>{audience.industry}</span>
+                                    </div>
+                                  )}
+                                  {audience.location && (
+                                    <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                                      <Globe className="h-3 w-3" />
+                                      <span>{audience.location}</span>
+                                    </div>
                                   )}
                                 </div>
-                              </div>
 
-                              {/* Step 2: Content Plan */}
-                              <div className={`flex flex-col gap-3 p-3 rounded-lg border transition-colors ${audience.icp_enrichment ? "border-border bg-muted/20 hover:bg-muted/40" : "border-border/50 bg-card opacity-60"}`}>
-                                <div className="flex items-center gap-3">
-                                  <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${audience.icp_enrichment ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                                    <PenSquare className="h-4 w-4" />
+                                {/* Keywords */}
+                                {audience.keywords.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {audience.keywords.slice(0, 4).map((keyword, index) => (
+                                      <Badge key={index} variant="outline" className="text-[10px] px-1.5 py-0 bg-muted/30 border-border/50">
+                                        {keyword}
+                                      </Badge>
+                                    ))}
+                                    {audience.keywords.length > 4 && (
+                                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted/30 border-border/50 text-muted-foreground">
+                                        +{audience.keywords.length - 4}
+                                      </Badge>
+                                    )}
                                   </div>
-                                  <div>
-                                    <p className="text-sm font-medium text-foreground">2. Plano de Comunicação</p>
-                                    <p className="text-xs text-muted-foreground">Gerar linha editorial tática</p>
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                  <Button
-                                    size="sm"
-                                    className="h-8 text-xs w-full"
-                                    variant="secondary"
-                                    onClick={(e) => { e.stopPropagation(); handleGenerateEditorial(audience); }}
-                                    disabled={!audience.icp_enrichment || editorialLoadingId === audience.id}
-                                  >
-                                    {editorialLoadingId === audience.id ? (
-                                      <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent mr-1.5" />
-                                    ) : null}
-                                    Gerar Plano
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    className="h-8 text-xs w-full"
-                                    variant="outline"
-                                    onClick={(e) => { e.stopPropagation(); handleOpenSavedFromCard(audience); }}
-                                    disabled={editorialLoadingId === audience.id}
-                                  >
-                                    Abrir planos salvos
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
+                                )}
 
-                        <div className="flex justify-end pt-2">
-                          <Button size="sm" variant="ghost" className="h-8 text-xs text-muted-foreground hover:text-foreground" onClick={() => startEdit(audience)}>
-                            Editar Público
-                          </Button>
+                                {/* Actions Footer */}
+                                {canAiKeys && hasAiKeys && (
+                                  <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                                    <div className="flex items-center gap-1.5">
+                                      <Button
+                                        size="sm"
+                                        variant={audience.icp_enrichment ? "outline" : "default"}
+                                        className="h-7 text-[11px] gap-1"
+                                        disabled={enrichingId === audience.id}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (audience.icp_enrichment) {
+                                            setSelectedEnrichmentAudience(audience);
+                                            setEnrichmentDialogOpen(true);
+                                          } else {
+                                            handleEnrichIcp(audience);
+                                          }
+                                        }}
+                                      >
+                                        {enrichingId === audience.id ? (
+                                          <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                        ) : (
+                                          <Brain className="h-3 w-3" />
+                                        )}
+                                        {audience.icp_enrichment ? "Ver ICP" : "Refinar"}
+                                      </Button>
+                                      {audience.icp_enrichment && (
+                                        <>
+                                          <Button
+                                            size="sm"
+                                            variant="secondary"
+                                            className="h-7 text-[11px] gap-1"
+                                            onClick={(e) => { e.stopPropagation(); handleGenerateEditorial(audience); }}
+                                            disabled={editorialLoadingId === audience.id}
+                                          >
+                                            {editorialLoadingId === audience.id ? (
+                                              <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                            ) : (
+                                              <PenSquare className="h-3 w-3" />
+                                            )}
+                                            Plano
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-7 text-[11px] gap-1 text-muted-foreground"
+                                            onClick={(e) => { e.stopPropagation(); handleOpenSavedFromCard(audience); }}
+                                          >
+                                            Salvos
+                                          </Button>
+                                        </>
+                                      )}
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 text-[10px] text-muted-foreground hover:text-foreground"
+                                      onClick={() => startEdit(audience)}
+                                    >
+                                      Editar
+                                    </Button>
+                                  </div>
+                                )}
+                                {!(canAiKeys && hasAiKeys) && (
+                                  <div className="flex justify-end pt-2 border-t border-border/50">
+                                    <Button size="sm" variant="ghost" className="h-7 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => startEdit(audience)}>
+                                      Editar Público
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                    ))}
+                    )}
                   </div>
-                )}
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <IcpEnrichmentDialog

@@ -322,64 +322,81 @@ export default function Alerts() {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-            <Card
-              className={`cursor-pointer transition-colors ${filterCategory === "premature" ? "ring-2 ring-red-500/50" : ""}`}
+            <button
+              className={`rounded-xl border bg-card p-3 sm:p-4 text-left transition-all hover:shadow-md ${filterCategory === "premature" ? "ring-2 ring-red-500/50 border-red-500/30" : "border-border"}`}
               onClick={() => setFilterCategory(filterCategory === "premature" ? "all" : "premature")}
             >
-              <CardContent className="p-3 sm:p-4 text-center">
-                <TrendingDown className="h-5 w-5 text-red-500 mx-auto mb-1" />
-                <p className="text-xl sm:text-2xl font-bold text-red-500">{prematureAlerts.length}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Investimento Prematuro</p>
-              </CardContent>
-            </Card>
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 sm:p-2 bg-red-500/10 rounded-lg shrink-0">
+                  <TrendingDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-red-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Prematuro</p>
+                  <p className="text-lg sm:text-xl font-bold text-foreground">{prematureAlerts.length}</p>
+                </div>
+              </div>
+            </button>
 
-            <Card
-              className={`cursor-pointer transition-colors ${filterCategory === "not_recommended" ? "ring-2 ring-amber-500/50" : ""}`}
+            <button
+              className={`rounded-xl border bg-card p-3 sm:p-4 text-left transition-all hover:shadow-md ${filterCategory === "not_recommended" ? "ring-2 ring-amber-500/50 border-amber-500/30" : "border-border"}`}
               onClick={() => setFilterCategory(filterCategory === "not_recommended" ? "all" : "not_recommended")}
             >
-              <CardContent className="p-3 sm:p-4 text-center">
-                <Ban className="h-5 w-5 text-amber-500 mx-auto mb-1" />
-                <p className="text-xl sm:text-2xl font-bold text-amber-500">{notRecommended.length}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Não Recomendados</p>
-              </CardContent>
-            </Card>
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 sm:p-2 bg-amber-500/10 rounded-lg shrink-0">
+                  <Ban className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Não Recomendados</p>
+                  <p className="text-lg sm:text-xl font-bold text-foreground">{notRecommended.length}</p>
+                </div>
+              </div>
+            </button>
 
-            <Card
-              className={`cursor-pointer transition-colors ${filterCategory === "risks" ? "ring-2 ring-orange-500/50" : ""}`}
+            <button
+              className={`rounded-xl border bg-card p-3 sm:p-4 text-left transition-all hover:shadow-md ${filterCategory === "risks" ? "ring-2 ring-orange-500/50 border-orange-500/30" : "border-border"}`}
               onClick={() => setFilterCategory(filterCategory === "risks" ? "all" : "risks")}
             >
-              <CardContent className="p-3 sm:p-4 text-center">
-                <AlertTriangle className="h-5 w-5 text-orange-500 mx-auto mb-1" />
-                <p className="text-xl sm:text-2xl font-bold text-orange-500">{withRisks.length}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Riscos Identificados</p>
-              </CardContent>
-            </Card>
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 sm:p-2 bg-orange-500/10 rounded-lg shrink-0">
+                  <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-orange-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Riscos</p>
+                  <p className="text-lg sm:text-xl font-bold text-foreground">{withRisks.length}</p>
+                </div>
+              </div>
+            </button>
 
-            <Card
-              className={`cursor-pointer transition-colors ${filterCategory === "warnings" ? "ring-2 ring-yellow-500/50" : ""}`}
+            <button
+              className={`rounded-xl border bg-card p-3 sm:p-4 text-left transition-all hover:shadow-md ${filterCategory === "warnings" ? "ring-2 ring-yellow-500/50 border-yellow-500/30" : "border-border"}`}
               onClick={() => setFilterCategory(filterCategory === "warnings" ? "all" : "warnings")}
             >
-              <CardContent className="p-3 sm:p-4 text-center">
-                <Info className="h-5 w-5 text-yellow-500 mx-auto mb-1" />
-                <p className="text-xl sm:text-2xl font-bold text-yellow-500">{insightAlerts.length}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Alertas da Análise</p>
-              </CardContent>
-            </Card>
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 sm:p-2 bg-yellow-500/10 rounded-lg shrink-0">
+                  <Info className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-wider truncate">Alertas</p>
+                  <p className="text-lg sm:text-xl font-bold text-foreground">{insightAlerts.length}</p>
+                </div>
+              </div>
+            </button>
           </div>
 
           {/* Loading */}
           {loading && (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="border border-border rounded-lg bg-card p-4 space-y-3 animate-pulse">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="rounded-xl border border-border bg-card p-4 space-y-3 animate-pulse">
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 bg-muted rounded-full" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 w-48 bg-muted rounded" />
-                      <div className="h-3 w-72 bg-muted rounded" />
+                    <div className="h-9 w-9 bg-muted rounded-lg" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-4 w-36 bg-muted rounded" />
+                      <div className="h-3 w-48 bg-muted rounded" />
                     </div>
                     <div className="h-5 w-16 bg-muted rounded-full" />
                   </div>
+                  <div className="h-3 w-full bg-muted rounded" />
                 </div>
               ))}
             </div>
@@ -420,81 +437,73 @@ export default function Alerts() {
                 </Badge>
               </button>
               {expandedSections.has("premature") && (
-                <>
-                  <p className="text-xs text-muted-foreground -mt-1 ml-[22px]">
-                    Canais com score abaixo de 50 indicam que seu site ainda não está preparado para receber tráfego pago nesse canal. Investir agora pode resultar em desperdício de budget.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                    {filteredPremature.map((item) => {
-                      const key = `premature-${item.project_id}-${item.channel}`;
-                      const expanded = expandedCards.has(key);
-                      const scoreColor = item.score < 30 ? "text-red-600" : "text-orange-500";
-                      return (
-                        <Card key={key} className="border-red-500/20 bg-red-500/[0.02]">
-                          <CardContent className="p-3 sm:p-4">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <Badge className={channelColors[item.channel] + " text-[10px] sm:text-xs"}>
-                                    {channelNames[item.channel]}
-                                  </Badge>
-                                  <span className="text-xs text-muted-foreground truncate">{item.project_name}</span>
-                                </div>
-                                <div className="flex items-center gap-2 mt-2">
-                                  <span className={`text-2xl font-bold ${scoreColor}`}>{item.score}</span>
-                                  <span className="text-xs text-muted-foreground">/100</span>
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  Score abaixo de 50 — investimento neste canal pode ser prematuro.
-                                  {item.score < 30 && " Score crítico: considere melhorias significativas antes de investir."}
-                                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                  {filteredPremature.map((item) => {
+                    const key = `premature-${item.project_id}-${item.channel}`;
+                    const expanded = expandedCards.has(key);
+                    const scoreColor = item.score < 30 ? "text-red-600" : "text-orange-500";
+                    return (
+                      <Card key={key} className="border-red-500/20">
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge className={channelColors[item.channel] + " text-[10px] sm:text-xs"}>
+                                  {channelNames[item.channel]}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground truncate">{item.project_name}</span>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 shrink-0"
-                                onClick={() => toggleExpand(key)}
-                              >
-                                {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                              </Button>
+                              <div className="flex items-center gap-2 mt-2">
+                                <span className={`text-2xl font-bold ${scoreColor}`}>{item.score}</span>
+                                <span className="text-xs text-muted-foreground">/100</span>
+                              </div>
+
                             </div>
-                            {expanded && (
-                              <div className="mt-3 pt-3 border-t border-border space-y-2">
-                                {item.objective && (
-                                  <p className="text-xs"><span className="font-medium text-foreground">Objetivo:</span> <span className="text-muted-foreground">{item.objective}</span></p>
-                                )}
-                                {item.risks.length > 0 && (
-                                  <div>
-                                    <p className="text-xs font-medium text-foreground mb-1">Riscos:</p>
-                                    <ul className="space-y-1">
-                                      {item.risks.map((risk, i) => (
-                                        <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                                          <span className="text-red-400 mt-0.5 shrink-0">•</span>
-                                          <span>{risk}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-                                <div className="flex items-center gap-2 pt-1">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 text-[10px] sm:text-xs gap-1"
-                                    onClick={() => navigate("/projects")}
-                                  >
-                                    <ExternalLink className="h-3 w-3" />
-                                    Ver Projeto
-                                  </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 shrink-0"
+                              onClick={() => toggleExpand(key)}
+                            >
+                              {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                            </Button>
+                          </div>
+                          {expanded && (
+                            <div className="mt-3 pt-3 border-t border-border space-y-2">
+                              {item.objective && (
+                                <p className="text-xs"><span className="font-medium text-foreground">Objetivo:</span> <span className="text-muted-foreground">{item.objective}</span></p>
+                              )}
+                              {item.risks.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-medium text-foreground mb-1">Riscos:</p>
+                                  <ul className="space-y-1">
+                                    {item.risks.map((risk, i) => (
+                                      <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                                        <span className="text-red-400 mt-0.5 shrink-0">•</span>
+                                        <span>{risk}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
                                 </div>
+                              )}
+                              <div className="flex items-center gap-2 pt-1">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 text-[10px] sm:text-xs gap-1"
+                                  onClick={() => navigate("/projects")}
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                  Ver Projeto
+                                </Button>
                               </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
               )}
             </div>
           )}
@@ -514,80 +523,75 @@ export default function Alerts() {
                 </Badge>
               </button>
               {expandedSections.has("not_recommended") && (
-                <>
-                  <p className="text-xs text-muted-foreground -mt-1 ml-[22px]">
-                    A análise estratégica identificou que estes canais não são adequados para o projeto no momento. Investir neles pode não trazer retorno.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                    {filteredNotRecommended.map((item) => {
-                      const key = `notrec-${item.project_id}-${item.channel}`;
-                      const expanded = expandedCards.has(key);
-                      return (
-                        <Card key={key} className="border-amber-500/20 bg-amber-500/[0.02]">
-                          <CardContent className="p-3 sm:p-4">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <Badge className={channelColors[item.channel] + " text-[10px] sm:text-xs"}>
-                                    {channelNames[item.channel]}
-                                  </Badge>
-                                  <Badge variant="outline" className="text-red-500 border-red-500/30 text-[10px]">
-                                    ✗ Não recomendado
-                                  </Badge>
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-2 truncate">
-                                  Projeto: <span className="font-medium text-foreground">{item.project_name}</span>
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  Score: <span className="font-medium">{item.score}/100</span> — este canal não é indicado para o perfil do projeto.
-                                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                  {filteredNotRecommended.map((item) => {
+                    const key = `notrec-${item.project_id}-${item.channel}`;
+                    const expanded = expandedCards.has(key);
+                    return (
+                      <Card key={key} className="border-amber-500/20">
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge className={channelColors[item.channel] + " text-[10px] sm:text-xs"}>
+                                  {channelNames[item.channel]}
+                                </Badge>
+                                <Badge variant="outline" className="text-red-500 border-red-500/30 text-[10px]">
+                                  ✗ Não recomendado
+                                </Badge>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 shrink-0"
-                                onClick={() => toggleExpand(key)}
-                              >
-                                {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                              </Button>
+                              <p className="text-xs text-muted-foreground mt-2 truncate">
+                                Projeto: <span className="font-medium text-foreground">{item.project_name}</span>
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Score: <span className="font-medium">{item.score}/100</span>
+                              </p>
                             </div>
-                            {expanded && (
-                              <div className="mt-3 pt-3 border-t border-border space-y-2">
-                                {item.objective && (
-                                  <p className="text-xs"><span className="font-medium text-foreground">Objetivo:</span> <span className="text-muted-foreground">{item.objective}</span></p>
-                                )}
-                                {item.risks.length > 0 && (
-                                  <div>
-                                    <p className="text-xs font-medium text-foreground mb-1">Riscos:</p>
-                                    <ul className="space-y-1">
-                                      {item.risks.map((risk, i) => (
-                                        <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                                          <span className="text-amber-400 mt-0.5 shrink-0">•</span>
-                                          <span>{risk}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-                                <div className="flex items-center gap-2 pt-1">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 text-[10px] sm:text-xs gap-1"
-                                    onClick={() => navigate("/tactical")}
-                                  >
-                                    <ExternalLink className="h-3 w-3" />
-                                    Ver Plano Tático
-                                  </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 shrink-0"
+                              onClick={() => toggleExpand(key)}
+                            >
+                              {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                            </Button>
+                          </div>
+                          {expanded && (
+                            <div className="mt-3 pt-3 border-t border-border space-y-2">
+                              {item.objective && (
+                                <p className="text-xs"><span className="font-medium text-foreground">Objetivo:</span> <span className="text-muted-foreground">{item.objective}</span></p>
+                              )}
+                              {item.risks.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-medium text-foreground mb-1">Riscos:</p>
+                                  <ul className="space-y-1">
+                                    {item.risks.map((risk, i) => (
+                                      <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                                        <span className="text-amber-400 mt-0.5 shrink-0">•</span>
+                                        <span>{risk}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
                                 </div>
+                              )}
+                              <div className="flex items-center gap-2 pt-1">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 text-[10px] sm:text-xs gap-1"
+                                  onClick={() => navigate("/tactical")}
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                  Ver Plano Tático
+                                </Button>
                               </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
               )}
             </div>
           )}
@@ -607,37 +611,32 @@ export default function Alerts() {
                 </Badge>
               </button>
               {expandedSections.has("risks") && (
-                <>
-                  <p className="text-xs text-muted-foreground -mt-1 ml-[22px]">
-                    Riscos específicos identificados pela análise para cada canal. Considere mitigá-los antes de investir.
-                  </p>
-                  <div className="space-y-2">
-                    {filteredWithRisks.map((item) => {
-                      const key = `risk-${item.project_id}-${item.channel}`;
-                      return (
-                        <Card key={key} className="border-orange-500/20 bg-orange-500/[0.02]">
-                          <CardContent className="p-3 sm:p-4">
-                            <div className="flex items-center gap-2 flex-wrap mb-2">
-                              <Badge className={channelColors[item.channel] + " text-[10px] sm:text-xs"}>
-                                {channelNames[item.channel]}
-                              </Badge>
-                              <span className="text-xs text-muted-foreground">{item.project_name}</span>
-                              <span className="text-xs font-medium ml-auto">Score: {item.score}</span>
-                            </div>
-                            <ul className="space-y-1.5">
-                              {item.risks.map((risk, i) => (
-                                <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
-                                  <AlertTriangle className="h-3 w-3 text-orange-400 mt-0.5 shrink-0" />
-                                  <span>{risk}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                  {filteredWithRisks.map((item) => {
+                    const key = `risk-${item.project_id}-${item.channel}`;
+                    return (
+                      <Card key={key} className="border-orange-500/20">
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="flex items-center gap-2 flex-wrap mb-2">
+                            <Badge className={channelColors[item.channel] + " text-[10px] sm:text-xs"}>
+                              {channelNames[item.channel]}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">{item.project_name}</span>
+                            <span className="text-xs font-medium ml-auto">Score: {item.score}</span>
+                          </div>
+                          <ul className="space-y-1.5">
+                            {item.risks.map((risk, i) => (
+                              <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
+                                <AlertTriangle className="h-3 w-3 text-orange-400 mt-0.5 shrink-0" />
+                                <span>{risk}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
               )}
             </div>
           )}
@@ -657,75 +656,47 @@ export default function Alerts() {
                 </Badge>
               </button>
               {expandedSections.has("warnings") && (
-                <>
-                  <p className="text-xs text-muted-foreground -mt-1 ml-[22px]">
-                    Problemas identificados automaticamente pela análise da URL do projeto. Resolva-os para melhorar seus scores.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                    {filteredInsights.map((insight) => {
-                      const key = `insight-${insight.id}`;
-                      const expanded = expandedCards.has(key);
-                      return (
-                        <Card key={key} className="border-yellow-500/20 bg-yellow-500/[0.02]">
-                          <CardContent className="p-3 sm:p-4">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs text-muted-foreground mb-1 truncate">{insight.project_name}</p>
-                                <p className="text-sm font-medium text-foreground">{insight.title}</p>
-                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{insight.description}</p>
-                              </div>
-                              {insight.action && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 shrink-0"
-                                  onClick={() => toggleExpand(key)}
-                                >
-                                  {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                                </Button>
-                              )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                  {filteredInsights.map((insight) => {
+                    const key = `insight-${insight.id}`;
+                    const expanded = expandedCards.has(key);
+                    return (
+                      <Card key={key} className="border-yellow-500/20">
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-muted-foreground mb-1 truncate">{insight.project_name}</p>
+                              <p className="text-sm font-medium text-foreground">{insight.title}</p>
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{insight.description}</p>
                             </div>
-                            {expanded && insight.action && (
-                              <div className="mt-3 pt-3 border-t border-border">
-                                <p className="text-xs">
-                                  <span className="font-medium text-foreground">Ação recomendada:</span>{" "}
-                                  <span className="text-muted-foreground">{insight.action}</span>
-                                </p>
-                              </div>
+                            {insight.action && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 shrink-0"
+                                onClick={() => toggleExpand(key)}
+                              >
+                                {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                              </Button>
                             )}
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </>
+                          </div>
+                          {expanded && insight.action && (
+                            <div className="mt-3 pt-3 border-t border-border">
+                              <p className="text-xs">
+                                <span className="font-medium text-foreground">Ação recomendada:</span>{" "}
+                                <span className="text-muted-foreground">{insight.action}</span>
+                              </p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
               )}
             </div>
           )}
 
-          {/* Info Box */}
-          {!loading && totalAlerts > 0 && (
-            <Card className="border-primary/20 bg-primary/[0.02]">
-              <CardContent className="p-4 sm:p-5">
-                <div className="flex items-start gap-3">
-                  <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground mb-1">Como interpretar os alertas</h3>
-                    <ul className="space-y-1.5 text-xs text-muted-foreground">
-                      <li><span className="font-medium text-red-500">Investimento Prematuro</span> — O score do canal está abaixo de 50. Seu site precisa de melhorias antes de investir nesse canal.</li>
-                      <li><span className="font-medium text-amber-500">Canal Não Recomendado</span> — A análise estratégica indica que esse canal não é adequado para o perfil do seu projeto.</li>
-                      <li><span className="font-medium text-orange-500">Riscos por Canal</span> — Riscos específicos que podem impactar o retorno do investimento nesse canal.</li>
-                      <li><span className="font-medium text-yellow-500">Alertas da Análise</span> — Problemas na URL do projeto que afetam a prontidão para receber tráfego pago.</li>
-                    </ul>
-                    <p className="text-xs text-muted-foreground mt-3">
-                      <strong>Dica:</strong> Resolva os alertas de investimento prematuro e canais não recomendados antes de criar campanhas.
-                      Use o <button className="text-primary hover:underline font-medium" onClick={() => navigate("/tactical")}>Plano Tático</button> para estruturar campanhas apenas nos canais recomendados.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </DashboardLayout>
     </FeatureGate>
