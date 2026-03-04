@@ -53,19 +53,33 @@ const featureFlagsInFlight = new Map<string, Promise<FeatureFlagsState>>();
 // =====================================================
 
 export function useFeatureFlags() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const userId = user?.id;
-  const [features, setFeatures] = useState<FeatureFlag[]>([]);
-  const [planAccess, setPlanAccess] = useState<PlanFeatureAccess[]>([]);
-  const [userOverrides, setUserOverrides] = useState<UserFeatureOverride[]>([]);
-  const [userPlan, setUserPlan] = useState<string>("starter");
-  const [loading, setLoading] = useState(true);
 
-  const applyState = useCallback((state: FeatureFlagsState) => {
-    setFeatures(state.features);
-    setPlanAccess(state.planAccess);
-    setUserOverrides(state.userOverrides);
-    setUserPlan(state.userPlan);
+  const [state, setState] = useState<{
+    features: FeatureFlag[];
+    planAccess: PlanFeatureAccess[];
+    userOverrides: UserFeatureOverride[];
+    userPlan: string;
+    loading: boolean;
+  }>({
+    features: [],
+    planAccess: [],
+    userOverrides: [],
+    userPlan: "starter",
+    loading: true,
+  });
+
+  const { features, planAccess, userOverrides, userPlan, loading } = state;
+
+  const applyState = useCallback((next: FeatureFlagsState) => {
+    setState({
+      features: next.features,
+      planAccess: next.planAccess,
+      userOverrides: next.userOverrides,
+      userPlan: next.userPlan,
+      loading: false,
+    });
   }, []);
 
   const loadData = useCallback(async (options?: { force?: boolean; silent?: boolean }) => {
@@ -78,12 +92,11 @@ export function useFeatureFlags() {
 
     if (!force && cached && isCacheFresh) {
       applyState(cached);
-      if (!silent) setLoading(false);
       return;
     }
 
     if (!silent && !cached) {
-      setLoading(true);
+      setState(prev => ({ ...prev, loading: true }));
     }
 
     try {
@@ -125,34 +138,37 @@ export function useFeatureFlags() {
       const next = await request;
       featureFlagsCache.set(userId, next);
       applyState(next);
-    } catch (err) {
+    } catch (err: any) {
       console.error("[feature-flags] Error loading:", err?.message || "Unknown error");
+      setState(prev => ({ ...prev, loading: false }));
     } finally {
       featureFlagsInFlight.delete(userId);
-      setLoading(false);
     }
   }, [applyState, userId]);
 
   useEffect(() => {
     if (!userId) {
-      setFeatures([]);
-      setPlanAccess([]);
-      setUserOverrides([]);
-      setUserPlan("starter");
-      setLoading(false);
+      if (!authLoading) {
+        setState({
+          features: [],
+          planAccess: [],
+          userOverrides: [],
+          userPlan: "starter",
+          loading: false,
+        });
+      }
       return;
     }
 
     const cached = featureFlagsCache.get(userId);
     if (cached) {
       applyState(cached);
-      setLoading(false);
       void loadData({ silent: true });
       return;
     }
 
     void loadData();
-  }, [applyState, loadData, userId]);
+  }, [applyState, loadData, userId, authLoading]);
 
   // Build lookup maps
   const featureMap = useMemo(() => {
@@ -181,31 +197,23 @@ export function useFeatureFlags() {
   const checkFeature = useCallback(
     (featureKey: string): FeatureCheck => {
       const flag = featureMap.get(featureKey);
+      const override = overrideMap.get(featureKey);
 
-      // Feature doesn't exist in flags — allow by default (backwards compat)
-      if (!flag) return { available: true, status: "available" };
+      // Feature doesn't exist in flags — block by default if loading, allow for backwards compat if loaded
+      if (!flag) {
+        return {
+          available: !loading,
+          status: loading ? "development" : "available"
+        };
+      }
 
       // "disabled" is an absolute block — no override can bypass it
       if (flag.status === "disabled") {
         return { available: false, status: "disabled", message: "Recurso desativado." };
       }
 
-      // Check per-user override BEFORE global status (allows admin to grant
-      // access to specific users even when feature is in development/maintenance)
-      const override = overrideMap.get(featureKey);
-      if (override) {
-        if (override.is_enabled) {
-          return { available: true, status: "available" };
-        } else {
-          return {
-            available: false,
-            status: "plan_blocked",
-            message: "Esse recurso faz parte do plano Professional. Faça upgrade e desbloqueie ferramentas avançadas de estratégia e execução.",
-          };
-        }
-      }
-
-      // No override — check global status
+      // NOVO: Status de desenvolvimento/manutenção tem precedência sobre o override
+      // para garantir que a tela de "Em desenvolvimento" apareça mesmo para admins
       if (flag.status === "development") {
         return {
           available: false,
@@ -228,6 +236,19 @@ export function useFeatureFlags() {
         };
       }
 
+      // Check per-user override (allows bypassing plan restrictions)
+      if (override) {
+        if (override.is_enabled) {
+          return { available: true, status: "available" };
+        } else {
+          return {
+            available: false,
+            status: "plan_blocked",
+            message: "Esse recurso faz parte do plano Professional. Faça upgrade e desbloqueie ferramentas avançadas de estratégia e execução.",
+          };
+        }
+      }
+
       // Feature is active — check plan access
       const pa = planAccessMap.get(featureKey);
       if (pa && !pa.is_enabled) {
@@ -240,7 +261,7 @@ export function useFeatureFlags() {
 
       return { available: true, status: "available" };
     },
-    [featureMap, planAccessMap, overrideMap]
+    [featureMap, planAccessMap, overrideMap, loading]
   );
 
   /**
@@ -251,12 +272,32 @@ export function useFeatureFlags() {
     [checkFeature]
   );
 
+  /**
+   * Determine if a feature should be visible in navigation
+   * Priority: Always show if active, OR if user has an override (even if blocked by status)
+   */
+  const shouldShowInSidebar = useCallback(
+    (featureKey: string): boolean => {
+      const flag = featureMap.get(featureKey);
+      const override = overrideMap.get(featureKey);
+
+      if (!flag) return true; // Default to visible for unknown features
+      if (flag.status === "active") return true;
+      if (flag.status === "disabled") return !!override; // Only show disabled features if user has override
+
+      // For development/maintenance/deprecated: show if user has override
+      return !!override;
+    },
+    [featureMap, overrideMap]
+  );
+
   return {
     features,
     userPlan,
-    loading,
+    loading: loading || authLoading,
     checkFeature,
     isFeatureAvailable,
+    shouldShowInSidebar,
     refresh: () => loadData({ force: true }),
   };
 }

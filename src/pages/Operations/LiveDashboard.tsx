@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import {
   Activity,
@@ -16,6 +17,7 @@ import {
   ArrowLeft,
   BarChart3,
   Calculator,
+  CalendarDays,
   CheckCircle2,
   CircleGauge,
   Clock3,
@@ -43,7 +45,7 @@ import {
   Wallet,
 } from "lucide-react";
 import type { CampaignChannel, CampaignMetrics, CampaignStatus } from "@/lib/operationalTypes";
-import { CAMPAIGN_STATUS_LABELS, CHANNEL_LABELS } from "@/lib/operationalTypes";
+import { CAMPAIGN_STATUS_LABELS, CHANNEL_LABELS, MONTH_LABELS } from "@/lib/operationalTypes";
 
 type CampaignRow = {
   id: string;
@@ -54,6 +56,8 @@ type CampaignRow = {
   project_name: string;
   budget_total: number;
   budget_spent: number;
+  start_date: string | null;
+  end_date: string | null;
 };
 
 type MetricsSummaryRow = {
@@ -107,9 +111,47 @@ type InjectBenchmark = {
 
 export default function OperationsLiveDashboard() {
   const { user, loading: authLoading } = useAuth();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const projectId = searchParams.get("projectId");
   const viewId = searchParams.get("viewId");
+  const periodParam = searchParams.get("period");
+
+  // Derive selected month/year from period param or default to current month
+  const { selectedMonth, selectedYear } = useMemo(() => {
+    if (periodParam) {
+      const parts = periodParam.split('-');
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      if (!isNaN(y) && !isNaN(m)) return { selectedMonth: m, selectedYear: y };
+    }
+    const now = new Date();
+    return { selectedMonth: now.getMonth() + 1, selectedYear: now.getFullYear() };
+  }, [periodParam]);
+
+  const setPeriod = (val: string) => {
+    setSearchParams((prev) => {
+      prev.set("period", val);
+      return prev;
+    });
+  };
+
+  // Generate period options (same as OperationsFilters)
+  const periodOptions = useMemo(() => {
+    const opts: { value: string; label: string }[] = [];
+    const d = new Date();
+    d.setDate(15);
+    for (let i = 0; i < 24; i++) {
+      const month = d.getMonth() + 1;
+      const year = d.getFullYear();
+      const value = `${year}-${String(month).padStart(2, '0')}`;
+      let label = `${MONTH_LABELS[month]} ${year}`;
+      if (i === 0) label = `Este mês (${MONTH_LABELS[month]})`;
+      else if (i === 1) label = `Mês passado (${MONTH_LABELS[month]})`;
+      opts.push({ value, label });
+      d.setMonth(d.getMonth() - 1);
+    }
+    return opts;
+  }, []);
 
   const [campaigns, setCampaigns] = useState<CampaignRow[]>([]);
   const [summariesByCampaign, setSummariesByCampaign] = useState<Record<string, MetricsSummaryRow>>({});
@@ -172,7 +214,7 @@ export default function OperationsLiveDashboard() {
       // 1. Prepare Independent Queries
       let campaignsQuery = (supabase as any)
         .from("campaigns")
-        .select("id,name,channel,status,project_id,budget_total,budget_spent,projects!inner(name)")
+        .select("id,name,channel,status,project_id,budget_total,budget_spent,start_date,end_date,projects!inner(name)")
         .eq("user_id", currentUserId)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false });
@@ -222,6 +264,8 @@ export default function OperationsLiveDashboard() {
         project_name: campaign.projects?.name || "Sem projeto",
         budget_total: Number(campaign.budget_total) || 0,
         budget_spent: Number(campaign.budget_spent) || 0,
+        start_date: campaign.start_date || null,
+        end_date: campaign.end_date || null,
       }));
       setCampaigns(mappedCampaigns);
 
@@ -367,10 +411,23 @@ export default function OperationsLiveDashboard() {
     return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
   }, []);
 
+  // Filter campaigns by selected period overlap (same logic as Operations page)
+  const filteredCampaigns = useMemo(() => {
+    const monthStart = new Date(selectedYear, selectedMonth - 1, 1);
+    const monthEnd = new Date(selectedYear, selectedMonth, 0);
+
+    return campaigns.filter((c) => {
+      if (!c.start_date) return true; // no dates = always visible
+      const cStart = new Date(c.start_date + "T00:00:00");
+      const cEnd = c.end_date ? new Date(c.end_date + "T23:59:59") : new Date(2100, 0, 1);
+      return cStart <= monthEnd && cEnd >= monthStart;
+    });
+  }, [campaigns, selectedMonth, selectedYear]);
+
   const projectName = useMemo(() => {
-    if (campaigns.length === 0) return projectId ? "Projeto selecionado" : "Todos os projetos";
-    return projectId ? campaigns[0].project_name : "Todos os projetos";
-  }, [campaigns, projectId]);
+    if (filteredCampaigns.length === 0) return projectId ? "Projeto selecionado" : "Todos os projetos";
+    return projectId ? filteredCampaigns[0].project_name : "Todos os projetos";
+  }, [filteredCampaigns, projectId]);
 
   const totals = useMemo(() => {
     let budgetTotal = 0;
@@ -385,7 +442,7 @@ export default function OperationsLiveDashboard() {
     let manualLtv = 0;
     let manualAvgTicket = 0;
 
-    campaigns.forEach((campaign) => {
+    filteredCampaigns.forEach((campaign) => {
       const summary = summariesByCampaign[campaign.id];
       const latest = latestMetricsByCampaign[campaign.id];
 
@@ -454,27 +511,20 @@ export default function OperationsLiveDashboard() {
       leadsToSales: leads > 0 ? (conversions / leads) * 100 : 0,
       paybackMonths: avgTicket > 0 ? cac / avgTicket : 0,
     };
-  }, [campaigns, summariesByCampaign, latestMetricsByCampaign]);
+  }, [filteredCampaigns, summariesByCampaign, latestMetricsByCampaign]);
 
   const currentMonthBudget = useMemo(() => {
-    const now = new Date();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
-    const rows = allocations.filter((item) => item.month === month && item.year === year);
+    const rows = allocations.filter((item) => item.month === selectedMonth && item.year === selectedYear);
     const planned = rows.reduce((sum, item) => sum + item.planned_budget, 0);
 
     // Na dashboard, a visão ao vivo do atual mês bate sempre com as campanhas (saldo em tempo real)
-    const actual = campaigns.reduce((sum, item) => sum + item.budget_spent, 0);
+    const actual = filteredCampaigns.reduce((sum, item) => sum + item.budget_spent, 0);
 
     const pacing = planned > 0 ? (actual / planned) * 100 : 0;
     return { planned, actual, pacing };
-  }, [allocations, campaigns]);
+  }, [allocations, filteredCampaigns]);
 
   const byChannel = useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
-
     const channelBudgetMap: Record<CampaignChannel, { planned: number; actual: number }> = {
       google: { planned: 0, actual: 0 },
       meta: { planned: 0, actual: 0 },
@@ -483,7 +533,7 @@ export default function OperationsLiveDashboard() {
     };
 
     allocations
-      .filter((item) => item.month === currentMonth && item.year === currentYear)
+      .filter((item) => item.month === selectedMonth && item.year === selectedYear)
       .forEach((item) => {
         const bucket = channelBudgetMap[item.channel];
         if (!bucket) return;
@@ -492,7 +542,7 @@ export default function OperationsLiveDashboard() {
       });
 
     return CHANNEL_ORDER.map((channel) => {
-      const rows = campaigns.filter((campaign) => campaign.channel === channel);
+      const rows = filteredCampaigns.filter((campaign) => campaign.channel === channel);
       const fallbackBudget = rows.reduce((sum, row) => sum + row.budget_total, 0);
       const fallbackCost = rows.reduce((sum, row) => sum + row.budget_spent, 0);
 
@@ -509,7 +559,7 @@ export default function OperationsLiveDashboard() {
         pacing: budget > 0 ? (cost / budget) * 100 : 0,
       };
     }).filter((item) => item.campaigns > 0);
-  }, [campaigns, allocations, summariesByCampaign]);
+  }, [filteredCampaigns, allocations, summariesByCampaign]);
 
 
 
@@ -572,6 +622,21 @@ export default function OperationsLiveDashboard() {
             <div className="flex items-center gap-2 flex-wrap">
               <Link to="/operations"><Button variant="outline" size="sm" className="gap-1.5"><ArrowLeft className="h-4 w-4" />Voltar</Button></Link>
               <Badge variant="secondary" className="text-xs">{projectName}</Badge>
+              <Select value={`${selectedYear}-${String(selectedMonth).padStart(2, '0')}`} onValueChange={setPeriod}>
+                <SelectTrigger className="h-8 min-w-[150px] w-auto text-xs border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
+                    <SelectValue placeholder="Período" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {periodOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {isLive && (user || viewId) ? (
                 <Badge className="gap-1.5 bg-red-600 text-white hover:bg-red-600 animate-pulse">
                   <Radio className="h-3.5 w-3.5" /> AO VIVO
@@ -623,7 +688,7 @@ export default function OperationsLiveDashboard() {
 
         <SectionTitle title="Vendas & Operação" colorClass="text-blue-500" />
         <div className="grid grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7 gap-3">
-          <TopCard icon={Megaphone} title="Campanhas" value={String(campaigns.length)} helper="Total ativas/pausadas" />
+          <TopCard icon={Megaphone} title="Campanhas" value={String(filteredCampaigns.length)} helper="Total ativas/pausadas" />
           <TopCard icon={Eye} title="Impressões" value={formatNumber(totals.impressions)} helper={`CTR geral ${formatPercent(totals.ctr)}`} />
           <TopCard icon={MousePointerClick} title="Cliques" value={formatNumber(totals.clicks)} helper="Tráfego consolidado" />
           <TopCard icon={Target} title="Conversões" value={formatNumber(totals.conversions)} helper="Resultados totais" />
@@ -726,7 +791,7 @@ export default function OperationsLiveDashboard() {
         </div>
 
         <div className="grid grid-cols-1 2xl:grid-cols-2 gap-3">
-          {campaigns.map((campaign) => {
+          {filteredCampaigns.map((campaign) => {
             const summary = summariesByCampaign[campaign.id];
             const latestMetric = latestMetricsByCampaign[campaign.id];
             const budgetPacing = campaign.budget_total > 0 ? ((campaign.budget_spent || 0) / campaign.budget_total) * 100 : 0;
@@ -816,7 +881,7 @@ export default function OperationsLiveDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {campaigns.map((campaign) => {
+                {filteredCampaigns.map((campaign) => {
                   const summary = summariesByCampaign[campaign.id];
                   const statusMeta = getStatusMeta(campaign.status);
                   return (
@@ -854,10 +919,10 @@ export default function OperationsLiveDashboard() {
                 <TableRow className="bg-slate-50/50 dark:bg-slate-900/50">
                   <TableCell colSpan={3} className="text-right font-medium">Total Geral:</TableCell>
                   <TableCell className="text-right font-bold text-blue-600 dark:text-blue-400">
-                    {formatCurrency(campaigns.reduce((sum, c) => sum + (c.budget_total || 0), 0))}
+                    {formatCurrency(filteredCampaigns.reduce((sum, c) => sum + (c.budget_total || 0), 0))}
                   </TableCell>
                   <TableCell className="text-right font-bold text-amber-600 dark:text-amber-500">
-                    {formatCurrency(campaigns.reduce((sum, c) => sum + (c.budget_spent || 0), 0))}
+                    {formatCurrency(filteredCampaigns.reduce((sum, c) => sum + (c.budget_spent || 0), 0))}
                   </TableCell>
                 </TableRow>
               </TableFooter>
@@ -878,7 +943,7 @@ export default function OperationsLiveDashboard() {
               <div className="mt-2 p-4 bg-slate-950 text-slate-300 rounded overflow-auto max-h-96 font-mono text-[10px]">
                 <p className="font-bold text-emerald-400 mb-2">Exemplo Campanha Google (Latest Metrics):</p>
                 <pre>{JSON.stringify(Object.values(latestMetricsByCampaign).find(m => {
-                  const camp = campaigns.find(c => c.id === m.campaign_id);
+                  const camp = filteredCampaigns.find(c => c.id === m.campaign_id);
                   return camp?.channel === 'google';
                 }) || "Nenhuma métrica google encontrada no latestMap", null, 2)}</pre>
 

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -34,6 +35,7 @@ import {
   CAMPAIGN_STATUS_FLOW,
 } from "@/lib/operationalTypes";
 import type { PerformanceAiResult } from "@/lib/aiAnalyzer";
+import { StatusChangeDateDialog } from "./StatusChangeDateDialog";
 import type { Campaign } from "../types";
 
 type ReallocateHighlight = { type: "source" | "target" } | null;
@@ -42,7 +44,7 @@ interface CampaignRowProps {
   campaign: Campaign;
   isExpanded: boolean;
   hasAiResult: boolean;
-  onStatusChange: (id: string, status: CampaignStatus) => void;
+  onStatusChange: (id: string, status: CampaignStatus, date?: string) => void;
   onToggleExpand: (id: string) => void;
   onShowAiDialog: (id: string) => void;
   onEdit: (campaign: Campaign) => void;
@@ -95,6 +97,27 @@ export function CampaignRow({
     : 0;
   const remainingBudget = Math.max(0, (campaign.budget_total || 0) - (campaign.budget_spent || 0));
 
+  // Dialog state for status changes that need a platform date
+  const [pendingStatus, setPendingStatus] = useState<{
+    status: CampaignStatus;
+    dateField: "start_date" | "end_date";
+  } | null>(null);
+
+  const handleStatusClick = (status: CampaignStatus) => {
+    // "active" without existing start_date → ask for start date
+    if (status === "active" && !campaign.start_date) {
+      setPendingStatus({ status, dateField: "start_date" });
+      return;
+    }
+    // "completed" → ask for end date
+    if (status === "completed") {
+      setPendingStatus({ status, dateField: "end_date" });
+      return;
+    }
+    // Other transitions (paused, archived, draft) → proceed directly
+    onStatusChange(campaign.id, status);
+  };
+
   return (
     <div className={`
       relative group transition-all duration-300
@@ -112,9 +135,9 @@ export function CampaignRow({
           </Badge>
           <Badge variant="outline" className={`text-[10px] font-medium border-border flex items-center gap-1.5 px-2 py-0.5 h-5 bg-background`}>
             <div className={`h-1.5 w-1.5 rounded-full ${campaign.status === "active" ? "bg-emerald-500 animate-pulse" :
-                campaign.status === "paused" ? "bg-amber-500" :
-                  campaign.status === "completed" ? "bg-blue-500" :
-                    campaign.status === "archived" ? "bg-red-500" : "bg-slate-400"
+              campaign.status === "paused" ? "bg-amber-500" :
+                campaign.status === "completed" ? "bg-blue-500" :
+                  campaign.status === "archived" ? "bg-red-500" : "bg-slate-400"
               }`} />
             {CAMPAIGN_STATUS_LABELS[campaign.status]}
           </Badge>
@@ -241,7 +264,7 @@ export function CampaignRow({
               size="icon"
               className="h-8 w-8 text-muted-foreground hover:text-primary"
               title={label}
-              onClick={() => onStatusChange(campaign.id, status)}
+              onClick={() => handleStatusClick(status)}
             >
               <Icon className="h-4 w-4" />
             </Button>
@@ -277,6 +300,21 @@ export function CampaignRow({
         <div className="p-4 border-t bg-muted/5 animate-in slide-in-from-top-2 duration-300">
           {children}
         </div>
+      )}
+
+      {/* Date dialog for status changes */}
+      {pendingStatus && (
+        <StatusChangeDateDialog
+          open={!!pendingStatus}
+          campaignName={campaign.name}
+          targetStatus={pendingStatus.status}
+          dateField={pendingStatus.dateField}
+          onConfirm={(status, date) => {
+            onStatusChange(campaign.id, status, date);
+            setPendingStatus(null);
+          }}
+          onCancel={() => setPendingStatus(null)}
+        />
       )}
     </div>
   );

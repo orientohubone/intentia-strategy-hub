@@ -133,7 +133,7 @@ export function CampaignMetricsList({ metrics, loading, onEdit, onDelete }: Camp
               {/* Expanded details */}
               {isExpanded && (
                 <div className="border-t px-3 py-2.5 bg-muted/30">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-1.5 text-xs">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-1.5 text-xs">
                     <MetricRow label="Impressões" value={formatNumber(m.impressions)} show={m.impressions > 0} />
                     <MetricRow label="Cliques" value={formatNumber(m.clicks)} show={m.clicks > 0} />
                     <MetricRow label="CTR" value={`${m.ctr}%`} show={m.ctr > 0} />

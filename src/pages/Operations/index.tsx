@@ -298,7 +298,7 @@ export default function Operations() {
                             variant="outline"
                             size="sm"
                             className="h-8 gap-1.5 text-xs"
-                            onClick={() => navigate(`/operations/live-dashboard?projectId=${group.projectId}`)}
+                            onClick={() => navigate(`/operations/live-dashboard?projectId=${group.projectId}&period=${filterPeriod}`)}
                           >
                             <MonitorUp className="h-3.5 w-3.5" />
                             Dashboard
@@ -325,7 +325,7 @@ export default function Operations() {
 
                         return (
                           <div className="border-t p-4 bg-muted/10 dark:bg-slate-950/20">
-                            <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 gap-6">
                               {byChannel.map(({ channel, items }) => {
                                 const channelBudget = items.reduce((sum, c) => sum + (c.budget_total || 0), 0);
                                 const channelSpent = items.reduce((sum, c) => sum + (c.budget_spent || 0), 0);
@@ -402,7 +402,7 @@ export default function Operations() {
                                     {/* Campaigns Grid within Channel Card */}
                                     {isExpanded && (
                                       <div className="p-4 pt-0 border-t bg-muted/5">
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                                        <div className="grid grid-cols-1 gap-4 mt-4">
                                           {items.map((campaign) => {
                                             const currentEditingMetricId =
                                               metricsFormCampaignId === campaign.id ? editingMetricId : null;
@@ -443,7 +443,7 @@ export default function Operations() {
                                             };
 
                                             return (
-                                              <div key={campaign.id} className={isCampaignExpanded ? "lg:col-span-2 transition-all" : "transition-all"}>
+                                              <div key={campaign.id} className="transition-all">
                                                 <CampaignRow
                                                   campaign={campaign}
                                                   isExpanded={isCampaignExpanded}

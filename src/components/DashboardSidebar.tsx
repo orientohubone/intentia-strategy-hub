@@ -35,6 +35,7 @@ import {
   X,
   Brain,
   PenSquare,
+  TrendingUp,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -108,6 +109,12 @@ const navSections: NavSection[] = [
       { icon: Sparkles, label: "Loja de Apps", href: "/apps" },
     ],
   },
+  {
+    title: "Resultados",
+    items: [
+      { icon: TrendingUp, label: "Resultados", href: "/results", featureKey: "results" },
+    ],
+  },
 ];
 
 const bottomNavItems: NavItem[] = [
@@ -141,7 +148,7 @@ export function DashboardSidebar({ mobileOpen = false, onMobileClose }: Dashboar
   const [loading, setLoading] = useState(true);
   const location = useLocation();
   const { user } = useAuth();
-  const { isFeatureAvailable } = useFeatureFlags();
+  const { isFeatureAvailable, shouldShowInSidebar, loading: flagsLoading } = useFeatureFlags();
   const userId = user?.id;
 
   useEffect(() => {
@@ -335,7 +342,7 @@ export function DashboardSidebar({ mobileOpen = false, onMobileClose }: Dashboar
                         // ── GRUPO com children (ex: SEO) ──────────────────
                         if (item.children) {
                           const visibleChildren = item.children.filter(
-                            (c) => !c.featureKey || isFeatureAvailable(c.featureKey)
+                            (c) => !c.featureKey || shouldShowInSidebar(c.featureKey)
                           );
                           if (visibleChildren.length === 0) return null;
 
@@ -425,9 +432,8 @@ export function DashboardSidebar({ mobileOpen = false, onMobileClose }: Dashboar
                             </div>
                           );
                         }
-
                         // ── ITEM NORMAL ───────────────────────────────────
-                        if (item.featureKey && !isFeatureAvailable(item.featureKey)) return null;
+                        if (item.featureKey && !shouldShowInSidebar(item.featureKey)) return null;
                         const isActive = item.href ? location.pathname === item.href : false;
                         const linkEl = (
                           <Link

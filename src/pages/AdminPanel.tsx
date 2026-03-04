@@ -142,6 +142,7 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: typeof Target; colo
   social: { label: "Marca & Social", icon: Palette, color: "text-pink-500", bg: "bg-pink-500/10" },
   admin: { label: "Configurações", icon: Settings, color: "text-sky-500", bg: "bg-sky-500/10" },
   integrations: { label: "Integrações", icon: Plug, color: "text-blue-500", bg: "bg-blue-500/10" },
+  results: { label: "Resultados", icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
   seo_performance: { label: "SEO & Performance", icon: Gauge, color: "text-cyan-500", bg: "bg-cyan-500/10" },
 };
 
@@ -274,7 +275,7 @@ export default function AdminPanel() {
     const result = await adminUpdateUserPlan(userId, newPlan, admin.cnpj);
     if (result.error) {
       toast.error(result.error);
-      console.error("[admin] Plan change error:", result.error?.message || "Unknown error");
+      console.error("[admin] Plan change error:", result.error || "Unknown error");
     } else {
       toast.success(`Plano atualizado para ${PLAN_CONFIG[newPlan]?.label || newPlan}.`);
       await loadUsers();
@@ -1450,7 +1451,7 @@ export default function AdminPanel() {
                                       <Switch
                                         checked={effectiveAccess}
                                         onCheckedChange={(checked) => toggleUserFeatureOverride(user.user_id, feature.feature_key, checked)}
-                                        disabled={isSavingOverride || !isFeatureActive}
+                                        disabled={isSavingOverride || feature.status === "disabled"}
                                         className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-red-500/60 flex-shrink-0 scale-75"
                                       />
 

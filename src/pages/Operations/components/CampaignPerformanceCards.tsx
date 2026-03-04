@@ -70,13 +70,13 @@ interface KpiCardProps {
 
 function KpiCard({ label, value, icon: Icon, color, subtitle }: KpiCardProps) {
   return (
-    <div className="bg-background border rounded-lg p-3 space-y-1">
+    <div className="bg-background border rounded-lg p-3 space-y-1 min-w-0">
       <div className="flex items-center gap-1.5">
-        <Icon className={`h-3.5 w-3.5 ${color}`} />
-        <span className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">{label}</span>
+        <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${color}`} />
+        <span className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider truncate">{label}</span>
       </div>
-      <p className="text-base sm:text-lg font-bold">{value}</p>
-      {subtitle && <p className="text-[11px] text-muted-foreground">{subtitle}</p>}
+      <p className="text-base sm:text-lg font-bold truncate">{value}</p>
+      {subtitle && <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>}
     </div>
   );
 }
@@ -256,7 +256,7 @@ export function CampaignPerformanceCards({ summary, channel, campaignName }: Cam
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
         {allCards.map((card) => (
           <KpiCard key={card.label} {...card} />
         ))}

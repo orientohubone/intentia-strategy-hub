@@ -63,7 +63,7 @@ export function FeatureGate({
         </DashboardLayout>
       );
     }
-    return <>{children}</>;
+    return null;
   }
 
   const check = checkFeature(featureKey);
@@ -73,7 +73,7 @@ export function FeatureGate({
       ...check,
       message: check.message || "Este recurso não está disponível no momento."
     };
-    
+
     if (withLayout) {
       return (
         <DashboardLayout>

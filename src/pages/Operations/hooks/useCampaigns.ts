@@ -239,15 +239,15 @@ export function useCampaigns() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: CampaignStatus) => {
+  const handleStatusChange = async (id: string, newStatus: CampaignStatus, date?: string) => {
     if (!userId) return;
     try {
       const updateData: any = { status: newStatus };
       if (newStatus === "active" && !campaigns.find((c) => c.id === id)?.start_date) {
-        updateData.start_date = new Date().toISOString().split("T")[0];
+        updateData.start_date = date || new Date().toISOString().split("T")[0];
       }
       if (newStatus === "completed") {
-        updateData.end_date = new Date().toISOString().split("T")[0];
+        updateData.end_date = date || new Date().toISOString().split("T")[0];
       }
 
       const { error } = await (supabase as any)

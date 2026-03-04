@@ -18,6 +18,7 @@ import TacticalPlan from "./pages/TacticalPlan";
 import Alerts from "./pages/Alerts";
 import Operations from "./pages/Operations";
 import Reports from "./pages/Reports";
+import Results from "./pages/Results";
 import Pricing from "./pages/Pricing";
 import Auth from "./pages/Auth";
 import About from "./pages/About";
@@ -79,249 +80,257 @@ const queryClient = new QueryClient();
 const App = () => {
   return (
     <HelmetProvider>
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<ForceLightMode><Index /></ForceLightMode>} />
-            <Route path="/precos" element={<ForceLightMode><Pricing /></ForceLightMode>} />
-            <Route path="/auth" element={<ForceLightMode><Auth /></ForceLightMode>} />
-            <Route path="/assinar" element={<ForceLightMode><Subscribe /></ForceLightMode>} />
-            <Route path="/sobre" element={<ForceLightMode><About /></ForceLightMode>} />
-            <Route path="/cases" element={<ForceLightMode><Cases /></ForceLightMode>} />
-            <Route path="/blog" element={<ForceLightMode><Blog /></ForceLightMode>} />
-            <Route path="/blog/:slug" element={<ForceLightMode><BlogPost /></ForceLightMode>} />
-            <Route path="/contato" element={<ForceLightMode><Contact /></ForceLightMode>} />
-            <Route path="/politica-de-privacidade" element={<ForceLightMode><PrivacyPolicy /></ForceLightMode>} />
-            <Route path="/termos-de-servico" element={<ForceLightMode><TermsOfService /></ForceLightMode>} />
-            <Route path="/politica-de-cookies" element={<ForceLightMode><CookiePolicy /></ForceLightMode>} />
-            <Route path="/exclusao-de-dados" element={<ForceLightMode><DataDeletion /></ForceLightMode>} />
-            <Route path="/brand" element={<ForceLightMode><BrandGuide /></ForceLightMode>} />
-            <Route path="/brand/posts" element={<ForceLightMode><BrandPosts /></ForceLightMode>} />
-            <Route path="/brand/google-ads-doc" element={<ForceLightMode><GoogleAdsDesignDoc /></ForceLightMode>} />
-            <Route path="/seguranca" element={<ForceLightMode><Security /></ForceLightMode>} />
-            <Route path="/status" element={<ForceLightMode><Status /></ForceLightMode>} />
-            <Route path="/plano-tatico" element={<ForceLightMode><TacticalPlanPage /></ForceLightMode>} />
-            <Route path="/comparar" element={<ForceLightMode><Comparar /></ForceLightMode>} />
-            <Route path="/changelog" element={<ForceLightMode><Changelog /></ForceLightMode>} />
-            <Route path="/diagnostico-url" element={<ForceLightMode><FeatureDiagnostico /></ForceLightMode>} />
-            <Route path="/analise-ia" element={<ForceLightMode><FeatureAnaliseIA /></ForceLightMode>} />
-            <Route path="/benchmark-competitivo" element={<ForceLightMode><FeatureBenchmark /></ForceLightMode>} />
-            <Route path="/score-canal" element={<ForceLightMode><FeatureScoreCanal /></ForceLightMode>} />
-            <Route path="/alertas-insights" element={<ForceLightMode><FeatureInsights /></ForceLightMode>} />
-            <Route path="/dados-estruturados" element={<ForceLightMode><FeatureDadosEstruturados /></ForceLightMode>} />
-            <Route path="/gestao-campanhas" element={<ForceLightMode><FeatureGestaoCampanhas /></ForceLightMode>} />
-            <Route path="/gestao-budget" element={<ForceLightMode><FeatureGestaoBudget /></ForceLightMode>} />
-            <Route path="/monitoramento-seo-inteligente" element={<ForceLightMode><FeatureSeoMonitoring /></ForceLightMode>} />
-            <Route path="/relatorios" element={<ForceLightMode><FeatureRelatorios /></ForceLightMode>} />
-            <Route path="/tia" element={<TiaPage />} />
-            <Route path="/verify-test" element={<ForceLightMode><VerifyTest /></ForceLightMode>} />
-            <Route path="/verify-success" element={<ForceLightMode><VerifySuccess /></ForceLightMode>} />
-            <Route
-              path="/home"
-              element={
-                <ProtectedRoute>
-                  <Home />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/projects"
-              element={
-                <ProtectedRoute>
-                  <Projects />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/insights"
-              element={
-                <ProtectedRoute>
-                  <Insights />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/audiences"
-              element={
-                <ProtectedRoute>
-                  <Audiences />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard/audiences/refinar-icp"
-              element={
-                <ProtectedRoute>
-                  <RefinarIcp />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard/audiences/plano-comunicacao"
-              element={
-                <ProtectedRoute>
-                  <PlanoComunicacao />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/benchmark"
-              element={
-                <ProtectedRoute>
-                  <Benchmark />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/tactical"
-              element={
-                <ProtectedRoute>
-                  <TacticalPlan />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/checkout"
-              element={
-                <ProtectedRoute>
-                  <Checkout />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/alertas"
-              element={
-                <ProtectedRoute>
-                  <Alerts />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/operations"
-              element={
-                <ProtectedRoute>
-                  <Operations />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/operations/live-dashboard" element={<OperationsLiveDashboard />} />
-            <Route
-              path="/reports"
-              element={
-                <ProtectedRoute>
-                  <FeatureGate featureKey="reports_feature">
-                    <Reports />
-                  </FeatureGate>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/help"
-              element={
-                <ProtectedRoute>
-                  <Help />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/support"
-              element={
-                <ProtectedRoute>
-                  <Support />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/integracoes"
-              element={
-                <ProtectedRoute>
-                  <Integrations />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/apps"
-              element={
-                <ProtectedRoute>
-                  <AppStore />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/seo-geo"
-              element={
-                <ProtectedRoute>
-                  <FeatureGate featureKey="seo_analysis">
-                    <SeoGeo />
-                  </FeatureGate>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/seo-monitoring"
-              element={
-                <ProtectedRoute>
-                  <FeatureGate featureKey="performance_monitoring">
-                    <SeoMonitoring />
-                  </FeatureGate>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/heuristic-analysis"
-              element={
-                <ProtectedRoute>
-                  <HeuristicAnalysisHub />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/heuristic-analysis/:projectId"
-              element={
-                <ProtectedRoute>
-                  <HeuristicAnalysisDetail />
-                </ProtectedRoute>
-              }
-            />
-            {/* Admin Routes */}
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route
-              path="/admin"
-              element={
-                <AdminProtectedRoute>
-                  <AdminPanel />
-                </AdminProtectedRoute>
-              }
-            />
-            <Route path="/oauth/callback" element={<OAuthCallback />} />
-            <Route path="/api/status-rss" element={<StatusRssFallback />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<ForceLightMode><NotFound /></ForceLightMode>} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<ForceLightMode><Index /></ForceLightMode>} />
+                <Route path="/precos" element={<ForceLightMode><Pricing /></ForceLightMode>} />
+                <Route path="/auth" element={<ForceLightMode><Auth /></ForceLightMode>} />
+                <Route path="/assinar" element={<ForceLightMode><Subscribe /></ForceLightMode>} />
+                <Route path="/sobre" element={<ForceLightMode><About /></ForceLightMode>} />
+                <Route path="/cases" element={<ForceLightMode><Cases /></ForceLightMode>} />
+                <Route path="/blog" element={<ForceLightMode><Blog /></ForceLightMode>} />
+                <Route path="/blog/:slug" element={<ForceLightMode><BlogPost /></ForceLightMode>} />
+                <Route path="/contato" element={<ForceLightMode><Contact /></ForceLightMode>} />
+                <Route path="/politica-de-privacidade" element={<ForceLightMode><PrivacyPolicy /></ForceLightMode>} />
+                <Route path="/termos-de-servico" element={<ForceLightMode><TermsOfService /></ForceLightMode>} />
+                <Route path="/politica-de-cookies" element={<ForceLightMode><CookiePolicy /></ForceLightMode>} />
+                <Route path="/exclusao-de-dados" element={<ForceLightMode><DataDeletion /></ForceLightMode>} />
+                <Route path="/brand" element={<ForceLightMode><BrandGuide /></ForceLightMode>} />
+                <Route path="/brand/posts" element={<ForceLightMode><BrandPosts /></ForceLightMode>} />
+                <Route path="/brand/google-ads-doc" element={<ForceLightMode><GoogleAdsDesignDoc /></ForceLightMode>} />
+                <Route path="/seguranca" element={<ForceLightMode><Security /></ForceLightMode>} />
+                <Route path="/status" element={<ForceLightMode><Status /></ForceLightMode>} />
+                <Route path="/plano-tatico" element={<ForceLightMode><TacticalPlanPage /></ForceLightMode>} />
+                <Route path="/comparar" element={<ForceLightMode><Comparar /></ForceLightMode>} />
+                <Route path="/changelog" element={<ForceLightMode><Changelog /></ForceLightMode>} />
+                <Route path="/diagnostico-url" element={<ForceLightMode><FeatureDiagnostico /></ForceLightMode>} />
+                <Route path="/analise-ia" element={<ForceLightMode><FeatureAnaliseIA /></ForceLightMode>} />
+                <Route path="/benchmark-competitivo" element={<ForceLightMode><FeatureBenchmark /></ForceLightMode>} />
+                <Route path="/score-canal" element={<ForceLightMode><FeatureScoreCanal /></ForceLightMode>} />
+                <Route path="/alertas-insights" element={<ForceLightMode><FeatureInsights /></ForceLightMode>} />
+                <Route path="/dados-estruturados" element={<ForceLightMode><FeatureDadosEstruturados /></ForceLightMode>} />
+                <Route path="/gestao-campanhas" element={<ForceLightMode><FeatureGestaoCampanhas /></ForceLightMode>} />
+                <Route path="/gestao-budget" element={<ForceLightMode><FeatureGestaoBudget /></ForceLightMode>} />
+                <Route path="/monitoramento-seo-inteligente" element={<ForceLightMode><FeatureSeoMonitoring /></ForceLightMode>} />
+                <Route path="/relatorios" element={<ForceLightMode><FeatureRelatorios /></ForceLightMode>} />
+                <Route path="/tia" element={<TiaPage />} />
+                <Route path="/verify-test" element={<ForceLightMode><VerifyTest /></ForceLightMode>} />
+                <Route path="/verify-success" element={<ForceLightMode><VerifySuccess /></ForceLightMode>} />
+                <Route
+                  path="/home"
+                  element={
+                    <ProtectedRoute>
+                      <Home />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/projects"
+                  element={
+                    <ProtectedRoute>
+                      <Projects />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/insights"
+                  element={
+                    <ProtectedRoute>
+                      <Insights />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/audiences"
+                  element={
+                    <ProtectedRoute>
+                      <Audiences />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/audiences/refinar-icp"
+                  element={
+                    <ProtectedRoute>
+                      <RefinarIcp />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/audiences/plano-comunicacao"
+                  element={
+                    <ProtectedRoute>
+                      <PlanoComunicacao />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/benchmark"
+                  element={
+                    <ProtectedRoute>
+                      <Benchmark />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/tactical"
+                  element={
+                    <ProtectedRoute>
+                      <TacticalPlan />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/checkout"
+                  element={
+                    <ProtectedRoute>
+                      <Checkout />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/alertas"
+                  element={
+                    <ProtectedRoute>
+                      <Alerts />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/operations"
+                  element={
+                    <ProtectedRoute>
+                      <Operations />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/results"
+                  element={
+                    <ProtectedRoute>
+                      <Results />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/operations/live-dashboard" element={<OperationsLiveDashboard />} />
+                <Route
+                  path="/reports"
+                  element={
+                    <ProtectedRoute>
+                      <FeatureGate featureKey="reports_feature">
+                        <Reports />
+                      </FeatureGate>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/help"
+                  element={
+                    <ProtectedRoute>
+                      <Help />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/support"
+                  element={
+                    <ProtectedRoute>
+                      <Support />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/integracoes"
+                  element={
+                    <ProtectedRoute>
+                      <Integrations />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/apps"
+                  element={
+                    <ProtectedRoute>
+                      <AppStore />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/seo-geo"
+                  element={
+                    <ProtectedRoute>
+                      <FeatureGate featureKey="seo_analysis">
+                        <SeoGeo />
+                      </FeatureGate>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/seo-monitoring"
+                  element={
+                    <ProtectedRoute>
+                      <FeatureGate featureKey="performance_monitoring">
+                        <SeoMonitoring />
+                      </FeatureGate>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/heuristic-analysis"
+                  element={
+                    <ProtectedRoute>
+                      <HeuristicAnalysisHub />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/heuristic-analysis/:projectId"
+                  element={
+                    <ProtectedRoute>
+                      <HeuristicAnalysisDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                {/* Admin Routes */}
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminProtectedRoute>
+                      <AdminPanel />
+                    </AdminProtectedRoute>
+                  }
+                />
+                <Route path="/oauth/callback" element={<OAuthCallback />} />
+                <Route path="/api/status-rss" element={<StatusRssFallback />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<ForceLightMode><NotFound /></ForceLightMode>} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
     </HelmetProvider>
   );
 };
