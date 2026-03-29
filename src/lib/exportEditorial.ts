@@ -97,7 +97,7 @@ export function exportEditorialToPdf(title: string, lines: EditorialLine[]) {
           resolve();
         } catch (err) {
           cleanup();
-          reject(err as any);
+          reject(err instanceof Error ? err : new Error(String(err)));
         }
       }, 150);
     };

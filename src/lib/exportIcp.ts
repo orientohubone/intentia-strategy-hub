@@ -136,7 +136,7 @@ export async function exportIcpToPdf(audienceName: string, enrichment: IcpEnrich
           resolve();
         } catch (err) {
           cleanup();
-          reject(err as any);
+          reject(err instanceof Error ? err : new Error(String(err)));
         }
       }, 150);
     };
