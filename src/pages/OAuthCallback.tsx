@@ -12,8 +12,11 @@ export default function OAuthCallback() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const error = searchParams.get("error");
-    const errorDescription = searchParams.get("error_description");
+    // Alguns provedores retornam erros via fragment/hash em vez de query string
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+
+    const error = searchParams.get("error") || hashParams.get("error");
+    const errorDescription = searchParams.get("error_description") || hashParams.get("error_description");
     const rawProvider = searchParams.get("provider");
     const connStatus = searchParams.get("status");
     const account = searchParams.get("account");
@@ -22,29 +25,16 @@ export default function OAuthCallback() {
     const isValidProvider = rawProvider && Object.keys(PROVIDER_CONFIGS).includes(rawProvider);
     const provider = isValidProvider ? (rawProvider as AdProvider) : null;
 
-    // Função para sanitizar texto simples para evitar XSS ao injetar no DOM via toast/message
-    const escapeHTML = (str: string) => {
-      return str.replace(/[&<>'"]/g,
-        tag => ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            "'": '&#39;',
-            '"': '&quot;'
-          }[tag] || tag)
-      );
-    };
-
+    // React already escapes text content correctly, but we ensure string coercion
     if (error) {
       setStatus("error");
       const rawErrorText = String(errorDescription || error || "Erro desconhecido na autenticação.");
-      const cleanError = escapeHTML(rawErrorText);
-      setMessage(cleanError);
-      toast.error(`Erro na conexão: ${cleanError}`);
+      setMessage(rawErrorText);
+      toast.error(`Erro na conexão: ${rawErrorText}`);
     } else if (connStatus === "connected" && provider) {
       setStatus("success");
       const providerName = PROVIDER_CONFIGS[provider].name;
-      const cleanAccount = account ? escapeHTML(String(account)) : "";
+      const cleanAccount = account ? String(account) : "";
       setMessage(`${providerName} conectado com sucesso!${cleanAccount ? ` Conta: ${cleanAccount}` : ""}`);
       toast.success(`${providerName} conectado com sucesso!`);
     } else {
