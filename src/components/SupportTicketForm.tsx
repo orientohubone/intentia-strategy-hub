@@ -90,7 +90,9 @@ export function SupportTicketForm({ onSuccess, onCancel }: SupportTicketFormProp
       if (formData.attachments && formData.attachments.length > 0) {
         for (const file of formData.attachments) {
           const fileExt = file.name.split('.').pop();
-          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          // SECURITY: Use crypto.randomUUID() instead of Math.random() for secure file upload names
+          // to prevent predictability vulnerabilities.
+          const fileName = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${fileExt}`;
           
           const { error: uploadError } = await supabase.storage
             .from('support-attachments')
