@@ -15,12 +15,16 @@ export default function OAuthCallback() {
     const error = searchParams.get("error");
     const errorDescription = searchParams.get("error_description");
     const rawProvider = searchParams.get("provider");
-    const connStatus = searchParams.get("status");
+    const rawConnStatus = searchParams.get("status");
     const account = searchParams.get("account");
 
     // Validação estrita do provider para evitar Open Redirect/XSS via payload de provider inválido
     const isValidProvider = rawProvider && Object.keys(PROVIDER_CONFIGS).includes(rawProvider);
     const provider = isValidProvider ? (rawProvider as AdProvider) : null;
+
+    // Strict validation for status to prevent injection
+    const allowedStatuses = ["connected", "error"];
+    const connStatus = allowedStatuses.includes(rawConnStatus || "") ? rawConnStatus : null;
 
     // Função para sanitizar texto simples para evitar XSS ao injetar no DOM via toast/message
     const escapeHTML = (str: string) => {
