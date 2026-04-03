@@ -191,6 +191,7 @@ export default function CampaignPerformanceAiDialog({
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7"
+                  aria-label={isFullscreen ? "Minimizar" : "Tela cheia"}
                   onClick={() => setIsFullscreen(!isFullscreen)}
                 >
                   {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Expand className="h-4 w-4" />}

@@ -65,10 +65,10 @@ export default function CampaignCalendar({ campaigns, filterChannel = "all", fil
       {/* Header */}
       <div className="flex items-center justify-between bg-card p-3 rounded-xl border border-border shadow-sm">
         <div className="flex items-center gap-1.5">
-          <Button variant="outline" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-colors" onClick={prevMonth}>
+          <Button variant="outline" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-colors" onClick={prevMonth} aria-label="Mês anterior">
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-colors" onClick={nextMonth}>
+          <Button variant="outline" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-colors" onClick={nextMonth} aria-label="Próximo mês">
             <ChevronRight className="h-4 w-4" />
           </Button>
           <div className="flex items-center px-4 h-9 rounded-lg bg-primary/10 ml-2 border border-primary/20 shadow-[0_0_15px_-5px_rgba(var(--primary),0.2)]">

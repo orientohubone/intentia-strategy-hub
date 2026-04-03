@@ -132,6 +132,7 @@ export function CampaignExpandedMetrics({
             className="h-8 w-8 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 flex-shrink-0"
             disabled={aiAnalyzing === campaign.id}
             title={aiAnalyzing === campaign.id ? "Analisando performance..." : "Executar análise de performance por IA"}
+            aria-label={aiAnalyzing === campaign.id ? "Analisando performance..." : "Executar análise de performance por IA"}
             onClick={() => onAiAnalysis(campaign)}
           >
             {aiAnalyzing === campaign.id ? (

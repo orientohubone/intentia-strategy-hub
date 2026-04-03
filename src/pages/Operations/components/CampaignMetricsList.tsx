@@ -92,6 +92,7 @@ export function CampaignMetricsList({ metrics, loading, onEdit, onDelete }: Camp
                     size="icon"
                     className="h-7 w-7"
                     title="Editar"
+                    aria-label="Editar métrica"
                     onClick={(e) => { e.stopPropagation(); onEdit(m); }}
                   >
                     <Edit2 className="h-3.5 w-3.5" />
@@ -104,6 +105,7 @@ export function CampaignMetricsList({ metrics, loading, onEdit, onDelete }: Camp
                         size="icon"
                         className="h-7 w-7 text-destructive hover:text-destructive"
                         title="Excluir"
+                        aria-label="Excluir métrica"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Trash2 className="h-3.5 w-3.5" />

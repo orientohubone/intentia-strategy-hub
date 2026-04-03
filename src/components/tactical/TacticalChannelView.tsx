@@ -797,7 +797,7 @@ export function TacticalChannelView({ channel, tacticalPlanId, channelScore, pro
                   }}
                 />
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeAdGroup(i)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeAdGroup(i)} aria-label="Remover grupo de anúncio">
                 <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
               </Button>
             </div>
@@ -828,7 +828,7 @@ export function TacticalChannelView({ channel, tacticalPlanId, channelScore, pro
                     <p className="text-sm font-semibold text-foreground">{fw.framework_name}</p>
                     {fwType && <p className="text-xs text-muted-foreground">{fwType.description}</p>}
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeCopyFramework(i)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeCopyFramework(i)} aria-label="Remover framework de copy">
                     <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                   </Button>
                 </div>
@@ -932,7 +932,7 @@ export function TacticalChannelView({ channel, tacticalPlanId, channelScore, pro
                     <Badge className="text-[10px] bg-primary/10 text-primary border-primary/30">Vinculado</Badge>
                   )}
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeSegmentation(i)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeSegmentation(i)} aria-label="Remover segmentação">
                   <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                 </Button>
               </div>
@@ -1062,7 +1062,7 @@ export function TacticalChannelView({ channel, tacticalPlanId, channelScore, pro
                   }}
                 />
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeMetric(i)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeMetric(i)} aria-label="Remover métrica">
                 <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
               </Button>
             </div>
@@ -1102,7 +1102,7 @@ export function TacticalChannelView({ channel, tacticalPlanId, channelScore, pro
                     <option value="medium">Média</option>
                     <option value="low">Baixa</option>
                   </select>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeTestPlan(i)}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeTestPlan(i)} aria-label="Remover teste">
                     <Trash2 className="h-3 w-3 text-muted-foreground" />
                   </Button>
                 </div>

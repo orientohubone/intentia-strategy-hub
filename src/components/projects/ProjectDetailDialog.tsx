@@ -169,6 +169,7 @@ export function ProjectDetailDialog({
                               className="h-8 w-8 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 flex-shrink-0"
                               disabled={project.status !== "completed" || analyzing || aiAnalyzing === project.id || !canAiAnalysis}
                               title={!canAiAnalysis ? "Análise por IA indisponível no seu plano" : project.status !== "completed" ? "Aguardando conclusão da análise heurística" : "Executar análise por IA"}
+                              aria-label={!canAiAnalysis ? "Análise por IA indisponível no seu plano" : project.status !== "completed" ? "Aguardando conclusão da análise heurística" : "Executar análise por IA"}
                               onClick={() => handleAiAnalysis(project.id)}
                             >
                               {aiAnalyzing === project.id ? (
@@ -424,7 +425,7 @@ export function ProjectDetailDialog({
                               <div className="sm:hidden">
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
-                                    <Button size="icon" variant="ghost" className="h-7 w-7">
+                                    <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Opções de download">
                                       <Download className="h-3.5 w-3.5" />
                                     </Button>
                                   </DropdownMenuTrigger>

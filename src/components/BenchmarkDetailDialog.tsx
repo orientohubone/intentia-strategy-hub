@@ -377,6 +377,7 @@ export function BenchmarkDetailDialog({
                       className="h-8 w-8 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 flex-shrink-0"
                       disabled={aiAnalyzing === b.id}
                       title="Enriquecer benchmark com IA"
+                      aria-label="Enriquecer benchmark com IA"
                       onClick={() => onAiAnalysis?.(b.id)}
                     >
                       {aiAnalyzing === b.id ? (
