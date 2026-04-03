@@ -1072,6 +1072,7 @@ export function FloatingChat() {
                       className="h-9 w-9 shrink-0 rounded-full"
                       onClick={sendTiaMessage}
                       disabled={tiaLoading || !tiaInput.trim()}
+                      aria-label="Enviar mensagem para Tia"
                     >
                       <Send className="h-3.5 w-3.5" />
                     </Button>
@@ -1260,6 +1261,7 @@ export function FloatingChat() {
                   disabled={!newMessage.trim() || sending}
                   size="icon"
                   className="h-9 w-9 shrink-0 rounded-full"
+                  aria-label="Enviar mensagem de suporte"
                 >
                   {sending ? (
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />

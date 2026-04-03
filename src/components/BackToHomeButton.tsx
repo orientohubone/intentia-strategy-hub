@@ -32,7 +32,8 @@ export function BackToHomeButton() {
       className={`fixed top-[4.5rem] sm:top-8 left-4 sm:left-8 z-40 bg-background/80 backdrop-blur-sm border border-border/50 hover:bg-accent transition-all duration-300 hover:scale-110 ${
         visible ? "opacity-60 hover:opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"
       }`}
-      aria-label="Voltar para página inicial"
+      title="Voltar ao início"
+      aria-label="Voltar ao início"
     >
       <ArrowLeft className="h-4 w-4" />
     </Button>

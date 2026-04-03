@@ -246,6 +246,7 @@ export function OnboardingChecklist({ data }: OnboardingChecklistProps) {
                 size="icon"
                 className={`h-7 w-7 ${canScrollLeft ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/20 pointer-events-none"}`}
                 onClick={() => scroll("left")}
+                aria-label="Rolar para a esquerda"
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
               </Button>
@@ -254,6 +255,7 @@ export function OnboardingChecklist({ data }: OnboardingChecklistProps) {
                 size="icon"
                 className={`h-7 w-7 ${canScrollRight ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/20 pointer-events-none"}`}
                 onClick={() => scroll("right")}
+                aria-label="Rolar para a direita"
               >
                 <ChevronRight className="h-3.5 w-3.5" />
               </Button>
@@ -265,6 +267,7 @@ export function OnboardingChecklist({ data }: OnboardingChecklistProps) {
             size="icon"
             className="h-7 w-7 text-muted-foreground hover:text-foreground"
             onClick={toggleCollapsed}
+            aria-label={collapsed ? "Expandir checklist" : "Recolher checklist"}
           >
             {collapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
           </Button>

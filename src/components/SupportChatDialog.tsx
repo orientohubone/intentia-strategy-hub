@@ -156,7 +156,7 @@ export function SupportChatDialog({
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Fechar"
+              aria-label="Fechar diálogo de suporte"
               className="h-8 w-8"
               onClick={() => onOpenChange(false)}
             >
@@ -271,6 +271,7 @@ export function SupportChatDialog({
               disabled={!newMessage.trim() || sendingMessage}
               size="icon"
               className="h-10 w-10 shrink-0 rounded-full"
+              aria-label="Enviar mensagem"
             >
               {sendingMessage ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />

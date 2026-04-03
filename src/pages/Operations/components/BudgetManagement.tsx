@@ -310,7 +310,7 @@ export default function BudgetManagement({ userId, projectId, projectName, campa
                   <DollarSign className="h-4 w-4 text-primary" />
                   <span className="text-sm font-semibold">Alocar Budget</span>
                 </div>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={resetForm}>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={resetForm} aria-label="Fechar">
                   <X className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -561,12 +561,12 @@ function CurrentMonthCard({ summary, expectedPacing, onDelete, onEdit }: { summa
               <ChannelPacingRow allocation={ch} />
             </div>
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground flex-shrink-0" onClick={() => onEdit(ch)}>
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground flex-shrink-0" onClick={() => onEdit(ch)} aria-label="Editar alocação">
                 <Pencil className="h-3 w-3" />
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive flex-shrink-0">
+                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive flex-shrink-0" aria-label="Excluir alocação">
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </AlertDialogTrigger>
@@ -633,12 +633,12 @@ function MonthCard({ summary, onDelete, onEdit }: { summary: BudgetProjectSummar
                 <ChannelPacingRow allocation={ch} />
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground flex-shrink-0" onClick={() => onEdit(ch)}>
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground flex-shrink-0" onClick={() => onEdit(ch)} aria-label="Editar alocação">
                   <Pencil className="h-3 w-3" />
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive flex-shrink-0">
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive flex-shrink-0" aria-label="Excluir alocação">
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </AlertDialogTrigger>

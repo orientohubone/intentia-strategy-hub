@@ -1128,7 +1128,7 @@ export function BrandLandingPosts() {
       {/* Carousel */}
       <div className="relative">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" className="shrink-0 h-10 w-10 rounded-full" onClick={prev}>
+          <Button variant="outline" size="icon" className="shrink-0 h-10 w-10 rounded-full" onClick={prev} aria-label="Item anterior">
             <ChevronLeft className="h-5 w-5" />
           </Button>
 
@@ -1197,7 +1197,7 @@ export function BrandLandingPosts() {
             </div>
           </div>
 
-          <Button variant="outline" size="icon" className="shrink-0 h-10 w-10 rounded-full" onClick={next}>
+          <Button variant="outline" size="icon" className="shrink-0 h-10 w-10 rounded-full" onClick={next} aria-label="Próximo item">
             <ChevronRight className="h-5 w-5" />
           </Button>
         </div>

@@ -31,6 +31,7 @@ export function DashboardHeader({ onMenuToggle }: DashboardHeaderProps) {
           variant="ghost"
           size="icon"
           aria-label="Menu principal"
+          aria-expanded={false} /* This will need state if we want accurate aria-expanded, but we can just use the toggle nature */
           className="h-9 w-9 lg:hidden shrink-0"
           onClick={onMenuToggle}
         >

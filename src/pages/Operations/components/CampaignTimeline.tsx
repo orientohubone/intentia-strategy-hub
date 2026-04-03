@@ -141,13 +141,13 @@ export default function CampaignTimeline({ campaigns, filterChannel = "all", fil
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={prevWeeks}>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={prevWeeks} aria-label="Semanas anteriores">
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-xs text-muted-foreground min-w-[120px] text-center">
             {formatShortDate(viewStart.toISOString().split("T")[0])} — {formatShortDate(addDays(viewStart, totalDays - 1).toISOString().split("T")[0])}
           </span>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={nextWeeks}>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={nextWeeks} aria-label="Próximas semanas">
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

@@ -150,6 +150,7 @@ export function CampaignRow({
               size="icon"
               className="h-7 w-7 text-amber-600 hover:bg-amber-500/10"
               title="Reaproveitar saldo"
+              aria-label="Reaproveitar saldo"
               onClick={() => onReallocate(campaign, remainingBudget)}
             >
               <GitCompareArrows className="h-3.5 w-3.5" />
@@ -160,6 +161,7 @@ export function CampaignRow({
             size="icon"
             className="h-7 w-7"
             title="Editar"
+            aria-label="Editar campanha"
             onClick={() => onEdit(campaign)}
           >
             <Edit2 className="h-3.5 w-3.5" />
@@ -169,6 +171,7 @@ export function CampaignRow({
               <button
                 className="h-7 w-7 inline-flex items-center justify-center rounded-md text-destructive hover:bg-destructive/10 transition-colors"
                 title="Excluir"
+                aria-label="Excluir campanha"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
@@ -264,6 +267,7 @@ export function CampaignRow({
               size="icon"
               className="h-8 w-8 text-muted-foreground hover:text-primary"
               title={label}
+              aria-label={`Alterar status para ${label}`}
               onClick={() => handleStatusClick(status)}
             >
               <Icon className="h-4 w-4" />
@@ -278,6 +282,7 @@ export function CampaignRow({
               size="icon"
               className="h-8 w-8 text-purple-500 hover:bg-purple-500/10"
               title="Análise IA"
+              aria-label="Ver análise de IA da campanha"
               onClick={() => onShowAiDialog(campaign.id)}
             >
               <Sparkles className="h-4 w-4" />

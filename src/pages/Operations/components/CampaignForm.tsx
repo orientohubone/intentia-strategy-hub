@@ -29,7 +29,7 @@ export function CampaignForm({
         <h2 className="text-lg font-semibold">
           {editingId ? "Editar Campanha" : "Nova Campanha"}
         </h2>
-        <Button variant="ghost" size="icon" onClick={onCancel}>
+        <Button variant="ghost" size="icon" onClick={onCancel} aria-label="Fechar formulário">
           <X className="h-4 w-4" />
         </Button>
       </div>
