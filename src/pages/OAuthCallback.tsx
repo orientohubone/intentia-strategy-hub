@@ -12,15 +12,25 @@ export default function OAuthCallback() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const error = searchParams.get("error");
-    const errorDescription = searchParams.get("error_description");
-    const rawProvider = searchParams.get("provider");
-    const connStatus = searchParams.get("status");
-    const account = searchParams.get("account");
+    // Extract parameters from both search query and hash fragment
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const error = searchParams.get("error") || hashParams.get("error");
+    const errorDescription = searchParams.get("error_description") || hashParams.get("error_description");
+    const rawProvider = searchParams.get("provider") || hashParams.get("provider");
+    const connStatus = searchParams.get("status") || hashParams.get("status");
+    const account = searchParams.get("account") || hashParams.get("account");
+    const rawRedirectTo = searchParams.get("redirectTo") || hashParams.get("redirectTo");
 
     // Validação estrita do provider para evitar Open Redirect/XSS via payload de provider inválido
     const isValidProvider = rawProvider && Object.keys(PROVIDER_CONFIGS).includes(rawProvider);
     const provider = isValidProvider ? (rawProvider as AdProvider) : null;
+
+    // Strict validation for redirectTo to prevent Open Redirect
+    const isValidRelativeUrl = (url: string | null) => {
+      if (!url) return false;
+      return url.startsWith('/') && !url.startsWith('//') && !url.startsWith('/\\');
+    };
+    const redirectTo = isValidRelativeUrl(rawRedirectTo) ? rawRedirectTo : "/integracoes";
 
     // Função para sanitizar texto simples para evitar XSS ao injetar no DOM via toast/message
     const escapeHTML = (str: string) => {
@@ -62,7 +72,7 @@ export default function OAuthCallback() {
         await new Promise((r) => setTimeout(r, 500));
         retries++;
       }
-      navigate("/integracoes", { replace: true });
+      navigate(redirectTo as string, { replace: true });
     };
 
     const delay = status === "error" ? 3000 : 2000;
