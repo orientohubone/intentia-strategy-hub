@@ -54,9 +54,12 @@ export function SEO({
 
       {/* JSON-LD Structured Data */}
       {jsonLd && (
-        <script type="application/ld+json">
-          {JSON.stringify(Array.isArray(jsonLd) ? jsonLd : jsonLd)}
-        </script>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(Array.isArray(jsonLd) ? jsonLd : [jsonLd]).replace(/</g, '\\u003c')
+          }}
+        />
       )}
     </Helmet>
   );
