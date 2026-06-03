@@ -120,6 +120,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ text });
   } catch (error: any) {
     console.error("[claude-proxy] Error:", error);
-    return res.status(500).json({ error: error.message || "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 }

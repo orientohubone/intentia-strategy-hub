@@ -74,6 +74,6 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({ project: data });
   } catch (err: any) {
     console.error("[project-context] Error:", err);
-    return res.status(500).json({ error: err?.message || "Internal error" });
+    return res.status(500).json({ error: "Internal error" });
   }
 }
