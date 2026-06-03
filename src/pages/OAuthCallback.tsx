@@ -12,11 +12,12 @@ export default function OAuthCallback() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const error = searchParams.get("error");
-    const errorDescription = searchParams.get("error_description");
-    const rawProvider = searchParams.get("provider");
-    const connStatus = searchParams.get("status");
-    const account = searchParams.get("account");
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const error = searchParams.get("error") || hashParams.get("error");
+    const errorDescription = searchParams.get("error_description") || hashParams.get("error_description");
+    const rawProvider = searchParams.get("provider") || hashParams.get("provider");
+    const connStatus = searchParams.get("status") || hashParams.get("status");
+    const account = searchParams.get("account") || hashParams.get("account");
 
     // Validação estrita do provider para evitar Open Redirect/XSS via payload de provider inválido
     const isValidProvider = rawProvider && Object.keys(PROVIDER_CONFIGS).includes(rawProvider);
