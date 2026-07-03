@@ -490,7 +490,9 @@ export function FloatingChat() {
   const TIA_MODE_KEY = "intentia_tia_mode";
   const TIA_WELCOME: TiaMessage = { role: "assistant", content: "Oi! 👋 Sou a **Tia**, sua assistente na Intentia.\n\nPode me perguntar sobre seus **projetos**, **campanhas**, **insights** ou qualquer coisa da plataforma!" };
 
-  const generateConvId = () => `conv_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  // SECURITY FIX: Using crypto.randomUUID() instead of Math.random() for secure unique identifier generation.
+  // Predictable identifiers can lead to information disclosure if used as session or document IDs.
+  const generateConvId = () => `conv_${Date.now()}_${crypto.randomUUID()}`;
 
   const deriveTitle = (msgs: TiaMessage[]): string => {
     const firstUser = msgs.find(m => m.role === "user");
